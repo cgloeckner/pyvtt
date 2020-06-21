@@ -1,0 +1,21 @@
+body {
+	background-color: white;
+}
+
+form {
+	margin-left: auto;
+	margin-right: auto;
+	width: 50%;
+}
+
+div.scene {
+	width: 1440px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+canvas#battlemap {
+	background-color: #ddd;
+	border: 1px solid black;
+}
+
