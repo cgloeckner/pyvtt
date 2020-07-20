@@ -101,8 +101,6 @@ def ajax_get_update(game_title):
 	for t in scene.tokens:
 		tokens.append(t.to_dict())
 	
-	print(tokens)
-	
 	return json.dumps(tokens)
 
 @post('/ajax/<game_title>/move/<token_id:int>/<x:int>/<y:int>')

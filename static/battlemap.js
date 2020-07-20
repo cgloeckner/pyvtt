@@ -27,7 +27,6 @@ function Token(id, url) {
 
 function addToken(id, url) {
 	tokens[id] = new Token(id, url);
-	console.log(id);
 }
 
 function selectToken(x, y) {
@@ -62,7 +61,6 @@ function selectToken(x, y) {
 }
 
 function updateToken(data) {
-	console.log(data)
 	// create token if necessary
 	if (!tokens.includes(data.id)) {
 		addToken(data.id, data.url);
