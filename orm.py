@@ -56,7 +56,7 @@ class Game(db.Entity):
 	active = Optional(str)
 
 	def getImagePath(self):
-		return os.path.join('.', 'game', self.title)
+		return os.path.join('.', 'games', self.title)
 
 	def getAllImages(self):
 		return os.listdir(self.getImagePath())
@@ -67,15 +67,17 @@ class Game(db.Entity):
 	def upload(self, handle):
 		"""Save the given image via file handle and return the url to the image.
 		"""
+		game_root = self.getImagePath()
+		if not os.path.isdir(game_root):
+			os.mkdir(game_root)
+		
 		# generate internal filename
-		image_id   = '{0}.png'.format(len(getAllImages()))
-		local_path = os.path.join(getImagePath(), image_id)
+		image_id   = '{0}.png'.format(len(self.getAllImages()))
+		local_path = os.path.join(game_root, image_id)
 		handle.save(local_path)
 		
 		# propagate remote path
-		url = getImageUrl()
-		self.images.add(url)
-		return url
+		return self.getImageUrl(image_id)
 
 
 # --- UNIT TESTS --------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 from bottle import *
 
-import os
+import os, json
 
 from pony import orm
 from orm import db, db_session, Token, Game
@@ -169,8 +169,9 @@ def post_image_upload(game_title):
 	files = request.files.getall('file[]')
 	for handle in files:
 		url = game.upload(handle)
+		print(url)
 		# create token
-		db.Token(scene=scene, url=url, pos=(50, 50))
+		db.Token(scene=scene, url=url, posx=50, posy=50)
 	
 	db.commit()
 	
