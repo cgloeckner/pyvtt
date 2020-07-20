@@ -227,6 +227,7 @@ function tokenWheel(event) {
 		}
 		
 		// note: client-side prediction disabled
+		/*
 		if (event.shiftKey) {
 			token.rotate = token.rotate - 5 * event.deltaY;
 			if (token.rotate >= 360.0 || token.rotate <= -360.0) {
@@ -248,6 +249,7 @@ function tokenWheel(event) {
 			var url = '/ajax/' + game_title + '/resize/' + select_id + '/' + token.size;
 			$.post(url);
 		}
+		*/
 	}
 }
 
