@@ -148,7 +148,7 @@ def ajax_post_clone(game_title, token_id):
 	token = db.Token.select(lambda t: t.id == token_id).first()
 	# clone token
 	db.Token(scene=token.scene, url=token.url, posx=token.posx,
-		posy=token.posy + token.size/10, size=token.size, rotate=token.rotate)
+		posy=token.posy + token.size//10, size=token.size, rotate=token.rotate)
 
 @post('/ajax/<game_title>/delete/<token_id:int>')
 def ajax_post_delete(game_title, token_id):

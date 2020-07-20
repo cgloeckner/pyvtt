@@ -6,7 +6,7 @@
 </form>
 
 <div class="scene">
-	<canvas id="battlemap" width="1440" height="720" onMouseDown="tokenClick()" onMouseMove="tokenMove()" onMouseUp="tokenRelease()"></canvas>
+	<canvas id="battlemap" width="1440" height="720"></canvas>
 </div>
 
 <div id="token">
@@ -24,7 +24,19 @@
 
 <script>
 var battlemap = $('#battlemap')[0]
+
+/** Mobile controls not working yet
+battlemap.addEventListener('touchstart', tokenClick);
+battlemap.addEventListener('touchmove', tokenMove);
+battlemap.addEventListener('touchend', tokenRelease);
+*/
+
+// desktop controls
+battlemap.addEventListener('mousedown', tokenClick);
+battlemap.addEventListener('mousemove', tokenMove);
+battlemap.addEventListener('mouseup', tokenRelease);
 battlemap.addEventListener('wheel', tokenWheel);
+
 start('{{game.title}}');
 </script>
 
