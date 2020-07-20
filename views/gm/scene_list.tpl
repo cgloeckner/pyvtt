@@ -3,8 +3,8 @@
 <h1><a href="/play/{{game.title}}">{{game.title}}</a></h1>
 
 <ul>
-%for title in game.scenes:
-	<li><a href="/setup/{{game.title}}/{{title}}">{{title}}</a></li>
+%for s in game.scenes:
+	<li><a href="/setup/{{game.title}}/{{s.title}}">{{s.title}}</a></li>
 %end
 </ul>
 
