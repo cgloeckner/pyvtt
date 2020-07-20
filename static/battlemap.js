@@ -13,10 +13,10 @@ function clearCanvas() {
 
 var tokens = [];
 
-function Token(token_id, url) {
-	this.token_id = token_id;
-	this.x = 0;
-	this.y = 0;
+function Token(id, url) {
+	this.id = id;
+	this.posx = 0;
+	this.posy = 0;
 	this.size = 250;
 	this.url = url;
 	this.rotate = 0.0;
@@ -25,8 +25,9 @@ function Token(token_id, url) {
 	this.locked = false;
 }
 
-function addToken(token_id, url) {
-	tokens[token_id] = new Token(token_id, url);
+function addToken(id, url) {
+	tokens[id] = new Token(id, url);
+	console.log(id);
 }
 
 function selectToken(x, y) {
@@ -34,10 +35,10 @@ function selectToken(x, y) {
 	// search for any fitting (unlocked) token
 	$.each(tokens, function(index, item) {
 		if (item != null && !item.locked) {
-			var min_x = item.x - item.size / 2;
-			var max_x = item.x + item.size / 2;
-			var min_y = item.y - item.size / 2;
-			var max_y = item.y + item.size / 2;
+			var min_x = item.posx - item.size / 2;
+			var max_x = item.posx + item.size / 2;
+			var min_y = item.posy - item.size / 2;
+			var max_y = item.posy + item.size / 2;
 			if (min_x <= x && x <= max_x && min_y <= y && y <= max_y) {
 				result = item;
 			}
@@ -47,10 +48,10 @@ function selectToken(x, y) {
 		// search for any fitting (locked) token
 		$.each(tokens, function(index, item) {
 			if (item != null && item.locked) {
-				var min_x = item.x - item.size / 2;
-				var max_x = item.x + item.size / 2;
-				var min_y = item.y - item.size / 2;
-				var max_y = item.y + item.size / 2;
+				var min_x = item.posx - item.size / 2;
+				var max_x = item.posx + item.size / 2;
+				var min_y = item.posy - item.size / 2;
+				var max_y = item.posy + item.size / 2;
 				if (min_x <= x && x <= max_x && min_y <= y && y <= max_y) {
 					result = item;
 				}
@@ -61,19 +62,20 @@ function selectToken(x, y) {
 }
 
 function updateToken(data) {
+	console.log(data)
 	// create token if necessary
-	if (!tokens.includes(data.token_id)) {
-		addToken(data.token_id, data.remote_path);
+	if (!tokens.includes(data.id)) {
+		addToken(data.id, data.url);
 	}
 	
 	// update token data
-	tokens[data.token_id].x      = data.pos[0];
-	tokens[data.token_id].y      = data.pos[1];
-	tokens[data.token_id].size   = data.size;
-	tokens[data.token_id].rotate = data.rotate;
-	tokens[data.token_id].flip_x = data.flip_x;
-	tokens[data.token_id].flip_y = data.flip_y;
-	tokens[data.token_id].locked = data.locked;
+	tokens[data.id].posx      = data.posx;
+	tokens[data.id].posy      = data.posy;
+	tokens[data.id].size   = data.size;
+	tokens[data.id].rotate = data.rotate;
+	tokens[data.id].flip_x = data.flip_x;
+	tokens[data.id].flip_y = data.flip_y;
+	tokens[data.id].locked = data.locked;
 }
 
 function drawToken(token, show_ui) {
@@ -92,7 +94,7 @@ function drawToken(token, show_ui) {
 	var canvas = $('#battlemap');
 	var context = canvas[0].getContext("2d");
 	context.save();
-	context.translate(token.x, token.y);
+	context.translate(token.posx, token.posy);
 	if (show_ui) {
 		context.beginPath();
 		context.moveTo(-w/2, -h/2);
@@ -124,8 +126,8 @@ function handleSelectedToken(token) {
 	if (dragging && !token.locked) {
 		if (drag_preview_idle > 4) {
 			// client side prediction
-			token.x = mouse_x;
-			token.y = mouse_y;
+			token.posx = mouse_x;
+			token.posy = mouse_y;
 		} else {
 			drag_preview_idle += 1;
 		}
@@ -137,7 +139,7 @@ function update() {
 	if (pull_tick > 10) {
 		url = '/ajax/' + game_title + '/update';
 		$.getJSON(url, function(data) {
-			tokens = [];
+			//tokens = [];
 			$.each(data, function(index, item) {
 				updateToken(item);
 			});
@@ -151,7 +153,7 @@ function update() {
 	// draw locked tokens
 	$.each(tokens, function(index, item) {
 		if (item != null && item.locked) {
-			if (item.token_id == select_id) {
+			if (item.id == select_id) {
 				// draw token with ui
 				handleSelectedToken(item);
 			} else {
@@ -162,7 +164,7 @@ function update() {
 	// draw unlocked tokens
 	$.each(tokens, function(index, item) {
 		if (item != null && !item.locked) {
-			if (item.token_id == select_id) {
+			if (item.id == select_id) {
 				// draw token with ui
 				handleSelectedToken(item);
 			} else {
@@ -186,7 +188,7 @@ function tokenMove() {
 	
 	if (select_id != 0) {
 		var token = tokens[select_id];
-		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.x + '|' + token.y + ')';
+		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.posx + '|' + token.posy + ')';
 	}
 }
 
@@ -195,13 +197,15 @@ function tokenClick() {
 	mouse_y = event.offsetY;
 	drag_preview_idle = 0;
 	
+	prev_id = select_id;
+	
 	select_id = 0;
 	var token = selectToken(mouse_x, mouse_y);
 	if (token != null) {
-		select_id = token.token_id;
+		select_id = token.id;
 		dragging = true;
 		
-		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.x + '|' + token.y + ')';
+		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.posx + '|' + token.posy + ')';
 		$('#locked')[0].checked = token.locked;
 	}
 }
@@ -222,22 +226,25 @@ function tokenWheel(event) {
 			return;
 		}
 		
+		// note: client-side prediction disabled
 		if (event.shiftKey) {
-			token.rotate = token.rotate - 2 * event.deltaY;
+			token.rotate = token.rotate - 5 * event.deltaY;
 			if (token.rotate >= 360.0 || token.rotate <= -360.0) {
 				token.rotate = 0.0;
 			}
+			
 			var url = '/ajax/' + game_title + '/rotate/' + select_id + '/' + token.rotate;
 			$.post(url);
 			
 		} else {
-			token.size += -2 * event.deltaY;
+			token.size = token.size - 5 * event.deltaY;
 			if (token.size > 1440) {
 				token.size = 1440;
 			}
 			if (token.size < 16) {
 				token.size = 16;
 			}
+			
 			var url = '/ajax/' + game_title + '/resize/' + select_id + '/' + token.size;
 			$.post(url);
 		}

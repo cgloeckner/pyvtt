@@ -100,6 +100,8 @@ def ajax_get_update(game_title):
 	for t in scene.tokens:
 		tokens.append(t.to_dict())
 	
+	print(tokens)
+	
 	return json.dumps(tokens)
 
 @post('/ajax/<game_title>/move/<token_id:int>/<x:int>/<y:int>')
@@ -169,7 +171,6 @@ def post_image_upload(game_title):
 	files = request.files.getall('file[]')
 	for handle in files:
 		url = game.upload(handle)
-		print(url)
 		# create token
 		db.Token(scene=scene, url=url, posx=50, posy=50)
 	
