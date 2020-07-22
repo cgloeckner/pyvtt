@@ -2,7 +2,7 @@
 
 <h1>Setup Game: 
 %if game.active != '':
-	<a href="/play/{{g.title}}">{{game.title}}</a>
+	<a href="/play/{{game.title}}">{{game.title}}</a>
 %else:
 	{{game.title}}
 %end

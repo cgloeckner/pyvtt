@@ -90,6 +90,15 @@ class Game(db.Entity):
 		# propagate remote path
 		return self.getImageUrl(image_id)
 
+	def clear(self):
+		# remove all images
+		game_root = self.getImagePath()
+		for img in self.getAllImages():
+			path = os.path.join(game_root, img)
+			os.remove(path)
+		# remove game directory
+		os.rmdir(game_root)
+
 
 # --- UNIT TESTS --------------------------------------------------------------
 

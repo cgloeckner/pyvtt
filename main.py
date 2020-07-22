@@ -43,6 +43,7 @@ def post_create_game():
 def delete_game(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
+	game.clear()
 	game.delete()
 	
 	db.commit()
