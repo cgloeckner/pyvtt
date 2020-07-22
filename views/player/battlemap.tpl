@@ -1,26 +1,33 @@
 %include("header", title=game.active)
 
-<form action="/upload/{{game.title}}" method="post" enctype="multipart/form-data">
-	<input name="file[]" type="file" multiple />
-	<input type="submit" value="upload" />
-</form>
-
 <div class="scene">
-	<canvas id="battlemap" width="1440" height="720"></canvas>
+	<div class="dice">
+		<img src="/static/d4.png" onClick="rollDice(4);"><br />
+		<img src="/static/d6.png" onClick="rollDice(6);"><br />
+		<img src="/static/d8.png" onClick="rollDice(8);"><br />
+		<img src="/static/d12.png" onClick="rollDice(12);"><br />
+		<img src="/static/d20.png" onClick="rollDice(20);"><br />
+	</div>
+
+	<div style="float: left;">
+		<canvas id="battlemap" width="1000" height="720"></canvas>
+	</div>
+	
+	<div id="rolls"></span>
 </div>
 
-<div id="token">
+<div class="gm">
+	<form action="/upload/{{game.title}}" method="post" enctype="multipart/form-data">
+		<input name="file[]" type="file" multiple />
+		<input type="submit" value="upload" />
+	</form>
+
+	<input type="button" onClick="clearRolls()" value="clearRollLog" />
 	<span id="info"></span>
-	<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" />
-	<label for="locked">Locked</label>
+	<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>
 	<input type="button" onClick="tokenClone()" value="clone" />
 	<input type="button" onClick="tokenDelete()" value="delete" />
 </div>
-
-<!--
-
-<input type="button" onClick="start('{{game.title}}')" value="start" />
--->
 
 <script>
 var battlemap = $('#battlemap')[0]

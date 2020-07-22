@@ -145,8 +145,15 @@ function update() {
 		$.getJSON(url, function(data) {
 			// update current timeid
 			timeid = data['timeid']
+			
+			// update tokens
 			$.each(data['tokens'], function(index, item) {
 				updateToken(item);
+			});
+			
+			// show rolls
+			$.each(data['rolls'], function(index, item) {
+				$('#rolls')[0].append(item + '\n');
 			});
 		});
 
@@ -295,4 +302,11 @@ function tokenDelete(event) {
 	$.post(url);
 }
 
+function rollDice(sides) {
+	var url = '/roll/' + game_title + '/SHITFACE/' + sides
+	$.post(url);
+}
 
+function clearRolls() {
+	$('#rolls')[0].innerHTML = '';
+}

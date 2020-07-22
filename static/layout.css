@@ -12,10 +12,34 @@ div.scene {
 	width: 1440px;
 	margin-left: auto;
 	margin-right: auto;
+	border: 1px solid blue;
+}
+
+div.dice {
+	width: 70px;
+	float: left;
+}
+
+div.dice img {
+	width: 64px;
 }
 
 canvas#battlemap {
 	background-color: #ddd;
 	border: 1px solid black;
 }
+
+div.scene div#rolls {
+	width: 200px;
+	height: 750px;
+	overflow-y: scroll;
+	float: right;
+}
+
+div.gm {
+	width: 1000px;
+	margin-left: auto;
+	margin-right: auto;
+	border: 1px solid lime;
+}	
 

@@ -2,7 +2,7 @@
 
 from bottle import *
 
-import os, json
+import os, json, random
 
 from pony import orm
 from orm import db, db_session, Token, Game
@@ -115,16 +115,25 @@ def ajax_get_update(game_title, timeid):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
-	# format update data
+	
+	# query token data
 	tokens = list()
 	for t in scene.tokens:
 		if (t.timeid > timeid):
 			tokens.append(t.to_dict())
 	
-	# return tokens and timeid
+	# query rolls 
+	rolls = list()
+	recent_rolls = db.Roll.select(lambda r: r.game == game)
+	for r in recent_rolls:
+		if r.timeid > timeid:
+			rolls.append('{0} D{1}={2}'.format(r.player, r.sides, r.result))
+	
+	# return tokens, rolls and timeid
 	data = {
 		'timeid': scene.timeid,
-		'tokens': tokens
+		'tokens': tokens,
+		'rolls' : rolls
 	}
 	return json.dumps(data)
 
@@ -201,6 +210,7 @@ def post_image_upload(game_title):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	scene.timeid += 1
 	
 	# upload all files to the current game
 	# and create a token each
@@ -208,11 +218,23 @@ def post_image_upload(game_title):
 	for handle in files:
 		url = game.upload(handle)
 		# create token
-		db.Token(scene=scene, timeid=scene.timeid+1, url=url, posx=50, posy=50)
+		db.Token(scene=scene, timeid=scene.timeid, url=url, posx=50, posy=50)
 	
 	db.commit()
 	
 	redirect('/play/{0}'.format(game_title))
+
+@post('/roll/<game_title>/<player>/<sides:int>')
+def post_roll_dice(game_title, player, sides):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	scene.timeid += 1
+	
+	# add player roll
+	result = random.randrange(1, sides+1)
+	db.Roll(game=game, player=player, sides=sides, result=result, timeid=scene.timeid)
 
 
 # --- setup stuff -------------------------------------------------------------
