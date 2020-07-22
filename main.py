@@ -208,7 +208,7 @@ def post_image_upload(game_title):
 	for handle in files:
 		url = game.upload(handle)
 		# create token
-		db.Token(scene=scene, url=url, posx=50, posy=50)
+		db.Token(scene=scene, timeid=scene.timeid+1, url=url, posx=50, posy=50)
 	
 	db.commit()
 	
