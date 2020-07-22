@@ -1,10 +1,10 @@
 %include("header", title="Games List")
 
-<h1>Games</h1>
+<h1>Games Overview</h1>
 
 <ul>
 %for g in games:
-	<li><a href="/setup/{{g.title}}">{{g.title}}</a></li>
+	<li>{{g.title}} - <a href="/setup/{{g.title}}">Setup</a> - <a href="/play/{{g.title}}">Play</a></li>
 %end
 </ul>
 

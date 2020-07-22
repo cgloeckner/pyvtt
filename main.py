@@ -67,6 +67,15 @@ def post_create_scene(game_title):
 	db.commit()
 	redirect('/setup/{0}'.format(game.title))
 
+@get('/activate/<game_title>/<scene_title>')
+def post_create_scene(game_title, scene_title):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	game.active = scene_title
+
+	db.commit()
+	redirect('/setup/{0}'.format(game.title))
+
 
 # --- player routes -----------------------------------------------------------
 
