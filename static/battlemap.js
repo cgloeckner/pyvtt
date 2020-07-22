@@ -67,8 +67,8 @@ function updateToken(data) {
 	}
 	
 	// update token data
-	tokens[data.id].posx      = data.posx;
-	tokens[data.id].posy      = data.posy;
+	tokens[data.id].posx = data.posx;
+	tokens[data.id].posy = data.posy;
 	tokens[data.id].size   = data.size;
 	tokens[data.id].rotate = data.rotate;
 	tokens[data.id].flip_x = data.flip_x;
@@ -134,18 +134,22 @@ function handleSelectedToken(token) {
 }
 
 function update() {
-	if (pull_tick > 10) {
+	if (pull_tick == 0) {
+		// pull updates (syncronously)
+		$.ajaxSetup({async: false});
 		url = '/ajax/' + game_title + '/update';
 		$.getJSON(url, function(data) {
 			//tokens = [];
 			$.each(data, function(index, item) {
 				updateToken(item);
 			});
-			
-			pull_tick = 0;
 		});
+		$.ajaxSetup({async: true});
+
+		pull_tick = 5;
+	} else {
+		pull_tick -= 1;
 	}
-	pull_tick += 1;
 	
 	clearCanvas();
 	// draw locked tokens
@@ -224,8 +228,6 @@ function tokenWheel(event) {
 			return;
 		}
 		
-		// note: client-side prediction disabled
-		/*
 		if (event.shiftKey) {
 			token.rotate = token.rotate - 5 * event.deltaY;
 			if (token.rotate >= 360.0 || token.rotate <= -360.0) {
@@ -247,7 +249,6 @@ function tokenWheel(event) {
 			var url = '/ajax/' + game_title + '/resize/' + select_id + '/' + token.size;
 			$.post(url);
 		}
-		*/
 	}
 }
 
