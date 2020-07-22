@@ -1,6 +1,12 @@
 %include("header", title="[GM] {0}".format(game.title))
 
-<h1>Setup Game: <a href="/play/{{game.title}}">{{game.title}}</a></h1>
+<h1>Setup Game: 
+%if game.active != '':
+	<a href="/play/{{g.title}}">{{game.title}}</a>
+%else:
+	{{game.title}}
+%end
+</h1>
 <a href="/delete/{{game.title}}">Delete</a>
 
 <h2>Available Scenes:</h2>

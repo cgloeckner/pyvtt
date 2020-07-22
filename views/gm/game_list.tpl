@@ -4,7 +4,10 @@
 
 <ul>
 %for g in games:
-	<li>{{g.title}} - <a href="/setup/{{g.title}}">Setup</a> - <a href="/play/{{g.title}}">Play</a></li>
+	<li>{{g.title}} - <a href="/setup/{{g.title}}">Setup</a>
+	%if g.active != '':
+	 - <a href="/play/{{g.title}}">Play</a></li>
+	%end
 %end
 </ul>
 
