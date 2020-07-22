@@ -150,7 +150,7 @@ function update() {
 			});
 		});
 
-		//pull_tick = 5;
+		pull_tick = 10;
 	} else {
 		pull_tick -= 1;
 	}
@@ -196,6 +196,8 @@ function tokenMove() {
 		var token = tokens[select_id];
 		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.posx + '|' + token.posy + ')';
 		
+		// NOTE: disabled to better stability
+		/*
 		if (dragging) {
 			if (drag_boardcast_tick == 0) {
 				// update position for other players' client-side prediction
@@ -206,7 +208,7 @@ function tokenMove() {
 			} else {
 				drag_boardcast_tick -= 1;
 			}
-		}
+		}*/
 	}
 }
 
