@@ -116,6 +116,7 @@ var mouse_y = 0;
 
 var select_id = 0;
 var dragging = false;
+var drag_boardcast_tick = 0;
 
 var timeid = 0;
 
@@ -149,7 +150,7 @@ function update() {
 			});
 		});
 
-		pull_tick = 5;
+		//pull_tick = 5;
 	} else {
 		pull_tick -= 1;
 	}
@@ -194,6 +195,18 @@ function tokenMove() {
 	if (select_id != 0) {
 		var token = tokens[select_id];
 		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.posx + '|' + token.posy + ')';
+		
+		if (dragging) {
+			if (drag_boardcast_tick == 0) {
+				// update position for other players' client-side prediction
+				url = '/ajax/' + game_title + '/move/' + select_id + '/' + mouse_x + '/' + mouse_y;
+				$.post(url);
+				
+				//drag_boardcast_tick = 5;
+			} else {
+				drag_boardcast_tick -= 1;
+			}
+		}
 	}
 }
 
