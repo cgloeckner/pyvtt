@@ -101,13 +101,39 @@ def static_token(game_title, fname):
 	
 	return static_file(fname, root=path)
 
-@get('/play/<game_title>')
-@view('player/battlemap')
-def get_player_battlemap(game_title):
+@get('/login/<game_title>')
+@view('player/login')
+def player_login(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
 	return dict(game=game)
+
+@post('/login/<game_title>')
+@view('player/redirect')
+def set_player_name(game_title):
+	playername = request.forms.get('playername')
+	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title))
+	
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	
+	return dict(game=game, playername=playername)
+
+@get('/play/<game_title>')
+@view('player/battlemap')
+def get_player_battlemap(game_title):
+	# load player name from cookie
+	playername = request.get_cookie('playername')
+	if playername is None:
+		print('playername not found')
+		redirect('/login/{0}'.format(game_title))
+
+	else:
+		# load game
+		game = db.Game.select(lambda g: g.title == game_title).first()
+	
+		return dict(game=game)
 
 @get('/ajax/<game_title>/update/<timeid:int>')
 def ajax_get_update(game_title, timeid):
