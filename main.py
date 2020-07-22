@@ -39,6 +39,15 @@ def post_create_game():
 	db.commit()
 	redirect('/')
 
+@get('/delete/<game_title>')
+def delete_game(game_title):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	game.delete()
+	
+	db.commit()
+	redirect('/')
+
 @get('/setup/<game_title>')
 @view('gm/scene_list')
 def get_scene_list(game_title):
@@ -68,7 +77,7 @@ def post_create_scene(game_title):
 	redirect('/setup/{0}'.format(game.title))
 
 @get('/activate/<game_title>/<scene_title>')
-def post_create_scene(game_title, scene_title):
+def activate_scene(game_title, scene_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	game.active = scene_title
