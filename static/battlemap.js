@@ -117,6 +117,8 @@ var mouse_y = 0;
 var select_id = 0;
 var dragging = false;
 
+var timeid = 0;
+
 var pull_tick = 0;
 var drag_preview_idle = 0;
 
@@ -133,18 +135,19 @@ function handleSelectedToken(token) {
 	drawToken(token, true);
 }
 
+$.ajaxSetup({async: false}); // all syncronous ajax calls
+
 function update() {
 	if (pull_tick == 0) {
-		// pull updates (syncronously)
-		$.ajaxSetup({async: false});
-		url = '/ajax/' + game_title + '/update';
+		// pull updates using timeid (will fetch all data since then)
+		url = '/ajax/' + game_title + '/update/' + timeid;
 		$.getJSON(url, function(data) {
-			//tokens = [];
-			$.each(data, function(index, item) {
+			// update current timeid
+			timeid = data['timeid']
+			$.each(data['tokens'], function(index, item) {
 				updateToken(item);
 			});
 		});
-		$.ajaxSetup({async: true});
 
 		pull_tick = 5;
 	} else {

@@ -90,8 +90,8 @@ def get_player_battlemap(game_title):
 	
 	return dict(game=game)
 
-@get('/ajax/<game_title>/update')
-def ajax_get_update(game_title):
+@get('/ajax/<game_title>/update/<timeid:int>')
+def ajax_get_update(game_title, timeid):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
@@ -99,9 +99,15 @@ def ajax_get_update(game_title):
 	# format update data
 	tokens = list()
 	for t in scene.tokens:
-		tokens.append(t.to_dict())
+		if (t.timeid > timeid):
+			tokens.append(t.to_dict())
 	
-	return json.dumps(tokens)
+	# return tokens and timeid
+	data = {
+		'timeid': scene.timeid,
+		'tokens': tokens
+	}
+	return json.dumps(data)
 
 @post('/ajax/<game_title>/move/<token_id:int>/<x:int>/<y:int>')
 def ajax_post_move(game_title, token_id, x, y):
@@ -109,8 +115,11 @@ def ajax_post_move(game_title, token_id, x, y):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	# update position
-	token.update(pos=(x, y))
+	scene.timeid += 1
+	token.update(timeid=scene.timeid, pos=(x, y))
 
 @post('/ajax/<game_title>/resize/<token_id:int>/<size:int>')
 def ajax_post_resize(game_title, token_id, size):
@@ -118,8 +127,11 @@ def ajax_post_resize(game_title, token_id, size):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	# update position
-	token.update(size=size)
+	scene.timeid += 1
+	token.update(timeid=scene.timeid, size=size)
 
 @post('/ajax/<game_title>/rotate/<token_id:int>/<rotate:int>')
 def ajax_post_rotate(game_title, token_id, rotate):
@@ -127,8 +139,11 @@ def ajax_post_rotate(game_title, token_id, rotate):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	# update position
-	token.update(rotate=rotate)
+	scene.timeid += 1
+	token.update(timeid=scene.timeid, rotate=rotate)
 
 @post('/ajax/<game_title>/lock/<token_id:int>/<flag:int>')
 def ajax_post_rotate(game_title, token_id, flag):
@@ -136,8 +151,11 @@ def ajax_post_rotate(game_title, token_id, flag):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	# update position
-	token.update(locked=flag)
+	scene.timeid += 1
+	token.update(timeid=scene.timeid, locked=flag)
 
 @post('/ajax/<game_title>/clone/<token_id:int>')
 def ajax_post_clone(game_title, token_id):

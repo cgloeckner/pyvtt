@@ -18,24 +18,34 @@ class Token(db.Entity):
 	size   = Required(int, default=64)
 	rotate = Required(float, default=0.0)
 	locked = Required(bool, default=False)
+	timeid = Required(int, default=0) # dirty flag
 	
-	def update(self, pos=None, size=None, rotate=None, locked=None):
+	def update(self, timeid, pos=None, size=None, rotate=None, locked=None):
 		"""Handle update of several data fields. If locked, the only available
-		option is unlocking. Other actions will be ignored.
+		option is unlocking. Other actions will be ignored. The timeid is set
+		if anything has changed.
 		"""
 		if locked != None:
+			self.timeid = timeid
 			self.locked = locked
 		
 		if self.locked:
 			# cannot change something else if already locked
 			return
+		
 		if pos != None:
 			self.posx = pos[0]
 			self.posy = pos[1]
+			self.timeid = timeid
+			
 		if size != None:
 			self.size = size
+			self.timeid = timeid
+			
 		if rotate != None:
 			self.rotate = rotate
+			self.timeid = timeid
+		
 
 
 # -----------------------------------------------------------------------------
@@ -44,6 +54,7 @@ class Scene(db.Entity):
 	id     = PrimaryKey(int, auto=True)
 	title  = Required(str)
 	game   = Required("Game")
+	timeid = Required(int, default=0) # keeps time for dirtyflag on tokens
 	tokens = Set("Token", cascade_delete=True) # forward deletion to tokens
 
 
@@ -105,31 +116,35 @@ class Tests(unittest.TestCase):
 		t = db.Token[1]
 		
 		# update everything
-		t.update(pos=(4, 7), size=32, rotate=22)
+		t.update(timeid=42, pos=(4, 7), size=32, rotate=22)
 		self.assertEqual(t.posx, 4)
 		self.assertEqual(t.posy, 7)
 		self.assertEqual(t.size, 32)
 		self.assertEqual(t.rotate, 22)
 		self.assertEqual(t.locked, False)
+		self.assertEqual(t.timeid, 42)
 		
 		# lock it
-		t.update(locked=True)
+		t.update(timeid=47, locked=True)
 		self.assertEqual(t.locked, True)
+		self.assertEqual(t.timeid, 47)
 		
 		# no update when locked
-		t.update(pos=(5, 11), size=40, rotate=80)
+		t.update(timeid=50, pos=(5, 11), size=40, rotate=80)
 		self.assertEqual(t.posx, 4)
 		self.assertEqual(t.posy, 7)
 		self.assertEqual(t.size, 32)
 		self.assertEqual(t.rotate, 22)
+		self.assertEqual(t.timeid, 47)
 		
 		# update with unlocking
-		t.update(pos=(5, 11), size=40, rotate=80, locked=False)
+		t.update(timeid=53, pos=(5, 11), size=40, rotate=80, locked=False)
 		self.assertEqual(t.posx, 5)
 		self.assertEqual(t.posy, 11)
 		self.assertEqual(t.size, 40)
 		self.assertEqual(t.rotate, 80)
 		self.assertEqual(t.locked, False)
+		self.assertEqual(t.timeid, 53)
 		
 
 
