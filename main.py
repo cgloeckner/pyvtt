@@ -262,6 +262,18 @@ def post_roll_dice(game_title, player, sides):
 	result = random.randrange(1, sides+1)
 	db.Roll(game=game, player=player, sides=sides, result=result, timeid=scene.timeid)
 
+@post('/clear_rolls/<game_title>')
+def post_clear_rolls(game_title):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	
+	# query old rolls
+	old_rolls = db.Roll.select(lambda r: r.game == game and r.timeid < scene.timeid - 20)
+	old_rolls.delete()
+	
 
 # --- setup stuff -------------------------------------------------------------
 

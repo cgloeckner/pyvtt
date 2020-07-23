@@ -2,11 +2,9 @@
 
 <div class="scene">
 	<div class="dice">
-		<img src="/static/d4.png" onClick="rollDice(4);"><br />
-		<img src="/static/d6.png" onClick="rollDice(6);"><br />
-		<img src="/static/d8.png" onClick="rollDice(8);"><br />
-		<img src="/static/d12.png" onClick="rollDice(12);"><br />
-		<img src="/static/d20.png" onClick="rollDice(20);"><br />
+%for sides in [4, 6, 8, 10, 12, 20]:
+		<img src="/static/d{{sides}}.png" onClick="rollDice({{sides}});"><br />
+%end
 	</div>
 
 	<div style="float: left;">

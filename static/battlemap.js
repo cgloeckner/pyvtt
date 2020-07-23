@@ -307,6 +307,12 @@ function rollDice(sides) {
 	$.post(url);
 }
 
+
 function clearRolls() {
+	var url = '/clear_rolls/' + game_title;
+	$.post(url);
+
 	$('#rolls')[0].innerHTML = '';
 }
+
+
