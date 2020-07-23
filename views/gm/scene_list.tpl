@@ -2,7 +2,7 @@
 
 <h1>Setup Game: {{game.title}}</a></h1>
 %if game.active != '':
-<a href="/gm/{{game.title}}">Play as GM</a> - <a href="/play/{{game.title}}">Player-Link</a>
+<a href="/gm/{{game.title}}" target="_blank">Play as GM</a> - <a href="/play/{{game.title}}" target="_blank">Player-Link</a>
 %end
 
 <h2>Available Scenes:</h2>
