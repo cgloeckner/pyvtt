@@ -1,4 +1,10 @@
-%include("header", title=page_title)
+%if gm:
+	%title = '[GM] {0}'.format(game.title)
+%else:
+	%title = '[{0}] {1}'.format(player.name, game.title)
+%end
+
+%include("header", title=title)
 
 <div class="scene">
 	<div class="dice">

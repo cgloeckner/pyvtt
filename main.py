@@ -213,10 +213,13 @@ def set_player_name(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
-	# save playername in client cookie
-	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title))
+	# create player
+	player = db.Player(name=playername, game=game)
 	
-	return dict(game=game, page_title='[{0}] {1}'.format(playername, game.title))
+	# save playername in client cookie
+	response.set_cookie('playername', playername, path='/')
+	
+	return dict(game=game, player=player)
 
 @get('/play/<game_title>')
 @view('player/battlemap')
@@ -224,14 +227,18 @@ def get_player_battlemap(game_title):
 	# load player name from cookie
 	playername = request.get_cookie('playername')
 	
-	if playername is None or playername.upper() == 'GM':
+	# try to load player from db
+	player = db.Player.select(lambda p: p.name == playername).first()
+	
+	# redirect to login if player not found or invalid name ('GM') used
+	if playername is None or player is None or playername.upper() == 'GM':
 		redirect('/login/{0}'.format(game_title))
 
 	else:
 		# load game
 		game = db.Game.select(lambda g: g.title == game_title).first()
 		
-		return dict(game=game, gm=False, page_title='[{0}] {1}'.format(playername, game.title))
+		return dict(game=game, gm=False, player=player)
 
 @get('/ajax/<game_title>/update/<timeid:int>')
 def ajax_get_update(game_title, timeid):
@@ -240,10 +247,24 @@ def ajax_get_update(game_title, timeid):
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	
+	# load player name from cookie
+	playername = request.get_cookie('playername')
+	# try to load player from db
+	player = db.Player.select(lambda p: p.name == playername).first()
+	
 	# query all existing tokens each 3s
-	if int(time.time()) % 3 == 0:
-		timeid = 0
-		print("timeid", timeid)
+	now = int(time.time())
+	if player is None:
+		# GMs use buggy refresh (a couple of times at once .__.)
+		if now % 3 == 0:
+			timeid = 0
+			print('Fully updating GM')
+	else:
+		# players refresh correctly
+		if player.alive + 3 < now:
+			player.alive = now
+			timeid = 0
+			print('Fully updating', player.name)
 	
 	# query token data
 	tokens = list()

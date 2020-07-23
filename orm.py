@@ -86,7 +86,7 @@ class Game(db.Entity):
 	scenes  = Set("Scene", cascade_delete=True) # forward deletion to scenes
 	active  = Optional(str)
 	rolls   = Set(Roll)
-	players = Set(Player)
+	players = Set(Player, cascade_delete=True) # forward deletion to players
 
 	def getImagePath(self):
 		return os.path.join('.', 'games', self.title)
