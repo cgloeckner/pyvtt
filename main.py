@@ -86,6 +86,37 @@ def activate_scene(game_title, scene_title):
 	db.commit()
 	redirect('/setup/{0}'.format(game.title))
 
+@get('/delete_scene/<game_title>/<scene_title>')
+def activate_scene(game_title, scene_title):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+
+	# delete requested scene
+	scene = db.Scene.select(lambda s: s.game == game and s.title == scene_title).first()
+	scene.delete()
+
+	db.commit()
+	redirect('/setup/{0}'.format(game.title))
+
+@get('/duplicate/<game_title>/<scene_title>')
+def duplicate_scene(game_title, scene_title):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	
+	# load required scene
+	scene = db.Scene.select(lambda s: s.title == scene_title).first()
+	
+	# create copy of that scene
+	clone = db.Scene(title='{0}_new'.format(scene.title), game=game)
+	# copy tokens, too
+	for t in scene.tokens:
+		db.Token(scene=clone, url=t.url, posx=t.posx, posy=t.posy, size=t.size, rotate=t.rotate, locked=t.locked)
+	
+	assert(len(scene.tokens) == len(clone.tokens))
+	
+	db.commit()
+	redirect('/setup/{0}'.format(game.title))
+
 @get('/gm/<game_title>')
 @view('player/battlemap')
 def get_player_battlemap(game_title):

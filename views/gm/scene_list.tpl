@@ -8,7 +8,7 @@
 <h2>Available Scenes:</h2>
 <ul>
 %for s in game.scenes:
-	<li>{{s.title}} - <a href="/activate/{{game.title}}/{{s.title}}">Activate</a></li>
+	<li>{{s.title}} - <a href="/activate/{{game.title}}/{{s.title}}">Activate</a> - <a href="/duplicate/{{game.title}}/{{s.title}}">Duplicate</a> - <a href="/delete_scene/{{game.title}}/{{s.title}}">Delete</a></li>
 %end
 </ul>
 
