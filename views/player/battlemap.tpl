@@ -26,9 +26,12 @@
 	</form>
 
 	<input type="button" onClick="clearRolls()" value="clearRolls" />
+	<input type="button" onClick="clearVisible()" value="clearVisibleTokens" />
+	<input type="button" onClick="clearGmArea()" value="clearGmArea" /><br />
 	<span id="info"></span>
-	<input type="button" onClick="tokenStretch()" value="stretch" />
 	<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>
+	<input type="button" onClick="tokenReset()" value="reset" />
+	<input type="button" onClick="tokenStretch()" value="stretch" />
 	<input type="button" onClick="tokenClone()" value="clone" />
 	<input type="button" onClick="tokenDelete()" value="delete" />
 </div>

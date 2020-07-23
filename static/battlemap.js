@@ -305,6 +305,13 @@ function tokenLock() {
 	}
 }
 
+function tokenReset() {
+	var url = '/ajax/' + game_title + '/resize/' + select_id + '/64';
+	$.post(url);
+	var url = '/ajax/' + game_title + '/rotate/' + select_id + '/0';
+	$.post(url);
+}
+
 function tokenStretch() {
 	var url = '/ajax/' + game_title + '/resize/' + select_id + '/1000';
 	$.post(url);
@@ -330,6 +337,17 @@ function clearRolls() {
 	$.post(url);
 
 	$('#rolls')[0].innerHTML = '';
+}
+
+function clearVisible() {
+	var url = '/clear_tokens/' + game_title + '/players';
+	$.post(url);
+}
+
+function clearGmArea() {
+	var url = '/clear_tokens/' + game_title + '/gm';
+	$.post(url);
+
 }
 
 

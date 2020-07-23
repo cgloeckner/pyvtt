@@ -110,11 +110,16 @@ def ajax_post_rotate(game_title, token_id, flag):
 def ajax_post_clone(game_title, token_id):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	# update position
+	scene.timeid += 1
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
 	# clone token
 	db.Token(scene=token.scene, url=token.url, posx=token.posx,
-		posy=token.posy + token.size//10, size=token.size, rotate=token.rotate)
+		posy=token.posy + token.size//2, size=token.size, rotate=token.rotate,
+		timeid=scene.timeid)
 
 @post('/ajax/<game_title>/delete/<token_id:int>')
 def ajax_post_delete(game_title, token_id):
@@ -156,9 +161,27 @@ def post_clear_rolls(game_title):
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	
-	# query old rolls
+	# delete old rolls
 	old_rolls = db.Roll.select(lambda r: r.game == game and r.timeid < scene.timeid - 20)
 	old_rolls.delete()
+
+@post('/clear_tokens/<game_title>/<area>')
+def post_clear_tokens(game_title, area):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	
+	if area == 'gm':
+		# query all tokens within GM area
+		tokens = db.Token.select(lambda t: t.scene == scene and t.posx > 1000 and not t.locked)
+	else:
+		# query all tokens within visible range (players' point of view)
+		tokens = db.Token.select(lambda t: t.scene == scene and t.posx <= 1000 and not t.locked)
+	
+	# delete those tokens
+	tokens.delete()
+
 
 # --- player routes -----------------------------------------------------------
 
@@ -214,8 +237,8 @@ def ajax_get_update(game_title, timeid):
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	
-	# query all existing tokens each 10s
-	if int(time.time()) % 10 == 0:
+	# query all existing tokens each 3s
+	if int(time.time()) % 3 == 0:
 		timeid = 0
 	
 	# query token data
