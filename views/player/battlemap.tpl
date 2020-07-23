@@ -7,8 +7,12 @@
 %end
 	</div>
 
+%width = 1000
+%if gm:
+	%width += 200
+%end
 	<div style="float: left;">
-		<canvas id="battlemap" width="1000" height="720"></canvas>
+		<canvas id="battlemap" width="{{width}}" height="720"></canvas>
 	</div>
 	
 	<div id="rolls"></span>
