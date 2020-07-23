@@ -25,7 +25,7 @@
 		<input type="submit" value="upload" />
 	</form>
 
-	<input type="button" onClick="clearRolls()" value="clearRollLog" />
+	<input type="button" onClick="clearRolls()" value="clearRolls" />
 	<span id="info"></span>
 	<input type="button" onClick="tokenStretch()" value="stretch" />
 	<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>

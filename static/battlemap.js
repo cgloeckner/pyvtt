@@ -7,6 +7,12 @@ function clearCanvas() {
 	var canvas = $('#battlemap');
 	var context = canvas[0].getContext("2d");
 	context.clearRect(0, 0, canvas[0].width, canvas[0].height);
+	
+	// draw separation line for GM-area
+	context.beginPath();
+	context.moveTo(1001, 0);
+	context.lineTo(1001, canvas[0].height);
+	context.stroke();
 }
 
 // --- token implementation ---------------------------------------------------
@@ -146,14 +152,21 @@ function update() {
 			// update current timeid
 			timeid = data['timeid']
 			
+			console.log(data['full']);
+			
+			// clear all tokens if a full update was received
+			if (data['full']) {
+				tokens = [];
+			}
+			
 			// update tokens
-			$.each(data['tokens'], function(index, item) {
-				updateToken(item);
+			$.each(data['tokens'], function(index, token) {
+				updateToken(token);
 			});
 			
 			// show rolls
-			$.each(data['rolls'], function(index, item) {
-				$('#rolls')[0].append(item + '\n');
+			$.each(data['rolls'], function(index, info) {
+				$('#rolls')[0].append(info + '\n');
 			});
 		});
 
@@ -312,12 +325,12 @@ function rollDice(sides) {
 	$.post(url);
 }
 
-
 function clearRolls() {
 	var url = '/clear_rolls/' + game_title;
 	$.post(url);
 
 	$('#rolls')[0].innerHTML = '';
 }
+
 
 

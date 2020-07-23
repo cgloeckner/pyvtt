@@ -2,7 +2,7 @@
 
 from bottle import *
 
-import os, json, random
+import os, json, random, time
 
 from pony import orm
 from orm import db, db_session, Token, Game
@@ -120,6 +120,8 @@ def ajax_post_clone(game_title, token_id):
 def ajax_post_delete(game_title, token_id):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
 	# delete token
@@ -136,10 +138,12 @@ def post_image_upload(game_title):
 	# upload all files to the current game
 	# and create a token each
 	files = request.files.getall('file[]')
+	yoffset = 0
 	for handle in files:
 		url = game.upload(handle)
 		# create token
-		db.Token(scene=scene, timeid=scene.timeid, url=url, posx=1100, posy=50)
+		yoffset += 1
+		db.Token(scene=scene, timeid=scene.timeid, url=url, posx=1100, posy=50 * yoffset)
 	
 	db.commit()
 	
@@ -151,12 +155,10 @@ def post_clear_rolls(game_title):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
-	game = db.Game.select(lambda g: g.title == game_title).first()
 	
 	# query old rolls
 	old_rolls = db.Roll.select(lambda r: r.game == game and r.timeid < scene.timeid - 20)
 	old_rolls.delete()
-	
 
 # --- player routes -----------------------------------------------------------
 
@@ -212,6 +214,10 @@ def ajax_get_update(game_title, timeid):
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	
+	# query all existing tokens each 10s
+	if int(time.time()) % 10 == 0:
+		timeid = 0
+	
 	# query token data
 	tokens = list()
 	for t in scene.tokens:
@@ -227,9 +233,10 @@ def ajax_get_update(game_title, timeid):
 	
 	# return tokens, rolls and timeid
 	data = {
-		'timeid': scene.timeid,
-		'tokens': tokens,
-		'rolls' : rolls
+		'timeid' : scene.timeid,
+		'full'   : timeid == 0,
+		'tokens' : tokens,
+		'rolls'  : rolls
 	}
 	return json.dumps(data)
 

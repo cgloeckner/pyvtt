@@ -1,13 +1,9 @@
 %include("header", title="[GM] {0}".format(game.title))
 
-<h1>Setup Game: 
+<h1>Setup Game: {{game.title}}</a></h1>
 %if game.active != '':
-	<a href="/gm/{{game.title}}">{{game.title}}</a>
-%else:
-	{{game.title}}
+<a href="/gm/{{game.title}}">Play as GM</a> - <a href="/play/{{game.title}}">Player-Link</a>
 %end
-</h1>
-<a href="/delete/{{game.title}}">Delete</a>
 
 <h2>Available Scenes:</h2>
 <ul>
@@ -23,6 +19,10 @@
 </form>
 
 <a href="/">Back to Games Overview</a>
+
+<hr />
+
+<a href="/delete/{{game.title}}">Delete</a>
 
 %include("footer")
 

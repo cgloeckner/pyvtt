@@ -51,11 +51,11 @@ class Token(db.Entity):
 # -----------------------------------------------------------------------------
 
 class Scene(db.Entity):
-	id     = PrimaryKey(int, auto=True)
-	title  = Required(str)
-	game   = Required("Game")
-	timeid = Required(int, default=0) # keeps time for dirtyflag on tokens
-	tokens = Set("Token", cascade_delete=True) # forward deletion to tokens
+	id      = PrimaryKey(int, auto=True)
+	title   = Required(str)
+	game    = Required("Game")
+	timeid  = Required(int, default=0) # keeps time for dirtyflag on tokens
+	tokens  = Set("Token", cascade_delete=True) # forward deletion to tokens
 
 
 # -----------------------------------------------------------------------------
