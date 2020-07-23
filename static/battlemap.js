@@ -26,8 +26,6 @@ function Token(id, url) {
 	this.size = 250;
 	this.url = url;
 	this.rotate = 0.0;
-	this.flip_x = false;
-	this.flip_y = false;
 	this.locked = false;
 }
 
