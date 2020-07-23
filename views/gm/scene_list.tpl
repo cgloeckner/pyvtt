@@ -1,4 +1,4 @@
-%include("header", title="[GM] {0}".format(game.title))
+%include("header", title=game.title)
 
 <h1>Setup Game: {{game.title}}</a></h1>
 %if game.active != '':

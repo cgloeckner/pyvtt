@@ -209,26 +209,29 @@ def player_login(game_title):
 @view('player/redirect')
 def set_player_name(game_title):
 	playername = request.forms.get('playername')
-	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title))
 	
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
-	return dict(game=game, playername=playername)
+	# save playername in client cookie
+	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title))
+	
+	return dict(game=game, page_title='[{0}] {1}'.format(playername, game.title))
 
 @get('/play/<game_title>')
 @view('player/battlemap')
 def get_player_battlemap(game_title):
 	# load player name from cookie
 	playername = request.get_cookie('playername')
+	
 	if playername is None or playername.upper() == 'GM':
 		redirect('/login/{0}'.format(game_title))
 
 	else:
 		# load game
 		game = db.Game.select(lambda g: g.title == game_title).first()
-	
-		return dict(game=game, gm=False, page_title = '[{0}] {1}'.format(playername, game.title))
+		
+		return dict(game=game, gm=False, page_title='[{0}] {1}'.format(playername, game.title))
 
 @get('/ajax/<game_title>/update/<timeid:int>')
 def ajax_get_update(game_title, timeid):
@@ -240,6 +243,7 @@ def ajax_get_update(game_title, timeid):
 	# query all existing tokens each 3s
 	if int(time.time()) % 3 == 0:
 		timeid = 0
+		print("timeid", timeid)
 	
 	# query token data
 	tokens = list()

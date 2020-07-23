@@ -38,7 +38,7 @@
 %end
 
 <script>
-var battlemap = $('#battlemap')[0]
+var battlemap = $('#battlemap')[0];
 
 /** Mobile controls not working yet
 battlemap.addEventListener('touchstart', tokenClick);

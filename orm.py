@@ -71,12 +71,22 @@ class Roll(db.Entity):
 
 # -----------------------------------------------------------------------------
 
+class Player(db.Entity):
+	id    = PrimaryKey(int, auto=True)
+	name  = Required(str)
+	game  = Required("Game")
+	alive = Required(int, default=0) # timestamp last time seen
+
+
+# -----------------------------------------------------------------------------
+
 class Game(db.Entity):
-	id     = PrimaryKey(int, auto=True)
-	title  = Required(str, unique=True)
-	scenes = Set("Scene", cascade_delete=True) # forward deletion to scenes
-	active = Optional(str)
-	rolls  = Set(Roll)
+	id      = PrimaryKey(int, auto=True)
+	title   = Required(str, unique=True)
+	scenes  = Set("Scene", cascade_delete=True) # forward deletion to scenes
+	active  = Optional(str)
+	rolls   = Set(Roll)
+	players = Set(Player)
 
 	def getImagePath(self):
 		return os.path.join('.', 'games', self.title)

@@ -201,7 +201,7 @@ function update() {
 }
 
 function start(title) {
-	game_title = title;
+	game_title  = title;
 	
 	update();
 }
