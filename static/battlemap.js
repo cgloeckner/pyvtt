@@ -292,6 +292,11 @@ function tokenLock() {
 	}
 }
 
+function tokenStretch() {
+	var url = '/ajax/' + game_title + '/resize/' + select_id + '/1000';
+	$.post(url);
+}
+
 function tokenClone() {
 	var url = '/ajax/' + game_title + '/clone/' + select_id;
 	$.post(url);
