@@ -1,4 +1,4 @@
-%include("header", title=game.active)
+%include("header", title=page_title)
 
 <div class="scene">
 	<div class="dice">
@@ -14,6 +14,7 @@
 	<div id="rolls"></span>
 </div>
 
+%if gm:
 <div class="gm">
 	<form action="/upload/{{game.title}}" method="post" enctype="multipart/form-data">
 		<input name="file[]" type="file" multiple />
@@ -26,6 +27,7 @@
 	<input type="button" onClick="tokenClone()" value="clone" />
 	<input type="button" onClick="tokenDelete()" value="delete" />
 </div>
+%end
 
 <script>
 var battlemap = $('#battlemap')[0]

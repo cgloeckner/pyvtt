@@ -6,7 +6,7 @@
 %for g in games:
 	<li>{{g.title}} - <a href="/setup/{{g.title}}">Setup</a>
 	%if g.active != '':
-	 - <a href="/play/{{g.title}}">Play</a></li>
+	 - <a href="/gm/{{g.title}}">Play as GM</a> - <a href="/play/{{g.title}}">Player-Link</a></li>
 	%end
 %end
 </ul>

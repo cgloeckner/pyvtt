@@ -6,7 +6,7 @@
 	<script src="/static/battlemap.js"></script>
 	<link rel="stylesheet" type="text/css" href="/static/normalize.css">
 	<link rel="stylesheet" type="text/css" href="/static/layout.css">
-	<title>PyVTT: {{title}}</title>
+	<title>{{title}} (PyVTT)</title>
 </head>
 
 <body>
