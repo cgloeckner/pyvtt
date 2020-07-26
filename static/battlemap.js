@@ -127,6 +127,7 @@ var mouse_y = 0;
 var select_id = 0; // determines selected token
 var grabbed = 0; // determines whether grabbed or not
 var update_tick = 0; // delays updates to not every loop tick
+var full_tick = 0; // counts updates until the next full update is requested
 
 const fps = 60;
 
@@ -149,18 +150,29 @@ function updateTokens() {
 	});
 	change_cache = [];
 	
+	// fake zero-timeid if full update is requested
+	if (full_tick == 0) {
+		timeid = 0;
+		full_tick = 5;
+	} else {
+		full_tick -= 1;
+	}
+	
 	// start update with server
 	$.ajax({
 		type: 'POST',
 		url:  '/play/' + game_title + '/update',
 		dataType: 'json',
 		data: {
-			'timeid'  : 0,
+			'timeid'  : timeid,
 			'changes' : JSON.stringify(changes)
 		},
 		success: function(response) {
 			// update current timeid
 			timeid = response['timeid'];
+			if (timeid == 0) {
+				console.log('FULL');
+			}
 			
 			// clear all local tokens if a full update was received
 			if (response['full']) {
@@ -173,15 +185,19 @@ function updateTokens() {
 			});
 				
 			// show rolls
-			$.each(response['rolls'], function(index, info) {
-				$('#rolls')[0].append(info + '\n');
+			var rolls_div = $('#rolls')[0];
+			rolls_div.innerHTML = '';
+			$.each(response['rolls'], function(index, roll) {
+				rolls_div.append($('div').innerHTML = roll['player'] + ': D' + roll['sides'] + '=' + roll['result']);
+				rolls_div.innerHTML += '<br />';
 			});
 			
 			// show players
 			var players_div = $('#players')[0];
 			players_div.innerHTML = '';
 			$.each(response['players'], function(index, player_name) {
-				players_div.append($('div').innerHTML = player_name)
+				players_div.append($('div').innerHTML = player_name);
+				players_div.innerHTML += '<br />';
 			});
 		}
 	});

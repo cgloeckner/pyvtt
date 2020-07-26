@@ -21,11 +21,11 @@
 		<canvas id="battlemap" width="{{width}}" height="720"></canvas>
 	</div>
 	
+	<div id="players"></div>
+
 	<div id="rolls"></div>
 </div>
 
-<div id="players">
-</div>
 
 %if gm:
 <div class="gm">

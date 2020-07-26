@@ -292,6 +292,8 @@ def post_player_update(game_title):
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	
+	now = int(time.time())
+	
 	# fetch token updates from client
 	timeid  = float(request.POST.get('timeid'))
 	changes = json.loads(request.POST.get('changes'))
@@ -311,23 +313,30 @@ def post_player_update(game_title):
 		playername = request.get_cookie('playername')
 		player = db.Player.select(lambda p: p.name == playername).first()
 		if player is not None:
-			player.alive = int(time.time())
+			player.alive = now
 
 	# query token data
 	tokens = list()
 	for t in scene.tokens:
-		tokens.append(t.to_dict())
+		# consider token if it was updated after given timeid
+		if t.timeid >= timeid:
+			tokens.append(t.to_dict())
 	
 	# query rolls 
 	rolls = list()
-	recent_rolls = db.Roll.select(lambda r: r.game == game)
-	for r in recent_rolls:
-		rolls.append('{0} D{1}={2}'.format(r.player, r.sides, r.result))
+	for r in db.Roll.select(lambda r: r.game == game).order_by(lambda r: -r.timeid)[:10]:
+		# consider token if it was updated after given timeid
+		#if r.timeid >= timeid:
+		rolls.append({
+			'player': r.player,
+			'sides': r.sides,
+			'result': r.result
+		})
 	
 	# query players alive
 	players = ['GM']
 	for p in db.Player.select(lambda p: p.game == game):
-		if p.alive >= int(time.time()) - 10:
+		if p.alive >= now - 10:
 			players.append(p.name)
 		else:
 			# player timeout
@@ -335,7 +344,7 @@ def post_player_update(game_title):
 	
 	# return tokens, rolls and timestamp
 	data = {
-		'timeid' : timeid,
+		'timeid' : time.time(),
 		'full'   : timeid == 0,
 		'tokens' : tokens,
 		'rolls'  : rolls,
@@ -344,7 +353,7 @@ def post_player_update(game_title):
 	return json.dumps(data)
 
 @post('/play/<game_title>/roll/<sides:int>')
-def post_roll_dice(game_title, player, sides):
+def post_roll_dice(game_title, sides):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
@@ -355,10 +364,12 @@ def post_roll_dice(game_title, player, sides):
 	playername = request.get_cookie('playername')
 	# try to load player from db
 	player = db.Player.select(lambda p: p.name == playername).first()
+	if player is None:
+		playername = 'GM'
 	
 	# add player roll
 	result = random.randrange(1, sides+1)
-	db.Roll(game=game, player=player, sides=sides, result=result, timeid=scene.timeid)
+	db.Roll(game=game, player=playername, sides=sides, result=result, timeid=int(time.time()))
 
 
 # --- setup stuff -------------------------------------------------------------

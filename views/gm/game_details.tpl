@@ -44,6 +44,14 @@
 %end
 </table>
 
+<h2>10 Latest Rolls:</h2>
+
+<ul>
+%for r in game.rolls.order_by(lambda r: -r.timeid)[:10]:
+	<li>{{r.player}} D{{r.sides}} = {{r.result}}</li>
+%end
+</ul>
+
 <a href="/">Back to Games Overview</a>
 
 <hr />
