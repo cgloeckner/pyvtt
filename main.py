@@ -184,19 +184,15 @@ def post_clear_rolls(game_title):
 	old_rolls = db.Roll.select(lambda r: r.game == game and r.timeid < scene.timeid - 20)
 	old_rolls.delete()
 
-@post('/gm/<game_title>/clear_tokens/<area>')
-def post_clear_tokens(game_title, area):
+@post('/gm/<game_title>/clear_tokens')
+def post_clear_tokens(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	
-	if area == 'gm':
-		# query all tokens within GM area
-		tokens = db.Token.select(lambda t: t.scene == scene and t.posx > 1000 and not t.locked)
-	else:
-		# query all tokens within visible range (players' point of view)
-		tokens = db.Token.select(lambda t: t.scene == scene and t.posx <= 1000 and not t.locked)
+	# query all tokens within visible range (players' point of view)
+	tokens = db.Token.select(lambda t: t.scene == scene and t.posx <= 1000 and not t.locked)
 	
 	# delete those tokens
 	tokens.delete()

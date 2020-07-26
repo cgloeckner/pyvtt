@@ -357,12 +357,7 @@ function tokenDelete() {
 
 /// GM Event handle to clear all tokens in the playing area
 function clearVisible() {
-	$.post('/gm/' + game_title + '/clear_tokens/players');
-}
-
-/// GM Event handle to clear all tokens in the GM area
-function clearGmArea() {
-	$.post('/clear_tokens/' + game_title + '/clear_tokens/gm');
+	$.post('/gm/' + game_title + '/clear_tokens');
 }
 
 
