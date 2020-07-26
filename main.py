@@ -39,10 +39,21 @@ def post_create_game():
 	db.commit()
 	redirect('/')
 
+@post('/setup/rename/<game_title>')
+def post_rename_game(game_title):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	
+	game.title = request.forms.game_title
+	
+	db.commit()
+	redirect('/')
+
 @get('/setup/delete/<game_title>')
 def delete_game(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
+	
 	game.clear()
 	game.delete()
 	

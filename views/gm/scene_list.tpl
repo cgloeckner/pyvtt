@@ -33,7 +33,12 @@
 
 <hr />
 
-<a href="/delete/{{game.title}}">Delete</a>
+<form action="/setup/rename/{{game.title}}" id="rename_game" method="post">
+	<input type="text" name="game_title" value="" />
+	<input type="submit" value="Rename Game" />
+</form>
+
+<a href="/delete/{{game.title}}">Delete Game</a>
 
 %include("footer")
 
