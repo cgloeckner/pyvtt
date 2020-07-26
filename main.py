@@ -30,7 +30,7 @@ def get_game_list():
 	
 	return dict(games=games)
 
-@post('/create_game/')
+@post('/setup/create')
 def post_create_game():
 	game_title = request.forms.game_title
 	# create game
@@ -39,7 +39,7 @@ def post_create_game():
 	db.commit()
 	redirect('/')
 
-@get('/delete/<game_title>')
+@get('/setup/delete/<game_title>')
 def delete_game(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -49,7 +49,7 @@ def delete_game(game_title):
 	db.commit()
 	redirect('/')
 
-@get('/setup/<game_title>')
+@get('/setup/list/<game_title>')
 @view('gm/scene_list')
 def get_scene_list(game_title):
 	# load game
@@ -57,7 +57,7 @@ def get_scene_list(game_title):
 	
 	return dict(game=game)
 
-@post('/create_scene/<game_title>')
+@post('/gm/<game_title>/create')
 def post_create_scene(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -66,7 +66,7 @@ def post_create_scene(game_title):
 	title = request.forms.scene_title
 	for s in db.Scene.select(lambda s: s.game == game):
 		if s.title == title:
-			redirect('/setup/{0}'.format(game.title))
+			redirect('/gm/{0}'.format(game.title))
 	
 	# create scene
 	scene = db.Scene(title=title, game=game)
@@ -75,18 +75,34 @@ def post_create_scene(game_title):
 		game.active = scene.title
 
 	db.commit()
-	redirect('/setup/{0}'.format(game.title))
+	redirect('/setup/list/{0}'.format(game.title))
 
-@get('/activate/<game_title>/<scene_title>')
+@get('/gm/<game_title>/activate/<scene_title>')
 def activate_scene(game_title, scene_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	game.active = scene_title
 
 	db.commit()
-	redirect('/setup/{0}'.format(game.title))
+	redirect('/setup/list/{0}'.format(game.title))
 
-@get('/delete_scene/<game_title>/<scene_title>')
+@post('/gm/<game_title>/rename/<scene_title>')
+def activate_scene(game_title, scene_title):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+
+	new_title = request.forms.scene_title
+
+	# rename scene
+	scene = db.Scene.select(lambda s: s.game == game and s.title == scene_title).first()
+	if game.active == scene.title:
+		game.active = new_title
+	scene.title = new_title
+
+	db.commit()
+	redirect('/setup/list/{0}'.format(game.title))
+
+@get('/gm/<game_title>/delete/<scene_title>')
 def activate_scene(game_title, scene_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -96,9 +112,9 @@ def activate_scene(game_title, scene_title):
 	scene.delete()
 
 	db.commit()
-	redirect('/setup/{0}'.format(game.title))
+	redirect('/setup/list/{0}'.format(game.title))
 
-@get('/duplicate/<game_title>/<scene_title>')
+@get('/gm/<game_title>/clone/<scene_title>')
 def duplicate_scene(game_title, scene_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -115,7 +131,7 @@ def duplicate_scene(game_title, scene_title):
 	assert(len(scene.tokens) == len(clone.tokens))
 	
 	db.commit()
-	redirect('/setup/{0}'.format(game.title))
+	redirect('/setup/list/{0}'.format(game.title))
 
 @get('/gm/<game_title>')
 @view('player/battlemap')

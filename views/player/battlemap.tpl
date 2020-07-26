@@ -1,5 +1,5 @@
 %if gm:
-	%title = '[GM] {0}'.format(game.title)
+	%title = '[GM] {0} @ {1}'.format(game.title, game.active)
 %else:
 	%title = '[{0}] {1}'.format(player.name, game.title)
 %end

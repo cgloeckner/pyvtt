@@ -6,16 +6,27 @@
 %end
 
 <h2>Available Scenes:</h2>
-<ul>
-%for s in game.scenes:
-	<li>{{s.title}} - <a href="/activate/{{game.title}}/{{s.title}}">Activate</a> - <a href="/duplicate/{{game.title}}/{{s.title}}">Duplicate</a> - <a href="/delete_scene/{{game.title}}/{{s.title}}">Delete</a></li>
+<table>
+	</tr>
+%for s in game.scenes.order_by(lambda s: s.id):
+	<tr>
+		<td>{{s.title}}</td>
+		<td><a href="/gm/{{game.title}}/activate/{{s.title}}">Activate</a></td>
+		<td><a href="/gm/{{game.title}}/clone/{{s.title}}">Duplicate</a></td>
+		<td><form action="/gm/{{game.title}}/rename/{{s.title}}" id="rename_{{s.id}}" method="post">
+				<input type="text" name="scene_title" value="" />
+				<input type="submit" value="Rename" />
+		</form></td>
+		<td><a href="/gm/{{game.title}}/delete/{{s.title}}">Delete</a></td>
+	</tr>
 %end
-</ul>
+</table>
 
 <b>Active Scene</b>: {{game.active}}
 
-<form action="/create_scene/{{game.title}}" id="create_scene" method="post">
-	Create Scene with Title: <input type="text" name="scene_title" value="untitled" /><input type="submit" value="Create" />
+<form action="/gm/{{game.title}}/create" id="create" method="post">
+	Create Scene with Title: <input type="text" name="scene_title" value="untitled" />
+	<input type="submit" value="Create" />
 </form>
 
 <a href="/">Back to Games Overview</a>
