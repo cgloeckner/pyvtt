@@ -21,7 +21,10 @@
 		<canvas id="battlemap" width="{{width}}" height="720"></canvas>
 	</div>
 	
-	<div id="rolls"></span>
+	<div id="rolls"></div>
+</div>
+
+<div id="players">
 </div>
 
 %if gm:
@@ -39,6 +42,9 @@
 	<input type="button" onClick="tokenClone()" value="clone" />
 	<input type="button" onClick="tokenDelete()" value="delete" />
 </div>
+%else:
+	<span id="info" style="display: none"></span>
+	<input type="checkbox" style="display: none" name="locked" id="locked" onChange="tokenLock()" />
 %end
 
 <script>

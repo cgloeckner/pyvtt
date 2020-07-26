@@ -39,16 +39,6 @@ def post_create_game():
 	db.commit()
 	redirect('/')
 
-@post('/setup/rename/<game_title>')
-def post_rename_game(game_title):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	
-	game.title = request.forms.game_title
-	
-	db.commit()
-	redirect('/')
-
 @get('/setup/delete/<game_title>')
 def delete_game(game_title):
 	# load game
@@ -61,8 +51,8 @@ def delete_game(game_title):
 	redirect('/')
 
 @get('/setup/list/<game_title>')
-@view('gm/scene_list')
-def get_scene_list(game_title):
+@view('gm/game_details')
+def get_game_details(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
@@ -144,6 +134,15 @@ def duplicate_scene(game_title, scene_title):
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))
 
+@get('/gm/<game_title>/kick/<player_name>')
+def kick_player(game_title, player_name):
+	# query and delete player
+	player = db.Player.select(lambda p: p.name == player_name).first()
+	player.delete()
+	
+	db.commit()
+	redirect('/setup/list/{0}'.format(game_title))
+
 @get('/gm/<game_title>')
 @view('player/battlemap')
 def get_player_battlemap(game_title):
@@ -158,7 +157,7 @@ def post_image_upload(game_title):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
-	scene.timeid += 1
+	scene.timeid = int(time.time())
 	
 	# upload all files to the current game
 	# and create a token each
@@ -181,7 +180,7 @@ def ajax_post_clone(game_title, token_id):
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	# update position
-	scene.timeid += 1
+	scene.timeid = int(time.time())
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
 	# clone token
@@ -225,6 +224,7 @@ def post_clear_tokens(game_title):
 	tokens.delete()
 
 
+
 # --- player routes -----------------------------------------------------------
 
 @get('/static/<fname>')
@@ -256,10 +256,10 @@ def set_player_name(game_title):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
 	# create player
-	player = db.Player(name=playername, game=game)
+	player = db.Player(name=playername, game=game, alive=int(time.time()))
 	
 	# save playername in client cookie
-	response.set_cookie('playername', playername, path='/')
+	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title))
 	
 	return dict(game=game, player=player)
 
@@ -279,6 +279,9 @@ def get_player_battlemap(game_title):
 	else:
 		# load game
 		game = db.Game.select(lambda g: g.title == game_title).first()
+		
+		# keep player alive
+		player.alive = int(time.time())
 		
 		return dict(game=game, gm=False, player=player)
 
@@ -303,35 +306,55 @@ def post_player_update(game_title):
 			locked=data['locked']
 		)
 
+	# keep player alive
+	if timeid == 0:
+		playername = request.get_cookie('playername')
+		player = db.Player.select(lambda p: p.name == playername).first()
+		if player is not None:
+			player.alive = int(time.time())
+
 	# query token data
 	tokens = list()
 	for t in scene.tokens:
-		#if (t.timeid > timeid):
 		tokens.append(t.to_dict())
 	
 	# query rolls 
 	rolls = list()
 	recent_rolls = db.Roll.select(lambda r: r.game == game)
 	for r in recent_rolls:
-		if r.timeid > timeid:
-			rolls.append('{0} D{1}={2}'.format(r.player, r.sides, r.result))
+		rolls.append('{0} D{1}={2}'.format(r.player, r.sides, r.result))
+	
+	# query players alive
+	players = ['GM']
+	for p in db.Player.select(lambda p: p.game == game):
+		if p.alive >= int(time.time()) - 10:
+			players.append(p.name)
+		else:
+			# player timeout
+			p.delete()
 	
 	# return tokens, rolls and timestamp
 	data = {
 		'timeid' : timeid,
 		'full'   : timeid == 0,
 		'tokens' : tokens,
-		'rolls'  : rolls
+		'rolls'  : rolls,
+		'players': players
 	}
 	return json.dumps(data)
 
-@post('/play/<game_title>/roll/<player>/<sides:int>')
+@post('/play/<game_title>/roll/<sides:int>')
 def post_roll_dice(game_title, player, sides):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
-	scene.timeid += 1
+	scene.timeid = int(time.time())
+	
+	# load player name from cookie
+	playername = request.get_cookie('playername')
+	# try to load player from db
+	player = db.Player.select(lambda p: p.name == playername).first()
 	
 	# add player roll
 	result = random.randrange(1, sides+1)

@@ -19,7 +19,7 @@
 %end
 </table>
 
-<form action="/setup/create/" id="create_game" method="post">
+<form action="/setup/create" id="create_game" method="post">
 	Game title: <input type="text" name="game_title" value="untitled" /><input type="submit" value="Create" />
 </form>
 

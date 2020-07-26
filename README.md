@@ -5,7 +5,7 @@ Python-based Virtual Tabletop Tool
 # Planned features/fixes
 - Improve Rolling Dice (better log, less buggy, auto-scroll)
 - Layout improvements (remove borders, set background color etc.)
-- Player Names (add GM to playerlist, list players, handle timeout via keepalive via update pull)
+- re-enable full vs. partial queries (cloned scene: might need timeid = 0)
 - multithreading server + synchronous db-access
 - implement CTRL+C, CTRL+V, CTRL+A, DEL key behavior
 

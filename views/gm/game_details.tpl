@@ -5,9 +5,13 @@
 <a href="/gm/{{game.title}}" target="_blank">Play as GM</a> - <a href="/play/{{game.title}}" target="_blank">Player-Link</a>
 %end
 
+<form action="/gm/{{game.title}}/create" id="create" method="post">
+	Create Scene with Title: <input type="text" name="scene_title" value="untitled" />
+	<input type="submit" value="Create" />
+</form>
+
 <h2>Available Scenes:</h2>
 <table>
-	</tr>
 %for s in game.scenes.order_by(lambda s: s.id):
 	<tr>
 		<td>{{s.title}}</td>
@@ -24,21 +28,27 @@
 
 <b>Active Scene</b>: {{game.active}}
 
-<form action="/gm/{{game.title}}/create" id="create" method="post">
-	Create Scene with Title: <input type="text" name="scene_title" value="untitled" />
-	<input type="submit" value="Create" />
-</form>
+<h2>Available Players:</h2>
+<table>
+	<tr>
+		<td>GM</td>
+		<td>-</td>
+		<td></td>
+	</tr>
+%for p in game.players.order_by(lambda p: p.name):
+	<tr>
+		<td>{{p.name}}</td>
+		<td>{{p.alive}}</td>
+		<td><a href="/gm/{{game.title}}/kick/{{p.name}}">Kick</a></td>
+	</tr>
+%end
+</table>
 
 <a href="/">Back to Games Overview</a>
 
 <hr />
 
-<form action="/setup/rename/{{game.title}}" id="rename_game" method="post">
-	<input type="text" name="game_title" value="" />
-	<input type="submit" value="Rename Game" />
-</form>
-
-<a href="/delete/{{game.title}}">Delete Game</a>
+<a href="/setup/delete/{{game.title}}">Delete Game</a>
 
 %include("footer")
 

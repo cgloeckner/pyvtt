@@ -176,6 +176,13 @@ function updateTokens() {
 			$.each(response['rolls'], function(index, info) {
 				$('#rolls')[0].append(info + '\n');
 			});
+			
+			// show players
+			var players_div = $('#players')[0];
+			players_div.innerHTML = '';
+			$.each(response['players'], function(index, player_name) {
+				players_div.append($('div').innerHTML = player_name)
+			});
 		}
 	});
 }
@@ -202,7 +209,6 @@ function drawScene() {
 /// Updates the entire game: update tokens from time to time, drawing each time
 function updateGame() {
 	if (update_tick < 0) {
-		console.log('update');
 		updateTokens();
 		update_tick = 500.0 / (1000.0 / fps);
 	} else {
@@ -364,7 +370,7 @@ function clearVisible() {
 // TODO: reimplement later
 
 function rollDice(sides) {
-	$.post('/play/' + game_title + '/roll/SHITFACE/' + sides);
+	$.post('/play/' + game_title + '/roll/' + sides);
 }
 
 function clearRolls() {
