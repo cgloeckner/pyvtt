@@ -7,7 +7,10 @@ var images = [];
 function clearCanvas() {
 	var canvas = $('#battlemap');
 	var context = canvas[0].getContext("2d");
-	context.clearRect(0, 0, canvas[0].width, canvas[0].height);
+	context.clearRect(0, 0, 1000, canvas[0].height);
+	
+	// make GM-area transparent
+	context.clearRect(1000, 0, canvas[0].width, canvas[0].height);
 	
 	// draw separation line for GM-area
 	context.beginPath();
@@ -131,6 +134,24 @@ var full_tick = 0; // counts updates until the next full update is requested
 
 const fps = 60;
 
+
+function showRoll(sides, result, player) {
+	var target = $('#rollbox')[0];
+	var div_class = 'roll';
+	if (result == 1) {
+		div_class += ' min-roll';
+	}
+	if (result == sides) {
+		div_class += ' max-roll';
+	}
+	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" /><span class="result">' + result + '</span><span class="player">' +player + '</span></div>';
+}
+
+function showPlayer(name) {
+	var target = $('#players')[0];
+	target.innerHTML += '<span class="player">' + name + '</span>';
+}
+
 /// Triggers token updates (pushing and pulling token data via the server)
 function updateTokens() {
 	// fetch all changed tokens' data
@@ -185,19 +206,17 @@ function updateTokens() {
 			});
 				
 			// show rolls
-			var rolls_div = $('#rolls')[0];
+			var rolls_div = $('#rollbox')[0];
 			rolls_div.innerHTML = '';
 			$.each(response['rolls'], function(index, roll) {
-				rolls_div.append($('div').innerHTML = roll['player'] + ': D' + roll['sides'] + '=' + roll['result']);
-				rolls_div.innerHTML += '<br />';
+				showRoll(roll['sides'], roll['result'], roll['player']);
 			});
 			
 			// show players
 			var players_div = $('#players')[0];
 			players_div.innerHTML = '';
 			$.each(response['players'], function(index, player_name) {
-				players_div.append($('div').innerHTML = player_name);
-				players_div.innerHTML += '<br />';
+				showPlayer(player_name);
 			});
 		}
 	});
@@ -258,7 +277,6 @@ function tokenGrab() {
 		grabbed = true;
 		
 		// show GM-info
-		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.posx + '|' + token.posy + ')';
 		$('#locked')[0].checked = token.locked;
 	}
 }
@@ -285,17 +303,11 @@ function tokenMove() {
 		token.posx = mouse_x;
 		token.posy = mouse_y;
 		
-		// show GM-info
-		var token = tokens[select_id];
-		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.posx + '|' + token.posy + ')';
-		
 		// mark token as changed
 		if (!change_cache.includes(select_id)) {
 			change_cache.push(select_id);
 		}
 	}
-	
-	$('#info')[0].innerHTML = 'Mouse (' + mouse_x + '|' + mouse_y + ')';
 }
 
 /// Event handle for rotation and scaling of tokens (if not locked)
@@ -318,7 +330,7 @@ function tokenWheel(event) {
 				change_cache.push(select_id);
 			}
 			
-		} else if (event.altKey) {
+		} else {
 			// handle scaling
 			token.size = token.size - 5 * event.deltaY;
 			if (token.size > 1440) {
@@ -336,6 +348,10 @@ function tokenWheel(event) {
 	}
 }
 
+/// Event handle to click a dice
+function rollDice(sides) {
+	$.post('/play/' + game_title + '/roll/' + sides);
+}
 /// GM Event handle for (un)locking a token
 function tokenLock() {
 	if (select_id != 0) {
@@ -375,23 +391,6 @@ function tokenClone() {
 /// GM Event handle to delete a token
 function tokenDelete() {
 	$.post('/gm/' + game_title + '/delete/' + select_id);
-}
-
-/// GM Event handle to clear all tokens in the playing area
-function clearVisible() {
-	$.post('/gm/' + game_title + '/clear_tokens');
-}
-
-
-// TODO: reimplement later
-
-function rollDice(sides) {
-	$.post('/play/' + game_title + '/roll/' + sides);
-}
-
-function clearRolls() {
-	$.post('/gm/' + game_title + '/clear_rolls');
-	$('#rolls')[0].innerHTML = '';
 }
 
 

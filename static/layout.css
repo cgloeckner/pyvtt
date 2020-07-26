@@ -1,5 +1,5 @@
 body {
-	background-color: white;
+	background-image: url('/static/background.jpg');
 }
 
 form {
@@ -8,24 +8,105 @@ form {
 	width: 50%;
 }
 
-div.scene {
-	width: 1440px;
+div.menu {
+	display: block;
+	width: 1000px;
+	margin-top: 10px;
 	margin-left: auto;
 	margin-right: auto;
-	border: 1px solid blue;
+	padding: 5px;
+	background-color: rgba(200, 200, 200, 0.66);
+	border-radius: 10px;
+	text-align: center;
 }
 
-div.dice {
-	width: 70px;
+div.menu table {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+div.scene {
+	width: 1440px;
+	height: 720px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+div.dicebox {
+	width: 210px;
 	float: left;
 }
 
-div.dice img {
+div.dicebox img {
 	width: 64px;
+	height: 64px;
+}
+
+div.dicebox img:hover {
+	outline-color: red;
+	cursor: pointer;
+	filter: drop-shadow(1px 1px 10px gold) 
+          drop-shadow(-1px -1px 0 gold);
+}
+
+div#rollbox {
+	padding-top: 10px;
+	height: 550px;
+	overflow-y: auto;
+}
+
+div#rollbox div.roll {
+	display: inline-block;
+	width: 180px;
+	margin-left: auto;
+	margin-right: auto;
+	height: 35px;
+	padding: 5px;
+	margin: 2px;
+	background-color: rgba(150, 150, 150, 0.5);
+	border-radius: 10px;
+	text-align: center;
+}
+
+div#rollbox div.min-roll {
+	background-color: rgba(250, 0, 0, 0.5);
+}
+
+div#rollbox div.max-roll {
+	background-color: rgba(0, 250, 0, 0.5);
+}
+
+div#rollbox div.roll img {
+	float: left;
+	width: 30px;
+	height: 30px;
+	vertical-align: text-bottom;
+}
+
+div#rollbox div.roll span.result {
+	width: 30px;
+	margin-left: auto;
+	margin-right: auto;
+	font-size: xx-large;
+}
+
+div#rollbox div.roll span.player {
+	float: right;
+	font-size: smaller;
+}
+
+div.gm_info {
+	display: inline-block;
+	padding: 5px;
+	margin: 2px;
+	font-size: smaller;
+	background-color: rgba(200, 200, 200, 0.33);
+	border-radius: 10px;
+	text-align: center;
 }
 
 canvas#battlemap {
-	background-color: #ddd;
+	background-color: rgba(100, 100, 100, 0.25);
 	border: 1px solid black;
 }
 
@@ -36,10 +117,29 @@ div.scene div#rolls {
 	float: right;
 }
 
-div.gm {
-	width: 1000px;
+div#players {
+	display: block;
+	width: 800px;
+	text-align: center;
 	margin-left: auto;
 	margin-right: auto;
-	border: 1px solid lime;
+}
+
+div#players span.player {
+	display: inline-block;
+	height: 25px;
+	padding: 5px;
+	margin: 2px;
+	font-size: larger;
+	background-color: rgba(200, 200, 200, 0.75);
+	border-radius: 10px;
+	text-align: center;
+}
+
+form.upload {
+	background-color: rgba(200, 200, 200, 0.33);
+	border-radius: 10px;
+	padding: 5px;
 }	
+
 

@@ -1,5 +1,7 @@
 %include("header", title=game.title)
 
+<div class="menu">
+
 <h1>Setup Game: {{game.title}}</a></h1>
 %if game.active != '':
 <a href="/gm/{{game.title}}" target="_blank">Play as GM</a> - <a href="/play/{{game.title}}" target="_blank">Player-Link</a>
@@ -18,8 +20,8 @@
 		<td><a href="/gm/{{game.title}}/activate/{{s.title}}">Activate</a></td>
 		<td><a href="/gm/{{game.title}}/clone/{{s.title}}">Duplicate</a></td>
 		<td><form action="/gm/{{game.title}}/rename/{{s.title}}" id="rename_{{s.id}}" method="post">
-				<input type="text" name="scene_title" value="" />
-				<input type="submit" value="Rename" />
+			<input type="text" name="scene_title" value="" />
+			<input type="submit" value="Rename"></input>
 		</form></td>
 		<td><a href="/gm/{{game.title}}/delete/{{s.title}}">Delete</a></td>
 	</tr>
@@ -29,7 +31,7 @@
 <b>Active Scene</b>: {{game.active}}
 
 <h2>Available Players:</h2>
-<table>
+<table border="1">
 	<tr>
 		<td>GM</td>
 		<td>-</td>
@@ -57,6 +59,8 @@
 <hr />
 
 <a href="/setup/delete/{{game.title}}">Delete Game</a>
+
+</div>
 
 %include("footer")
 

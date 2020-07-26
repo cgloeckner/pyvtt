@@ -1,5 +1,7 @@
 %include("header", title="Games List")
 
+<div class="menu">
+
 <h1>Games Overview</h1>
 
 <table>
@@ -22,6 +24,8 @@
 <form action="/setup/create" id="create_game" method="post">
 	Game title: <input type="text" name="game_title" value="untitled" /><input type="submit" value="Create" />
 </form>
+
+</div>
 
 %include("footer")
 

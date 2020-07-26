@@ -6,45 +6,42 @@
 
 %include("header", title=title)
 
+<div id="players"></div>
+
 <div class="scene">
-	<div class="dice">
+	<div class="dicebox">
 %for sides in [4, 6, 8, 10, 12, 20]:
-		<img src="/static/d{{sides}}.png" onClick="rollDice({{sides}});"><br />
+		<img class="d{{sides}}" src="/static/d{{sides}}.png" onClick="rollDice({{sides}});" />
+%end
+		<div id="rollbox">
+		</div>
+		
+%if gm:
+		<div class="gm_info">
+			<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>
+			<input type="button" onClick="tokenStretch()" value="stretch" />
+			<input type="button" onClick="tokenClone()" value="clone" />
+			<input type="button" onClick="tokenDelete()" value="delete" />
+		</div>
+%else:
+		<input type="checkbox" style="display: none" name="locked" id="locked" onChange="tokenLock()" />
 %end
 	</div>
-
+	
 %width = 1000
 %if gm:
 	%width += 200
 %end
-	<div style="float: left;">
+	<div class="battlemap">
 		<canvas id="battlemap" width="{{width}}" height="720"></canvas>
 	</div>
-	
-	<div id="players"></div>
-
-	<div id="rolls"></div>
 </div>
-
 
 %if gm:
-<div class="gm">
-	<form action="/gm/{{game.title}}/upload" method="post" enctype="multipart/form-data">
-		<input name="file[]" type="file" multiple />
-		<input type="submit" value="upload" />
-	</form>
-
-	<input type="button" onClick="clearRolls()" value="clearRolls" />
-	<input type="button" onClick="clearVisible()" value="clearVisible" /><br />
-	<span id="info"></span>
-	<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>
-	<input type="button" onClick="tokenStretch()" value="stretch" />
-	<input type="button" onClick="tokenClone()" value="clone" />
-	<input type="button" onClick="tokenDelete()" value="delete" />
-</div>
-%else:
-	<span id="info" style="display: none"></span>
-	<input type="checkbox" style="display: none" name="locked" id="locked" onChange="tokenLock()" />
+<form class="upload" action="/gm/{{game.title}}/upload" method="post" enctype="multipart/form-data">
+	<input name="file[]" type="file" multiple />
+	<input type="submit" value="upload" />
+</form>
 %end
 
 <script>
