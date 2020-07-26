@@ -3,6 +3,7 @@
 
 var images = [];
 
+/// Will clear the canvas
 function clearCanvas() {
 	var canvas = $('#battlemap');
 	var context = canvas[0].getContext("2d");
@@ -17,8 +18,10 @@ function clearCanvas() {
 
 // --- token implementation ---------------------------------------------------
 
-var tokens = [];
+var tokens       = []; // holds all tokens, updated by the server
+var change_cache = []; // holds ids of all client-changed tokens
 
+/// Token constructor
 function Token(id, url) {
 	this.id = id;
 	this.posx = 0;
@@ -29,10 +32,12 @@ function Token(id, url) {
 	this.locked = false;
 }
 
+/// Add token with id and url to the scene
 function addToken(id, url) {
 	tokens[id] = new Token(id, url);
 }
 
+/// Determines which token is selected when clicking the given position
 function selectToken(x, y) {
 	var result = null;
 	// search for any fitting (unlocked) token
@@ -64,6 +69,7 @@ function selectToken(x, y) {
 	return result;
 }
 
+/// Update token data for the provided token (might create a new token)
 function updateToken(data) {
 	// create token if necessary
 	if (!tokens.includes(data.id)) {
@@ -71,15 +77,14 @@ function updateToken(data) {
 	}
 	
 	// update token data
-	tokens[data.id].posx = data.posx;
-	tokens[data.id].posy = data.posy;
+	tokens[data.id].posx   = data.posx;
+	tokens[data.id].posy   = data.posy;
 	tokens[data.id].size   = data.size;
 	tokens[data.id].rotate = data.rotate;
-	tokens[data.id].flip_x = data.flip_x;
-	tokens[data.id].flip_y = data.flip_y;
 	tokens[data.id].locked = data.locked;
 }
 
+/// Draws a single token (show_ui will show the selection box around it)
 function drawToken(token, show_ui) {
 	// cache image if necessary
 	if (!images.includes(token.url)) {
@@ -114,126 +119,113 @@ function drawToken(token, show_ui) {
 // --- game state implementation ----------------------------------------------
 
 var game_title = '';
+var timeid = 0;
 
 var mouse_x = 0;
 var mouse_y = 0;
 
-var select_id = 0;
-var dragging = false;
-var drag_boardcast_tick = 0;
+var select_id = 0; // determines selected token
+var grabbed = 0; // determines whether grabbed or not
+var update_tick = 0; // delays updates to not every loop tick
 
-var timeid = 0;
+const fps = 60;
 
-var pull_tick = 0;
-var drag_preview_idle = 0;
-
-function handleSelectedToken(token) {
-	if (dragging && !token.locked) {
-		if (drag_preview_idle > 4) {
-			// client side prediction
-			token.posx = mouse_x;
-			token.posy = mouse_y;
-		} else {
-			drag_preview_idle += 1;
-		}
-	}
-	drawToken(token, true);
-}
-
-$.ajaxSetup({async: false}); // all syncronous ajax calls
-
-function update() {
-	if (pull_tick == 0) {
-		// pull updates using timeid (will fetch all data since then)
-		url = '/ajax/' + game_title + '/update/' + timeid;
-		$.getJSON(url, function(data) {
+/// Triggers token updates (pushing and pulling token data via the server)
+function updateTokens() {
+	// fetch all changed tokens' data
+	var changes = [];
+	$.each(change_cache, function(index, token_id) {
+		// copy token to update-data
+		var t = tokens[token_id];
+		var data = {
+			'id'    : t.id,
+			'posx'  : t.posx,
+			'posy'  : t.posy,
+			'size'  : t.size,
+			'rotate': t.rotate,
+			'locked': t.locked
+		};
+		changes.push(data);
+	});
+	change_cache = [];
+	
+	// start update with server
+	$.ajax({
+		type: 'POST',
+		url:  '/play/' + game_title + '/update',
+		dataType: 'json',
+		data: {
+			'timeid'  : 0,
+			'changes' : JSON.stringify(changes)
+		},
+		success: function(response) {
 			// update current timeid
-			timeid = data['timeid']
+			timeid = response['timeid'];
 			
-			console.log(data['full']);
-			
-			// clear all tokens if a full update was received
-			if (data['full']) {
+			// clear all local tokens if a full update was received
+			if (response['full']) {
 				tokens = [];
 			}
 			
 			// update tokens
-			$.each(data['tokens'], function(index, token) {
+			$.each(response['tokens'], function(index, token) {
 				updateToken(token);
 			});
-			
+				
 			// show rolls
-			$.each(data['rolls'], function(index, info) {
+			$.each(response['rolls'], function(index, info) {
 				$('#rolls')[0].append(info + '\n');
 			});
-		});
+		}
+	});
+}
 
-		pull_tick = 10;
-	} else {
-		pull_tick -= 1;
-	}
-	
+/// Draw the entire scene (locked tokens in the background, unlocked in foreground)
+function drawScene() {
 	clearCanvas();
+	
 	// draw locked tokens
-	$.each(tokens, function(index, item) {
-		if (item != null && item.locked) {
-			if (item.id == select_id) {
-				// draw token with ui
-				handleSelectedToken(item);
-			} else {
-				drawToken(item, false);
-			}
+	$.each(tokens, function(index, token) {
+		if (token != null && token.locked) {
+			drawToken(token, token.id == select_id);
 		}
 	});
+	
 	// draw unlocked tokens
-	$.each(tokens, function(index, item) {
-		if (item != null && !item.locked) {
-			if (item.id == select_id) {
-				// draw token with ui
-				handleSelectedToken(item);
-			} else {
-				drawToken(item, false);
-			}
+	$.each(tokens, function(index, token) {
+		if (token != null && !token.locked) {
+			drawToken(token, token.id == select_id);
 		}
 	});
-	
-	setTimeout("update()", 15);
 }
 
-function start(title) {
-	game_title  = title;
-	
-	update();
-}
-
-function tokenMove() {
-	mouse_x = event.offsetX;
-	mouse_y = event.offsetY;
-	
-	if (select_id != 0) {
-		var token = tokens[select_id];
-		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.posx + '|' + token.posy + ')';
-		
-		// NOTE: disabled to better stability
-		/*
-		if (dragging) {
-			if (drag_boardcast_tick == 0) {
-				// update position for other players' client-side prediction
-				url = '/ajax/' + game_title + '/move/' + select_id + '/' + mouse_x + '/' + mouse_y;
-				$.post(url);
-				
-				//drag_boardcast_tick = 5;
-			} else {
-				drag_boardcast_tick -= 1;
-			}
-		}*/
+/// Updates the entire game: update tokens from time to time, drawing each time
+function updateGame() {
+	if (update_tick < 0) {
+		console.log('update');
+		updateTokens();
+		update_tick = 500.0 / (1000.0 / fps);
+	} else {
+		update_tick -= 1;
 	}
+	
+	drawScene();
+	setTimeout("updateGame()", 1000.0 / fps);
 }
 
-function tokenClick() {
+/// Sets up the game and triggers the update loop
+function start(title) {
+	game_title = title;
+	
+	updateGame();
+}
+
+// ----------------------------------------------------------------------------
+
+/// Event handle for start grabbing a token
+function tokenGrab() {
 	mouse_x = event.offsetX;
 	mouse_y = event.offsetY;
-	drag_preview_idle = 0;
 	
 	prev_id = select_id;
 	
@@ -241,39 +233,71 @@ function tokenClick() {
 	var token = selectToken(mouse_x, mouse_y);
 	if (token != null) {
 		select_id = token.id;
-		dragging = true;
+		grabbed = true;
 		
+		// show GM-info
 		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.posx + '|' + token.posy + ')';
 		$('#locked')[0].checked = token.locked;
 	}
 }
 
+/// Event handle for releasing a grabbed token
 function tokenRelease() {
 	if (select_id != 0) {
-		url = '/ajax/' + game_title + '/move/' + select_id + '/' + mouse_x + '/' + mouse_y;
-		$.post(url);
-		
-		dragging = false
+		grabbed = false;
 	}
 }
 
+/// Event handle for moving a grabbed token (if not locked)
+function tokenMove() {
+	mouse_x = event.offsetX;
+	mouse_y = event.offsetY;
+	
+	if (select_id != 0 && grabbed) {
+		var token = tokens[select_id];
+		if (token == null || token.locked) {
+			return;
+		}
+		
+		// update position
+		token.posx = mouse_x;
+		token.posy = mouse_y;
+		
+		// show GM-info
+		var token = tokens[select_id];
+		$('#info')[0].innerHTML = 'Token#' + select_id + ' at (' + token.posx + '|' + token.posy + ')';
+		
+		// mark token as changed
+		if (!change_cache.includes(select_id)) {
+			change_cache.push(select_id);
+		}
+	}
+	
+	$('#info')[0].innerHTML = 'Mouse (' + mouse_x + '|' + mouse_y + ')';
+}
+
+/// Event handle for rotation and scaling of tokens (if not locked)
 function tokenWheel(event) {
 	if (select_id != 0) {
 		var token = tokens[select_id];
 		if (token.locked) {
 			return;
 		}
-		
+
 		if (event.shiftKey) {
+			// handle rotation
 			token.rotate = token.rotate - 5 * event.deltaY;
 			if (token.rotate >= 360.0 || token.rotate <= -360.0) {
 				token.rotate = 0.0;
 			}
 			
-			var url = '/ajax/' + game_title + '/rotate/' + select_id + '/' + token.rotate;
-			$.post(url);
+			// mark token as changed
+			if (!change_cache.includes(select_id)) {
+				change_cache.push(select_id);
+			}
 			
-		} else {
+		} else if (event.altKey) {
+			// handle scaling
 			token.size = token.size - 5 * event.deltaY;
 			if (token.size > 1440) {
 				token.size = 1440;
@@ -282,71 +306,75 @@ function tokenWheel(event) {
 				token.size = 16;
 			}
 			
-			var url = '/ajax/' + game_title + '/resize/' + select_id + '/' + token.size;
-			$.post(url);
+			// mark token as changed
+			if (!change_cache.includes(select_id)) {
+				change_cache.push(select_id);
+			}
 		}
 	}
 }
 
+/// GM Event handle for (un)locking a token
 function tokenLock() {
 	if (select_id != 0) {
-		var lock_it = $('#locked')[0].checked;
-		var url = '/ajax/' + game_title + '/lock/' + select_id + '/';
-		if (lock_it) {
-			url += '1';
-		} else {
-			url += '0';
-		}
-		$.post(url);
+		tokens[select_id].locked = $('#locked')[0].checked;
 		
-		tokens[select_id].lock = lock_it;
+		// mark token as changed
+		if (!change_cache.includes(select_id)) {
+			change_cache.push(select_id);
+		}
 	}
 }
 
-function tokenReset() {
-	var url = '/ajax/' + game_title + '/resize/' + select_id + '/64';
-	$.post(url);
-	var url = '/ajax/' + game_title + '/rotate/' + select_id + '/0';
-	$.post(url);
-}
-
+/// GM Event handle for stretching a token to fit the screen
 function tokenStretch() {
-	var url = '/ajax/' + game_title + '/resize/' + select_id + '/1000';
-	$.post(url);
+	if (select_id != 0) {
+		var token = tokens[select_id];
+		
+		// stretch and center token in the center
+		token.posx   = 500;
+		token.posy   = 360;
+		token.size   = 1000;
+		token.rotate = 0;
+		token.locked = true;
+			
+		// mark token as changed
+		if (!change_cache.includes(select_id)) {
+			change_cache.push(select_id);
+		}
+	}
 }
 
+/// GM Event handle to clone a token
 function tokenClone() {
-	var url = '/ajax/' + game_title + '/clone/' + select_id;
-	$.post(url);
+	$.post('/gm/' + game_title + '/clone/' + select_id);
 }
 
-function tokenDelete(event) {
-	var url = '/ajax/' + game_title + '/delete/' + select_id;
-	$.post(url);
+/// GM Event handle to delete a token
+function tokenDelete() {
+	$.post('/gm/' + game_title + '/delete/' + select_id);
 }
+
+/// GM Event handle to clear all tokens in the playing area
+function clearVisible() {
+	$.post('/gm/' + game_title + '/clear_tokens/players');
+}
+
+/// GM Event handle to clear all tokens in the GM area
+function clearGmArea() {
+	$.post('/clear_tokens/' + game_title + '/clear_tokens/gm');
+}
+
+
+// TODO: reimplement later
 
 function rollDice(sides) {
-	var url = '/roll/' + game_title + '/SHITFACE/' + sides
-	$.post(url);
+	$.post('/play/' + game_title + '/roll/SHITFACE/' + sides);
 }
 
 function clearRolls() {
-	var url = '/clear_rolls/' + game_title;
-	$.post(url);
-
+	$.post('/gm/' + game_title + '/clear_rolls');
 	$('#rolls')[0].innerHTML = '';
 }
-
-function clearVisible() {
-	var url = '/clear_tokens/' + game_title + '/players';
-	$.post(url);
-}
-
-function clearGmArea() {
-	var url = '/clear_tokens/' + game_title + '/gm';
-	$.post(url);
-
-}
-
 
 

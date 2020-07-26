@@ -21,17 +21,12 @@ class Token(db.Entity):
 	timeid = Required(int, default=0) # dirty flag
 	
 	def update(self, timeid, pos=None, size=None, rotate=None, locked=None):
-		"""Handle update of several data fields. If locked, the only available
-		option is unlocking. Other actions will be ignored. The timeid is set
-		if anything has changed.
+		"""Handle update of several data fields. The timeid is set if anything
+		has actually changed.
 		"""
-		if locked != None:
+		if self.locked != locked:
 			self.timeid = timeid
 			self.locked = locked
-		
-		if self.locked:
-			# cannot change something else if already locked
-			return
 		
 		if pos != None:
 			self.posx = pos[0]

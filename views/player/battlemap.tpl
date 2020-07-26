@@ -26,7 +26,7 @@
 
 %if gm:
 <div class="gm">
-	<form action="/upload/{{game.title}}" method="post" enctype="multipart/form-data">
+	<form action="/gm/{{game.title}}/upload" method="post" enctype="multipart/form-data">
 		<input name="file[]" type="file" multiple />
 		<input type="submit" value="upload" />
 	</form>
@@ -36,7 +36,6 @@
 	<input type="button" onClick="clearGmArea()" value="clearGmArea" /><br />
 	<span id="info"></span>
 	<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>
-	<input type="button" onClick="tokenReset()" value="reset" />
 	<input type="button" onClick="tokenStretch()" value="stretch" />
 	<input type="button" onClick="tokenClone()" value="clone" />
 	<input type="button" onClick="tokenDelete()" value="delete" />
@@ -47,13 +46,13 @@
 var battlemap = $('#battlemap')[0];
 
 /** Mobile controls not working yet
-battlemap.addEventListener('touchstart', tokenClick);
+battlemap.addEventListener('touchstart', tokenGrab);
 battlemap.addEventListener('touchmove', tokenMove);
 battlemap.addEventListener('touchend', tokenRelease);
 */
 
 // desktop controls
-battlemap.addEventListener('mousedown', tokenClick);
+battlemap.addEventListener('mousedown', tokenGrab);
 battlemap.addEventListener('mousemove', tokenMove);
 battlemap.addEventListener('mouseup', tokenRelease);
 battlemap.addEventListener('wheel', tokenWheel);

@@ -125,45 +125,7 @@ def get_player_battlemap(game_title):
 	
 	return dict(game=game, gm=True, page_title='[GM] {0}'.format(game.title))
 
-@post('/ajax/<game_title>/lock/<token_id:int>/<flag:int>')
-def ajax_post_rotate(game_title, token_id, flag):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	# load requested token
-	token = db.Token.select(lambda t: t.id == token_id).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
-	# update position
-	scene.timeid += 1
-	token.update(timeid=scene.timeid, locked=flag)
-
-@post('/ajax/<game_title>/clone/<token_id:int>')
-def ajax_post_clone(game_title, token_id):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
-	# update position
-	scene.timeid += 1
-	# load requested token
-	token = db.Token.select(lambda t: t.id == token_id).first()
-	# clone token
-	db.Token(scene=token.scene, url=token.url, posx=token.posx,
-		posy=token.posy + token.size//2, size=token.size, rotate=token.rotate,
-		timeid=scene.timeid)
-
-@post('/ajax/<game_title>/delete/<token_id:int>')
-def ajax_post_delete(game_title, token_id):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
-	# load requested token
-	token = db.Token.select(lambda t: t.id == token_id).first()
-	# delete token
-	token.delete()
-
-@post('/upload/<game_title>')
+@post('/gm/<game_title>/upload')
 def post_image_upload(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -185,7 +147,33 @@ def post_image_upload(game_title):
 	
 	redirect('/gm/{0}'.format(game_title))
 
-@post('/clear_rolls/<game_title>')
+@post('/gm/<game_title>/clone/<token_id:int>')
+def ajax_post_clone(game_title, token_id):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	# update position
+	scene.timeid += 1
+	# load requested token
+	token = db.Token.select(lambda t: t.id == token_id).first()
+	# clone token
+	db.Token(scene=token.scene, url=token.url, posx=token.posx,
+		posy=token.posy + token.size//2, size=token.size, rotate=token.rotate,
+		timeid=int(time.time()))
+
+@post('/gm/<game_title>/delete/<token_id:int>')
+def ajax_post_delete(game_title, token_id):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	# load requested token
+	token = db.Token.select(lambda t: t.id == token_id).first()
+	# delete token
+	token.delete()
+
+@post('/gm/<game_title>/clear_rolls')
 def post_clear_rolls(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -196,7 +184,7 @@ def post_clear_rolls(game_title):
 	old_rolls = db.Roll.select(lambda r: r.game == game and r.timeid < scene.timeid - 20)
 	old_rolls.delete()
 
-@post('/clear_tokens/<game_title>/<area>')
+@post('/gm/<game_title>/clear_tokens/<area>')
 def post_clear_tokens(game_title, area):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -271,37 +259,32 @@ def get_player_battlemap(game_title):
 		
 		return dict(game=game, gm=False, player=player)
 
-@get('/ajax/<game_title>/update/<timeid:int>')
-def ajax_get_update(game_title, timeid):
+@post('/play/<game_title>/update')
+def post_player_update(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.title == game.active).first()
 	
-	# load player name from cookie
-	playername = request.get_cookie('playername')
-	# try to load player from db
-	player = db.Player.select(lambda p: p.name == playername).first()
-	
-	# query all existing tokens each 3s
-	now = int(time.time())
-	if player is None:
-		# GMs use buggy refresh (a couple of times at once .__.)
-		if now % 3 == 0:
-			timeid = 0
-			print('Fully updating GM')
-	else:
-		# players refresh correctly
-		if player.alive + 3 < now:
-			player.alive = now
-			timeid = 0
-			print('Fully updating', player.name)
-	
+	# fetch token updates from client
+	timeid  = float(request.POST.get('timeid'))
+	changes = json.loads(request.POST.get('changes'))
+	# update token data
+	for data in changes:
+		token = scene.tokens.select(lambda s: s.id == data['id']).first()
+		token.update(
+			timeid=int(timeid),
+			pos=(data['posx'], data['posy']),
+			size=data['size'],
+			rotate=data['rotate'],
+			locked=data['locked']
+		)
+
 	# query token data
 	tokens = list()
 	for t in scene.tokens:
-		if (t.timeid > timeid):
-			tokens.append(t.to_dict())
+		#if (t.timeid > timeid):
+		tokens.append(t.to_dict())
 	
 	# query rolls 
 	rolls = list()
@@ -310,52 +293,16 @@ def ajax_get_update(game_title, timeid):
 		if r.timeid > timeid:
 			rolls.append('{0} D{1}={2}'.format(r.player, r.sides, r.result))
 	
-	# return tokens, rolls and timeid
+	# return tokens, rolls and timestamp
 	data = {
-		'timeid' : scene.timeid,
+		'timeid' : timeid,
 		'full'   : timeid == 0,
 		'tokens' : tokens,
 		'rolls'  : rolls
 	}
 	return json.dumps(data)
 
-@post('/ajax/<game_title>/move/<token_id:int>/<x:int>/<y:int>')
-def ajax_post_move(game_title, token_id, x, y):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	# load requested token
-	token = db.Token.select(lambda t: t.id == token_id).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
-	# update position
-	scene.timeid += 1
-	token.update(timeid=scene.timeid, pos=(x, y))
-
-@post('/ajax/<game_title>/resize/<token_id:int>/<size:int>')
-def ajax_post_resize(game_title, token_id, size):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	# load requested token
-	token = db.Token.select(lambda t: t.id == token_id).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
-	# update position
-	scene.timeid += 1
-	token.update(timeid=scene.timeid, size=size)
-
-@post('/ajax/<game_title>/rotate/<token_id:int>/<rotate:int>')
-def ajax_post_rotate(game_title, token_id, rotate):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	# load requested token
-	token = db.Token.select(lambda t: t.id == token_id).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
-	# update position
-	scene.timeid += 1
-	token.update(timeid=scene.timeid, rotate=rotate)
-
-@post('/roll/<game_title>/<player>/<sides:int>')
+@post('/play/<game_title>/roll/<player>/<sides:int>')
 def post_roll_dice(game_title, player, sides):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
