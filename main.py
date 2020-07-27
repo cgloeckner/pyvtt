@@ -352,7 +352,11 @@ def post_roll_dice(game_title, sides):
 if not os.path.isdir('games'):
 	os.mkdir('games')
 
-run(host=host, reloader=debug, debug=debug, port=port)
+app = default_app()
+from paste import httpserver
+httpserver.serve(app, host='0.0.0.0', port=8080)
+
+#run(host=host, reloader=debug, debug=debug, port=port)
 
 
 
