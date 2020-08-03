@@ -128,6 +128,7 @@ var timeid = 0;
 var mouse_x = 0;
 var mouse_y = 0;
 
+var copy_token = 0; // determines copy-selected token (CTRL+C)
 var select_id = 0; // determines selected token
 var grabbed = 0; // determines whether grabbed or not
 var update_tick = 0; // delays updates to not every loop tick
@@ -359,6 +360,31 @@ function tokenWheel(event) {
 function rollDice(sides) {
 	$.post('/play/' + game_title + '/roll/' + sides);
 }
+
+/// GM Event handle shortcuts on tokens
+function tokenShortcut(event) {
+	console.log(event);
+	if (event.ctrlKey) {
+		if (event.keyCode == 67) { // CTRL+C
+			copy_token = select_id;
+			console.log('CTRL+C: ', copy_token);
+		} else if (event.keyCode == 86) { // CTRL+V
+			if (copy_token > 0) {
+				$.post('/gm/' + game_title + '/clone/' + copy_token + '/' + mouse_x + '/' + mouse_y);
+				timeid = 0; // force full refresh next time
+			}
+		}
+	} else {
+		if (event.keyCode == 46) { // DEL
+			if (select_id == copy_token) {
+				copy_token = 0;
+			}
+			$.post('/gm/' + game_title + '/delete/' + select_id);
+				timeid = 0; // force full refresh next time
+		}
+	}
+}
+
 /// GM Event handle for (un)locking a token
 function tokenLock() {
 	if (select_id != 0) {
@@ -388,16 +414,6 @@ function tokenStretch() {
 			change_cache.push(select_id);
 		}
 	}
-}
-
-/// GM Event handle to clone a token
-function tokenClone() {
-	$.post('/gm/' + game_title + '/clone/' + select_id);
-}
-
-/// GM Event handle to delete a token
-function tokenDelete() {
-	$.post('/gm/' + game_title + '/delete/' + select_id);
 }
 
 

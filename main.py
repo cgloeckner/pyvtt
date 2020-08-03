@@ -173,8 +173,8 @@ def post_image_upload(game_title):
 	
 	redirect('/gm/{0}'.format(game_title))
 
-@post('/gm/<game_title>/clone/<token_id:int>')
-def ajax_post_clone(game_title, token_id):
+@post('/gm/<game_title>/clone/<token_id:int>/<x:int>/<y:int>')
+def ajax_post_clone(game_title, token_id, x, y):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
@@ -184,9 +184,8 @@ def ajax_post_clone(game_title, token_id):
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
 	# clone token
-	db.Token(scene=token.scene, url=token.url, posx=token.posx,
-		posy=token.posy + token.size//2, size=token.size, rotate=token.rotate,
-		timeid=int(time.time()))
+	db.Token(scene=token.scene, url=token.url, posx=x, posy=y, size=token.size,
+		rotate=token.rotate, timeid=int(time.time()))
 
 @post('/gm/<game_title>/delete/<token_id:int>')
 def ajax_post_delete(game_title, token_id):
@@ -355,9 +354,9 @@ if not os.path.isdir('games'):
 
 app = default_app()
 from paste import httpserver
-httpserver.serve(app, host='0.0.0.0', port=8080)
+#httpserver.serve(app, host='0.0.0.0', port=8080)
 
-#run(host=host, reloader=debug, debug=debug, port=port)
+run(host=host, reloader=debug, debug=debug, port=port)
 
 
 

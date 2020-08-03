@@ -58,6 +58,7 @@ battlemap.addEventListener('mousedown', tokenGrab);
 battlemap.addEventListener('mousemove', tokenMove);
 battlemap.addEventListener('mouseup', tokenRelease);
 battlemap.addEventListener('wheel', tokenWheel);
+document.addEventListener('keydown', tokenShortcut);
 
 start('{{game.title}}', '{{game.active}}');
 </script>

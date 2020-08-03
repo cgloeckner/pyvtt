@@ -5,7 +5,6 @@ requires pony (DB) and paste (async HTTP)
 
 # Planned features/fixes
 - synchronous db-access
-- implement INSERT (clone selected to mouse pos), DEL (deleted selected)
 
 # How to run
 - start `main.py` on GM's local computer
