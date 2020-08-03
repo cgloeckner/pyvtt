@@ -20,8 +20,6 @@
 		<div class="gm_info">
 			<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>
 			<input type="button" onClick="tokenStretch()" value="stretch" />
-			<input type="button" onClick="tokenClone()" value="clone" />
-			<input type="button" onClick="tokenDelete()" value="delete" />
 		</div>
 %else:
 		<input type="checkbox" style="display: none" name="locked" id="locked" onChange="tokenLock()" />
