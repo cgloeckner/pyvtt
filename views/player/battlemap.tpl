@@ -59,7 +59,7 @@ battlemap.addEventListener('mousemove', tokenMove);
 battlemap.addEventListener('mouseup', tokenRelease);
 battlemap.addEventListener('wheel', tokenWheel);
 
-start('{{game.title}}');
+start('{{game.title}}', '{{game.active}}');
 </script>
 
 %include("footer")

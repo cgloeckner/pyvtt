@@ -319,6 +319,7 @@ def post_player_update(game_title):
 	
 	# return tokens, rolls and timestamp
 	data = {
+		'active' : game.active,
 		'timeid' : time.time(),
 		'full'   : timeid == 0,
 		'tokens' : tokens,

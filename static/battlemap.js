@@ -122,6 +122,7 @@ function drawToken(token, show_ui) {
 // --- game state implementation ----------------------------------------------
 
 var game_title = '';
+var active_scene = '';
 var timeid = 0;
 
 var mouse_x = 0;
@@ -189,6 +190,11 @@ function updateTokens() {
 			'changes' : JSON.stringify(changes)
 		},
 		success: function(response) {
+			// refresh if scene changed
+			if (response['active'] != active_scene) {
+				location.reload();
+			}
+		
 			// update current timeid
 			timeid = response['timeid'];
 			if (timeid == 0) {
@@ -255,8 +261,9 @@ function updateGame() {
 }
 
 /// Sets up the game and triggers the update loop
-function start(title) {
+function start(title, scene) {
 	game_title = title;
+	active_scene = scene;
 	
 	updateGame();
 }
