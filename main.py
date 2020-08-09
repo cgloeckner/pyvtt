@@ -23,6 +23,16 @@ app.install(db_session)
 
 # --- GM routes ---------------------------------------------------------------
 
+gametitle_whitelist = []
+
+for i in range(65, 91):
+	gametitle_whitelist.append(chr(i))
+	gametitle_whitelist.append(chr(i+32))
+for i in range(10):	
+	gametitle_whitelist.append('{0}'.format(i))
+gametitle_whitelist.append('-')
+gametitle_whitelist.append('_')
+
 @get('/')
 @view('gm/game_list')
 def get_game_list():
@@ -33,8 +43,17 @@ def get_game_list():
 @post('/setup/create')
 def post_create_game():
 	game_title = request.forms.game_title
+	
+	# secure symbols used in title
+	fixed = ''
+	for c in game_title:
+		if c in gametitle_whitelist:
+			fixed += c
+		else:
+			fixed += '_'
+	
 	# create game
-	game = db.Game(title=game_title)
+	game = db.Game(title=fixed)
 	
 	db.commit()
 	redirect('/')
