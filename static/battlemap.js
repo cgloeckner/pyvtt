@@ -149,9 +149,20 @@ function showRoll(sides, result, player) {
 	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" /><span class="result">' + result + '</span><span class="player">' +player + '</span></div>';
 }
 
-function showPlayer(name) {
+function showPlayer(name, quit_link) {
+	var out = '<span class="player">';
+	if (quit_link) {
+		out += '<a href="/play/' + game_title + '/logout">';
+	}
+	out += name;
+	if (quit_link) {
+		out += '</a>';
+	}
+	out += '</span>';
+	console.log(out)
+	
 	var target = $('#players')[0];
-	target.innerHTML += '<span class="player">' + name + '</span>';
+	target.innerHTML += out;
 }
 
 /// Triggers token updates (pushing and pulling token data via the server)
@@ -221,9 +232,10 @@ function updateTokens() {
 			
 			// show players
 			var players_div = $('#players')[0];
+			var your_player_name = document.cookie.split(';')[0].split('=')[1];
 			players_div.innerHTML = '';
 			$.each(response['players'], function(index, player_name) {
-				showPlayer(player_name);
+				showPlayer(player_name, player_name == your_player_name);
 			});
 		}
 	});
@@ -267,6 +279,12 @@ function start(title, scene) {
 	active_scene = scene;
 	
 	updateGame();
+}
+
+/// Handles disconnecting
+function disconnect() {
+	// note: only works if another tab stays open
+	navigator.sendBeacon('/play/' + game_title + '/disconnect');
 }
 
 // ----------------------------------------------------------------------------

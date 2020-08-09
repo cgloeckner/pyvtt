@@ -1,7 +1,7 @@
 %if gm:
 	%title = '[GM] {0} @ {1}'.format(game.title, game.active)
 %else:
-	%title = '[{0}] {1}'.format(player.name, game.title)
+	%title = '[{0}] {1}'.format(playername, game.title)
 %end
 
 %include("header", title=title)
@@ -44,6 +44,12 @@
 
 <script>
 var battlemap = $('#battlemap')[0];
+
+$(window).on('unload', function() {
+	alert('pre');
+	disconnect();
+	alert('post');
+});
 
 /** Mobile controls not working yet
 battlemap.addEventListener('touchstart', tokenGrab);

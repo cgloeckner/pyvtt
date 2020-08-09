@@ -2,7 +2,7 @@
 
 <div class="menu">
 
-<p>Welcome, {{player.name}}. You'll be redirected to the <a href="/play/{{game.title}}">Game</a> in a second...</p>
+<p>Welcome, {{playername}}. You'll be redirected to the <a href="/play/{{game.title}}">Game</a> in a second...</p>
 
 <script type="text/javascript">
 <!--

@@ -2,14 +2,14 @@
 
 from bottle import *
 
-import os, json, random, time
+import os, json, random, time, sys
 
 from pony import orm
 from orm import db, db_session, Token, Game
 
 __author__ = "Christian Glöckner"
 
-host  = ''
+host  = '0.0.0.0'
 debug = True
 port  = 8080
 
@@ -20,18 +20,23 @@ app = default_app()
 app.catchall = not debug
 app.install(db_session)
 
-
-# --- GM routes ---------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 gametitle_whitelist = []
 
-for i in range(65, 91):
-	gametitle_whitelist.append(chr(i))
-	gametitle_whitelist.append(chr(i+32))
-for i in range(10):	
-	gametitle_whitelist.append('{0}'.format(i))
-gametitle_whitelist.append('-')
-gametitle_whitelist.append('_')
+players = dict()
+
+def applyWhitelist(s):
+	# secure symbols used in title
+	fixed = ''
+	for c in s:
+		if c in gametitle_whitelist:
+			fixed += c
+		else:
+			fixed += '_'
+	return fixed
+
+# --- GM routes ---------------------------------------------------------------
 
 @get('/')
 @view('gm/game_list')
@@ -42,18 +47,10 @@ def get_game_list():
 
 @post('/setup/create')
 def post_create_game():
-	game_title = request.forms.game_title
-	
-	# secure symbols used in title
-	fixed = ''
-	for c in game_title:
-		if c in gametitle_whitelist:
-			fixed += c
-		else:
-			fixed += '_'
+	game_title = applyWhitelist(request.forms.game_title)
 	
 	# create game
-	game = db.Game(title=fixed)
+	game = db.Game(title=game_title)
 	
 	db.commit()
 	redirect('/')
@@ -153,15 +150,6 @@ def duplicate_scene(game_title, scene_title):
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))
 
-@get('/gm/<game_title>/kick/<player_name>')
-def kick_player(game_title, player_name):
-	# query and delete player
-	player = db.Player.select(lambda p: p.name == player_name).first()
-	player.delete()
-	
-	db.commit()
-	redirect('/setup/list/{0}'.format(game_title))
-
 @get('/gm/<game_title>')
 @view('player/battlemap')
 def get_player_battlemap(game_title):
@@ -243,18 +231,16 @@ def player_login(game_title):
 @post('/login/<game_title>')
 @view('player/redirect')
 def set_player_name(game_title):
-	playername = request.forms.get('playername')
+	playername = applyWhitelist(request.forms.get('playername'))
 	
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
-	# create player
-	player = db.Player(name=playername, game=game, alive=int(time.time()))
+	# save playername in client cookie (expire after 14 days)
+	expire = int(time.time() + 3600 * 24 * 14)
+	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title), expires=expire)
 	
-	# save playername in client cookie
-	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title))
-	
-	return dict(game=game, player=player)
+	return dict(game=game, playername=playername)
 
 @get('/play/<game_title>')
 @view('player/battlemap')
@@ -262,21 +248,49 @@ def get_player_battlemap(game_title):
 	# load player name from cookie
 	playername = request.get_cookie('playername')
 	
-	# try to load player from db
-	player = db.Player.select(lambda p: p.name == playername).first()
-	
 	# redirect to login if player not found or invalid name ('GM') used
-	if playername is None or player is None or playername.upper() == 'GM':
+	if playername is None or playername.upper() == 'GM':
 		redirect('/login/{0}'.format(game_title))
 
 	else:
+		print(playername)
+		# save this playername
+		if game_title not in players:
+			players[game_title] = set()
+		players[game_title].add(playername)
+		
 		# load game
 		game = db.Game.select(lambda g: g.title == game_title).first()
 		
-		# keep player alive
-		player.alive = int(time.time())
-		
-		return dict(game=game, gm=False, player=player)
+		return dict(game=game, gm=False, playername=playername)
+
+# on window close
+@post('/play/<game_title>/disconnect')
+def quit_game(game_title):
+	# load player name from cookie
+	playername = request.get_cookie('playername')
+	
+	# remove player
+	if game_title in players and playername in players[game_title]:
+		players[game_title].remove(playername)
+
+
+# on logout purpose
+@get('/play/<game_title>/logout')
+def quit_game(game_title):
+	# load player name from cookie
+	playername = request.get_cookie('playername')
+	
+	# reset cookie
+	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title), expires=0)
+	
+	# remove player
+	if game_title in players and playername in players[game_title]:
+		players[game_title].remove(playername)
+
+	# show login page
+	redirect('/play/{0}'.format(game_title))
+
 
 @post('/play/<game_title>/update')
 def post_player_update(game_title):
@@ -301,13 +315,6 @@ def post_player_update(game_title):
 			locked=data['locked']
 		)
 
-	# keep player alive
-	if timeid == 0:
-		playername = request.get_cookie('playername')
-		player = db.Player.select(lambda p: p.name == playername).first()
-		if player is not None:
-			player.alive = now
-
 	# query token data
 	tokens = list()
 	for t in scene.tokens:
@@ -327,13 +334,9 @@ def post_player_update(game_title):
 		})
 	
 	# query players alive
-	players = ['GM']
-	for p in db.Player.select(lambda p: p.game == game):
-		if p.alive >= now - 10:
-			players.append(p.name)
-		else:
-			# player timeout
-			p.delete()
+	playerlist = ['GM']
+	if game_title in players:
+		playerlist.extend(list(players[game_title]))
 	
 	# return tokens, rolls and timestamp
 	data = {
@@ -342,7 +345,7 @@ def post_player_update(game_title):
 		'full'   : timeid == 0,
 		'tokens' : tokens,
 		'rolls'  : rolls,
-		'players': players
+		'players': playerlist
 	}
 	return json.dumps(data)
 
@@ -356,9 +359,7 @@ def post_roll_dice(game_title, sides):
 	
 	# load player name from cookie
 	playername = request.get_cookie('playername')
-	# try to load player from db
-	player = db.Player.select(lambda p: p.name == playername).first()
-	if player is None:
+	if playername is None:
 		playername = 'GM'
 	
 	# add player roll
@@ -368,14 +369,22 @@ def post_roll_dice(game_title, sides):
 
 # --- setup stuff -------------------------------------------------------------
 
+for i in range(65, 91):
+	gametitle_whitelist.append(chr(i))
+	gametitle_whitelist.append(chr(i+32))
+for i in range(10):	
+	gametitle_whitelist.append('{0}'.format(i))
+gametitle_whitelist.append('-')
+gametitle_whitelist.append('_')
+
 if not os.path.isdir('games'):
 	os.mkdir('games')
 
 app = default_app()
-from paste import httpserver
-#httpserver.serve(app, host='0.0.0.0', port=8080)
 
-run(host=host, reloader=debug, debug=debug, port=port)
-
-
+if 'debug' in sys.argv:
+	run(host=host, reloader=debug, debug=debug, port=port)	
+else:
+	from paste import httpserver
+	httpserver.serve(app, host=host, port=port)
 

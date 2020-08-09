@@ -14,6 +14,6 @@ requires pony (DB) and paste (async HTTP)
 
 # Known bugs
 - random player timeouts using microsoft edge
-- instant player timeout using mobile devices
 - unable to move tokens using mobile devices
+- no proper logout if the browser is completly closed
 

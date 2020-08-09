@@ -30,22 +30,6 @@
 
 <b>Active Scene</b>: {{game.active}}
 
-<h2>Available Players:</h2>
-<table border="1">
-	<tr>
-		<td>GM</td>
-		<td>-</td>
-		<td></td>
-	</tr>
-%for p in game.players.order_by(lambda p: p.name):
-	<tr>
-		<td>{{p.name}}</td>
-		<td>{{p.alive}}</td>
-		<td><a href="/gm/{{game.title}}/kick/{{p.name}}">Kick</a></td>
-	</tr>
-%end
-</table>
-
 <h2>10 Latest Rolls:</h2>
 
 <ul>
