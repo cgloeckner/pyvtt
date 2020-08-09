@@ -143,7 +143,7 @@ def duplicate_scene(game_title, scene_title):
 	clone = db.Scene(title='{0}_new'.format(scene.title), game=game)
 	# copy tokens, too
 	for t in scene.tokens:
-		db.Token(scene=clone, url=t.url, posx=t.posx, posy=t.posy, size=t.size, rotate=t.rotate, locked=t.locked)
+		db.Token(scene=clone, url=t.url, posx=t.posx, posy=t.posy, zorder=t.zorder, size=t.size, rotate=t.rotate, locked=t.locked)
 	
 	assert(len(scene.tokens) == len(clone.tokens))
 	
@@ -310,6 +310,7 @@ def post_player_update(game_title):
 		token.update(
 			timeid=int(timeid),
 			pos=(data['posx'], data['posy']),
+			zorder=data['zorder'],
 			size=data['size'],
 			rotate=data['rotate'],
 			locked=data['locked']

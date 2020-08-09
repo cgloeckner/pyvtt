@@ -15,12 +15,13 @@ class Token(db.Entity):
 	url    = Required(str)
 	posx   = Required(int)
 	posy   = Required(int)
+	zorder = Required(int, default=0)
 	size   = Required(int, default=64)
 	rotate = Required(float, default=0.0)
 	locked = Required(bool, default=False)
 	timeid = Required(int, default=0) # dirty flag
 	
-	def update(self, timeid, pos=None, size=None, rotate=None, locked=None):
+	def update(self, timeid, pos=None, zorder=None, size=None, rotate=None, locked=None):
 		"""Handle update of several data fields. The timeid is set if anything
 		has actually changed.
 		"""
@@ -32,7 +33,11 @@ class Token(db.Entity):
 			self.posx = pos[0]
 			self.posy = pos[1]
 			self.timeid = timeid
-			
+		
+		if zorder != None:
+			self.zorder = zorder
+			self.timeid = timeid	
+		
 		if size != None:
 			self.size = size
 			self.timeid = timeid

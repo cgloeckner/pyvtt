@@ -24,11 +24,16 @@ function clearCanvas() {
 var tokens       = []; // holds all tokens, updated by the server
 var change_cache = []; // holds ids of all client-changed tokens
 
+var culling = []; // holds tokens for culling
+var min_z = -1; // lowest known z-order
+var max_z =  1; // highest known z-order
+
 /// Token constructor
 function Token(id, url) {
 	this.id = id;
 	this.posx = 0;
 	this.posy = 0;
+	this.zorder = 0;
 	this.size = 250;
 	this.url = url;
 	this.rotate = 0.0;
@@ -82,9 +87,17 @@ function updateToken(data) {
 	// update token data
 	tokens[data.id].posx   = data.posx;
 	tokens[data.id].posy   = data.posy;
+	tokens[data.id].zorder = data.zorder;
 	tokens[data.id].size   = data.size;
 	tokens[data.id].rotate = data.rotate;
 	tokens[data.id].locked = data.locked;
+	
+	if (data.zorder < min_z) {
+		min_z = data.zorder;
+	}
+	if (data.zorder > max_z) {
+		max_z = data.zorder;
+	}
 }
 
 /// Draws a single token (show_ui will show the selection box around it)
@@ -176,6 +189,7 @@ function updateTokens() {
 			'id'    : t.id,
 			'posx'  : t.posx,
 			'posy'  : t.posy,
+			'zorder': t.zorder,
 			'size'  : t.size,
 			'rotate': t.rotate,
 			'locked': t.locked
@@ -245,18 +259,20 @@ function updateTokens() {
 function drawScene() {
 	clearCanvas();
 	
-	// draw locked tokens
+	// add all tokens to regular array
+	culling = [];
 	$.each(tokens, function(index, token) {
-		if (token != null && token.locked) {
-			drawToken(token, token.id == select_id);
+		if (token != null) {
+			culling.push(token);
 		}
 	});
 	
-	// draw unlocked tokens
-	$.each(tokens, function(index, token) {
-		if (token != null && !token.locked) {
-			drawToken(token, token.id == select_id);
-		}
+	// sort tokens by z-order
+	culling.sort(function(a, b) { return a.zorder - b.zorder });
+	
+	// draw tokens
+	$.each(culling, function(index, token) {
+		drawToken(token, token.id == select_id);
 	});
 }
 
@@ -434,4 +450,35 @@ function tokenStretch() {
 	}
 }
 
+/// GM Event handle for moving token to lowest z-order
+function tokenBottom() {
+	if (select_id != 0) {
+		var token = tokens[select_id];
+		
+		// move beneath lowest known z-order
+		token.zorder = min_z - 1;
+		--min_z;
+		
+		// mark token as changed
+		if (!change_cache.includes(select_id)) {
+			change_cache.push(select_id);
+		}
+	}
+}
+
+/// GM Event handle for moving token to hightest z-order
+function tokenTop() {
+	if (select_id != 0) {
+		var token = tokens[select_id];
+		
+		// move above highest known z-order
+		token.zorder = max_z - 1;
+		++max_z;
+			
+		// mark token as changed
+		if (!change_cache.includes(select_id)) {
+			change_cache.push(select_id);
+		}
+	}
+}
 
