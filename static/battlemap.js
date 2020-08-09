@@ -362,7 +362,7 @@ function tokenWheel(event) {
 
 		if (event.shiftKey) {
 			// handle rotation
-			token.rotate = token.rotate - 5 * event.deltaY;
+			token.rotate = token.rotate + 5 * event.deltaY;
 			if (token.rotate >= 360.0 || token.rotate <= -360.0) {
 				token.rotate = 0.0;
 			}
