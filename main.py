@@ -163,7 +163,7 @@ def post_image_upload(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
 	scene.timeid = int(time.time())
 	
 	# upload all files to the current game
@@ -185,7 +185,7 @@ def ajax_post_clone(game_title, token_id, x, y):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
 	# update position
 	scene.timeid = int(time.time())
 	# load requested token
@@ -199,7 +199,7 @@ def ajax_post_delete(game_title, token_id):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
 	# delete token
@@ -297,7 +297,7 @@ def post_player_update(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
 	
 	now = int(time.time())
 	
@@ -316,9 +316,9 @@ def post_player_update(game_title):
 			locked=data['locked']
 		)
 
-	# query token data
+	# query token data for that scene
 	tokens = list()
-	for t in scene.tokens:
+	for t in scene.tokens.select(lambda t: t.scene == scene):
 		# consider token if it was updated after given timeid
 		if t.timeid >= timeid:
 			tokens.append(t.to_dict())
@@ -355,7 +355,7 @@ def post_roll_dice(game_title, sides):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
-	scene = db.Scene.select(lambda s: s.title == game.active).first()
+	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
 	scene.timeid = int(time.time())
 	
 	# load player name from cookie
