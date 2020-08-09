@@ -137,7 +137,7 @@ var full_tick = 0; // counts updates until the next full update is requested
 const fps = 60;
 
 
-function showRoll(sides, result, player) {
+function showRoll(sides, result, player, time) {
 	var target = $('#rollbox')[0];
 	var div_class = 'roll';
 	if (result == 1) {
@@ -146,7 +146,7 @@ function showRoll(sides, result, player) {
 	if (result == sides) {
 		div_class += ' max-roll';
 	}
-	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" /><span class="result">' + result + '</span><span class="player">' +player + '</span></div>';
+	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" /><span class="result">' + result + '</span><span class="player">' + player + '<br />' + time + '</span></div>';
 }
 
 function showPlayer(name, quit_link) {
@@ -227,7 +227,7 @@ function updateTokens() {
 			var rolls_div = $('#rollbox')[0];
 			rolls_div.innerHTML = '';
 			$.each(response['rolls'], function(index, roll) {
-				showRoll(roll['sides'], roll['result'], roll['player']);
+				showRoll(roll['sides'], roll['result'], roll['player'], roll['time']);
 			});
 			
 			// show players

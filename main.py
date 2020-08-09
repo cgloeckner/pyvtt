@@ -326,11 +326,11 @@ def post_player_update(game_title):
 	rolls = list()
 	for r in db.Roll.select(lambda r: r.game == game).order_by(lambda r: -r.timeid)[:10]:
 		# consider token if it was updated after given timeid
-		#if r.timeid >= timeid:
 		rolls.append({
-			'player': r.player,
-			'sides': r.sides,
-			'result': r.result
+			'player' : r.player,
+			'sides'  : r.sides,
+			'result' : r.result,
+			'time'   : time.strftime('%H:%M:%S', time.localtime(r.timeid))
 		})
 	
 	# query players alive
