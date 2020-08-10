@@ -274,11 +274,13 @@ function updateGame() {
 }
 
 /// Sets up the game and triggers the update loop
-function start(title) {
+function start(title, gm) {
 	game_title = title;
 	
-	// notify game about this player
-	navigator.sendBeacon('/play/' + game_title + '/join');
+	if (!gm) {
+		// notify game about this player
+		navigator.sendBeacon('/play/' + game_title + '/join');
+	}
 	
 	updateGame();
 }
