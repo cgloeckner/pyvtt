@@ -48,7 +48,7 @@ function addToken(id, url) {
 /// Determines which token is selected when clicking the given position
 function selectToken(x, y) {
 	var result = null;
-	var bestz = min_z;
+	var bestz = min_z - 1;
 	// search for any fitting token with highest z-order
 	$.each(tokens, function(index, item) {
 		if (item != null) {
