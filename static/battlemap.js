@@ -161,7 +161,6 @@ function showPlayer(name, quit_link) {
 		out += '</a>';
 	}
 	out += '</span>';
-	console.log(out)
 	
 	var target = $('#players')[0];
 	target.innerHTML += out;
@@ -207,9 +206,6 @@ function updateTokens() {
 		success: function(response) {		
 			// update current timeid
 			timeid = response['timeid'];
-			if (timeid == 0) {
-				console.log('FULL');
-			}
 			
 			// clear all local tokens if a full update was received
 			if (response['full']) {
@@ -385,11 +381,9 @@ function rollDice(sides) {
 
 /// GM Event handle shortcuts on tokens
 function tokenShortcut(event) {
-	console.log(event);
 	if (event.ctrlKey) {
 		if (event.keyCode == 67) { // CTRL+C
 			copy_token = select_id;
-			console.log('CTRL+C: ', copy_token);
 		} else if (event.keyCode == 86) { // CTRL+V
 			if (copy_token > 0) {
 				$.post('/gm/' + game_title + '/clone/' + copy_token + '/' + mouse_x + '/' + mouse_y);
