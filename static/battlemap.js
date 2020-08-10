@@ -48,32 +48,22 @@ function addToken(id, url) {
 /// Determines which token is selected when clicking the given position
 function selectToken(x, y) {
 	var result = null;
-	// search for any fitting (unlocked) token
+	var bestz = min_z;
+	// search for any fitting token with highest z-order
 	$.each(tokens, function(index, item) {
-		if (item != null && !item.locked) {
+		if (item != null) {
 			var min_x = item.posx - item.size / 2;
 			var max_x = item.posx + item.size / 2;
 			var min_y = item.posy - item.size / 2;
 			var max_y = item.posy + item.size / 2;
 			if (min_x <= x && x <= max_x && min_y <= y && y <= max_y) {
-				result = item;
-			}
-		}
-	});
-	if (result == null) {
-		// search for any fitting (locked) token
-		$.each(tokens, function(index, item) {
-			if (item != null && item.locked) {
-				var min_x = item.posx - item.size / 2;
-				var max_x = item.posx + item.size / 2;
-				var min_y = item.posy - item.size / 2;
-				var max_y = item.posy + item.size / 2;
-				if (min_x <= x && x <= max_x && min_y <= y && y <= max_y) {
+				if (item.zorder > bestz) {
+					bestz = item.zorder;
 					result = item;
 				}
 			}
-		});
-	}
+		}
+	});
 	return result;
 }
 

@@ -80,7 +80,7 @@ def post_create_scene(game_title):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
 	# check existing scenes in this game for title-collision
-	title = request.forms.scene_title
+	title = applyWhitelist(request.forms.scene_title)
 	for s in db.Scene.select(lambda s: s.game == game):
 		if s.title == title:
 			redirect('/gm/{0}'.format(game.title))
@@ -253,7 +253,6 @@ def get_player_battlemap(game_title):
 		redirect('/login/{0}'.format(game_title))
 
 	else:
-		print(playername)
 		# save this playername
 		if game_title not in players:
 			players[game_title] = set()
