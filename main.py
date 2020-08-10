@@ -253,15 +253,22 @@ def get_player_battlemap(game_title):
 		redirect('/login/{0}'.format(game_title))
 
 	else:
-		# save this playername
-		if game_title not in players:
-			players[game_title] = set()
-		players[game_title].add(playername)
-		
 		# load game
 		game = db.Game.select(lambda g: g.title == game_title).first()
 		
 		return dict(game=game, gm=False, playername=playername)
+
+# on window open
+@post('/play/<game_title>/join')
+def join_game(game_title):
+	# load player name from cookie
+	playername = request.get_cookie('playername')
+	
+	# save this playername
+	if game_title not in players:
+		players[game_title] = set()
+	players[game_title].add(playername)
+		
 
 # on window close
 @post('/play/<game_title>/disconnect')

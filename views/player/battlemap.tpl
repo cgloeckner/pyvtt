@@ -66,7 +66,7 @@ battlemap.addEventListener('mouseup', tokenRelease);
 battlemap.addEventListener('wheel', tokenWheel);
 document.addEventListener('keydown', tokenShortcut);
 
-start('{{game.title}}', '{{game.active}}');
+start('{{game.title}}');
 </script>
 
 %include("footer")

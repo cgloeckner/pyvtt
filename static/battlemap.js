@@ -125,7 +125,6 @@ function drawToken(token, show_ui) {
 // --- game state implementation ----------------------------------------------
 
 var game_title = '';
-var active_scene = '';
 var timeid = 0;
 
 var mouse_x = 0;
@@ -205,12 +204,7 @@ function updateTokens() {
 			'timeid'  : timeid,
 			'changes' : JSON.stringify(changes)
 		},
-		success: function(response) {
-			// refresh if scene changed
-			if (response['active'] != active_scene) {
-				location.reload();
-			}
-		
+		success: function(response) {		
 			// update current timeid
 			timeid = response['timeid'];
 			if (timeid == 0) {
@@ -270,7 +264,7 @@ function drawScene() {
 function updateGame() {
 	if (update_tick < 0) {
 		updateTokens();
-		update_tick = 500.0 / (1000.0 / fps);
+		update_tick = 125.0 / (1000.0 / fps);
 	} else {
 		update_tick -= 1;
 	}
@@ -280,9 +274,11 @@ function updateGame() {
 }
 
 /// Sets up the game and triggers the update loop
-function start(title, scene) {
+function start(title) {
 	game_title = title;
-	active_scene = scene;
+	
+	// notify game about this player
+	navigator.sendBeacon('/play/' + game_title + '/join');
 	
 	updateGame();
 }
