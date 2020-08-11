@@ -331,7 +331,7 @@ def post_player_update(game_title):
 	
 	# query rolls 
 	rolls = list()
-	for r in db.Roll.select(lambda r: r.game == game).order_by(lambda r: -r.timeid)[:10]:
+	for r in db.Roll.select(lambda r: r.game == game).order_by(lambda r: -r.timeid)[:15]:
 		# consider token if it was updated after given timeid
 		rolls.append({
 			'player' : r.player,

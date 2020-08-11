@@ -32,27 +32,11 @@ div.scene {
 	margin-right: auto;
 }
 
-div.dicebox {
+div#rollbox {
 	width: 210px;
 	float: left;
-}
-
-div.dicebox img {
-	width: 64px;
-	height: 64px;
-}
-
-div.dicebox img:hover {
-	outline-color: red;
-	cursor: pointer;
-	filter: drop-shadow(1px 1px 10px gold) 
-          drop-shadow(-1px -1px 0 gold);
-}
-
-div#rollbox {
 	padding-top: 10px;
-	height: 550px;
-	overflow-y: auto;
+	height: 750px;
 }
 
 div#rollbox div.roll {
@@ -60,7 +44,7 @@ div#rollbox div.roll {
 	width: 180px;
 	margin-left: auto;
 	margin-right: auto;
-	height: 35px;
+	height: 33px;
 	padding: 5px;
 	margin: 2px;
 	background-color: rgba(150, 150, 150, 0.5);
@@ -95,16 +79,6 @@ div#rollbox div.roll span.player {
 	font-size: smaller;
 }
 
-div.gm_info {
-	display: inline-block;
-	padding: 5px;
-	margin: 2px;
-	font-size: smaller;
-	background-color: rgba(200, 200, 200, 0.33);
-	border-radius: 10px;
-	text-align: center;
-}
-
 canvas#battlemap {
 	background-color: rgba(100, 100, 100, 0.25);
 	border: 1px solid black;
@@ -117,17 +91,37 @@ div.scene div#rolls {
 	float: right;
 }
 
+div.dicebox {
+	width: 300px;
+	float: left;
+}
+
+div.dicebox img {
+	float: right;
+	width: 48px;
+	height: 48px;
+}
+
+div.dicebox img:hover {
+	outline-color: red;
+	cursor: pointer;
+	filter: drop-shadow(1px 1px 10px gold) 
+          drop-shadow(-1px -1px 0 gold);
+}
+
 div#players {
+	float: left;
 	display: block;
-	width: 800px;
+	width: auto;
 	text-align: center;
 	margin-left: auto;
 	margin-right: auto;
 }
 
 div#players span.player {
+	float: left;
 	display: inline-block;
-	height: 25px;
+	height: 30px;
 	padding: 5px;
 	margin: 2px;
 	font-size: larger;
@@ -136,10 +130,15 @@ div#players span.player {
 	text-align: center;
 }
 
-form.upload {
+form.gmtools {
+	float: right;
+	width: 400px;	
+	display: inline-block;
+	padding: 5px;
+	margin: 2px;
+	font-size: smaller;
 	background-color: rgba(200, 200, 200, 0.33);
 	border-radius: 10px;
-	padding: 5px;
-}	
-
+	text-align: center;
+}
 
