@@ -339,8 +339,19 @@ function uploadDrop(event) {
 
 /// Event handle for start grabbing a token
 function tokenGrab(event) {
-	mouse_x = event.offsetX;
-	mouse_y = event.offsetY;
+	if (event.changedTouches) {
+		var touchobj = event.changedTouches[0];
+		mouse_x = touchobj.clientX;
+		mouse_y = touchobj.clientY;
+	} else {
+		mouse_x = event.clientX;
+		mouse_y = event.clientY;
+	}
+	
+	// make pos relative
+	var bx = $('#battlemap')[0].getBoundingClientRect();
+	mouse_x -= bx.left;
+	mouse_y -= bx.top;
 	
 	prev_id = select_id;
 	
@@ -374,9 +385,22 @@ function tokenRelease() {
 }
 
 /// Event handle for moving a grabbed token (if not locked)
-function tokenMove() {
-	mouse_x = event.offsetX;
-	mouse_y = event.offsetY;
+function tokenMove(event) {
+	if (event.changedTouches) {
+		var touchobj = event.changedTouches[0];
+		mouse_x = touchobj.clientX;
+		mouse_y = touchobj.clientY;
+	} else {
+		mouse_x = event.clientX;
+		mouse_y = event.clientY;
+	}
+	
+	// make pos relative
+	var bx = $('#battlemap')[0].getBoundingClientRect();
+	mouse_x -= bx.left;
+	mouse_y -= bx.top;
+	
+	$('#mobile-debug')[0].innerHTML = mouse_x + ', ' + mouse_y + '; ' + select_id + '; ' + grabbed;
 	
 	if (select_id != 0 && grabbed) {
 		var token = tokens[select_id];

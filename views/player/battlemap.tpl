@@ -21,9 +21,10 @@
 			<input type="button" onClick="tokenBottom()" value="bottom" />
 			<input type="button" onClick="tokenTop()" value="top" />
 		</div>
-		<canvas id="battlemap" width="{{width}}" height="720"></canvas>
 		
-		<div>
+		<canvas id="battlemap" width="{{width}}" height=650"></canvas>
+		
+		<div class="mapfooter">
 			<div class="dicebox">
 %for sides in [4, 6, 8, 10, 12, 20]:
 				<img src="/static/d{{sides}}.png" onClick="rollDice({{sides}});" title="Roll 1D{{sides}}" />
@@ -41,9 +42,9 @@
 			<input type="checkbox" style="display: none" name="locked" id="locked" onChange="tokenLock()" />
 %end
 		</div>
+		
+		<span id="mobile-debug"></span>
 	</div>
-	
-	
 </div>
 
 <script>
@@ -53,18 +54,15 @@ $(window).on('unload', function() {
 	disconnect();
 });
 
-/** Mobile controls not working yet
-battlemap.addEventListener('touchstart', tokenGrab);
-battlemap.addEventListener('touchmove', tokenMove);
-battlemap.addEventListener('touchend', tokenRelease);
-*/
-
 // desktop controls
 battlemap.addEventListener('mousedown', tokenGrab);
 battlemap.addEventListener('mousemove', tokenMove);
 battlemap.addEventListener('mouseup', tokenRelease);
 battlemap.addEventListener('wheel', tokenWheel);
 document.addEventListener('keydown', tokenShortcut);
+
+// mobile control fix
+battlemap.addEventListener('touchend', tokenRelease);
 
 // drop zone implementation (using canvas) --> also as players :) 
 battlemap.addEventListener('dragover', uploadDrag);

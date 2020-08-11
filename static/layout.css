@@ -27,7 +27,7 @@ div.menu table {
 
 div.scene {
 	width: 1440px;
-	height: 720px;
+	height: 650px;
 	margin-left: auto;
 	margin-right: auto;
 }
@@ -45,7 +45,7 @@ div#rollbox {
 	width: 210px;
 	float: left;
 	padding-top: 10px;
-	height: 750px;
+	height: 650px;
 }
 
 div#rollbox div.roll {
@@ -88,6 +88,17 @@ div#rollbox div.roll span.result {
 div#rollbox div.roll span.player {
 	float: right;
 	font-size: smaller;
+}
+
+div.battlemap {
+	float: left;
+	width: 1200px;
+	height: 720px;
+}
+
+div.battlemap div.mapfooter {
+	width: 1200px;
+	height: 64px;
 }
 
 canvas#battlemap {

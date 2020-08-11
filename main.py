@@ -372,7 +372,7 @@ def post_player_update(game_title):
 	
 	# query rolls 
 	rolls = list()
-	for r in db.Roll.select(lambda r: r.game == game).order_by(lambda r: -r.timeid)[:15]:
+	for r in db.Roll.select(lambda r: r.game == game).order_by(lambda r: -r.timeid)[:13]:
 		# query color by player
 		color = '#000000'
 		if game_title in colors and r.player in colors[game_title]:
