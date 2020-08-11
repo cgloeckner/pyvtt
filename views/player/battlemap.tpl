@@ -22,7 +22,7 @@
 			<input type="button" onClick="tokenTop()" value="top" />
 		</div>
 		
-		<canvas id="battlemap" width="{{width}}" height=650"></canvas>
+		<canvas id="battlemap" width="{{width}}" height=620"></canvas>
 		
 		<div class="mapfooter">
 			<div class="dicebox">
@@ -40,10 +40,9 @@
 
 %else:
 			<input type="checkbox" style="display: none" name="locked" id="locked" onChange="tokenLock()" />
-%end
+%end		
+			<span id="mobile-debug" style="background-color: white;"></span>
 		</div>
-		
-		<span id="mobile-debug"></span>
 	</div>
 </div>
 
@@ -62,6 +61,8 @@ battlemap.addEventListener('wheel', tokenWheel);
 document.addEventListener('keydown', tokenShortcut);
 
 // mobile control fix
+battlemap.addEventListener('touchstart', tokenGrab);
+battlemap.addEventListener('touchmove', tokenMove);
 battlemap.addEventListener('touchend', tokenRelease);
 
 // drop zone implementation (using canvas) --> also as players :) 

@@ -5,7 +5,6 @@
 <h1>Games List</h1>
 
 <table>
-	</tr>
 %for g in games.order_by(lambda s: s.id):
 	<tr>
 		<td>{{g.title}}</td>
