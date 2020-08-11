@@ -36,6 +36,7 @@ def asGm(callback):
 gametitle_whitelist = []
 
 players = dict()
+colors  = dict()
 
 def applyWhitelist(s):
 	# secure symbols used in title
@@ -295,8 +296,13 @@ def join_game(game_title):
 	
 	# save this playername
 	if game_title not in players:
-		players[game_title] = dict()
-	players[game_title][playername] = playercolor
+		players[game_title] = set()
+	players[game_title].add(playername)
+	
+	# save this playercolor
+	if game_title not in colors:
+		colors[game_title] = dict()
+	colors[game_title][playername] = playercolor
 		
 
 # on window close
@@ -307,7 +313,9 @@ def quit_game(game_title):
 	
 	# remove player
 	if game_title in players and playername in players[game_title]:
-		players[game_title].pop(playername)
+		players[game_title].remove(playername)
+	
+	# note: color is kept
 
 
 # on logout purpose
@@ -323,8 +331,10 @@ def quit_game(game_title):
 	
 	# remove player
 	if game_title in players and playername in players[game_title]:
-		players[game_title].pop(playername)
+		players[game_title].remove(playername)
 
+	# note: color is kept
+	
 	# show login page
 	redirect('/play/{0}'.format(game_title))
 
@@ -363,9 +373,10 @@ def post_player_update(game_title):
 	# query rolls 
 	rolls = list()
 	for r in db.Roll.select(lambda r: r.game == game).order_by(lambda r: -r.timeid)[:15]:
+		# query color by player
 		color = '#000000'
-		if game_title in players and r.player in players[game_title]:
-			color = players[game_title][r.player]
+		if game_title in colors and r.player in colors[game_title]:
+			color = colors[game_title][r.player]
 		# consider token if it was updated after given timeid
 		rolls.append({
 			'player' : r.player,
