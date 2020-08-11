@@ -46,6 +46,9 @@
 </div>
 
 <script>
+// disable scrolling
+$('body').css('overflow', 'hidden');
+
 var battlemap = $('#battlemap')[0];
 
 $(window).on('unload', function() {

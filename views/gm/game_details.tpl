@@ -1,3 +1,4 @@
+%import time
 %include("header", title='Setup: {0}'.format(game.title))
 
 <div class="menu">
@@ -30,14 +31,20 @@
 
 <b>Active Scene</b>: {{game.active}}
 
-<h2>15 Latest Rolls:</h2>
+<h2>Latest Rolls:</h2>
 
 <ul>
-%for r in game.rolls.order_by(lambda r: -r.timeid)[:15]:
+%now = int(time.time())
+%num_old = 0
+%for r in game.rolls:
+	%if r.timeid > now - 60:
 	<li>{{r.player}} D{{r.sides}} = {{r.result}}</li>
+	%else:
+		%num_old += 1
+	%end
 %end
 </ul>
-<a href="/gm/{{game.title}}/clearRolls">clear rolls</a> <hr />
+<a href="/gm/{{game.title}}/clearRolls">clear old rolls ({{num_old}})</a> <hr />
 
 <a href="/">Back to Games Overview</a>
 

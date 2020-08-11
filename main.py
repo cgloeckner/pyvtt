@@ -168,9 +168,12 @@ def clear_rolls(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
-	# clear rolls
+	now = int(time.time())
+	
+	# clear old rolls
 	for r in game.rolls:
-		r.delete()
+		if r.timeid < now - 60:
+			r.delete()
 	
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))
@@ -372,7 +375,7 @@ def post_player_update(game_title):
 	
 	# query rolls 
 	rolls = list()
-	for r in db.Roll.select(lambda r: r.game == game).order_by(lambda r: -r.timeid)[:13]:
+	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 60).order_by(lambda r: -r.timeid)[:13]:
 		# query color by player
 		color = '#000000'
 		if game_title in colors and r.player in colors[game_title]:
