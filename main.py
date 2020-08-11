@@ -201,7 +201,7 @@ def get_player_battlemap(game_title):
 	
 	return dict(game=game, gm=True, page_title='[GM] {0}'.format(game.title), playercolor='#000000')
 
-@post('/gm/<game_title>/upload/<posx:int>/<posy:int>', apply=[asGm])
+@post('/gm/<game_title>/upload/<posx:int>/<posy:int>')
 def post_image_upload(game_title, posx, posy):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -275,7 +275,7 @@ def player_login(game_title):
 @post('/login/<game_title>')
 @view('player/redirect')
 def set_player_name(game_title):
-	playername = applyWhitelist(request.forms.get('playername'))
+	playername = applyWhitelist(request.forms.get('playername'))[:12]
 	playercolor  = request.forms.get('playercolor')
 	
 	# load game
@@ -356,7 +356,6 @@ def quit_game(game_title):
 	# show login page
 	redirect('/play/{0}'.format(game_title))
 
-
 @post('/play/<game_title>/update')
 def post_player_update(game_title):
 	# load game
@@ -374,7 +373,7 @@ def post_player_update(game_title):
 		token = scene.tokens.select(lambda s: s.id == data['id']).first()
 		token.update(
 			timeid=int(timeid),
-			pos=(data['posx'], data['posy']),
+			pos=(int(data['posx']), int(data['posy'])),
 			zorder=data['zorder'],
 			size=data['size'],
 			rotate=data['rotate'],
@@ -405,10 +404,13 @@ def post_player_update(game_title):
 		})
 	
 	# query players alive
-	playerlist = ['GM']
+	playerlist = ['GM:#000000']
 	if game_title in players:
 		for playername in players[game_title]:
-			playerlist.append(playername)
+			playercolor = '#000000'
+			if game_title in colors and playername in colors[game_title]:
+				playercolor = colors[game_title][playername]
+			playerlist.append('{0}:{1}'.format(playername, playercolor))
 	
 	# return tokens, rolls and timestamp
 	data = {

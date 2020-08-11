@@ -164,10 +164,10 @@ function showRoll(sides, result, player, color, time) {
 	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" style="filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"/><span class="result" style="color: ' + color + ';">' + result + '</span><span class="player">' + player + '<br />' + time + '</span></div>';
 }
 
-function showPlayer(name, quit_link) {
-	var out = '<span class="player">';
+function showPlayer(name, color, quit_link) {
+	var out = '<span class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">';
 	if (quit_link) {
-		out += '<a href="/play/' + game_title + '/logout" style="color:' + player_color + '" title="Logout">';
+		out += '<a href="/play/' + game_title + '/logout" title="Logout">';
 	}
 	out += name;
 	if (quit_link) {
@@ -241,8 +241,9 @@ function updateTokens() {
 			var players_div = $('#players')[0];
 			var your_player_name = document.cookie.split(';')[0].split('=')[1];
 			players_div.innerHTML = '';
-			$.each(response['players'], function(index, player_name) {
-				showPlayer(player_name, player_name == your_player_name);
+			$.each(response['players'], function(index, line) {
+				var parts = line.split(':');
+				showPlayer(parts[0], parts[1], parts[0] == your_player_name);
 			});
 		}
 	});
@@ -339,8 +340,8 @@ function uploadDrop(event) {
 function pickCanvasPos(event) {
 	if (event.changedTouches) {
 		var touchobj = event.changedTouches[0];
-		mouse_x = parseInt(touchobj.clientX);
-		mouse_y = parseInt(touchobj.clientY);
+		mouse_x = touchobj.clientX;
+		mouse_y = touchobj.clientY;
 	} else {
 		mouse_x = event.clientX;
 		mouse_y = event.clientY;

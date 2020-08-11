@@ -32,22 +32,18 @@
 			</div>
 			<div id="players"></div>
 
-%if gm:
 			<form id="uploadform" action="/gm/{{game.title}}/upload" method="post" enctype="multipart/form-data">
 				<input id="uploadqueue" name="file[]" type="file" multiple />
 				<input type="submit" value="upload" />
 			</form>
 
-%else:
-			<input type="checkbox" style="display: none" name="locked" id="locked" onChange="tokenLock()" />
-%end
 		</div>
 	</div>
 </div>
 
 <script>
 // disable scrolling
-$('body').css('overflow', 'hidden');
+//$('body').css('overflow', 'hidden');
 
 var battlemap = $('#battlemap')[0];
 
