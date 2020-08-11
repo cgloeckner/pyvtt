@@ -1,7 +1,7 @@
 %if gm:
-	%title = '{0}@{1}'.format(game.title, game.active)
+	%title = 'GM: {0}'.format(game.title)
 %else:
-	%title = '{0} ({1})'.format(game.title, playername)
+	%title = '{0} (as {1})'.format(game.title, playername)
 %end
 
 %include("header", title=title)

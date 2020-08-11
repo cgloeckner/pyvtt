@@ -2,7 +2,7 @@
 
 <div class="menu">
 
-<h1>Games Overview</h1>
+<h1>Games List</h1>
 
 <table>
 	</tr>

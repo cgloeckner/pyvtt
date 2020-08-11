@@ -1,4 +1,4 @@
-%include("header", title='{0} (Login)'.format(game.title))
+%include("header", title='Login: {0}'.format(game.title))
 
 <div class="menu">
 

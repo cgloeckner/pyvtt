@@ -1,4 +1,4 @@
-%include("header", title=game.title)
+%include("header", title='Setup: {0}'.format(game.title))
 
 <div class="menu">
 
