@@ -108,17 +108,16 @@ function drawToken(token, show_ui) {
 	var context = canvas[0].getContext("2d");
 	context.save();
 	context.translate(token.posx, token.posy);
-	if (show_ui) {
-		context.beginPath();
-		context.moveTo(-w/2, -h/2);
-		context.lineTo(w/2, -h/2);
-		context.lineTo(w/2, h/2);
-		context.lineTo(-w/2, h/2);
-		context.lineTo(-w/2, -h/2);
-		context.stroke();
-	}
 	context.rotate(token.rotate * 3.14/180.0);
+	
+	if (show_ui) {
+		// highlight token as selected
+		context.shadowColor = 'gold';
+		context.shadowBlur = 25;
+	}
+	
 	context.drawImage(images[token.url], -w / 2, -h / 2, w, h);
+	
 	context.restore();
 }
 
