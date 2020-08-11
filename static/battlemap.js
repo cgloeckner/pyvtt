@@ -125,6 +125,7 @@ function drawToken(token, show_ui) {
 // --- game state implementation ----------------------------------------------
 
 var game_title = '';
+var as_gm = false;
 var timeid = 0;
 
 var mouse_x = 0;
@@ -243,7 +244,9 @@ function drawScene() {
 	culling = [];
 	$.each(tokens, function(index, token) {
 		if (token != null) {
-			culling.push(token);
+			if (token.posx < 1000 || as_gm) {
+				culling.push(token);
+			}
 		}
 	});
 	
@@ -272,6 +275,7 @@ function updateGame() {
 /// Sets up the game and triggers the update loop
 function start(title, gm) {
 	game_title = title;
+	as_gm = gm;
 	
 	if (!gm) {
 		// notify game about this player
@@ -345,25 +349,27 @@ function tokenWheel(event) {
 		}
 
 		if (event.shiftKey) {
+			// handle scaling (GM only)
+			if (as_gm) {
+				token.size = token.size - 5 * event.deltaY;
+				if (token.size > 1440) {
+					token.size = 1440;
+				}
+				if (token.size < 16) {
+					token.size = 16;
+				}
+				
+				// mark token as changed
+				if (!change_cache.includes(select_id)) {
+					change_cache.push(select_id);
+				}
+			}
+			
+		} else {
 			// handle rotation
 			token.rotate = token.rotate - 5 * event.deltaY;
 			if (token.rotate >= 360.0 || token.rotate <= -360.0) {
 				token.rotate = 0.0;
-			}
-			
-			// mark token as changed
-			if (!change_cache.includes(select_id)) {
-				change_cache.push(select_id);
-			}
-			
-		} else {
-			// handle scaling
-			token.size = token.size - 5 * event.deltaY;
-			if (token.size > 1440) {
-				token.size = 1440;
-			}
-			if (token.size < 16) {
-				token.size = 16;
 			}
 			
 			// mark token as changed
