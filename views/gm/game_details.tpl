@@ -30,13 +30,14 @@
 
 <b>Active Scene</b>: {{game.active}}
 
-<h2>10 Latest Rolls:</h2>
+<h2>15 Latest Rolls:</h2>
 
 <ul>
-%for r in game.rolls.order_by(lambda r: -r.timeid)[:10]:
+%for r in game.rolls.order_by(lambda r: -r.timeid)[:15]:
 	<li>{{r.player}} D{{r.sides}} = {{r.result}}</li>
 %end
 </ul>
+<a href="/gm/{{game.title}}/clearRolls">clear rolls</a> <hr />
 
 <a href="/">Back to Games Overview</a>
 

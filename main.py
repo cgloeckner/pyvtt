@@ -162,6 +162,18 @@ def duplicate_scene(game_title, scene_title):
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))
 
+@get('/gm/<game_title>/clearRolls', apply=[asGm])
+def clear_rolls(game_title):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	
+	# clear rolls
+	for r in game.rolls:
+		r.delete()
+	
+	db.commit()
+	redirect('/setup/list/{0}'.format(game.title))
+
 @get('/gm/<game_title>', apply=[asGm])
 @view('player/battlemap')
 def get_player_battlemap(game_title):
