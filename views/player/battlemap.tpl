@@ -40,8 +40,7 @@
 
 %else:
 			<input type="checkbox" style="display: none" name="locked" id="locked" onChange="tokenLock()" />
-%end		
-			<span id="mobile-debug" style="background-color: white;"></span>
+%end
 		</div>
 	</div>
 </div>

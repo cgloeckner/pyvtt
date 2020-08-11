@@ -337,12 +337,12 @@ function uploadDrop(event) {
 
 // ----------------------------------------------------------------------------
 
-/// Event handle for start grabbing a token
-function tokenGrab(event) {
+/// Select mouse/touch position relative to the canvas
+function pickCanvasPos(event) {
 	if (event.changedTouches) {
 		var touchobj = event.changedTouches[0];
-		mouse_x = touchobj.clientX;
-		mouse_y = touchobj.clientY;
+		mouse_x = parseInt(touchobj.clientX);
+		mouse_y = parseInt(touchobj.clientY);
 	} else {
 		mouse_x = event.clientX;
 		mouse_y = event.clientY;
@@ -352,7 +352,12 @@ function tokenGrab(event) {
 	var bx = $('#battlemap')[0].getBoundingClientRect();
 	mouse_x -= bx.left;
 	mouse_y -= bx.top;
-	
+}
+
+/// Event handle for start grabbing a token
+function tokenGrab(event) {
+	pickCanvasPos(event);
+
 	prev_id = select_id;
 	
 	select_id = 0;
@@ -386,21 +391,7 @@ function tokenRelease() {
 
 /// Event handle for moving a grabbed token (if not locked)
 function tokenMove(event) {
-	if (event.changedTouches) {
-		var touchobj = event.changedTouches[0];
-		mouse_x = touchobj.clientX;
-		mouse_y = touchobj.clientY;
-	} else {
-		mouse_x = event.clientX;
-		mouse_y = event.clientY;
-	}
-	
-	// make pos relative
-	var bx = $('#battlemap')[0].getBoundingClientRect();
-	mouse_x -= bx.left;
-	mouse_y -= bx.top;
-	
-	$('#mobile-debug')[0].innerHTML = mouse_x + ', ' + mouse_y + '; ' + select_id + '; ' + grabbed;
+	pickCanvasPos(event);
 	
 	if (select_id != 0 && grabbed) {
 		var token = tokens[select_id];
