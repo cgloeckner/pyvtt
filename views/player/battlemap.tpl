@@ -15,12 +15,18 @@
 	%width += 200
 %end
 	<div class="battlemap">
+		<div id="tokenmenu">
+			<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>
+			<input type="button" onClick="tokenStretch()" value="stretch" />
+			<input type="button" onClick="tokenBottom()" value="bottom" />
+			<input type="button" onClick="tokenTop()" value="top" />
+		</div>
 		<canvas id="battlemap" width="{{width}}" height="720"></canvas>
 		
 		<div>
 			<div class="dicebox">
 %for sides in [4, 6, 8, 10, 12, 20]:
-				<img class="d{{sides}}" src="/static/d{{sides}}.png" onClick="rollDice({{sides}});" />
+				<img class="d{{sides}}" src="/static/d{{sides}}.png" onClick="rollDice({{sides}});" title="Roll 1D{{sides}}" />
 %end
 			</div>
 			<div id="players"></div>
@@ -29,11 +35,6 @@
 			<form class="gmtools" action="/gm/{{game.title}}/upload" method="post" enctype="multipart/form-data">
 				<input name="file[]" type="file" multiple />
 				<input type="submit" value="upload" />
-				<hr />
-				<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>
-				<input type="button" onClick="tokenStretch()" value="stretch" />
-				<input type="button" onClick="tokenBottom()" value="bottom" />
-				<input type="button" onClick="tokenTop()" value="top" />
 			</form>
 
 %else:
@@ -49,9 +50,7 @@
 var battlemap = $('#battlemap')[0];
 
 $(window).on('unload', function() {
-	alert('pre');
 	disconnect();
-	alert('post');
 });
 
 /** Mobile controls not working yet
@@ -66,6 +65,11 @@ battlemap.addEventListener('mousemove', tokenMove);
 battlemap.addEventListener('mouseup', tokenRelease);
 battlemap.addEventListener('wheel', tokenWheel);
 document.addEventListener('keydown', tokenShortcut);
+
+document.addEventListener('mousemove', mouseMove);
+document.addEventListener('contextmenu', event => {
+  event.preventDefault();
+});
 
 start('{{game.title}}', {{'true' if gm else 'false'}});
 </script>

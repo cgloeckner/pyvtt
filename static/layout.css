@@ -32,6 +32,15 @@ div.scene {
 	margin-right: auto;
 }
 
+div#tokenmenu {
+	background-color: rgba(150, 150, 150, 0.95);
+	border-radius: 10px;
+	padding: 15px;
+	width: 100px;
+	position: absolute;
+	display: none;
+}
+
 div#rollbox {
 	width: 210px;
 	float: left;
@@ -122,7 +131,7 @@ div#players span.player {
 	float: left;
 	display: inline-block;
 	height: 30px;
-	padding: 5px;
+	padding: 10px;
 	margin: 2px;
 	font-size: larger;
 	background-color: rgba(200, 200, 200, 0.75);

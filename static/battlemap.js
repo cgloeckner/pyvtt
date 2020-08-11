@@ -111,9 +111,12 @@ function drawToken(token, show_ui) {
 	context.rotate(token.rotate * 3.14/180.0);
 	
 	if (show_ui) {
-		// highlight token as selected
-		context.shadowColor = 'gold';
-		context.shadowBlur = 25;
+		// GM can select anything, players can select unlocked tokens
+		if (as_gm || !token.locked) {
+			// highlight token as selected
+			context.shadowColor = 'gold';
+			context.shadowBlur = 25;
+		}
 	}
 	
 	context.drawImage(images[token.url], -w / 2, -h / 2, w, h);
@@ -127,7 +130,7 @@ var game_title = '';
 var as_gm = false;
 var timeid = 0;
 
-var mouse_x = 0;
+var mouse_x = 0; // relative to canvas
 var mouse_y = 0;
 
 var copy_token = 0; // determines copy-selected token (CTRL+C)
@@ -137,6 +140,15 @@ var update_tick = 0; // delays updates to not every loop tick
 var full_tick = 0; // counts updates until the next full update is requested
 
 const fps = 60;
+
+/// mouse tracking
+var abs_mouse_x = 0;
+var abs_mouse_y = 0;
+
+function mouseMove(event) {
+	abs_mouse_x = event.clientX;
+	abs_mouse_y = event.clientY;
+}
 
 
 function showRoll(sides, result, player, time) {
@@ -154,7 +166,7 @@ function showRoll(sides, result, player, time) {
 function showPlayer(name, quit_link) {
 	var out = '<span class="player">';
 	if (quit_link) {
-		out += '<a href="/play/' + game_title + '/logout">';
+		out += '<a href="/play/' + game_title + '/logout" title="Logout">';
 	}
 	out += name;
 	if (quit_link) {
@@ -293,7 +305,7 @@ function disconnect() {
 // ----------------------------------------------------------------------------
 
 /// Event handle for start grabbing a token
-function tokenGrab() {
+function tokenGrab(event) {
 	mouse_x = event.offsetX;
 	mouse_y = event.offsetY;
 	
@@ -308,12 +320,23 @@ function tokenGrab() {
 		// show GM-info
 		$('#locked')[0].checked = token.locked;
 	}
+
+	// hide context menu	
+	$('#tokenmenu').css('display', 'none');
 }
 
 /// Event handle for releasing a grabbed token
 function tokenRelease() {
 	if (select_id != 0) {
 		grabbed = false;
+	}
+	
+	if (as_gm && select_id != 0 && event.button == 2) { // right click
+		// show context menu
+		var menu = $('#tokenmenu');
+		menu.css('display', 'block');
+		menu.css('left', abs_mouse_x);
+		menu.css('top', abs_mouse_y);
 	}
 }
 
@@ -415,6 +438,9 @@ function tokenLock() {
 		if (!change_cache.includes(select_id)) {
 			change_cache.push(select_id);
 		}
+		
+		// hide context menu	
+		$('#tokenmenu').css('display', 'none');
 	}
 }
 
@@ -434,6 +460,9 @@ function tokenStretch() {
 		if (!change_cache.includes(select_id)) {
 			change_cache.push(select_id);
 		}
+		
+		// hide context menu	
+		$('#tokenmenu').css('display', 'none');
 	}
 }
 
@@ -450,6 +479,9 @@ function tokenBottom() {
 		if (!change_cache.includes(select_id)) {
 			change_cache.push(select_id);
 		}
+		
+		// hide context menu	
+		$('#tokenmenu').css('display', 'none');
 	}
 }
 
@@ -466,6 +498,9 @@ function tokenTop() {
 		if (!change_cache.includes(select_id)) {
 			change_cache.push(select_id);
 		}
+		
+		// hide context menu	
+		$('#tokenmenu').css('display', 'none');
 	}
 }
 
