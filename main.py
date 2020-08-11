@@ -22,6 +22,17 @@ app.install(db_session)
 
 # -----------------------------------------------------------------------------
 
+lazy_mode = 'lazy' in sys.argv
+
+def asGm(callback):
+	def wrapper(*args, **kwargs):
+		if lazy_mode or request.environ.get('REMOTE_ADDR') == '127.0.0.1':
+			return callback(*args, **kwargs)
+		else:
+			abort(401)
+	return wrapper
+
+
 gametitle_whitelist = []
 
 players = dict()
@@ -36,16 +47,17 @@ def applyWhitelist(s):
 			fixed += '_'
 	return fixed
 
+
 # --- GM routes ---------------------------------------------------------------
 
-@get('/')
+@get('/', apply=[asGm])
 @view('gm/game_list')
-def get_game_list():
+def get_game_list():	
 	games = db.Game.select()
 	
 	return dict(games=games)
 
-@post('/setup/create')
+@post('/setup/create', apply=[asGm])
 def post_create_game():
 	game_title = applyWhitelist(request.forms.game_title)
 	
@@ -55,7 +67,7 @@ def post_create_game():
 	db.commit()
 	redirect('/')
 
-@get('/setup/delete/<game_title>')
+@get('/setup/delete/<game_title>', apply=[asGm])
 def delete_game(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -66,7 +78,7 @@ def delete_game(game_title):
 	db.commit()
 	redirect('/')
 
-@get('/setup/list/<game_title>')
+@get('/setup/list/<game_title>', apply=[asGm])
 @view('gm/game_details')
 def get_game_details(game_title):
 	# load game
@@ -74,7 +86,7 @@ def get_game_details(game_title):
 	
 	return dict(game=game)
 
-@post('/gm/<game_title>/create')
+@post('/gm/<game_title>/create', apply=[asGm])
 def post_create_scene(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -94,7 +106,7 @@ def post_create_scene(game_title):
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))
 
-@get('/gm/<game_title>/activate/<scene_title>')
+@get('/gm/<game_title>/activate/<scene_title>', apply=[asGm])
 def activate_scene(game_title, scene_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -103,7 +115,7 @@ def activate_scene(game_title, scene_title):
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))
 
-@post('/gm/<game_title>/rename/<scene_title>')
+@post('/gm/<game_title>/rename/<scene_title>', apply=[asGm])
 def activate_scene(game_title, scene_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -119,7 +131,7 @@ def activate_scene(game_title, scene_title):
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))
 
-@get('/gm/<game_title>/delete/<scene_title>')
+@get('/gm/<game_title>/delete/<scene_title>', apply=[asGm])
 def activate_scene(game_title, scene_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -131,7 +143,7 @@ def activate_scene(game_title, scene_title):
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))
 
-@get('/gm/<game_title>/clone/<scene_title>')
+@get('/gm/<game_title>/clone/<scene_title>', apply=[asGm])
 def duplicate_scene(game_title, scene_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -150,7 +162,7 @@ def duplicate_scene(game_title, scene_title):
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))
 
-@get('/gm/<game_title>')
+@get('/gm/<game_title>', apply=[asGm])
 @view('player/battlemap')
 def get_player_battlemap(game_title):
 	# load game
@@ -158,7 +170,7 @@ def get_player_battlemap(game_title):
 	
 	return dict(game=game, gm=True, page_title='[GM] {0}'.format(game.title))
 
-@post('/gm/<game_title>/upload/<posx:int>/<posy:int>')
+@post('/gm/<game_title>/upload/<posx:int>/<posy:int>', apply=[asGm])
 def post_image_upload(game_title, posx, posy):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -181,7 +193,7 @@ def post_image_upload(game_title, posx, posy):
 	
 	redirect('/gm/{0}'.format(game_title))
 
-@post('/gm/<game_title>/clone/<token_id:int>/<x:int>/<y:int>')
+@post('/gm/<game_title>/clone/<token_id:int>/<x:int>/<y:int>', apply=[asGm])
 def ajax_post_clone(game_title, token_id, x, y):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
