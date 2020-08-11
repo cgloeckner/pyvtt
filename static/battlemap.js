@@ -302,6 +302,32 @@ function disconnect() {
 	navigator.sendBeacon('/play/' + game_title + '/disconnect');
 }
 
+function uploadDrag(event) {
+	event.preventDefault();
+}
+
+function uploadDrop(event) {
+	event.preventDefault();
+
+	var queue = $('#uploadqueue')[0];
+	queue.files = event.dataTransfer.files;
+	
+	var f = new FormData($('#uploadform')[0]);
+	
+	$.ajax({
+		url: '/gm/' + game_title + '/upload',
+		type: 'POST',
+		data: f,
+		contentType: false,
+		cache: false,
+		processData: false,
+		success: function(response) {
+			// reset upload queue
+			$('#uploadqueue').val("");
+		}
+	});
+}
+
 // ----------------------------------------------------------------------------
 
 /// Event handle for start grabbing a token

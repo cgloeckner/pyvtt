@@ -32,8 +32,8 @@
 			<div id="players"></div>
 
 %if gm:
-			<form class="gmtools" action="/gm/{{game.title}}/upload" method="post" enctype="multipart/form-data">
-				<input name="file[]" type="file" multiple />
+			<form id="uploadform" action="/gm/{{game.title}}/upload" method="post" enctype="multipart/form-data">
+				<input id="uploadqueue" name="file[]" type="file" multiple />
 				<input type="submit" value="upload" />
 			</form>
 
@@ -66,6 +66,11 @@ battlemap.addEventListener('mouseup', tokenRelease);
 battlemap.addEventListener('wheel', tokenWheel);
 document.addEventListener('keydown', tokenShortcut);
 
+// drop zone implementation (using canvas) --> also as players :) 
+battlemap.addEventListener('dragover', uploadDrag);
+battlemap.addEventListener('drop', uploadDrop);
+
+// context menu implementing for token's
 document.addEventListener('mousemove', mouseMove);
 document.addEventListener('contextmenu', event => {
   event.preventDefault();

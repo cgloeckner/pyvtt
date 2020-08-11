@@ -169,6 +169,9 @@ def post_image_upload(game_title):
 	# upload all files to the current game
 	# and create a token each
 	files = request.files.getall('file[]')
+	
+	print(files)
+	
 	yoffset = 0
 	for handle in files:
 		url = game.upload(handle)
