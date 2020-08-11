@@ -6,8 +6,6 @@
 
 %include("header", title=title)
 
-<div id="players"></div>
-
 <div class="scene">
 	<div class="dicebox">
 %for sides in [4, 6, 8, 10, 12, 20]:
@@ -36,6 +34,8 @@
 		<canvas id="battlemap" width="{{width}}" height="720"></canvas>
 	</div>
 </div>
+
+<div id="players"></div>
 
 %if gm:
 <form class="upload" action="/gm/{{game.title}}/upload" method="post" enctype="multipart/form-data">

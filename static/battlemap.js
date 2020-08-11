@@ -99,7 +99,7 @@ function drawToken(token, show_ui) {
 	}
 	
 	// calculate new height (keeping aspect ratio)
-	var ratio  = images[token.url].height / images[token.url].width;
+	var ratio = images[token.url].height / images[token.url].width;
 	var w = token.size;
 	var h = w * ratio;
 	
