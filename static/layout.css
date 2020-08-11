@@ -133,7 +133,6 @@ div.dicebox img:hover {
 }
 
 div#players {
-	float: left;
 	display: block;
 	width: auto;
 	text-align: center;
@@ -142,9 +141,8 @@ div#players {
 }
 
 div#players span.player {
-	float: left;
 	display: inline-block;
-	height: 30px;
+	height: 20px;
 	padding: 10px;
 	margin: 2px;
 	font-size: larger;
