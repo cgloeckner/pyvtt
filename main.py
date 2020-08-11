@@ -158,8 +158,8 @@ def get_player_battlemap(game_title):
 	
 	return dict(game=game, gm=True, page_title='[GM] {0}'.format(game.title))
 
-@post('/gm/<game_title>/upload')
-def post_image_upload(game_title):
+@post('/gm/<game_title>/upload/<posx:int>/<posy:int>')
+def post_image_upload(game_title, posx, posy):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	# load active scene
@@ -170,14 +170,12 @@ def post_image_upload(game_title):
 	# and create a token each
 	files = request.files.getall('file[]')
 	
-	print(files)
-	
 	yoffset = 0
 	for handle in files:
 		url = game.upload(handle)
 		# create token
+		db.Token(scene=scene, timeid=scene.timeid, url=url, posx=posx, posy=posy + 10 * yoffset)
 		yoffset += 1
-		db.Token(scene=scene, timeid=scene.timeid, url=url, posx=1100, posy=50 * yoffset)
 	
 	db.commit()
 	

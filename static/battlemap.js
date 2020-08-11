@@ -304,6 +304,9 @@ function disconnect() {
 
 function uploadDrag(event) {
 	event.preventDefault();
+	
+	mouse_x = event.offsetX;
+	mouse_y = event.offsetY;
 }
 
 function uploadDrop(event) {
@@ -314,8 +317,10 @@ function uploadDrop(event) {
 	
 	var f = new FormData($('#uploadform')[0]);
 	
+	console.log('/gm/' + game_title + '/upload/' + mouse_x + '/' + mouse_y);
+	
 	$.ajax({
-		url: '/gm/' + game_title + '/upload',
+		url: '/gm/' + game_title + '/upload/' + mouse_x + '/' + mouse_y,
 		type: 'POST',
 		data: f,
 		contentType: false,
