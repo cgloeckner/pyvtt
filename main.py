@@ -64,6 +64,9 @@ def post_create_game():
 	
 	# create game
 	game = db.Game(title=game_title)
+	# create first scene
+	scene = db.Scene(title='new-scene', game=game)
+	game.active = scene.title
 	
 	db.commit()
 	redirect('/')
@@ -138,8 +141,20 @@ def activate_scene(game_title, scene_title):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 
 	# delete requested scene
+	old_active = game.active
 	scene = db.Scene.select(lambda s: s.game == game and s.title == scene_title).first()
 	scene.delete()
+	
+	# check for remaining scenes
+	remain = db.Scene.select(lambda s: s.game == game).first()
+	if remain is None:
+		# create new scene
+		scene = db.Scene(title='new-scene', game=game)
+		game.active = scene.title
+	
+	# fix active scene
+	if game.active == old_active:
+		game.active = db.Scene.select(lambda s: s.game == game).first().title
 
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))

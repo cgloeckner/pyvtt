@@ -319,8 +319,6 @@ function uploadDrop(event) {
 	
 	var f = new FormData($('#uploadform')[0]);
 	
-	console.log('/gm/' + game_title + '/upload/' + mouse_x + '/' + mouse_y);
-	
 	$.ajax({
 		url: '/gm/' + game_title + '/upload/' + mouse_x + '/' + mouse_y,
 		type: 'POST',
