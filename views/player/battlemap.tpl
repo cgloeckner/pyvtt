@@ -26,7 +26,7 @@
 		<div>
 			<div class="dicebox">
 %for sides in [4, 6, 8, 10, 12, 20]:
-				<img class="d{{sides}}" src="/static/d{{sides}}.png" onClick="rollDice({{sides}});" title="Roll 1D{{sides}}" />
+				<img src="/static/d{{sides}}.png" onClick="rollDice({{sides}});" title="Roll 1D{{sides}}" />
 %end
 			</div>
 			<div id="players"></div>
@@ -76,7 +76,7 @@ document.addEventListener('contextmenu', event => {
   event.preventDefault();
 });
 
-start('{{game.title}}', {{'true' if gm else 'false'}});
+start('{{game.title}}', {{'true' if gm else 'false'}}, '{{playercolor}}');
 </script>
 
 %include("footer")

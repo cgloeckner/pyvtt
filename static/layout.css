@@ -81,6 +81,8 @@ div#rollbox div.roll span.result {
 	margin-left: auto;
 	margin-right: auto;
 	font-size: xx-large;
+	-webkit-text-stroke-width: 0.5px;
+    -webkit-text-stroke-color: black;
 }
 
 div#rollbox div.roll span.player {
@@ -134,9 +136,14 @@ div#players span.player {
 	padding: 10px;
 	margin: 2px;
 	font-size: larger;
-	background-color: rgba(200, 200, 200, 0.75);
+	background-color: rgba(200, 200, 200, 0.5);
 	border-radius: 10px;
 	text-align: center;
+}
+
+div#players span.player a {
+	pointer: hand;
+	text-decoration: none;
 }
 
 form#uploadform {

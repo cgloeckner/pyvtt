@@ -180,7 +180,7 @@ def get_player_battlemap(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
-	return dict(game=game, gm=True, page_title='[GM] {0}'.format(game.title))
+	return dict(game=game, gm=True, page_title='[GM] {0}'.format(game.title), playercolor='#000000')
 
 @post('/gm/<game_title>/upload/<posx:int>/<posy:int>', apply=[asGm])
 def post_image_upload(game_title, posx, posy):
@@ -257,6 +257,7 @@ def player_login(game_title):
 @view('player/redirect')
 def set_player_name(game_title):
 	playername = applyWhitelist(request.forms.get('playername'))
+	playercolor  = request.forms.get('playercolor')
 	
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
@@ -264,14 +265,16 @@ def set_player_name(game_title):
 	# save playername in client cookie (expire after 14 days)
 	expire = int(time.time() + 3600 * 24 * 14)
 	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title), expires=expire)
+	response.set_cookie('playercolor', playercolor, path='/play/{0}'.format(game_title), expires=expire)
 	
 	return dict(game=game, playername=playername)
 
 @get('/play/<game_title>')
 @view('player/battlemap')
 def get_player_battlemap(game_title):
-	# load player name from cookie
+	# load player name and color from cookie
 	playername = request.get_cookie('playername')
+	playercolor = request.get_cookie('playercolor')
 	
 	# redirect to login if player not found or invalid name ('GM') used
 	if playername is None or playername.upper() == 'GM':
@@ -281,18 +284,19 @@ def get_player_battlemap(game_title):
 		# load game
 		game = db.Game.select(lambda g: g.title == game_title).first()
 		
-		return dict(game=game, gm=False, playername=playername)
+		return dict(game=game, gm=False, playername=playername, playercolor=playercolor)
 
 # on window open
 @post('/play/<game_title>/join')
 def join_game(game_title):
 	# load player name from cookie
 	playername = request.get_cookie('playername')
+	playercolor = request.get_cookie('playercolor')
 	
 	# save this playername
 	if game_title not in players:
-		players[game_title] = set()
-	players[game_title].add(playername)
+		players[game_title] = dict()
+	players[game_title][playername] = playercolor
 		
 
 # on window close
@@ -303,7 +307,7 @@ def quit_game(game_title):
 	
 	# remove player
 	if game_title in players and playername in players[game_title]:
-		players[game_title].remove(playername)
+		players[game_title].pop(playername)
 
 
 # on logout purpose
@@ -311,13 +315,15 @@ def quit_game(game_title):
 def quit_game(game_title):
 	# load player name from cookie
 	playername = request.get_cookie('playername')
+	playercolor = request.get_cookie('playercolor')
 	
 	# reset cookie
 	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title), expires=0)
+	response.set_cookie('playercolor', playercolor, path='/play/{0}'.format(game_title), expires=0)
 	
 	# remove player
 	if game_title in players and playername in players[game_title]:
-		players[game_title].remove(playername)
+		players[game_title].pop(playername)
 
 	# show login page
 	redirect('/play/{0}'.format(game_title))
@@ -357,9 +363,13 @@ def post_player_update(game_title):
 	# query rolls 
 	rolls = list()
 	for r in db.Roll.select(lambda r: r.game == game).order_by(lambda r: -r.timeid)[:15]:
+		color = '#000000'
+		if game_title in players and r.player in players[game_title]:
+			color = players[game_title][r.player]
 		# consider token if it was updated after given timeid
 		rolls.append({
 			'player' : r.player,
+			'color'  : color,
 			'sides'  : r.sides,
 			'result' : r.result,
 			'time'   : time.strftime('%H:%M:%S', time.localtime(r.timeid))
@@ -368,7 +378,8 @@ def post_player_update(game_title):
 	# query players alive
 	playerlist = ['GM']
 	if game_title in players:
-		playerlist.extend(list(players[game_title]))
+		for playername in players[game_title]:
+			playerlist.append(playername)
 	
 	# return tokens, rolls and timestamp
 	data = {

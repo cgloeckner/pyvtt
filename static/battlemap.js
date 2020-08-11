@@ -128,6 +128,7 @@ function drawToken(token, show_ui) {
 
 var game_title = '';
 var as_gm = false;
+var player_color = '';
 var timeid = 0;
 
 var mouse_x = 0; // relative to canvas
@@ -151,7 +152,7 @@ function mouseMove(event) {
 }
 
 
-function showRoll(sides, result, player, time) {
+function showRoll(sides, result, player, color, time) {
 	var target = $('#rollbox')[0];
 	var div_class = 'roll';
 	if (result == 1) {
@@ -160,13 +161,13 @@ function showRoll(sides, result, player, time) {
 	if (result == sides) {
 		div_class += ' max-roll';
 	}
-	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" /><span class="result">' + result + '</span><span class="player">' + player + '<br />' + time + '</span></div>';
+	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" style="filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"/><span class="result" style="color: ' + color + ';">' + result + '</span><span class="player">' + player + '<br />' + time + '</span></div>';
 }
 
 function showPlayer(name, quit_link) {
 	var out = '<span class="player">';
 	if (quit_link) {
-		out += '<a href="/play/' + game_title + '/logout" title="Logout">';
+		out += '<a href="/play/' + game_title + '/logout" style="color:' + player_color + '" title="Logout">';
 	}
 	out += name;
 	if (quit_link) {
@@ -233,7 +234,7 @@ function updateTokens() {
 			var rolls_div = $('#rollbox')[0];
 			rolls_div.innerHTML = '';
 			$.each(response['rolls'], function(index, roll) {
-				showRoll(roll['sides'], roll['result'], roll['player'], roll['time']);
+				showRoll(roll['sides'], roll['result'], roll['player'], roll['color'], roll['time']);
 			});
 			
 			// show players
@@ -284,9 +285,10 @@ function updateGame() {
 }
 
 /// Sets up the game and triggers the update loop
-function start(title, gm) {
+function start(title, gm, color) {
 	game_title = title;
 	as_gm = gm;
+	player_color = color;
 	
 	if (!gm) {
 		// notify game about this player
