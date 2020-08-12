@@ -22,7 +22,7 @@
 			<input type="button" onClick="tokenTop()" value="top" />
 		</div>
 		
-		<canvas id="battlemap" width="{{width}}" height=620"></canvas>
+		<canvas id="battlemap" width="{{width}}" height=720"></canvas>
 		
 		<div class="mapfooter">
 			<div class="dicebox">
