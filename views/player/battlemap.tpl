@@ -27,7 +27,7 @@
 		<div class="mapfooter">
 			<div class="dicebox">
 %for sides in [4, 6, 8, 10, 12, 20]:
-				<img src="/static/d{{sides}}.png" onClick="rollDice({{sides}});" title="Roll 1D{{sides}}" />
+				<img src="/static/d{{sides}}.png" id="d{{sides}}" title="Roll 1D{{sides}}" />
 %end
 			</div>
 			<div id="players"></div>
@@ -44,6 +44,15 @@
 <script>
 // disable scrolling
 //$('body').css('overflow', 'hidden');
+
+%for sides in [4, 6, 8, 10, 12, 20]:
+$('#d{{sides}}').on('singleclick', function(event) {
+	rollDice({{sides}});
+});
+%end
+$('#d10').on('dblclick', function(event) {
+	rollDice(100);
+});
 
 var battlemap = $('#battlemap')[0];
 
