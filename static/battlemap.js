@@ -519,8 +519,12 @@ function tokenBottom() {
 		var token = tokens[select_id];
 		
 		// move beneath lowest known z-order
-		token.zorder = min_z - 1;
-		--min_z;
+		if (token.locked) {
+			token.zorder = 1;
+		} else {
+			token.zorder = min_z - 1;
+			--min_z;
+		}
 		
 		// mark token as changed
 		if (!change_cache.includes(select_id)) {
@@ -538,8 +542,12 @@ function tokenTop() {
 		var token = tokens[select_id];
 		
 		// move above highest known z-order
-		token.zorder = max_z - 1;
-		++max_z;
+		if (token.locked) {
+			token.zorder = -1;
+		} else {
+			token.zorder = max_z - 1;
+			++max_z;
+		}
 			
 		// mark token as changed
 		if (!change_cache.includes(select_id)) {
