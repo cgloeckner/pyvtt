@@ -387,9 +387,9 @@ def post_player_update(game_title):
 		if t.timeid >= timeid:
 			tokens.append(t.to_dict())
 	
-	# query rolls 
+	# query rolls (within last 180 seconds)
 	rolls = list()
-	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 60).order_by(lambda r: -r.timeid)[:13]:
+	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 180).order_by(lambda r: -r.timeid)[:13]:
 		# query color by player
 		color = '#000000'
 		if game_title in colors and r.player in colors[game_title]:
