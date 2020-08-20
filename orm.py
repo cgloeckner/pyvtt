@@ -148,6 +148,20 @@ class Game(db.Entity):
 		# propagate remote path
 		return self.getImageUrl(checksums[self.title][new_md5])
 
+	def getAbandonedImages(self):
+		abandoned = list()
+		
+		# check all existing images
+		game_root = self.getImagePath()
+		for image_id in self.getAllImages():
+			url = self.getImageUrl(image_id)
+			# check for any tokens
+			if db.Token.select(lambda t: t.url == url).first() is None:
+				# found abandoned image
+				abandoned.append(os.path.join(game_root, image_id))
+		
+		return abandoned
+
 	def clear(self):
 		game_root = self.getImagePath()
 		if os.path.isdir(game_root):

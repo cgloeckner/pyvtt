@@ -201,6 +201,23 @@ def clear_rolls(game_title):
 	db.commit()
 	redirect('/setup/list/{0}'.format(game.title))
 
+@get('/gm/<game_title>/clearImages', apply=[asGm])
+def clear_images(game_title):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	
+	# query and remove abandoned images (those without any token)
+	abandoned = game.getAbandonedImages()
+	cleanup = 0
+	for fname in abandoned:
+		cleanup += os.path.getsize(fname)
+		os.remove(fname)
+	
+	megs = cleanup / (1024.0*1024.0)
+	print('{0} abandoned images deleted, {1} MB freed'.format(len(abandoned), megs))
+	
+	redirect('/setup/list/{0}'.format(game.title))
+
 @get('/gm/<game_title>', apply=[asGm])
 @view('player/battlemap')
 def get_player_battlemap(game_title):
