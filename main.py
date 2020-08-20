@@ -76,6 +76,9 @@ def post_create_game():
 	scene = db.Scene(title='new-scene', game=game)
 	game.active = scene.title
 	
+	# generate checksums for this new game (just preparation)
+	generateChecksums(game)
+	
 	db.commit()
 	redirect('/')
 

@@ -34,6 +34,8 @@ def getMd5(handle):
 	hash_md5 = hashlib.md5()
 	for chunk in iter(lambda: handle.read(4096), b""):
 		hash_md5.update(chunk)
+	# rewind after reading
+	handle.seek(0)
 	return hash_md5.hexdigest()
 
 
@@ -126,6 +128,14 @@ class Game(db.Entity):
 	def getAllImages(self):
 		return os.listdir(self.getImagePath())
 
+	def getNextId(self):
+		next_id = 0
+		for fname in os.listdir(self.getImagePath()):
+			number = int(fname.split('.png')[0])
+			if number >= next_id:
+				next_id = number + 1
+		return next_id
+
 	def getImageUrl(self, image_id):
 		return '/token/{0}/{1}'.format(self.title, image_id)
 
@@ -140,8 +150,10 @@ class Game(db.Entity):
 		new_md5 = getMd5(handle.file)
 		if new_md5 not in checksums[self.title]:
 			# create new image on disk
-			image_id   = '{0}.png'.format(len(self.getAllImages()))
+			next_id    = self.getNextId()
+			image_id   = '{0}.png'.format(next_id)
 			local_path = os.path.join(game_root, image_id)
+			print(local_path)
 			handle.save(local_path)
 			checksums[self.title][new_md5] = image_id
 		

@@ -1,4 +1,4 @@
-%import time
+%import time, os
 %include("header", title='Setup: {0}'.format(game.title))
 
 <div class="menu">
@@ -46,8 +46,25 @@
 </ul>
 <a href="/gm/{{game.title}}/clearRolls">clear old rolls ({{num_old}})</a> <hr />
 
-%num_abandoned = len(game.getAbandonedImages())
-<a href="/gm/{{game.title}}/clearImages">clear abandoned images ({{num_abandoned}})</a> <hr />
+%abandoned = len(game.getAbandonedImages())
+%size = 0
+%for fname in game.getAbandonedImages():
+	%size += os.path.getsize(fname)
+%end
+%if size < 1024:
+	%size = '<1 KB'
+%else:
+	%size /= 1024.0
+	%if size < 1024:
+		%size = '{0} KB'.format(int(size))
+	%else:
+		%size = '{0} MB'.format(int(size / 1024))
+	%end
+%end
+%if abandoned > 0:
+	%abandoned = '{0}x, {1}'.format(abandoned, size)
+%end
+<a href="/gm/{{game.title}}/clearImages">clear abandoned images ({{abandoned}})</a> <hr />
 
 <a href="/">Back to Games Overview</a>
 
