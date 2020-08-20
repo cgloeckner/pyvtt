@@ -7,16 +7,7 @@ var images = [];
 function clearCanvas() {
 	var canvas = $('#battlemap');
 	var context = canvas[0].getContext("2d");
-	context.clearRect(0, 0, 1000, canvas[0].height);
-	
-	// make GM-area transparent
-	context.clearRect(1000, 0, canvas[0].width, canvas[0].height);
-	
-	// draw separation line for GM-area
-	context.beginPath();
-	context.moveTo(1001, 0);
-	context.lineTo(1001, canvas[0].height);
-	context.stroke();
+	context.clearRect(0, 0, canvas[0].width, canvas[0].height);
 }
 
 // --- token implementation ---------------------------------------------------
@@ -257,9 +248,7 @@ function drawScene() {
 	culling = [];
 	$.each(tokens, function(index, token) {
 		if (token != null) {
-			if (token.posx < 1000 || as_gm) {
-				culling.push(token);
-			}
+			culling.push(token);
 		}
 	});
 	
@@ -497,9 +486,10 @@ function tokenStretch() {
 		var token = tokens[select_id];
 		
 		// stretch and center token in the center
-		token.posx   = 500;
-		token.posy   = 360;
-		token.size   = 1000;
+		var canvas = $('#battlemap')[0];
+		token.posx   = canvas.width / 2;
+		token.posy   = canvas.height / 2;
+		token.size   = canvas.width;
 		token.rotate = 0;
 		token.locked = true;
 			

@@ -10,10 +10,7 @@
 	<div id="rollbox">
 	</div>
 
-%width = 1000
-%if gm:
-	%width += 200
-%end
+%width = 1200
 	<div class="battlemap">
 		<div id="tokenmenu">
 			<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>
