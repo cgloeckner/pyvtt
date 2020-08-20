@@ -5,7 +5,7 @@ from bottle import *
 import os, json, random, time, sys, math
 
 from pony import orm
-from orm import db, db_session, Token, Game, getDataDir, generateChecksums
+from orm import db, db_session, Token, Game, getDataDir, resetChecksums, generateChecksums
 
 __author__ = "Christian Glöckner"
 
@@ -218,6 +218,13 @@ def clear_images(game_title):
 	
 	megs = cleanup / (1024.0*1024.0)
 	print('{0} abandoned images deleted, {1} MB freed'.format(len(abandoned), megs))
+	
+	# refresh checksums
+	s = time.time()
+	resetChecksums()
+	for g in db.Game.select():
+		generateChecksums(g)
+	print('Image checksums created within {0}s'.format(time.time() - s))
 	
 	redirect('/setup/list/{0}'.format(game.title))
 

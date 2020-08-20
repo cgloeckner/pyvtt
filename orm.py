@@ -32,14 +32,18 @@ def getDataDir():
 
 def getMd5(handle):
 	hash_md5 = hashlib.md5()
+	offset = handle.tell()
 	for chunk in iter(lambda: handle.read(4096), b""):
 		hash_md5.update(chunk)
 	# rewind after reading
-	handle.seek(0)
+	handle.seek(offset)
 	return hash_md5.hexdigest()
 
 
 checksums = dict()
+
+def resetChecksums():
+	checksums = dict()
 
 def generateChecksums(game):
 	global checksums
@@ -129,12 +133,14 @@ class Game(db.Entity):
 		return os.listdir(self.getImagePath())
 
 	def getNextId(self):
-		next_id = 0
+		max_id = -1
 		for fname in os.listdir(self.getImagePath()):
 			number = int(fname.split('.png')[0])
-			if number >= next_id:
-				next_id = number + 1
-		return next_id
+			if number > max_id:
+				max_id = number
+		else:
+			return 0
+		return max_id + 1
 
 	def getImageUrl(self, image_id):
 		return '/token/{0}/{1}'.format(self.title, image_id)
@@ -153,7 +159,6 @@ class Game(db.Entity):
 			next_id    = self.getNextId()
 			image_id   = '{0}.png'.format(next_id)
 			local_path = os.path.join(game_root, image_id)
-			print(local_path)
 			handle.save(local_path)
 			checksums[self.title][new_md5] = image_id
 		
