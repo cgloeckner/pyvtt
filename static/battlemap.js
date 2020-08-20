@@ -238,7 +238,14 @@ function updateTokens() {
 			$.each(response['tokens'], function(index, token) {
 				updateToken(token);
 			});
+			
+			if (mouse_over_id > 0 && !tokens.includes(mouse_over_id)) {
+				// reset, token was removed
+				mouse_over_id = 0;
 				
+				updateTokenbar();
+			}
+			
 			// show rolls
 			var rolls_div = $('#rollbox')[0];
 			rolls_div.innerHTML = '';
@@ -283,7 +290,7 @@ function drawScene() {
 function updateGame() {
 	if (update_tick < 0) {
 		updateTokens();
-		update_tick = 125.0 / (1000.0 / fps);
+		update_tick = 50.0 / (1000.0 / fps);
 	} else {
 		update_tick -= 1;
 	}
@@ -342,24 +349,34 @@ function uploadDrop(event) {
 }
 
 function updateTokenbar() {
-	if (mouse_over_id > 0)  {
-		var token = tokens[mouse_over_id];
-		var bx = $('#battlemap')[0].getBoundingClientRect();
-		var x = bx.left + token.posx - token.size / 2 + 10;
-		var y = bx.top + token.posy - 36;
-		$('#tokenbar').css('left', x + 'px');
-		$('#tokenbar').css('top', y + 'px');
+	$('#tokenbar').css('visibility', 'hidden');
+
+	// query mouse over token
+	var token = selectToken(mouse_x, mouse_y);
+	if (token != null) {
+		mouse_over_id = token.id;
 		
-		if (token.locked) {
-			$('#tokenLock')[0].src = '/static/locked.png';
-			$('#tokenTop').css('visibility', 'hidden');
-			$('#tokenBottom').css('visibility', 'hidden');
-			$('#tokenStretch').css('visibility', 'hidden');
-		} else {	
-			$('#tokenLock')[0].src = '/static/unlocked.png';
-			$('#tokenTop').css('visibility', 'visible');
-			$('#tokenBottom').css('visibility', 'visible');
-			$('#tokenStretch').css('visibility', 'visible');
+		if (!grabbed) {
+			// update tokenbar if not grabbed
+			$('#tokenbar').css('visibility', 'visible');
+			
+			var bx = $('#battlemap')[0].getBoundingClientRect();
+			var x = bx.left + token.posx - token.size / 2 + 10;
+			var y = bx.top + token.posy - 36;
+			$('#tokenbar').css('left', x + 'px');
+			$('#tokenbar').css('top', y + 'px');
+			
+			if (token.locked) {
+				$('#tokenLock')[0].src = '/static/locked.png';
+				$('#tokenTop').css('visibility', 'hidden');
+				$('#tokenBottom').css('visibility', 'hidden');
+				$('#tokenStretch').css('visibility', 'hidden');
+			} else {	
+				$('#tokenLock')[0].src = '/static/unlocked.png';
+				$('#tokenTop').css('visibility', 'inherited');
+				$('#tokenBottom').css('visibility', 'inherited');
+				$('#tokenStretch').css('visibility', 'inherited');
+			}
 		}
 	}
 }
@@ -396,6 +413,8 @@ function tokenGrab(event) {
 		select_id = token.id;
 		grabbed = true;
 	}
+	
+	updateTokenbar();
 }
 
 /// Event handle for releasing a grabbed token
@@ -403,13 +422,15 @@ function tokenRelease() {
 	if (select_id != 0) {
 		grabbed = false;
 	}
+	
+	updateTokenbar();
 }
 
 /// Event handle for moving a grabbed token (if not locked)
 function tokenMove(event) {
 	pickCanvasPos(event);
 	
-	mouse_over_id = select_id;
+	updateTokenbar();
 	
 	if (select_id != 0 && grabbed) {
 		var token = tokens[select_id];
@@ -425,14 +446,6 @@ function tokenMove(event) {
 		if (!change_cache.includes(select_id)) {
 			change_cache.push(select_id);
 		}
-	}
-
-	// handle mouse over selection	
-	var token = selectToken(mouse_x, mouse_y);
-	if (token != null) {
-		mouse_over_id = token.id;
-			
-		updateTokenbar();
 	}
 }
 
@@ -503,6 +516,8 @@ function tokenShortcut(event) {
 				timeid = 0; // force full refresh next time
 		}
 	}
+	
+	updateTokenbar();
 }
 
 /// GM Event handle for (un)locking a token
@@ -510,6 +525,8 @@ function tokenLock() {
 	if (mouse_over_id != 0) {
 		var token = tokens[mouse_over_id];
 		token.locked = !token.locked;
+		
+		console.log(token.locked);
 		
 		// mark token as changed
 		if (!change_cache.includes(mouse_over_id)) {
@@ -571,6 +588,8 @@ function tokenBottom() {
 			change_cache.push(mouse_over_id);
 		}
 	}
+	
+	updateTokenbar();
 }
 
 /// GM Event handle for moving token to hightest z-order
@@ -596,5 +615,7 @@ function tokenTop() {
 			change_cache.push(mouse_over_id);
 		}
 	}
+	
+	updateTokenbar();
 }
 
