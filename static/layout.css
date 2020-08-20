@@ -126,15 +126,38 @@ div.dicebox img {
 }
 
 div.dicebox img:hover {
-	outline-color: red;
 	cursor: pointer;
 	filter: drop-shadow(1px 1px 10px gold) 
           drop-shadow(-1px -1px 0 gold);
 }
 
+div#tokenbar {
+	position: absolute;
+}
+
+div#tokenbar img {
+	width: 16px;
+	height: 16px;
+	margin: 0px;
+	padding: 0px;
+	filter: opacity(0.66);
+}
+
+div#tokenbar img.out {
+	position: relative;
+	left: -10px;
+}
+
+div#tokenbar img:hover {
+	cursor: pointer;
+	filter: invert(1.0)
+		drop-shadow(1px 1px 10px black) 
+		drop-shadow(-1px -1px 10px black);
+}
+
 div#players {
 	display: block;
-	width: auto;
+	width: 200px;
 	text-align: center;
 	margin-left: auto;
 	margin-right: auto;

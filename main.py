@@ -242,20 +242,22 @@ def post_image_upload(game_title, posx, posy):
 	files = request.files.getall('file[]')
 	
 	# place tokens in circle around given position
-	degree = 360 / len(files)
-	radius = 32 * len(files)**0.5
-	if len(files) == 1:
-		radius = 0
-	for i, handle in enumerate(files):
-		# move with radius-step towards y direction and rotate this position
-		s = math.sin(i * degree * 3.14 / 180)
-		c = math.cos(i * degree * 3.14 / 180)
-		x = posx - radius * s
-		y = posy + radius * c
-		url = game.upload(handle)
-		# create token
-		db.Token(scene=scene, timeid=scene.timeid, url=url, posx=int(x), posy=int(y))
-	
+	n = len(files)
+	if n > 0:
+		degree = 360 / n
+		radius = 32 * n**0.5
+		if n == 1:
+			radius = 0
+		for i, handle in enumerate(files):
+			# move with radius-step towards y direction and rotate this position
+			s = math.sin(i * degree * 3.14 / 180)
+			c = math.cos(i * degree * 3.14 / 180)
+			x = posx - radius * s
+			y = posy + radius * c
+			url = game.upload(handle)
+			# create token
+			db.Token(scene=scene, timeid=scene.timeid, url=url, posx=int(x), posy=int(y))
+		
 	db.commit()
 	
 	redirect('/gm/{0}'.format(game_title))

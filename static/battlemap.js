@@ -40,9 +40,9 @@ function addToken(id, url) {
 function selectToken(x, y) {
 	var result = null;
 	var bestz = min_z - 1;
-	// search for any fitting token with highest z-order
+	// search for any fitting token with highest z-order (unlocked first)
 	$.each(tokens, function(index, item) {
-		if (item != null) {
+		if (item != null && !item.locked) {
 			var min_x = item.posx - item.size / 2;
 			var max_x = item.posx + item.size / 2;
 			var min_y = item.posy - item.size / 2;
@@ -55,6 +55,23 @@ function selectToken(x, y) {
 			}
 		}
 	});
+	if (result == null) {
+		// try locked tokens next
+		$.each(tokens, function(index, item) {
+			if (item != null && item.locked) {
+				var min_x = item.posx - item.size / 2;
+				var max_x = item.posx + item.size / 2;
+				var min_y = item.posy - item.size / 2;
+				var max_y = item.posy + item.size / 2;
+				if (min_x <= x && x <= max_x && min_y <= y && y <= max_y) {
+					if (item.zorder > bestz) {
+						bestz = item.zorder;
+						result = item;
+					}
+				}
+			}
+		});
+	}
 	return result;
 }
 
@@ -127,6 +144,7 @@ var mouse_y = 0;
 
 var copy_token = 0; // determines copy-selected token (CTRL+C)
 var select_id = 0; // determines selected token
+var mouse_over_id = 0; // determines which token would be selected
 var grabbed = 0; // determines whether grabbed or not
 var update_tick = 0; // delays updates to not every loop tick
 var full_tick = 0; // counts updates until the next full update is requested
@@ -323,6 +341,29 @@ function uploadDrop(event) {
 	});
 }
 
+function updateTokenbar() {
+	if (mouse_over_id > 0)  {
+		var token = tokens[mouse_over_id];
+		var bx = $('#battlemap')[0].getBoundingClientRect();
+		var x = bx.left + token.posx - token.size / 2 + 10;
+		var y = bx.top + token.posy - 36;
+		$('#tokenbar').css('left', x + 'px');
+		$('#tokenbar').css('top', y + 'px');
+		
+		if (token.locked) {
+			$('#tokenLock')[0].src = '/static/locked.png';
+			$('#tokenTop').css('visibility', 'hidden');
+			$('#tokenBottom').css('visibility', 'hidden');
+			$('#tokenStretch').css('visibility', 'hidden');
+		} else {	
+			$('#tokenLock')[0].src = '/static/unlocked.png';
+			$('#tokenTop').css('visibility', 'visible');
+			$('#tokenBottom').css('visibility', 'visible');
+			$('#tokenStretch').css('visibility', 'visible');
+		}
+	}
+}
+
 // ----------------------------------------------------------------------------
 
 /// Select mouse/touch position relative to the canvas
@@ -349,17 +390,12 @@ function tokenGrab(event) {
 	prev_id = select_id;
 	
 	select_id = 0;
+	
 	var token = selectToken(mouse_x, mouse_y);
-	if (token != null) {
+	if (token != null && !token.locked) {
 		select_id = token.id;
 		grabbed = true;
-		
-		// show GM-info
-		$('#locked')[0].checked = token.locked;
 	}
-
-	// hide context menu	
-	$('#tokenmenu').css('display', 'none');
 }
 
 /// Event handle for releasing a grabbed token
@@ -367,19 +403,13 @@ function tokenRelease() {
 	if (select_id != 0) {
 		grabbed = false;
 	}
-	
-	if (as_gm && select_id != 0 && event.button == 2) { // right click
-		// show context menu
-		var menu = $('#tokenmenu');
-		menu.css('display', 'block');
-		menu.css('left', abs_mouse_x);
-		menu.css('top', abs_mouse_y);
-	}
 }
 
 /// Event handle for moving a grabbed token (if not locked)
 function tokenMove(event) {
 	pickCanvasPos(event);
+	
+	mouse_over_id = select_id;
 	
 	if (select_id != 0 && grabbed) {
 		var token = tokens[select_id];
@@ -395,6 +425,14 @@ function tokenMove(event) {
 		if (!change_cache.includes(select_id)) {
 			change_cache.push(select_id);
 		}
+	}
+
+	// handle mouse over selection	
+	var token = selectToken(mouse_x, mouse_y);
+	if (token != null) {
+		mouse_over_id = token.id;
+			
+		updateTokenbar();
 	}
 }
 
@@ -436,6 +474,8 @@ function tokenWheel(event) {
 			}
 		}
 	}
+	
+	updateTokenbar();
 }
 
 /// Event handle to click a dice
@@ -467,23 +507,29 @@ function tokenShortcut(event) {
 
 /// GM Event handle for (un)locking a token
 function tokenLock() {
-	if (select_id != 0) {
-		tokens[select_id].locked = $('#locked')[0].checked;
+	if (mouse_over_id != 0) {
+		var token = tokens[mouse_over_id];
+		token.locked = !token.locked;
 		
 		// mark token as changed
-		if (!change_cache.includes(select_id)) {
-			change_cache.push(select_id);
+		if (!change_cache.includes(mouse_over_id)) {
+			change_cache.push(mouse_over_id);
 		}
 		
-		// hide context menu	
-		$('#tokenmenu').css('display', 'none');
+		updateTokenbar();
 	}
 }
 
 /// GM Event handle for stretching a token to fit the screen
 function tokenStretch() {
-	if (select_id != 0) {
-		var token = tokens[select_id];
+	if (mouse_over_id != 0) {
+		var token = tokens[mouse_over_id];
+		
+		if (token.locked) {
+			// ignore if locked
+			console.log('cannot stretch locked token');
+			return;
+		}
 		
 		// stretch and center token in the center
 		var canvas = $('#battlemap')[0];
@@ -494,20 +540,24 @@ function tokenStretch() {
 		token.locked = true;
 			
 		// mark token as changed
-		if (!change_cache.includes(select_id)) {
-			change_cache.push(select_id);
+		if (!change_cache.includes(mouse_over_id)) {
+			change_cache.push(mouse_over_id);
 		}
 		
-		// hide context menu	
-		$('#tokenmenu').css('display', 'none');
+		updateTokenbar();
 	}
 }
 
 /// GM Event handle for moving token to lowest z-order
 function tokenBottom() {
-	if (select_id != 0) {
-		var token = tokens[select_id];
+	if (mouse_over_id != 0) {
+		var token = tokens[mouse_over_id];
 		
+		if (token.locked) {
+			// ignore if locked
+			console.log('cannot move locked token to bottom');
+			return;
+		}
 		// move beneath lowest known z-order
 		if (token.locked) {
 			token.zorder = 1;
@@ -517,20 +567,22 @@ function tokenBottom() {
 		}
 		
 		// mark token as changed
-		if (!change_cache.includes(select_id)) {
-			change_cache.push(select_id);
+		if (!change_cache.includes(mouse_over_id)) {
+			change_cache.push(mouse_over_id);
 		}
-		
-		// hide context menu	
-		$('#tokenmenu').css('display', 'none');
 	}
 }
 
 /// GM Event handle for moving token to hightest z-order
 function tokenTop() {
-	if (select_id != 0) {
-		var token = tokens[select_id];
+	if (mouse_over_id != 0) {
+		var token = tokens[mouse_over_id];
 		
+		if (token.locked) {
+			// ignore if locked
+			console.log('cannot move locked token to top');
+			return;
+		}
 		// move above highest known z-order
 		if (token.locked) {
 			token.zorder = -1;
@@ -540,12 +592,9 @@ function tokenTop() {
 		}
 			
 		// mark token as changed
-		if (!change_cache.includes(select_id)) {
-			change_cache.push(select_id);
+		if (!change_cache.includes(mouse_over_id)) {
+			change_cache.push(mouse_over_id);
 		}
-		
-		// hide context menu	
-		$('#tokenmenu').css('display', 'none');
 	}
 }
 

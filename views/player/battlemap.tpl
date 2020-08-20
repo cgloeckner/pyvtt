@@ -12,13 +12,6 @@
 
 %width = 1200
 	<div class="battlemap">
-		<div id="tokenmenu">
-			<input type="checkbox" name="locked" id="locked" onChange="tokenLock()" /><label for="locked">Locked</label>
-			<input type="button" onClick="tokenStretch()" value="stretch" />
-			<input type="button" onClick="tokenBottom()" value="bottom" />
-			<input type="button" onClick="tokenTop()" value="top" />
-		</div>
-		
 		<canvas id="battlemap" width="{{width}}" height=720"></canvas>
 		
 		<div class="mapfooter">
@@ -27,8 +20,16 @@
 				<img src="/static/d{{sides}}.png" id="d{{sides}}" title="Roll 1D{{sides}}" />
 %end
 			</div>
+			
 			<div id="players"></div>
 
+			<div id="tokenbar">
+				<img src="/static/locked.png" id="tokenLock" onClick="tokenLock();" /><br />
+				<img src="/static/top.png" id="tokenTop" class="out" onClick="tokenTop();" /><br />
+				<img src="/static/bottom.png" id="tokenBottom" class="out" onClick="tokenBottom();" /><br />
+				<img src="/static/stretch.png" id="tokenStretch" onClick="tokenStretch();" /><br />
+			</div>
+			
 			<form id="uploadform" action="/gm/{{game.title}}/upload" method="post" enctype="multipart/form-data">
 				<input id="uploadqueue" name="file[]" type="file" multiple />
 				<input type="submit" value="upload" />
