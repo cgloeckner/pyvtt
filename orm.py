@@ -1,11 +1,34 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os
+import os, sys, pathlib
 
 from pony.orm import *
 
 __author__ = "Christian Glöckner"
+
+
+
+def getDataDir():
+	"""Returns a path object where persistent application data can be stored."""
+	# query home
+	p = pathlib.Path.home()
+	
+	# query system-specific appdata path
+	if sys.platform.startswith('linux'):
+		p = p / ".local" / "share"
+	else:
+		raise NotImplementedError('only linux supported yet')
+	
+	# ensure pyVTT folder exists
+	p = p / "pyVTT"
+	if not os.path.isdir(p):
+		print('Creating {0}'.format(p))
+		os.mkdir(p)
+	
+	return p
+
+
 
 db = Database()
 
@@ -79,7 +102,7 @@ class Game(db.Entity):
 	rolls   = Set(Roll)
 	
 	def getImagePath(self):
-		return os.path.join('.', 'games', self.title)
+		return getDataDir() / 'games' / self.title
 
 	def getAllImages(self):
 		return os.listdir(self.getImagePath())

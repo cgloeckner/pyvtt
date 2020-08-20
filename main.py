@@ -5,7 +5,7 @@ from bottle import *
 import os, json, random, time, sys
 
 from pony import orm
-from orm import db, db_session, Token, Game
+from orm import db, db_session, Token, Game, getDataDir
 
 __author__ = "Christian Glöckner"
 
@@ -13,7 +13,9 @@ host  = '0.0.0.0'
 debug = True
 port  = 8080
 
-db.bind('sqlite', 'data.db', create_db=True)
+
+# setup database connection
+db.bind('sqlite', str(getDataDir() / 'data.db'), create_db=True)
 db.generate_mapping(create_tables=True)
 
 app = default_app()
