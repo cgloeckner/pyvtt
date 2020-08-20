@@ -239,12 +239,7 @@ function updateTokens() {
 				updateToken(token);
 			});
 			
-			if (mouse_over_id > 0 && !tokens.includes(mouse_over_id)) {
-				// reset, token was removed
-				mouse_over_id = 0;
-				
-				updateTokenbar();
-			}
+			updateTokenbar();
 			
 			// show rolls
 			var rolls_div = $('#rollbox')[0];
@@ -373,9 +368,9 @@ function updateTokenbar() {
 				$('#tokenStretch').css('visibility', 'hidden');
 			} else {	
 				$('#tokenLock')[0].src = '/static/unlocked.png';
-				$('#tokenTop').css('visibility', 'inherited');
-				$('#tokenBottom').css('visibility', 'inherited');
-				$('#tokenStretch').css('visibility', 'inherited');
+				$('#tokenTop').css('visibility', '');
+				$('#tokenBottom').css('visibility', '');
+				$('#tokenStretch').css('visibility', '');
 			}
 		}
 	}
@@ -413,8 +408,6 @@ function tokenGrab(event) {
 		select_id = token.id;
 		grabbed = true;
 	}
-	
-	updateTokenbar();
 }
 
 /// Event handle for releasing a grabbed token
@@ -422,15 +415,11 @@ function tokenRelease() {
 	if (select_id != 0) {
 		grabbed = false;
 	}
-	
-	updateTokenbar();
 }
 
 /// Event handle for moving a grabbed token (if not locked)
 function tokenMove(event) {
 	pickCanvasPos(event);
-	
-	updateTokenbar();
 	
 	if (select_id != 0 && grabbed) {
 		var token = tokens[select_id];
@@ -487,8 +476,6 @@ function tokenWheel(event) {
 			}
 		}
 	}
-	
-	updateTokenbar();
 }
 
 /// Event handle to click a dice
@@ -516,8 +503,6 @@ function tokenShortcut(event) {
 				timeid = 0; // force full refresh next time
 		}
 	}
-	
-	updateTokenbar();
 }
 
 /// GM Event handle for (un)locking a token
@@ -526,14 +511,10 @@ function tokenLock() {
 		var token = tokens[mouse_over_id];
 		token.locked = !token.locked;
 		
-		console.log(token.locked);
-		
 		// mark token as changed
 		if (!change_cache.includes(mouse_over_id)) {
 			change_cache.push(mouse_over_id);
 		}
-		
-		updateTokenbar();
 	}
 }
 
@@ -560,8 +541,6 @@ function tokenStretch() {
 		if (!change_cache.includes(mouse_over_id)) {
 			change_cache.push(mouse_over_id);
 		}
-		
-		updateTokenbar();
 	}
 }
 
@@ -588,8 +567,6 @@ function tokenBottom() {
 			change_cache.push(mouse_over_id);
 		}
 	}
-	
-	updateTokenbar();
 }
 
 /// GM Event handle for moving token to hightest z-order
@@ -615,7 +592,5 @@ function tokenTop() {
 			change_cache.push(mouse_over_id);
 		}
 	}
-	
-	updateTokenbar();
 }
 
