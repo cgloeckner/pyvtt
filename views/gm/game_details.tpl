@@ -46,7 +46,8 @@
 </ul>
 <a href="/gm/{{game.title}}/clearRolls">clear old rolls ({{num_old}})</a> <hr />
 
-<a href="/gm/{{game.title}}/clearImages">clear abandoned images</a> <hr />
+%num_abandoned = len(game.getAbandonedImages())
+<a href="/gm/{{game.title}}/clearImages">clear abandoned images ({{num_abandoned}})</a> <hr />
 
 <a href="/">Back to Games Overview</a>
 
