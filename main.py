@@ -2,7 +2,7 @@
 
 from bottle import *
 
-import os, json, random, time, sys
+import os, json, random, time, sys, math
 
 from pony import orm
 from orm import db, db_session, Token, Game, getDataDir, generateChecksums
@@ -221,12 +221,20 @@ def post_image_upload(game_title, posx, posy):
 	# and create a token each
 	files = request.files.getall('file[]')
 	
-	yoffset = 0
-	for handle in files:
+	# place tokens in circle around given position
+	degree = 360 / len(files)
+	radius = 32 * len(files)**0.5
+	if len(files) == 1:
+		radius = 0
+	for i, handle in enumerate(files):
+		# move with radius-step towards y direction and rotate this position
+		s = math.sin(i * degree * 3.14 / 180)
+		c = math.cos(i * degree * 3.14 / 180)
+		x = posx - radius * s
+		y = posy + radius * c
 		url = game.upload(handle)
 		# create token
-		db.Token(scene=scene, timeid=scene.timeid, url=url, posx=posx, posy=posy + 10 * yoffset)
-		yoffset += 1
+		db.Token(scene=scene, timeid=scene.timeid, url=url, posx=int(x), posy=int(y))
 	
 	db.commit()
 	
