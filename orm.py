@@ -138,8 +138,6 @@ class Game(db.Entity):
 			number = int(fname.split('.png')[0])
 			if number > max_id:
 				max_id = number
-		else:
-			return 0
 		return max_id + 1
 
 	def getImageUrl(self, image_id):
