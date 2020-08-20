@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib
+import os, sys, pathlib, hashlib
 
 from pony.orm import *
 
@@ -27,6 +27,25 @@ def getDataDir():
 		os.mkdir(p)
 	
 	return p
+
+
+
+def getMd5(handle):
+	hash_md5 = hashlib.md5()
+	for chunk in iter(lambda: handle.read(4096), b""):
+		hash_md5.update(chunk)
+	return hash_md5.hexdigest()
+
+
+checksums = dict()
+
+def generateChecksums(game):
+	global checksums
+	checksums[game.title] = dict()
+	for fname in game.getAllImages():
+		with open(game.getImagePath() / fname, "rb") as handle:
+			md5 = getMd5(handle)
+			checksums[game.title][md5] = fname
 
 
 
@@ -116,14 +135,18 @@ class Game(db.Entity):
 		game_root = self.getImagePath()
 		if not os.path.isdir(game_root):
 			os.mkdir(game_root)
-		
-		# generate internal filename
-		image_id   = '{0}.png'.format(len(self.getAllImages()))
-		local_path = os.path.join(game_root, image_id)
-		handle.save(local_path)
+
+		# test for duplicates via md5 checksum
+		new_md5 = getMd5(handle.file)
+		if new_md5 not in checksums[self.title]:
+			# create new image on disk
+			image_id   = '{0}.png'.format(len(self.getAllImages()))
+			local_path = os.path.join(game_root, image_id)
+			handle.save(local_path)
+			checksums[self.title][new_md5] = image_id
 		
 		# propagate remote path
-		return self.getImageUrl(image_id)
+		return self.getImageUrl(checksums[self.title][new_md5])
 
 	def clear(self):
 		game_root = self.getImagePath()

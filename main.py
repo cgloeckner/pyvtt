@@ -5,7 +5,7 @@ from bottle import *
 import os, json, random, time, sys
 
 from pony import orm
-from orm import db, db_session, Token, Game, getDataDir
+from orm import db, db_session, Token, Game, getDataDir, generateChecksums
 
 __author__ = "Christian Glöckner"
 
@@ -21,6 +21,12 @@ db.generate_mapping(create_tables=True)
 app = default_app()
 app.catchall = not debug
 app.install(db_session)
+
+with db_session:
+	s = time.time()
+	for g in db.Game.select():
+		generateChecksums(g)
+	print('Image checksums created within {0}s'.format(time.time() - s))
 
 # -----------------------------------------------------------------------------
 
@@ -452,9 +458,6 @@ for i in range(10):
 	gametitle_whitelist.append('{0}'.format(i))
 gametitle_whitelist.append('-')
 gametitle_whitelist.append('_')
-
-if not os.path.isdir('games'):
-	os.mkdir('games')
 
 app = default_app()
 
