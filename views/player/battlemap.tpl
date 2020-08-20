@@ -34,6 +34,8 @@
 				<input id="uploadqueue" name="file[]" type="file" multiple />
 				<input type="submit" value="upload" />
 			</form>
+			
+			<div id="error">Connecting...</div>
 
 		</div>
 	</div>
@@ -75,7 +77,6 @@ battlemap.addEventListener('dragover', uploadDrag);
 battlemap.addEventListener('drop', uploadDrop);
 
 // context menu implementing for token's
-document.addEventListener('mousemove', mouseMove);
 document.addEventListener('contextmenu', event => {
   event.preventDefault();
 });

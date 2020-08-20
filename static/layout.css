@@ -186,3 +186,14 @@ form#uploadform {
 	display: none;
 }
 
+div#error {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 150px;
+	color: red;
+	border: 2px solid red;
+	padding: 5px;
+	background-color: black;
+}
+

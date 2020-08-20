@@ -151,16 +151,6 @@ var full_tick = 0; // counts updates until the next full update is requested
 
 const fps = 60;
 
-/// mouse tracking
-var abs_mouse_x = 0;
-var abs_mouse_y = 0;
-
-function mouseMove(event) {
-	abs_mouse_x = event.clientX;
-	abs_mouse_y = event.clientY;
-}
-
-
 function showRoll(sides, result, player, color, time) {
 	var target = $('#rollbox')[0];
 	var div_class = 'roll';
@@ -206,7 +196,6 @@ function updateTokens() {
 		};
 		changes.push(data);
 	});
-	change_cache = [];
 	
 	// fake zero-timeid if full update is requested
 	if (full_tick == 0) {
@@ -256,6 +245,21 @@ function updateTokens() {
 				var parts = line.split(':');
 				showPlayer(parts[0], parts[1], parts[0] == your_player_name);
 			});
+			
+			// reset changes
+			change_cache = [];
+			
+			$('#error').css('visibility', 'hidden');
+		}, error: function(jqXHR, text, error) {
+			// animate 'Connecting' with multiple dots
+			var error = $('#error');
+			error.css('visibility', 'visible');
+			var dots = error[0].innerHTML.split('Connecting')[1].length;
+			error[0].innerHTML = 'Connecting';
+			dots = (dots + 1) % 10;
+			for (i = 1; i <= dots; ++i) {
+				error[0].innerHTML += '.';
+			}
 		}
 	});
 }
