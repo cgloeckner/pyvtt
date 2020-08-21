@@ -55,6 +55,15 @@ $(window).on('unload', function() {
 	disconnect();
 });
 
+// disable window context menu for token right click
+document.addEventListener('contextmenu', event => {
+  event.preventDefault();
+});
+
+// drop zone implementation (using canvas) --> also as players :) 
+battlemap.addEventListener('dragover', uploadDrag);
+battlemap.addEventListener('drop', uploadDrop);
+
 // desktop controls
 battlemap.addEventListener('mousedown', tokenGrab);
 battlemap.addEventListener('mousemove', tokenMove);
@@ -67,14 +76,6 @@ battlemap.addEventListener('touchstart', tokenGrab);
 battlemap.addEventListener('touchmove', tokenMove);
 battlemap.addEventListener('touchend', tokenRelease);
 
-// drop zone implementation (using canvas) --> also as players :) 
-battlemap.addEventListener('dragover', uploadDrag);
-battlemap.addEventListener('drop', uploadDrop);
-
-// context menu implementing for token's
-document.addEventListener('contextmenu', event => {
-  event.preventDefault();
-});
 
 start('{{game.title}}');
 </script>

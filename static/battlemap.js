@@ -394,13 +394,24 @@ function tokenGrab(event) {
 	pickCanvasPos(event);
 
 	prev_id = select_id;
-	
 	select_id = 0;
-	
 	var token = selectToken(mouse_x, mouse_y);
+	
 	if (token != null && !token.locked) {
-		select_id = token.id;
-		grabbed = true;
+		if (event.buttons == 1) {
+			// Left click: select token
+			select_id = token.id;
+			grabbed = true;
+		} else if (event.buttons == 2) {
+			// Right click: reset token scale & rotation
+			token.rotate = 0;
+			token.size   = 64;
+			
+			// mark token as changed
+			if (!change_cache.includes(token.id)) {
+				change_cache.push(token.id);
+			}
+		}
 	}
 }
 
