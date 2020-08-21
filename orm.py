@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, threading
+import os, sys, pathlib, hashlib, threading, logging
 
 from pony.orm import *
 
@@ -23,13 +23,11 @@ def getDataDir():
 	p = p / "pyVTT"
 	
 	if not os.path.isdir(p):
-		print('Creating {0}'.format(p))
 		os.mkdir(p)
 	
 	return p
 
 vtt_data_dir = getDataDir()
-
 
 
 def getMd5(handle):

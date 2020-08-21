@@ -2,7 +2,7 @@
 
 from bottle import *
 
-import os, json, random, time, sys, math
+import os, json, random, time, sys, math, logging
 
 from pony import orm
 from orm import db, db_session, Token, Game, vtt_data_dir
@@ -12,6 +12,13 @@ __author__ = "Christian Glöckner"
 host  = '0.0.0.0'
 debug = True
 port  = 8080
+
+
+if 'debug' in sys.argv:
+	logging.basicConfig(filename=vtt_data_dir / 'pyvtt.log', level=logging.DEBUG)
+else:
+	logging.basicConfig(filename=vtt_data_dir / 'pyvtt.log', level=logging.INFO)
+
 
 # setup database connection
 db.bind('sqlite', str(vtt_data_dir / 'data.db'), create_db=True)
@@ -26,7 +33,8 @@ with db_session:
 	for g in db.Game.select():
 		g.makeLock()
 		g.makeMd5s()
-	print('Image checksums and threading locks created within {0}s'.format(time.time() - s))
+	t = time.time() - s
+	logging.info('Image checksums and threading locks created within {0}s'.format(t))
 
 # -----------------------------------------------------------------------------
 
@@ -215,12 +223,12 @@ def clear_images(game_title):
 	# query and remove abandoned images (those without any token)
 	cleanup, count = game.removeAbandonedImages()
 	megs = cleanup / (1024.0*1024.0)
-	print('{0} abandoned images deleted, {1} MB freed'.format(count, megs))
+	logging.info('{0} abandoned images deleted, {1} MB freed'.format(count, megs))
 	
 	# refresh checksums
 	s = time.time()
 	game.makeMd5s()
-	print('Image checksums for {1} created within {0}s'.format(time.time() - s, game.title))
+	logging.info('Image checksums for {1} created within {0}s'.format(time.time() - s, game.title))
 	
 	redirect('/setup/list/{0}'.format(game.title))
 
