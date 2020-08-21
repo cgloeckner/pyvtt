@@ -46,7 +46,7 @@ def get_game_list():
 
 @post('/setup/create', apply=[asGm])
 def post_create_game():
-	game_title = applyWhitelist(request.forms.game_title)
+	game_title = engine.applyWhitelist(request.forms.game_title)
 	
 	# create game
 	game = db.Game(title=game_title)
@@ -88,7 +88,7 @@ def post_create_scene(game_title):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
 	# check existing scenes in this game for title-collision
-	title = applyWhitelist(request.forms.scene_title)
+	title = engine.applyWhitelist(request.forms.scene_title)
 	for s in db.Scene.select(lambda s: s.game == game):
 		if s.title == title:
 			redirect('/gm/{0}'.format(game.title))
@@ -228,8 +228,8 @@ def player_login(game_title):
 @post('/login/<game_title>')
 @view('player/redirect')
 def set_player_name(game_title):
-	playername = applyWhitelist(request.forms.get('playername'))[:12]
-	playercolor  = request.forms.get('playercolor')
+	playername  = engine.applyWhitelist(request.forms.get('playername'))[:12]
+	playercolor = request.forms.get('playercolor')
 	
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()

@@ -128,6 +128,108 @@ function drawToken(token, show_ui) {
 	context.restore();
 }
 
+// --- player and rolls implementation ----------------------------------------
+
+var players = {};
+var rolls   = [];
+
+/// Roll constructor
+function Roll(sides, playername, result) {
+	this.sides      = sides;
+	this.playername = player;
+	this.result     = result;
+}
+
+function updatePlayers(response) {
+	var own_name = document.cookie.split(';')[0].split('=')[1];
+	
+	// parse players to key-value pairs (name => color)
+	var current = {};
+	$.each(response, function(index, line) {
+		var parts = line.split(':');
+		name  = parts[0];
+		color = parts[1];
+		current[name] = color;
+		
+		if (players[name] == null) {
+			// add new player
+			players[name] = color;
+			console.log(name, 'joined');
+			
+			var container = '<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">';
+			if (name == own_name) {
+				container += '<a href="/play/' + game_title + '/logout" title="Logout">' + name + '</a>';
+			} else {
+				container += name;
+			}
+			container += '</span>';
+			$('#players').append(container);
+		}
+	});
+	
+	$.each(players, function(name, color) {
+		if (color != null && current[name] == null) {
+			// remove existing player
+			players[name] = null;
+			console.log(name, 'left');
+			
+			$('#player_' + name).remove();
+		}
+	});
+}
+
+function showRoll(sides, result, player, color, time) {
+	var target = $('#rollbox')[0];
+	var div_class = 'roll';
+	if (result == 1) {
+		div_class += ' min-roll';
+	}
+	if (result == sides) {
+		div_class += ' max-roll';
+	}
+	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" style="filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"/><span class="result" style="color: ' + color + ';">' + result + '</span><span class="player">' + player + '<br />' + time + '</span></div>';
+}
+
+function updateRolls(rolls) {
+			// show rolls
+			var rolls_div = $('#rollbox')[0];
+			rolls_div.innerHTML = '';
+			$.each(rolls, function(index, roll) {
+				showRoll(roll['sides'], roll['result'], roll['player'], roll['color'], roll['time']);
+			});
+			
+}
+
+/*
+function showPlayer(name, color, quit_link) {
+	var out = '<span class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">';
+	if (quit_link) {
+		out += '<a href="/play/' + game_title + '/logout" title="Logout">';
+	}
+	out += name;
+	if (quit_link) {
+		out += '</a>';
+	}
+	out += '</span>';
+	
+	var target = $('#players')[0];
+	target.innerHTML += out;
+}
+
+
+function updatePlayers(players) {
+
+			// show players
+			var players_div = $('#players')[0];
+			var your_player_name = document.cookie.split(';')[0].split('=')[1];
+			players_div.innerHTML = '';
+			$.each(players, function(index, line) {
+				var parts = line.split(':');
+				showPlayer(parts[0], parts[1], parts[0] == your_player_name);
+			});
+}
+*/
+
 // --- game state implementation ----------------------------------------------
 
 var game_title = '';
@@ -144,33 +246,6 @@ var update_tick = 0; // delays updates to not every loop tick
 var full_tick = 0; // counts updates until the next full update is requested
 
 const fps = 60;
-
-function showRoll(sides, result, player, color, time) {
-	var target = $('#rollbox')[0];
-	var div_class = 'roll';
-	if (result == 1) {
-		div_class += ' min-roll';
-	}
-	if (result == sides) {
-		div_class += ' max-roll';
-	}
-	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" style="filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"/><span class="result" style="color: ' + color + ';">' + result + '</span><span class="player">' + player + '<br />' + time + '</span></div>';
-}
-
-function showPlayer(name, color, quit_link) {
-	var out = '<span class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">';
-	if (quit_link) {
-		out += '<a href="/play/' + game_title + '/logout" title="Logout">';
-	}
-	out += name;
-	if (quit_link) {
-		out += '</a>';
-	}
-	out += '</span>';
-	
-	var target = $('#players')[0];
-	target.innerHTML += out;
-}
 
 /// Triggers token updates (pushing and pulling token data via the server)
 function updateTokens() {
@@ -223,22 +298,8 @@ function updateTokens() {
 			});
 			
 			updateTokenbar();
-			
-			// show rolls
-			var rolls_div = $('#rollbox')[0];
-			rolls_div.innerHTML = '';
-			$.each(response['rolls'], function(index, roll) {
-				showRoll(roll['sides'], roll['result'], roll['player'], roll['color'], roll['time']);
-			});
-			
-			// show players
-			var players_div = $('#players')[0];
-			var your_player_name = document.cookie.split(';')[0].split('=')[1];
-			players_div.innerHTML = '';
-			$.each(response['players'], function(index, line) {
-				var parts = line.split(':');
-				showPlayer(parts[0], parts[1], parts[0] == your_player_name);
-			});
+			updateRolls(response['rolls']);
+			updatePlayers(response['players']);
 			
 			// reset changes
 			change_cache = [];
