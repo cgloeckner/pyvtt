@@ -350,7 +350,7 @@ function updateTokenbar() {
 			$('#tokenbar').css('visibility', 'visible');
 			
 			var bx = $('#battlemap')[0].getBoundingClientRect();
-			var x = bx.left + token.posx - token.size / 2 + 10;
+			var x = bx.left + token.posx - token.size / 2 + 5;
 			var y = bx.top + token.posy - 36;
 			$('#tokenbar').css('left', x + 'px');
 			$('#tokenbar').css('top', y + 'px');
@@ -446,8 +446,8 @@ function tokenWheel(event) {
 			if (token.size > 1440) {
 				token.size = 1440;
 			}
-			if (token.size < 16) {
-				token.size = 16;
+			if (token.size < 32) {
+				token.size = 32;
 			}
 				
 			// mark token as changed
