@@ -128,20 +128,16 @@ function drawToken(token, show_ui) {
 	context.restore();
 }
 
-// --- player and rolls implementation ----------------------------------------
+// --- player implementation --------------------------------------------------
 
 var players = {};
-var rolls   = [];
 
-/// Roll constructor
-function Roll(sides, playername, result) {
-	this.sides      = sides;
-	this.playername = player;
-	this.result     = result;
+function getCookie(key) {
+	return document.cookie.split(key + '=')[1].split('; ')[0];
 }
 
 function updatePlayers(response) {
-	var own_name = document.cookie.split(';')[0].split('=')[1];
+	var own_name = getCookie('playername');
 	
 	// parse players to key-value pairs (name => color)
 	var current = {};
@@ -178,6 +174,18 @@ function updatePlayers(response) {
 	});
 }
 
+
+// --- dice rolls implementation ---------------------------------------------- 
+
+var rolls   = [];
+
+/// Roll constructor
+function Roll(sides, playername, result) {
+	this.sides      = sides;
+	this.playername = player;
+	this.result     = result;
+}
+
 function showRoll(sides, result, player, color, time) {
 	var target = $('#rollbox')[0];
 	var div_class = 'roll';
@@ -191,44 +199,14 @@ function showRoll(sides, result, player, color, time) {
 }
 
 function updateRolls(rolls) {
-			// show rolls
-			var rolls_div = $('#rollbox')[0];
-			rolls_div.innerHTML = '';
-			$.each(rolls, function(index, roll) {
-				showRoll(roll['sides'], roll['result'], roll['player'], roll['color'], roll['time']);
-			});
-			
+	// show rolls
+	var rolls_div = $('#rollbox')[0];
+	rolls_div.innerHTML = '';
+	$.each(rolls, function(index, roll) {
+		showRoll(roll['sides'], roll['result'], roll['player'], roll['color'], roll['time']);
+	});		
 }
 
-/*
-function showPlayer(name, color, quit_link) {
-	var out = '<span class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">';
-	if (quit_link) {
-		out += '<a href="/play/' + game_title + '/logout" title="Logout">';
-	}
-	out += name;
-	if (quit_link) {
-		out += '</a>';
-	}
-	out += '</span>';
-	
-	var target = $('#players')[0];
-	target.innerHTML += out;
-}
-
-
-function updatePlayers(players) {
-
-			// show players
-			var players_div = $('#players')[0];
-			var your_player_name = document.cookie.split(';')[0].split('=')[1];
-			players_div.innerHTML = '';
-			$.each(players, function(index, line) {
-				var parts = line.split(':');
-				showPlayer(parts[0], parts[1], parts[0] == your_player_name);
-			});
-}
-*/
 
 // --- game state implementation ----------------------------------------------
 

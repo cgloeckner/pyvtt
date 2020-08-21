@@ -217,15 +217,21 @@ def static_token(game_title, fname):
 	
 	return static_file(fname, root=path)
 
-@get('/login/<game_title>')
+@get('/play/<game_title>/login')
 @view('player/login')
 def player_login(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
-	return dict(game=game)
+	# pick color (either from cookie or random)
+	playercolor = request.get_cookie('playercolor')
+	if playercolor is None:
+		colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
+		playercolor = colors[random.randrange(len(colors))]
+	
+	return dict(game=game, color=playercolor)
 
-@post('/login/<game_title>')
+@post('/play/<game_title>/login')
 @view('player/redirect')
 def set_player_name(game_title):
 	playername  = engine.applyWhitelist(request.forms.get('playername'))[:12]
@@ -250,7 +256,7 @@ def get_player_battlemap(game_title):
 	
 	# redirect to login if player not found
 	if playername is None:
-		redirect('/login/{0}'.format(game_title))
+		redirect('/play/{0}/login'.format(game_title))
 
 	else:
 		# load game
@@ -298,13 +304,12 @@ def quit_game(game_title):
 	
 	# reset cookie
 	response.set_cookie('playername', playername, path='/play/{0}'.format(game_title), expires=0)
-	response.set_cookie('playercolor', playercolor, path='/play/{0}'.format(game_title), expires=0)
+	# note: color is kept in cookies
 	
 	# remove player
 	if game_title in engine.players and playername in engine.players[game_title]:
 		engine.players[game_title].remove(playername)
-
-	# note: color is kept
+	# note: color is kept in cache
 	
 	# show login page
 	redirect('/play/{0}'.format(game_title))
