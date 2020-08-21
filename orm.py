@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, threading, logging, time
+import os, sys, pathlib, hashlib, threading, logging, time, requests
 
 from pony.orm import *
 
@@ -37,6 +37,9 @@ class Engine(object):
 		self.port  = 8080
 		self.debug = True
 		self.lazy  = False
+		
+		# query public ip
+		self.publicip = requests.get('https://api.ipify.org').text
 
 		# whitelist for game titles etc.
 		self.gametitle_whitelist = []

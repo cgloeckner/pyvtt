@@ -5,7 +5,7 @@
 
 <h1>Setup Game: {{game.title}}</a></h1>
 %if game.active != '':
-<a href="/play/{{game.title}}" target="_blank">Play</a>
+<a href="http://{{server}}/play/{{game.title}}" target="_blank">Play</a>
 %end
 
 <form action="/gm/{{game.title}}/create" id="create" method="post">

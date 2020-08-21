@@ -10,7 +10,7 @@
 		<td>{{g.title}}</td>
 		<td><a href="/setup/list/{{g.title}}">Setup</a></td>
 		%if g.active != '':
-			<td><a href="/play/{{g.title}}" target="_blank">Play</a></td>
+			<td><a href="http://{{server}}/play/{{g.title}}" target="_blank">Play</a></td>
 		%else:
 			<td></td>
 			<td></td>
