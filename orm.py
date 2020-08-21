@@ -40,6 +40,9 @@ def getMd5(handle):
 	return hash_md5.hexdigest()
 
 
+checksums = dict()
+
+
 db = Database()
 
 class Token(db.Entity):
@@ -112,11 +115,12 @@ class Game(db.Entity):
 	rolls   = Set(Roll)
 	
 	def makeMd5s(self):
-		self.checksums = dict()
+		data = dict()
 		for fname in self.getAllImages():
 			with open(self.getImagePath() / fname, "rb") as handle:
 				md5 = getMd5(handle)
-				self.checksums[md5] = fname
+				data[md5] = fname
+		checksums[self.title] = data
 	
 	def getImagePath(self):
 		return getDataDir() / 'games' / self.title
@@ -144,16 +148,16 @@ class Game(db.Entity):
 
 		# test for duplicates via md5 checksum
 		new_md5 = getMd5(handle.file)
-		if new_md5 not in self.checksums:
+		if new_md5 not in checksums[self.title]:
 			# create new image on disk
 			next_id    = self.getNextId()
 			image_id   = '{0}.png'.format(next_id)
 			local_path = os.path.join(game_root, image_id)
 			handle.save(local_path)
-			self.checksums[new_md5] = image_id
+			checksums[self.title][new_md5] = image_id
 		
 		# propagate remote path
-		return self.getImageUrl(self.checksums[new_md5])
+		return self.getImageUrl(checksums[self.title][new_md5])
 
 	def getAbandonedImages(self):
 		abandoned = list()
