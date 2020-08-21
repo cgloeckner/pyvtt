@@ -284,6 +284,7 @@ function updateTokens() {
 			
 			$('#error').css('visibility', 'hidden');
 		}, error: function(jqXHR, text, error) {
+		/*
 			// animate 'Connecting' with multiple dots
 			var error = $('#error');
 			error.css('visibility', 'visible');
@@ -293,6 +294,7 @@ function updateTokens() {
 			for (i = 1; i <= dots; ++i) {
 				error[0].innerHTML += '.';
 			}
+		*/
 		}
 	});
 }
@@ -322,7 +324,7 @@ function drawScene() {
 function updateGame() {
 	if (update_tick < 0) {
 		updateTokens();
-		update_tick = 50.0 / (1000.0 / fps);
+		update_tick = 250.0 / (1000.0 / fps);
 	} else {
 		update_tick -= 1;
 	}
@@ -532,7 +534,7 @@ function tokenShortcut(event) {
 			copy_token = select_id;
 		} else if (event.keyCode == 86) { // CTRL+V
 			if (copy_token > 0) {
-				$.post('/play/' + game_title + '/clone/' + copy_token + '/' + mouse_x + '/' + mouse_y);
+				$.post('/play/' + game_title + '/clone/' + copy_token + '/' + parseInt(mouse_x) + '/' + parseInt(mouse_y));
 				timeid = 0; // force full refresh next time
 			}
 		}
