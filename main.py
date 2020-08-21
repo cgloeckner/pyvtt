@@ -54,11 +54,7 @@ def post_create_game():
 	scene = db.Scene(title='new-scene', game=game)
 	game.active = scene.title
 	
-	# create lock for this game
-	game.makeLock()
-	
-	# generate checksums for this new game (just preparation)
-	game.makeMd5s()
+	game.postSetup()
 	
 	db.commit()
 	redirect('/')

@@ -167,6 +167,9 @@ class Game(db.Entity):
 	active  = Optional(str)
 	rolls   = Set(Roll)
 	
+	def makeLock(self):
+		engine.locks[self.title] = threading.Lock();
+	
 	def makeMd5s(self):
 		data = dict()
 		for fname in self.getAllImages():
@@ -175,8 +178,15 @@ class Game(db.Entity):
 				data[md5] = fname
 		engine.checksums[self.title] = data
 	
-	def makeLock(self):
-		engine.locks[self.title] = threading.Lock();
+	def postSetup(self):
+		self.makeLock()
+		
+		game_root = self.getImagePath()
+		with engine.locks[self.title]: # make IO access safe
+			if not os.path.isdir(game_root):
+				os.mkdir(game_root)
+		
+		self.makeMd5s()
 	
 	def getImagePath(self):
 		return engine.data_dir / 'games' / self.title
@@ -206,9 +216,6 @@ class Game(db.Entity):
 		game_root = self.getImagePath()
 		
 		with engine.locks[self.title]: # make IO access safe
-			if not os.path.isdir(game_root):
-				os.mkdir(game_root)
-
 			if new_md5 not in engine.checksums[self.title]:
 				# create new image on disk
 				next_id    = self.getNextId()
