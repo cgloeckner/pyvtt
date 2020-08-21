@@ -5,7 +5,7 @@ from bottle import *
 import os, json, random, time, sys, math
 
 from pony import orm
-from orm import db, db_session, Token, Game, getDataDir, resetChecksums, generateChecksums
+from orm import db, db_session, Token, Game, getDataDir
 
 __author__ = "Christian Glöckner"
 
@@ -25,7 +25,7 @@ app.install(db_session)
 with db_session:
 	s = time.time()
 	for g in db.Game.select():
-		generateChecksums(g)
+		g.makeMd5s()
 	print('Image checksums created within {0}s'.format(time.time() - s))
 
 # -----------------------------------------------------------------------------
@@ -77,7 +77,7 @@ def post_create_game():
 	game.active = scene.title
 	
 	# generate checksums for this new game (just preparation)
-	generateChecksums(game)
+	game.makeMd5s()
 	
 	db.commit()
 	redirect('/')
@@ -221,10 +221,8 @@ def clear_images(game_title):
 	
 	# refresh checksums
 	s = time.time()
-	resetChecksums()
-	for g in db.Game.select():
-		generateChecksums(g)
-	print('Image checksums created within {0}s'.format(time.time() - s))
+	game.makeMd5s()
+	print('Image checksums for {1} created within {0}s'.format(time.time() - s, game.title))
 	
 	redirect('/setup/list/{0}'.format(game.title))
 
