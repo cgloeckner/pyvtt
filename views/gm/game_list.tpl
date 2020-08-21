@@ -10,8 +10,7 @@
 		<td>{{g.title}}</td>
 		<td><a href="/setup/list/{{g.title}}">Setup</a></td>
 		%if g.active != '':
-			<td><a href="/gm/{{g.title}}" target="_blank">Play as GM</a></td>
-			<td><a href="/play/{{g.title}}" target="_blank">Player-Link</a></td>
+			<td><a href="/play/{{g.title}}" target="_blank">Play</a></td>
 		%else:
 			<td></td>
 			<td></td>

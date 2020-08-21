@@ -119,12 +119,8 @@ function drawToken(token, show_ui) {
 	context.rotate(token.rotate * 3.14/180.0);
 	
 	if (show_ui) {
-		// GM can select anything, players can select unlocked tokens
-		if (as_gm || !token.locked) {
-			// highlight token as selected
-			context.shadowColor = 'gold';
-			context.shadowBlur = 25;
-		}
+		context.shadowColor = 'gold';
+		context.shadowBlur = 25;
 	}
 	
 	context.drawImage(images[token.url], -w / 2, -h / 2, w, h);
@@ -135,8 +131,6 @@ function drawToken(token, show_ui) {
 // --- game state implementation ----------------------------------------------
 
 var game_title = '';
-var as_gm = false;
-var player_color = '';
 var timeid = 0;
 
 var mouse_x = 0; // relative to canvas
@@ -299,15 +293,11 @@ function updateGame() {
 }
 
 /// Sets up the game and triggers the update loop
-function start(title, gm, color) {
+function start(title) {
 	game_title = title;
-	as_gm = gm;
-	player_color = color;
 	
-	if (!gm) {
-		// notify game about this player
-		navigator.sendBeacon('/play/' + game_title + '/join');
-	}
+	// notify game about this player
+	navigator.sendBeacon('/play/' + game_title + '/join');
 	
 	updateGame();
 }
@@ -334,7 +324,7 @@ function uploadDrop(event) {
 	var f = new FormData($('#uploadform')[0]);
 	
 	$.ajax({
-		url: '/gm/' + game_title + '/upload/' + mouse_x + '/' + mouse_y,
+		url: '/play/' + game_title + '/upload/' + mouse_x + '/' + mouse_y,
 		type: 'POST',
 		data: f,
 		contentType: false,
@@ -451,20 +441,18 @@ function tokenWheel(event) {
 		}
 
 		if (event.shiftKey) {
-			// handle scaling (GM only)
-			if (as_gm) {
-				token.size = token.size - 5 * event.deltaY;
-				if (token.size > 1440) {
-					token.size = 1440;
-				}
-				if (token.size < 16) {
-					token.size = 16;
-				}
+			// handle scaling
+			token.size = token.size - 5 * event.deltaY;
+			if (token.size > 1440) {
+				token.size = 1440;
+			}
+			if (token.size < 16) {
+				token.size = 16;
+			}
 				
-				// mark token as changed
-				if (!change_cache.includes(select_id)) {
-					change_cache.push(select_id);
-				}
+			// mark token as changed
+			if (!change_cache.includes(select_id)) {
+				change_cache.push(select_id);
 			}
 			
 		} else {
@@ -487,14 +475,14 @@ function rollDice(sides) {
 	$.post('/play/' + game_title + '/roll/' + sides);
 }
 
-/// GM Event handle shortcuts on tokens
+/// Event handle shortcuts on tokens
 function tokenShortcut(event) {
 	if (event.ctrlKey) {
 		if (event.keyCode == 67) { // CTRL+C
 			copy_token = select_id;
 		} else if (event.keyCode == 86) { // CTRL+V
 			if (copy_token > 0) {
-				$.post('/gm/' + game_title + '/clone/' + copy_token + '/' + mouse_x + '/' + mouse_y);
+				$.post('/play/' + game_title + '/clone/' + copy_token + '/' + mouse_x + '/' + mouse_y);
 				timeid = 0; // force full refresh next time
 			}
 		}
@@ -503,13 +491,13 @@ function tokenShortcut(event) {
 			if (select_id == copy_token) {
 				copy_token = 0;
 			}
-			$.post('/gm/' + game_title + '/delete/' + select_id);
+			$.post('/play/' + game_title + '/delete/' + select_id);
 				timeid = 0; // force full refresh next time
 		}
 	}
 }
 
-/// GM Event handle for (un)locking a token
+/// Event handle for (un)locking a token
 function tokenLock() {
 	if (mouse_over_id != 0) {
 		var token = tokens[mouse_over_id];
@@ -522,7 +510,7 @@ function tokenLock() {
 	}
 }
 
-/// GM Event handle for stretching a token to fit the screen
+/// Event handle for stretching a token to fit the screen
 function tokenStretch() {
 	if (mouse_over_id != 0) {
 		var token = tokens[mouse_over_id];
@@ -548,7 +536,7 @@ function tokenStretch() {
 	}
 }
 
-/// GM Event handle for moving token to lowest z-order
+/// Event handle for moving token to lowest z-order
 function tokenBottom() {
 	if (mouse_over_id != 0) {
 		var token = tokens[mouse_over_id];
@@ -573,7 +561,7 @@ function tokenBottom() {
 	}
 }
 
-/// GM Event handle for moving token to hightest z-order
+/// Event handle for moving token to hightest z-order
 function tokenTop() {
 	if (mouse_over_id != 0) {
 		var token = tokens[mouse_over_id];

@@ -1,8 +1,4 @@
-%if gm:
-	%title = 'GM: {0}'.format(game.title)
-%else:
-	%title = '{0} (as {1})'.format(game.title, playername)
-%end
+%title = '{0}: {1}'.format(playername, game.title)
 
 %include("header", title=title)
 
@@ -30,9 +26,8 @@
 				<img src="/static/stretch.png" id="tokenStretch" onClick="tokenStretch();" /><br />
 			</div>
 			
-			<form id="uploadform" action="/gm/{{game.title}}/upload" method="post" enctype="multipart/form-data">
+			<form id="uploadform" method="post" enctype="multipart/form-data">
 				<input id="uploadqueue" name="file[]" type="file" multiple />
-				<input type="submit" value="upload" />
 			</form>
 			
 			<div id="error">Connecting...</div>
@@ -81,7 +76,7 @@ document.addEventListener('contextmenu', event => {
   event.preventDefault();
 });
 
-start('{{game.title}}', {{'true' if gm else 'false'}}, '{{playercolor}}');
+start('{{game.title}}');
 </script>
 
 %include("footer")

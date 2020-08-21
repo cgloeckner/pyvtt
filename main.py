@@ -226,74 +226,8 @@ def clear_images(game_title):
 	
 	redirect('/setup/list/{0}'.format(game.title))
 
-@get('/gm/<game_title>', apply=[asGm])
-@view('player/battlemap')
-def get_player_battlemap(game_title):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	
-	return dict(game=game, gm=True, page_title='[GM] {0}'.format(game.title), playercolor='#000000')
 
-@post('/gm/<game_title>/upload/<posx:int>/<posy:int>')
-def post_image_upload(game_title, posx, posy):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
-	scene.timeid = int(time.time())
-	
-	# upload all files to the current game
-	# and create a token each
-	files = request.files.getall('file[]')
-	
-	# place tokens in circle around given position
-	n = len(files)
-	if n > 0:
-		degree = 360 / n
-		radius = 32 * n**0.5
-		if n == 1:
-			radius = 0
-		for i, handle in enumerate(files):
-			# move with radius-step towards y direction and rotate this position
-			s = math.sin(i * degree * 3.14 / 180)
-			c = math.cos(i * degree * 3.14 / 180)
-			x = posx - radius * s
-			y = posy + radius * c
-			url = game.upload(handle)
-			# create token
-			db.Token(scene=scene, timeid=scene.timeid, url=url, posx=int(x), posy=int(y))
-		
-	db.commit()
-	
-	redirect('/gm/{0}'.format(game_title))
-
-@post('/gm/<game_title>/clone/<token_id:int>/<x:int>/<y:int>', apply=[asGm])
-def ajax_post_clone(game_title, token_id, x, y):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
-	# update position
-	scene.timeid = int(time.time())
-	# load requested token
-	token = db.Token.select(lambda t: t.id == token_id).first()
-	# clone token
-	db.Token(scene=token.scene, url=token.url, posx=x, posy=y, zorder=token.zorder,
-		size=token.size, rotate=token.rotate, timeid=int(time.time()))
-
-@post('/gm/<game_title>/delete/<token_id:int>')
-def ajax_post_delete(game_title, token_id):
-	# load game
-	game = db.Game.select(lambda g: g.title == game_title).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
-	# load requested token
-	token = db.Token.select(lambda t: t.id == token_id).first()
-	# delete token
-	token.delete()
-
-
-# --- player routes -----------------------------------------------------------
+# --- playing routes ----------------------------------------------------------
 
 @get('/static/<fname>')
 def static_files(fname):
@@ -338,15 +272,15 @@ def get_player_battlemap(game_title):
 	playername = request.get_cookie('playername')
 	playercolor = request.get_cookie('playercolor')
 	
-	# redirect to login if player not found or invalid name ('GM') used
-	if playername is None or playername.upper() == 'GM':
+	# redirect to login if player not found
+	if playername is None:
 		redirect('/login/{0}'.format(game_title))
 
 	else:
 		# load game
 		game = db.Game.select(lambda g: g.title == game_title).first()
 		
-		return dict(game=game, gm=False, playername=playername, playercolor=playercolor)
+		return dict(game=game, playername=playername, playercolor=playercolor)
 
 # on window open
 @post('/play/<game_title>/join')
@@ -447,7 +381,7 @@ def post_player_update(game_title):
 		})
 	
 	# query players alive
-	playerlist = ['GM:#000000']
+	playerlist = list()
 	if game_title in players:
 		for playername in players[game_title]:
 			playercolor = '#000000'
@@ -476,12 +410,66 @@ def post_roll_dice(game_title, sides):
 	
 	# load player name from cookie
 	playername = request.get_cookie('playername')
-	if playername is None:
-		playername = 'GM'
 	
 	# add player roll
 	result = random.randrange(1, sides+1)
 	db.Roll(game=game, player=playername, sides=sides, result=result, timeid=int(time.time()))
+
+@post('/play/<game_title>/upload/<posx:int>/<posy:int>')
+def post_image_upload(game_title, posx, posy):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
+	scene.timeid = int(time.time())
+	
+	# upload all files to the current game
+	# and create a token each
+	files = request.files.getall('file[]')
+	
+	# place tokens in circle around given position
+	n = len(files)
+	if n > 0:
+		degree = 360 / n
+		radius = 32 * n**0.5
+		if n == 1:
+			radius = 0
+		for i, handle in enumerate(files):
+			# move with radius-step towards y direction and rotate this position
+			s = math.sin(i * degree * 3.14 / 180)
+			c = math.cos(i * degree * 3.14 / 180)
+			x = posx - radius * s
+			y = posy + radius * c
+			url = game.upload(handle)
+			# create token
+			db.Token(scene=scene, timeid=scene.timeid, url=url, posx=int(x), posy=int(y))
+		
+	db.commit()
+
+@post('/play/<game_title>/clone/<token_id:int>/<x:int>/<y:int>')
+def ajax_post_clone(game_title, token_id, x, y):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
+	# update position
+	scene.timeid = int(time.time())
+	# load requested token
+	token = db.Token.select(lambda t: t.id == token_id).first()
+	# clone token
+	db.Token(scene=token.scene, url=token.url, posx=x, posy=y, zorder=token.zorder,
+		size=token.size, rotate=token.rotate, timeid=int(time.time()))
+
+@post('/play/<game_title>/delete/<token_id:int>')
+def ajax_post_delete(game_title, token_id):
+	# load game
+	game = db.Game.select(lambda g: g.title == game_title).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
+	# load requested token
+	token = db.Token.select(lambda t: t.id == token_id).first()
+	# delete token
+	token.delete()
 
 
 # --- setup stuff -------------------------------------------------------------
