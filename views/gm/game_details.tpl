@@ -46,9 +46,9 @@
 </ul>
 <a href="/gm/{{game.title}}/clearRolls">clear old rolls ({{num_old}})</a> <hr />
 
-%abandoned = len(game.getAbandonedImages())
+%abandoned = game.getAbandonedImages()
 %size = 0
-%for fname in game.getAbandonedImages():
+%for fname in abandoned:
 	%size += os.path.getsize(fname)
 %end
 %if size < 1024:
@@ -61,8 +61,10 @@
 		%size = '{0} MB'.format(int(size / 1024))
 	%end
 %end
-%if abandoned > 0:
-	%abandoned = '{0}x, {1}'.format(abandoned, size)
+%if len(abandoned) > 0:
+	%abandoned = '{0}x, {1}'.format(len(abandoned), size)
+%else:
+	%abandoned = '0'
 %end
 <a href="/gm/{{game.title}}/clearImages">clear abandoned images ({{abandoned}})</a> <hr />
 

@@ -5,7 +5,7 @@ from bottle import *
 import os, json, random, time, sys, math
 
 from pony import orm
-from orm import db, db_session, Token, Game, getDataDir
+from orm import db, db_session, Token, Game, vtt_data_dir
 
 __author__ = "Christian Glöckner"
 
@@ -13,9 +13,8 @@ host  = '0.0.0.0'
 debug = True
 port  = 8080
 
-
 # setup database connection
-db.bind('sqlite', str(getDataDir() / 'data.db'), create_db=True)
+db.bind('sqlite', str(vtt_data_dir / 'data.db'), create_db=True)
 db.generate_mapping(create_tables=True)
 
 app = default_app()
@@ -25,8 +24,9 @@ app.install(db_session)
 with db_session:
 	s = time.time()
 	for g in db.Game.select():
+		g.makeLock()
 		g.makeMd5s()
-	print('Image checksums created within {0}s'.format(time.time() - s))
+	print('Image checksums and threading locks created within {0}s'.format(time.time() - s))
 
 # -----------------------------------------------------------------------------
 
@@ -61,7 +61,7 @@ def applyWhitelist(s):
 
 @get('/', apply=[asGm])
 @view('gm/game_list')
-def get_game_list():	
+def get_game_list():
 	games = db.Game.select()
 	
 	return dict(games=games)
@@ -75,6 +75,9 @@ def post_create_game():
 	# create first scene
 	scene = db.Scene(title='new-scene', game=game)
 	game.active = scene.title
+	
+	# create lock for this game
+	game.makeLock()
 	
 	# generate checksums for this new game (just preparation)
 	game.makeMd5s()
@@ -210,14 +213,9 @@ def clear_images(game_title):
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
 	# query and remove abandoned images (those without any token)
-	abandoned = game.getAbandonedImages()
-	cleanup = 0
-	for fname in abandoned:
-		cleanup += os.path.getsize(fname)
-		os.remove(fname)
-	
+	cleanup, count = game.removeAbandonedImages()
 	megs = cleanup / (1024.0*1024.0)
-	print('{0} abandoned images deleted, {1} MB freed'.format(len(abandoned), megs))
+	print('{0} abandoned images deleted, {1} MB freed'.format(count, megs))
 	
 	# refresh checksums
 	s = time.time()

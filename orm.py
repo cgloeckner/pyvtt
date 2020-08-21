@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib
+import os, sys, pathlib, hashlib, threading
 
 from pony.orm import *
 
 __author__ = "Christian Glöckner"
-
 
 
 def getDataDir():
@@ -22,11 +21,14 @@ def getDataDir():
 	
 	# ensure pyVTT folder exists
 	p = p / "pyVTT"
+	
 	if not os.path.isdir(p):
 		print('Creating {0}'.format(p))
 		os.mkdir(p)
 	
 	return p
+
+vtt_data_dir = getDataDir()
 
 
 
@@ -40,7 +42,9 @@ def getMd5(handle):
 	return hash_md5.hexdigest()
 
 
-checksums = dict()
+checksums = dict() # per game
+
+locks = dict() # per game
 
 
 db = Database()
@@ -122,13 +126,18 @@ class Game(db.Entity):
 				data[md5] = fname
 		checksums[self.title] = data
 	
+	def makeLock(self):
+		locks[self.title] = threading.Lock();
+	
 	def getImagePath(self):
-		return getDataDir() / 'games' / self.title
+		return vtt_data_dir / 'games' / self.title
 
 	def getAllImages(self):
+		"""Note: needs to be called from a threadsafe context."""
 		return os.listdir(self.getImagePath())
 
 	def getNextId(self):
+		"""Note: needs to be called from a threadsafe context."""
 		max_id = -1
 		for fname in os.listdir(self.getImagePath()):
 			number = int(fname.split('.png')[0])
@@ -142,46 +151,62 @@ class Game(db.Entity):
 	def upload(self, handle):
 		"""Save the given image via file handle and return the url to the image.
 		"""
-		game_root = self.getImagePath()
-		if not os.path.isdir(game_root):
-			os.mkdir(game_root)
-
 		# test for duplicates via md5 checksum
 		new_md5 = getMd5(handle.file)
-		if new_md5 not in checksums[self.title]:
-			# create new image on disk
-			next_id    = self.getNextId()
-			image_id   = '{0}.png'.format(next_id)
-			local_path = os.path.join(game_root, image_id)
-			handle.save(local_path)
-			checksums[self.title][new_md5] = image_id
+		
+		game_root = self.getImagePath()
+		
+		with locks[self.title]: # make IO access safe
+			if not os.path.isdir(game_root):
+				os.mkdir(game_root)
+
+			if new_md5 not in checksums[self.title]:
+				# create new image on disk
+				next_id    = self.getNextId()
+				image_id   = '{0}.png'.format(next_id)
+				local_path = os.path.join(game_root, image_id)
+				handle.save(local_path)
+				checksums[self.title][new_md5] = image_id
 		
 		# propagate remote path
 		return self.getImageUrl(checksums[self.title][new_md5])
 
 	def getAbandonedImages(self):
-		abandoned = list()
-		
 		# check all existing images
 		game_root = self.getImagePath()
-		for image_id in self.getAllImages():
+		all_images = list()
+		with locks[self.title]: # make IO access safe
+			all_images = self.getAllImages()
+		
+		abandoned = list()
+		for image_id in all_images:
 			url = self.getImageUrl(image_id)
 			# check for any tokens
 			if db.Token.select(lambda t: t.url == url).first() is None:
 				# found abandoned image
 				abandoned.append(os.path.join(game_root, image_id))
-		
+			
 		return abandoned
 
+	def removeAbandonedImages(self):
+		relevant = self.getAbandonedImages()
+		cleanup = 0
+		with locks[self.title]: # make IO access safe
+			for fname in relevant:
+				cleanup += os.path.getsize(fname)
+				os.remove(fname)
+		return cleanup, len(relevant)
+
 	def clear(self):
-		game_root = self.getImagePath()
-		if os.path.isdir(game_root):
-			# remove all images
-			for img in self.getAllImages():
-				path = os.path.join(game_root, img)
-				os.remove(path)
-			# remove game directory
-			os.rmdir(game_root)
+		with locks[self.title]: # make IO access saf
+			game_root = self.getImagePath()
+			if os.path.isdir(game_root):
+				# remove all images
+				for img in self.getAllImages():
+					path = os.path.join(game_root, img)
+					os.remove(path)
+				# remove game directory
+				os.rmdir(game_root)
 
 
 # --- UNIT TESTS --------------------------------------------------------------
