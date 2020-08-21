@@ -5,67 +5,37 @@ from bottle import *
 import os, json, random, time, sys, math, logging
 
 from pony import orm
-from orm import db, db_session, Token, Game, vtt_data_dir
+from orm import db, db_session, Token, Game, engine
 
 __author__ = "Christian Glöckner"
 
-host  = '0.0.0.0'
-debug = True
-port  = 8080
-
-
-if 'debug' in sys.argv:
-	logging.basicConfig(filename=vtt_data_dir / 'pyvtt.log', level=logging.DEBUG)
-else:
-	logging.basicConfig(filename=vtt_data_dir / 'pyvtt.log', level=logging.INFO)
 
 
 # setup database connection
-db.bind('sqlite', str(vtt_data_dir / 'data.db'), create_db=True)
+db.bind('sqlite', str(engine.data_dir / 'data.db'), create_db=True)
 db.generate_mapping(create_tables=True)
 
+
+# setup db_session to all routes
 app = default_app()
-app.catchall = not debug
+app.catchall = not engine.debug
 app.install(db_session)
 
-with db_session:
-	s = time.time()
-	for g in db.Game.select():
-		g.makeLock()
-		g.makeMd5s()
-	t = time.time() - s
-	logging.info('Image checksums and threading locks created within {0}s'.format(t))
+# setup engine with cli args and db session
+engine.setup(sys.argv)
 
-# -----------------------------------------------------------------------------
 
-lazy_mode = 'lazy' in sys.argv
+# --- GM routes ---------------------------------------------------------------
 
+# decorator for GM-routes
 def asGm(callback):
 	def wrapper(*args, **kwargs):
-		if lazy_mode or request.environ.get('REMOTE_ADDR') == '127.0.0.1':
+		if engine.lazy or request.environ.get('REMOTE_ADDR') == '127.0.0.1':
 			return callback(*args, **kwargs)
 		else:
 			abort(401)
 	return wrapper
 
-
-gametitle_whitelist = []
-
-players = dict()
-colors  = dict()
-
-def applyWhitelist(s):
-	# secure symbols used in title
-	fixed = ''
-	for c in s:
-		if c in gametitle_whitelist:
-			fixed += c
-		else:
-			fixed += '_'
-	return fixed
-
-
-# --- GM routes ---------------------------------------------------------------
 
 @get('/', apply=[asGm])
 @view('gm/game_list')
@@ -296,14 +266,14 @@ def join_game(game_title):
 	playercolor = request.get_cookie('playercolor')
 	
 	# save this playername
-	if game_title not in players:
-		players[game_title] = set()
-	players[game_title].add(playername)
+	if game_title not in engine.players:
+		engine.players[game_title] = set()
+	engine.players[game_title].add(playername)
 	
 	# save this playercolor
-	if game_title not in colors:
-		colors[game_title] = dict()
-	colors[game_title][playername] = playercolor
+	if game_title not in engine.colors:
+		engine.colors[game_title] = dict()
+	engine.colors[game_title][playername] = playercolor
 		
 
 # on window close
@@ -313,8 +283,8 @@ def quit_game(game_title):
 	playername = request.get_cookie('playername')
 	
 	# remove player
-	if game_title in players and playername in players[game_title]:
-		players[game_title].remove(playername)
+	if game_title in engine.players and playername in engine.players[game_title]:
+		engine.players[game_title].remove(playername)
 	
 	# note: color is kept
 
@@ -331,8 +301,8 @@ def quit_game(game_title):
 	response.set_cookie('playercolor', playercolor, path='/play/{0}'.format(game_title), expires=0)
 	
 	# remove player
-	if game_title in players and playername in players[game_title]:
-		players[game_title].remove(playername)
+	if game_title in engine.players and playername in engine.players[game_title]:
+		engine.players[game_title].remove(playername)
 
 	# note: color is kept
 	
@@ -375,8 +345,8 @@ def post_player_update(game_title):
 	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 180).order_by(lambda r: -r.timeid)[:13]:
 		# query color by player
 		color = '#000000'
-		if game_title in colors and r.player in colors[game_title]:
-			color = colors[game_title][r.player]
+		if game_title in engine.colors and r.player in engine.colors[game_title]:
+			color = engine.colors[game_title][r.player]
 		# consider token if it was updated after given timeid
 		rolls.append({
 			'player' : r.player,
@@ -388,11 +358,11 @@ def post_player_update(game_title):
 	
 	# query players alive
 	playerlist = list()
-	if game_title in players:
-		for playername in players[game_title]:
+	if game_title in engine.players:
+		for playername in engine.players[game_title]:
 			playercolor = '#000000'
-			if game_title in colors and playername in colors[game_title]:
-				playercolor = colors[game_title][playername]
+			if game_title in engine.colors and playername in engine.colors[game_title]:
+				playercolor = engine.colors[game_title][playername]
 			playerlist.append('{0}:{1}'.format(playername, playercolor))
 	
 	# return tokens, rolls and timestamp
@@ -480,19 +450,12 @@ def ajax_post_delete(game_title, token_id):
 
 # --- setup stuff -------------------------------------------------------------
 
-for i in range(65, 91):
-	gametitle_whitelist.append(chr(i))
-	gametitle_whitelist.append(chr(i+32))
-for i in range(10):	
-	gametitle_whitelist.append('{0}'.format(i))
-gametitle_whitelist.append('-')
-gametitle_whitelist.append('_')
-
 app = default_app()
 
-if 'debug' in sys.argv:
-	run(host=host, reloader=debug, debug=debug, port=port)	
+if engine.debug:
+	run(host=engine.host, reloader=True, debug=True, port=engine.port)	
 else:
 	from paste import httpserver
-	httpserver.serve(app, host=host, port=port)
+	httpserver.serve(app, host=engine.host, port=engine.port)
+
 

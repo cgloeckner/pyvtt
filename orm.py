@@ -1,51 +1,100 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, threading, logging
+import os, sys, pathlib, hashlib, threading, logging, time
 
 from pony.orm import *
 
 __author__ = "Christian Glöckner"
 
 
-def getDataDir():
-	"""Returns a path object where persistent application data can be stored."""
-	# query home
-	p = pathlib.Path.home()
-	
-	# query system-specific appdata path
-	if sys.platform.startswith('linux'):
-		p = p / ".local" / "share"
-	else:
-		raise NotImplementedError('only linux supported yet')
-	
-	# ensure pyVTT folder exists
-	p = p / "pyVTT"
-	
-	if not os.path.isdir(p):
-		os.mkdir(p)
-	
-	return p
-
-vtt_data_dir = getDataDir()
-
-
-def getMd5(handle):
-	hash_md5 = hashlib.md5()
-	offset = handle.tell()
-	for chunk in iter(lambda: handle.read(4096), b""):
-		hash_md5.update(chunk)
-	# rewind after reading
-	handle.seek(offset)
-	return hash_md5.hexdigest()
-
-
-checksums = dict() # per game
-
-locks = dict() # per game
-
-
 db = Database()
+
+class Engine(object):
+
+	def __init__(self):
+		# Setups path object where persistent application data can be stored.
+		p = pathlib.Path.home()
+		if sys.platform.startswith('linux'):
+			p = p / ".local" / "share"
+		else:
+			raise NotImplementedError('only linux supported yet')
+		
+		# ensure pyVTT folder exists
+		p = p / "pyVTT"
+		
+		if not os.path.isdir(p):
+			os.mkdir(p)
+		
+		self.data_dir = p
+		
+		# setup per-game stuff
+		self.checksums = dict()
+		self.locks     = dict()
+		
+		# webserver stuff
+		self.host  = '0.0.0.0'
+		self.port  = 8080
+		self.debug = True
+		self.lazy  = False
+
+		# whitelist for game titles etc.
+		self.gametitle_whitelist = []
+		for i in range(65, 91):
+			self.gametitle_whitelist.append(chr(i))
+			self.gametitle_whitelist.append(chr(i+32))
+		for i in range(10):	
+			self.gametitle_whitelist.append('{0}'.format(i))
+		self.gametitle_whitelist.append('-')
+		self.gametitle_whitelist.append('_')
+
+		# game cache
+		self.players = dict()
+		self.colors  = dict()
+
+	def setup(self, argv):
+		self.debug = '--debug' in argv
+		self.lazy  = '--lazy' in argv
+		
+		# setup logging
+		if self.debug:
+			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', level=logging.DEBUG)
+		else:
+			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', level=logging.INFO)
+		
+		# prepare existing games' cache
+		with db_session:
+			s = time.time()
+			for g in db.Game.select():
+				g.makeLock()
+				g.makeMd5s()
+			t = time.time() - s
+			logging.info('Image checksums and threading locks created within {0}s'.format(t))
+
+	def applyWhitelist(self, s):
+			# secure symbols used in title
+			fixed = ''
+			for c in s:
+				if c in self.gametitle_whitelist:
+					fixed += c
+				else:
+					fixed += '_'
+			return fixed
+	
+	@staticmethod
+	def getMd5(handle):
+		hash_md5 = hashlib.md5()
+		offset = handle.tell()
+		for chunk in iter(lambda: handle.read(4096), b""):
+			hash_md5.update(chunk)
+		# rewind after reading
+		handle.seek(offset)
+		return hash_md5.hexdigest()
+
+
+engine = Engine()
+
+# -----------------------------------------------------------------------------
 
 class Token(db.Entity):
 	id     = PrimaryKey(int, auto=True)
@@ -83,9 +132,8 @@ class Token(db.Entity):
 		if rotate != None:
 			self.rotate = rotate
 			self.timeid = timeid
-		
-
-
+	
+	
 # -----------------------------------------------------------------------------
 
 class Scene(db.Entity):
@@ -120,15 +168,15 @@ class Game(db.Entity):
 		data = dict()
 		for fname in self.getAllImages():
 			with open(self.getImagePath() / fname, "rb") as handle:
-				md5 = getMd5(handle)
+				md5 = engine.getMd5(handle)
 				data[md5] = fname
-		checksums[self.title] = data
+		engine.checksums[self.title] = data
 	
 	def makeLock(self):
-		locks[self.title] = threading.Lock();
+		engine.locks[self.title] = threading.Lock();
 	
 	def getImagePath(self):
-		return vtt_data_dir / 'games' / self.title
+		return engine.data_dir / 'games' / self.title
 
 	def getAllImages(self):
 		"""Note: needs to be called from a threadsafe context."""
@@ -150,30 +198,30 @@ class Game(db.Entity):
 		"""Save the given image via file handle and return the url to the image.
 		"""
 		# test for duplicates via md5 checksum
-		new_md5 = getMd5(handle.file)
+		new_md5 = engine.getMd5(handle.file)
 		
 		game_root = self.getImagePath()
 		
-		with locks[self.title]: # make IO access safe
+		with engine.locks[self.title]: # make IO access safe
 			if not os.path.isdir(game_root):
 				os.mkdir(game_root)
 
-			if new_md5 not in checksums[self.title]:
+			if new_md5 not in engine.checksums[self.title]:
 				# create new image on disk
 				next_id    = self.getNextId()
 				image_id   = '{0}.png'.format(next_id)
 				local_path = os.path.join(game_root, image_id)
 				handle.save(local_path)
-				checksums[self.title][new_md5] = image_id
+				engine.checksums[self.title][new_md5] = image_id
 		
 		# propagate remote path
-		return self.getImageUrl(checksums[self.title][new_md5])
+		return self.getImageUrl(engine.checksums[self.title][new_md5])
 
 	def getAbandonedImages(self):
 		# check all existing images
 		game_root = self.getImagePath()
 		all_images = list()
-		with locks[self.title]: # make IO access safe
+		with engine.locks[self.title]: # make IO access safe
 			all_images = self.getAllImages()
 		
 		abandoned = list()
@@ -189,14 +237,14 @@ class Game(db.Entity):
 	def removeAbandonedImages(self):
 		relevant = self.getAbandonedImages()
 		cleanup = 0
-		with locks[self.title]: # make IO access safe
+		with engine.locks[self.title]: # make IO access safe
 			for fname in relevant:
 				cleanup += os.path.getsize(fname)
 				os.remove(fname)
 		return cleanup, len(relevant)
 
 	def clear(self):
-		with locks[self.title]: # make IO access saf
+		with engine.locks[self.title]: # make IO access saf
 			game_root = self.getImagePath()
 			if os.path.isdir(game_root):
 				# remove all images
