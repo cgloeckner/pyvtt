@@ -573,13 +573,15 @@ function tokenStretch() {
 			return;
 		}
 		
-		// stretch and center token in the center
+		// stretch and center token in the center (on deepest z-order)
 		var canvas = $('#battlemap')[0];
 		token.posx   = canvas.width / 2;
 		token.posy   = canvas.height / 2;
 		token.size   = canvas.width;
 		token.rotate = 0;
 		token.locked = true;
+		token.zorder = min_z;
+		min_z -= 1;
 			
 		// mark token as changed
 		if (!change_cache.includes(mouse_over_id)) {

@@ -445,8 +445,9 @@ def ajax_post_delete(game_title, token_id):
 	scene = db.Scene.select(lambda s: s.game == game and s.title == game.active).first()
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
-	# delete token
-	token.delete()
+	if token is not None:
+		# delete token
+		token.delete()
 
 
 # --- setup stuff -------------------------------------------------------------
