@@ -38,10 +38,14 @@ function addToken(id, url) {
 
 /// Determines which token is selected when clicking the given position
 function selectToken(x, y) {
-	var result = null;
+	var result = null;	
 	var bestz = min_z - 1;
+	var background = null;
 	// search for any fitting token with highest z-order (unlocked first)
 	$.each(tokens, function(index, item) {
+		if (item != null && item.size == -1) {
+			background = item;
+		}
 		if (item != null && !item.locked) {
 			var min_x = item.posx - item.size / 2;
 			var max_x = item.posx + item.size / 2;
@@ -72,6 +76,10 @@ function selectToken(x, y) {
 			}
 		});
 	}
+	if (result == null) {
+		// fallback: grab background if possible
+		result = background;
+	}
 	return result;
 }
 
@@ -96,10 +104,20 @@ function updateToken(data) {
 	if (data.zorder > max_z) {
 		max_z = data.zorder;
 	}
+	
+	if (data.size == -1) {
+		// align background image to center
+		var canvas = $('#battlemap');
+		tokens[data.id].posx = canvas[0].width / 2;
+		tokens[data.id].posy = canvas[0].height / 2;
+	}
 }
 
 /// Draws a single token (show_ui will show the selection box around it)
 function drawToken(token, show_ui) {
+	var canvas = $('#battlemap');
+	var context = canvas[0].getContext("2d");
+	
 	// cache image if necessary
 	if (!images.includes(token.url)) {
 		images[token.url] = new Image();
@@ -107,18 +125,26 @@ function drawToken(token, show_ui) {
 	}
 	
 	// calculate new height (keeping aspect ratio)
-	var ratio = images[token.url].height / images[token.url].width;
+	var src_h = images[token.url].height;
+	var src_w = images[token.url].width;
+	var ratio = src_h / src_w;
 	var w = token.size;
+	if (w == -1) {
+		// enlarge to entire canvas
+		w = canvas[0].width;
+	}
 	var h = w * ratio;
-	if (images[token.url].height > images[token.url].width) {
+	if (src_h > src_w) {
 		// use size on height	
 		var h = token.size;
+		if (h == -1) {
+			// enlarge to entire canvas
+			h = canvas[0].height;
+		}
 		var w = h / ratio;
 	}
 	
 	// draw image
-	var canvas = $('#battlemap');
-	var context = canvas[0].getContext("2d");
 	context.save();
 	context.translate(token.posx, token.posy);
 	context.rotate(token.rotate * 3.14/180.0);
@@ -310,9 +336,14 @@ function drawScene() {
 	
 	// add all tokens to regular array
 	culling = [];
+	var background = null;
 	$.each(tokens, function(index, token) {
 		if (token != null) {
-			culling.push(token);
+			if (token.size == -1) {
+				background = token;
+			} else {
+				culling.push(token);
+			}
 		}
 	});
 	
@@ -320,6 +351,9 @@ function drawScene() {
 	culling.sort(function(a, b) { return a.zorder - b.zorder });
 	
 	// draw tokens
+	if (background != null) {
+		drawToken(background, background.id == select_id);
+	}
 	$.each(culling, function(index, token) {
 		drawToken(token, token.id == select_id);
 	});
@@ -395,9 +429,37 @@ function updateTokenbar() {
 			// update tokenbar if not grabbed
 			$('#tokenbar').css('visibility', 'visible');
 			
-			var bx = $('#battlemap')[0].getBoundingClientRect();
-			var x = bx.left + token.posx - token.size / 2 + 5;
+			// adjust position based on size and aspect ratio
+			var canvas = $('#battlemap');
+			var bx = canvas[0].getBoundingClientRect();
+			
+			// cache image if necessary
+			if (!images.includes(token.url)) {
+				images[token.url] = new Image();
+				images[token.url].src = token.url;
+			}
+		
+			// image size aspect ratio
+			var src_h = images[token.url].height;
+			var src_w = images[token.url].width;
+			var ratio = src_h / src_w;
+			
+			// determine token size
+			var size = token.size;
+			if (size == -1) {
+				// determine size of background image
+				size = canvas[0].width;
+				if (src_h > src_w) {
+					// determine width when stretching to height
+					size = canvas[0].height / ratio;
+				}
+			}
+			console.log(size);
+			
+			// setup position
+			var x = bx.left + token.posx - size / 2 + 5;
 			var y = bx.top + token.posy - 36;
+			
 			$('#tokenbar').css('left', x + 'px');
 			$('#tokenbar').css('top', y + 'px');
 			
@@ -582,11 +644,8 @@ function tokenStretch() {
 			return;
 		}
 		
-		// stretch and center token in the center (on deepest z-order)
-		var canvas = $('#battlemap')[0];
-		token.posx   = canvas.width / 2;
-		token.posy   = canvas.height / 2;
-		token.size   = canvas.width;
+		// stretch token to entire canvas (on deepest z-order)
+		token.size = -1;
 		token.rotate = 0;
 		token.locked = true;
 		token.zorder = min_z;

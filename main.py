@@ -443,10 +443,7 @@ def post_image_upload(game_title, posx, posy):
 				
 			elif size > 2 * 1024 * 1024:
 				# files larger 2mb as assumed to be tokens
-				# note: relative to canvas size
-				kwargs["posx"]   = 600
-				kwargs["posy"]   = 360
-				kwargs["size"]   = 1200
+				kwargs["size"]   = -1 # indicates to client "use canvas size"
 				kwargs["zorder"] = bottom
 				kwargs["locked"] = True
 				
