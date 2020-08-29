@@ -119,7 +119,7 @@ function drawToken(token, show_ui) {
 	context.rotate(token.rotate * 3.14/180.0);
 	
 	if (show_ui) {
-		context.shadowColor = 'gold';
+		context.shadowColor = getCookie('playercolor');
 		context.shadowBlur = 25;
 	}
 	
