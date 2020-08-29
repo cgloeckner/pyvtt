@@ -112,7 +112,7 @@ def activate_scene(game_title, scene_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 
-	new_title = request.forms.scene_title
+	new_title = engine.applyWhitelist(request.forms.scene_title)
 
 	# rename scene
 	scene = db.Scene.select(lambda s: s.game == game and s.title == scene_title).first()
