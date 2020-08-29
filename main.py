@@ -325,14 +325,15 @@ def post_player_update(game_title):
 	# update token data
 	for data in changes:
 		token = scene.tokens.select(lambda s: s.id == data['id']).first()
-		token.update(
-			timeid=int(timeid),
-			pos=(int(data['posx']), int(data['posy'])),
-			zorder=data['zorder'],
-			size=data['size'],
-			rotate=data['rotate'],
-			locked=data['locked']
-		)
+		if token is not None:
+			token.update(
+				timeid=int(timeid),
+				pos=(int(data['posx']), int(data['posy'])),
+				zorder=data['zorder'],
+				size=data['size'],
+				rotate=data['rotate'],
+				locked=data['locked']
+			)
 
 	# query token data for that scene
 	tokens = list()
@@ -404,6 +405,16 @@ def post_image_upload(game_title, posx, posy):
 	# and create a token each
 	files = request.files.getall('file[]')
 	
+	tokens = list(db.Token.select(lambda t: t.scene == scene))
+	if len(tokens) > 0:
+		bottom = min(tokens, key=lambda t: t.zorder).zorder - 1
+		if bottom == 0:
+			bottom = -1
+		top    = max(tokens, key=lambda t: t.zorder).zorder + 1
+	else:
+		bottom = -1
+		top = 1
+	
 	# place tokens in circle around given position
 	n = len(files)
 	if n > 0:
@@ -415,11 +426,37 @@ def post_image_upload(game_title, posx, posy):
 			# move with radius-step towards y direction and rotate this position
 			s = math.sin(i * degree * 3.14 / 180)
 			c = math.cos(i * degree * 3.14 / 180)
-			x = posx - radius * s
-			y = posy + radius * c
-			url = game.upload(handle)
+			
+			kwargs = {
+				"scene"  : scene,
+				"timeid" : scene.timeid,
+				"url"    : game.upload(handle),
+				"posx"   : int(posx - radius * s),
+				"posy"   : int(posy + radius * c)
+			}
+			
+			# determine file size to handle different image types
+			size = game.getFileSize(kwargs["url"])
+			if size < 150 * 1024:
+				# files smaller 100kb as assumed to be tokens
+				kwargs["zorder"] = top
+				
+			elif size > 2 * 1024 * 1024:
+				# files larger 2mb as assumed to be tokens
+				# note: relative to canvas size
+				kwargs["posx"]   = 600
+				kwargs["posy"]   = 360
+				kwargs["size"]   = 1200
+				kwargs["zorder"] = bottom
+				kwargs["locked"] = True
+				
+			else:
+				# other images are assumed to be decoration
+				kwargs["size"] = 100
+				kwargs["locked"] = True
+				
 			# create token
-			db.Token(scene=scene, timeid=scene.timeid, url=url, posx=int(x), posy=int(y))
+			db.Token(**kwargs)
 		
 	db.commit()
 

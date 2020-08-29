@@ -207,6 +207,12 @@ class Game(db.Entity):
 	def getImageUrl(self, image_id):
 		return '/token/{0}/{1}'.format(self.title, image_id)
 
+	def getFileSize(self, url):
+		game_root  = self.getImagePath()
+		image_id   = url.split('/')[-1]
+		local_path = os.path.join(game_root, image_id)
+		return os.path.getsize(local_path)
+
 	def upload(self, handle):
 		"""Save the given image via file handle and return the url to the image.
 		"""

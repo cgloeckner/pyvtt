@@ -9,6 +9,10 @@ requires pony (DB) and paste (async HTTP)
 - query your public IP, set up your game in the browser
 - send the play-link to your players to join
 
+# Notes
+- Images up to 150kb are handled as tokens
+- Images larger 2mb are handled as backgrounds
+
 # GM not local?
 start with `--lazy` to skip IP-checking for GM-routes
 
