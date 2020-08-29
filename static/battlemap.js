@@ -591,6 +591,8 @@ function tokenWheel(event) {
 			}
 		}
 	}
+	
+	updateTokenbar();
 }
 
 /// Event handle to click a dice
@@ -645,11 +647,16 @@ function tokenStretch() {
 		}
 		
 		// stretch token to entire canvas (on deepest z-order)
+		var canvas = $('#battlemap');
 		token.size = -1;
 		token.rotate = 0;
 		token.locked = true;
 		token.zorder = min_z;
 		min_z -= 1;
+		
+		// client-side prediction for position
+		token.posx = canvas[0].width / 2;
+		token.posy = canvas[0].height / 2;
 			
 		// mark token as changed
 		if (!change_cache.includes(mouse_over_id)) {
