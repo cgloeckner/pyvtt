@@ -3,7 +3,7 @@
 
 <div class="menu">
 
-<h1>Setup Game: {{game.title}}</a></h1>
+<h1>Storyboard: {{game.title}}</a></h1>
 %if game.active != '':
 <a href="http://{{server}}/play/{{game.title}}" target="_blank">Play</a>
 %end
@@ -17,19 +17,23 @@
 <table>
 %for s in game.scenes.order_by(lambda s: s.id):
 	<tr>
-		<td>{{s.title}}</td>
-		<td><a href="/gm/{{game.title}}/activate/{{s.title}}">Activate</a></td>
-		<td><a href="/gm/{{game.title}}/clone/{{s.title}}">Duplicate</a></td>
-		<td><form action="/gm/{{game.title}}/rename/{{s.title}}" id="rename_{{s.id}}" method="post">
+	%if s.title == game.active:
+		<td><b><i>{{s.title}}</i></b></td>
+	%else:
+		<td><a href="/gm/{{game.title}}/activate/{{s.title}}">{{s.title}}</a></td>
+	%end
+		<td style="width: 50px;"></td>
+		<td><a href="/gm/{{game.title}}/clone/{{s.title}}"><img src="/static/copy.png" title="duplicate" /></a></td>
+		<td style="width: 50px;"></td>
+		<td><form id="#form_{{s.title}}'" action="/gm/{{game.title}}/rename/{{s.title}}" id="rename_{{s.id}}" method="post">
 			<input type="text" name="scene_title" value="" />
-			<input type="submit" value="Rename"></input>
+			<input type="image" src="/static/rename.png" title="rename">
 		</form></td>
-		<td><a href="/gm/{{game.title}}/delete/{{s.title}}">Delete</a></td>
+		<td style="width: 50px;"></td>
+		<td><a href="/gm/{{game.title}}/delete/{{s.title}}"><img src="/static/delete.png" title="delete" /></a></td>
 	</tr>
 %end
 </table>
-
-<b>Active Scene</b>: {{game.active}}
 
 <h2>Latest Rolls:</h2>
 
@@ -42,6 +46,9 @@
 	%else:
 		%num_old += 1
 	%end
+%end
+%if num_old == 0:
+	no old rolls yet
 %end
 </ul>
 <a href="/gm/{{game.title}}/clearRolls">clear old rolls ({{num_old}})</a> <hr />

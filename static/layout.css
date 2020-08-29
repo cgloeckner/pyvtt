@@ -25,6 +25,20 @@ div.menu table {
 	margin-right: auto;
 }
 
+div.menu form {
+	width: auto;
+}
+
+div.menu img,
+div.menu input[type=image] {
+	width: 16px;
+}
+
+div.menu table input {
+	display: inline;
+	width: 100px;
+}
+
 div.scene {
 	width: 1440px;
 	height: 720px;
