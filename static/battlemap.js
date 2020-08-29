@@ -110,6 +110,11 @@ function drawToken(token, show_ui) {
 	var ratio = images[token.url].height / images[token.url].width;
 	var w = token.size;
 	var h = w * ratio;
+	if (images[token.url].height > images[token.url].width) {
+		// use size on height	
+		var h = token.size;
+		var w = h / ratio;
+	}
 	
 	// draw image
 	var canvas = $('#battlemap');
@@ -454,6 +459,8 @@ function tokenGrab(event) {
 			}
 		}
 	}
+	
+	updateTokenbar();
 }
 
 /// Event handle for releasing a grabbed token
@@ -461,6 +468,8 @@ function tokenRelease() {
 	if (select_id != 0) {
 		grabbed = false;
 	}
+	
+	updateTokenbar();
 }
 
 /// Event handle for moving a grabbed token (if not locked)
