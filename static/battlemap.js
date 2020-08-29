@@ -2,12 +2,16 @@
 // --- image handling implementation ------------------------------------------
 
 var images = [];
+var canvas_ratio = 1.0; // canvas aspect ratio
 
 /// Will clear the canvas
 function clearCanvas() {
 	var canvas = $('#battlemap');
 	var context = canvas[0].getContext("2d");
 	context.clearRect(0, 0, canvas[0].width, canvas[0].height);
+	
+	// Recalculate aspect ratio
+	canvas_ratio = canvas[0].width / canvas[0].height;
 }
 
 // --- token implementation ---------------------------------------------------
@@ -127,21 +131,28 @@ function drawToken(token, show_ui) {
 	// calculate new height (keeping aspect ratio)
 	var src_h = images[token.url].height;
 	var src_w = images[token.url].width;
-	var ratio = src_h / src_w;
+	var ratio = src_w / src_h;
+	
+	// scale token via width (most common usecase)
 	var w = token.size;
-	if (w == -1) {
-		// enlarge to entire canvas
-		w = canvas[0].width;
-	}
-	var h = w * ratio;
-	if (src_h > src_w) {
-		// use size on height	
-		var h = token.size;
-		if (h == -1) {
-			// enlarge to entire canvas
-			h = canvas[0].height;
+	var h = w / ratio;
+	if (token.size == -1) {
+		if (ratio >= canvas_ratio) {
+			// most common case: image is wider than canvas (or same ratio)
+			// needs to be stretched to fit width
+			w = canvas[0].width
+			h = w / ratio;
+		} else {
+			// image is taller than canvas
+			// needs to be stretched to fit height
+			h = canvas[0].height
+			w = h * ratio;
 		}
-		var w = h / ratio;
+		
+	} else if (src_h > src_w) {
+		// scale token via height
+		h = token.size;
+		w = h * ratio;
 	}
 	
 	// draw image
@@ -442,16 +453,19 @@ function updateTokenbar() {
 			// image size aspect ratio
 			var src_h = images[token.url].height;
 			var src_w = images[token.url].width;
-			var ratio = src_h / src_w;
+			var ratio = src_w / src_h;
 			
 			// determine token size
 			var size = token.size;
 			if (size == -1) {
-				// determine size of background image
-				size = canvas[0].width;
-				if (src_h > src_w) {
-					// determine width when stretching to height
-					size = canvas[0].height / ratio;
+				if (ratio >= canvas_ratio) {
+					// most common case: image is wider than canvas (or same ratio)
+					// needs to be stretched to fit width
+					size = canvas[0].width
+				} else {
+					// image is taller than canvas
+					// needs to be stretched to fit height
+					size = canvas[0].height * ratio;
 				}
 			}
 			console.log(size);
