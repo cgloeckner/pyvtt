@@ -107,15 +107,16 @@ function getActualSize(token, maxw, maxh) {
 /// Determiens if position is within token's bounding box
 function isOverToken(x, y, token) {
 	// 1st stage: bounding box test
-	var min_x = token.posx - token.size / 2;
-	var max_x = token.posx + token.size / 2;
-	var min_y = token.posy - token.size / 2;
-	var max_y = token.posy + token.size / 2;
-	var in_box = min_x <= x && x <= max_x && min_y <= y && y <= max_y;
-	if (!in_box) {
-		return false;
+	if (token.size > 0) {
+		var min_x = token.posx - token.size / 2;
+		var max_x = token.posx + token.size / 2;
+		var min_y = token.posy - token.size / 2;
+		var max_y = token.posy + token.size / 2;
+		var in_box = min_x <= x && x <= max_x && min_y <= y && y <= max_y;
+		if (!in_box) {
+			return false;
+		}
 	}
-	
 	// 2nd stage: image alpha test
 	// note: query at position relative to token's center
 	var dx = x - token.posx;
@@ -129,11 +130,14 @@ function selectToken(x, y) {
 	var result = null;	
 	var bestz = min_z - 1;
 	var background = null;
-	// search for any fitting token with highest z-order (unlocked first)
-	$.each(culling, function(index, item) {
+	// search for background
+	$.each(tokens, function(index, item) {
 		if (item != null && item.size == -1) {
 			background = item;
 		}
+	});
+	// search for any fitting culling with highest z-order (unlocked first)
+	$.each(culling, function(index, item) {
 		if (item != null && !item.locked && item.zorder > bestz && isOverToken(x, y, item)) {
 			bestz  = item.zorder;
 			result = item;
