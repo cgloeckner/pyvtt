@@ -437,20 +437,14 @@ def post_image_upload(game_title, posx, posy):
 			
 			# determine file size to handle different image types
 			size = game.getFileSize(kwargs["url"])
-			if size < 150 * 1024:
-				# files smaller 100kb as assumed to be tokens
+			if size < 250 * 1024:
+				# files smaller 250kb as assumed to be tokens
 				kwargs["zorder"] = top
 				
-			elif size > 2 * 1024 * 1024:
-				# files larger 2mb as assumed to be tokens
-				kwargs["size"]   = -1 # indicates to client "use canvas size"
-				kwargs["zorder"] = bottom
-				kwargs["locked"] = True
-				
 			else:
-				# other images are assumed to be decoration
-				kwargs["size"] = 100
-				kwargs["locked"] = True
+				# files larger 250kb are handled as decoration (index cards) etc.)
+				kwargs["size"]   = 300
+				kwargs["zorder"] = bottom
 				
 			# create token
 			db.Token(**kwargs)
