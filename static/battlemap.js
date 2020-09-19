@@ -296,6 +296,37 @@ function updateRolls(rolls) {
 	});		
 }
 
+/*
+function updateRolls(rolls) {
+	// show rolls
+	$('#roll4')[0].innerHTML = '';
+	$('#roll6')[0].innerHTML = '';
+	$('#roll8')[0].innerHTML = '';
+	$('#roll10')[0].innerHTML = '';
+	$('#roll12')[0].innerHTML = '';
+	$('#roll20')[0].innerHTML = '';
+	$.each(rolls, function(index, roll) {
+		showRoll(roll['sides'], roll['result'], roll['color']);
+	});
+}
+
+function showRoll(sides, result, color) {
+	var raw = '<div class="roll';
+	if (result == sides) {
+		raw += ' max-roll';
+	} else if (result == 1) {
+		raw += ' min-roll';
+	}
+	raw += '" style="color: ' + color + ';">' + result + '</div>';
+
+	if (sides == 100) {
+		sides = 10;
+	}
+	$('#roll' + sides)[0].innerHTML += raw;
+	
+	return $('#roll' + sides)[0]; 
+}
+*/
 
 // --- game state implementation ----------------------------------------------
 

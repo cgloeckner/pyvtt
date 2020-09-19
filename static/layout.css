@@ -129,8 +129,56 @@ div.scene div#rolls {
 }
 
 div.dicebox {
+	position: absolute;
+	bottom: 30px;
 	width: 300px;
 	float: left;
+	
+	pointer-events: none;
+}
+
+div.dicebox div.dice {
+	display: inline-block;
+	width: 45px;
+	
+	pointer-events: auto;
+}
+
+div.dicebox div.rolls {
+	height: 0px;
+	display: inline-block;
+	flex-direction: column;
+	
+	pointer-events: none;
+}
+
+div.dicebox div.rolls div.roll {
+	width: 28px;
+	height: 28px;
+	padding: 8px;
+	margin-bottom: 2px;
+	
+	font-size: x-large;
+	text-align: center;
+	
+	background-color: rgba(50, 50, 50, 0.75);
+	border-radius: 10px;
+	
+	pointer-events: none;
+}
+
+div.dicebox div.rolls div.min-roll {
+	background-color: rgba(250, 0, 0, 0.5);
+	
+	-webkit-text-stroke-width: 0.5px;
+    -webkit-text-stroke-color: black;
+}
+
+div.dicebox div.rolls div.max-roll {
+	background-color: rgba(0, 250, 0, 0.5);
+	
+	-webkit-text-stroke-width: 0.5px;
+    -webkit-text-stroke-color: black;
 }
 
 div.dicebox img {

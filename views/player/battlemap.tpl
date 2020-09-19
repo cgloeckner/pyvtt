@@ -12,8 +12,11 @@
 		
 		<div class="mapfooter">
 			<div class="dicebox">
-%for sides in [4, 6, 8, 10, 12, 20]:
-				<img src="/static/d{{sides}}.png" id="d{{sides}}" title="Roll 1D{{sides}}" />
+%for sides in [20, 12, 10, 8, 6, 4]:
+				<div class="dice">
+					<div class="rolls" id="roll{{sides}}"></div><br />
+					<img src="/static/d{{sides}}.png" id="d{{sides}}" title="Roll 1D{{sides}}" />
+				</div>
 %end
 			</div>
 			

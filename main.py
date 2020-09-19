@@ -352,6 +352,9 @@ def post_player_update(game_title):
 	
 	# query rolls (within last 180 seconds)
 	rolls = list()
+	"""for s in [4, 6, 8, 10, 100, 12, 20]:
+		for r in db.Roll.select(lambda r: r.game == game and r.sides == s and r.timeid >= now - 180).order_by(lambda r: -r.timeid)[:13]:
+	"""
 	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 180).order_by(lambda r: -r.timeid)[:13]:
 		# query color by player
 		color = '#000000'
