@@ -307,6 +307,10 @@ def quit_game(game_title):
 		engine.players[game_title].remove(playername)
 	# note: color is kept in cache
 	
+	if game_title in engine.selected:
+		# reset selection
+		engine.selected[game_title][playercolor] = 0
+	
 	# show login page
 	redirect('/play/{0}'.format(game_title))
 
@@ -320,8 +324,12 @@ def post_player_update(game_title):
 	now = int(time.time())
 	
 	# fetch token updates from client
-	timeid  = float(request.POST.get('timeid'))
-	changes = json.loads(request.POST.get('changes'))
+	timeid   = float(request.POST.get('timeid'))
+	changes  = json.loads(request.POST.get('changes'))
+	if game.title not in engine.selected:
+		engine.selected[game.title] = dict()
+	engine.selected[game.title][request.get_cookie('playercolor')] = int(request.POST.get('selected'))
+	
 	# update token data
 	for data in changes:
 		token = scene.tokens.select(lambda s: s.id == data['id']).first()
@@ -369,12 +377,13 @@ def post_player_update(game_title):
 	
 	# return tokens, rolls and timestamp
 	data = {
-		'active' : game.active,
-		'timeid' : time.time(),
-		'full'   : timeid == 0,
-		'tokens' : tokens,
-		'rolls'  : rolls,
-		'players': playerlist
+		'active'   : game.active,
+		'timeid'   : time.time(),
+		'full'     : timeid == 0,
+		'tokens'   : tokens,
+		'rolls'    : rolls,
+		'players'  : playerlist,
+		'selected' : engine.selected[game.title]
 	}
 	return json.dumps(data)
 

@@ -54,6 +54,7 @@ class Engine(object):
 		# game cache
 		self.players = dict()
 		self.colors  = dict()
+		self.selected  = dict()
 
 	def setup(self, argv):
 		self.debug = '--debug' in argv

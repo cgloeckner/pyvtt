@@ -19,6 +19,8 @@ function clearCanvas() {
 var tokens       = []; // holds all tokens, updated by the server
 var change_cache = []; // holds ids of all client-changed tokens
 
+var player_selections = []; // contains selected tokens and corresponding player colors
+
 var culling = []; // holds tokens for culling
 var min_z = -1; // lowest known z-order
 var max_z =  1; // highest known z-order
@@ -118,7 +120,7 @@ function updateToken(data) {
 }
 
 /// Draws a single token (show_ui will show the selection box around it)
-function drawToken(token, show_ui) {
+function drawToken(token, color) {
 	var canvas = $('#battlemap');
 	var context = canvas[0].getContext("2d");
 	
@@ -160,8 +162,8 @@ function drawToken(token, show_ui) {
 	context.translate(token.posx, token.posy);
 	context.rotate(token.rotate * 3.14/180.0);
 	
-	if (show_ui) {
-		context.shadowColor = getCookie('playercolor');
+	if (color != null) {
+		context.shadowColor = color;
 		context.shadowBlur = 25;
 	}
 	
@@ -300,8 +302,9 @@ function updateTokens() {
 		url:  '/play/' + game_title + '/update',
 		dataType: 'json',
 		data: {
-			'timeid'  : timeid,
-			'changes' : JSON.stringify(changes)
+			'timeid'   : timeid,
+			'changes'  : JSON.stringify(changes),
+			'selected' : select_id
 		},
 		success: function(response) {		
 			// update current timeid
@@ -320,6 +323,12 @@ function updateTokens() {
 			updateTokenbar();
 			updateRolls(response['rolls']);
 			updatePlayers(response['players']);
+			
+			// highlight token selection (switch key and value, see server impl)
+			player_selections = [];
+			$.each(response['selected'], function(color, tokenid) {
+				player_selections.push([tokenid, color]);
+			});
 			
 			// reset changes
 			change_cache = [];
@@ -366,7 +375,16 @@ function drawScene() {
 		drawToken(background, background.id == select_id);
 	}
 	$.each(culling, function(index, token) {
-		drawToken(token, token.id == select_id);
+		var color = null;
+		$.each(player_selections, function(index, arr) {
+			if (arr[0] == token.id) {
+				color = arr[1];
+			}
+		});
+		if (color == null && token.id == select_id) {
+			color = getCookie('playercolor');
+		}
+		drawToken(token, color);
 	});
 }
 
@@ -468,7 +486,6 @@ function updateTokenbar() {
 					size = canvas[0].height * ratio;
 				}
 			}
-			console.log(size);
 			
 			// setup position
 			var x = bx.left + token.posx - size / 2 + 5;
