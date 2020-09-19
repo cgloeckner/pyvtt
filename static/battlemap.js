@@ -14,6 +14,37 @@ function clearCanvas() {
 	canvas_ratio = canvas[0].width / canvas[0].height;
 }
 
+var mem_canvas = null;
+
+/// Get image pixel data
+function getPixelData(token, x, y) {
+	// note: tokens are drawn centered
+	// x, y is relative to the token position
+	
+	var dom_canvas = $('#battlemap')[0];
+	
+	// setup in-memory canvas
+	mem_canvas = document.createElement('canvas');
+	mem_canvas.width  = token.size;
+	mem_canvas.height = token.size;
+
+	// query clean context
+	var mem_ctx = mem_canvas.getContext('2d');
+	mem_ctx.clearRect(0, 0, token.size, token.size);
+	
+	// draw image (scaled and rotated)
+	sizes = getActualSize(token, dom_canvas.width, dom_canvas.height);
+	mem_ctx.save();
+	mem_ctx.translate(sizes[0] / 2, sizes[1] / 2);
+	mem_ctx.rotate(token.rotate * 3.14/180.0);
+	// note: drawn centered for proper rotation
+	mem_ctx.drawImage(images[token.url], -sizes[0] / 2, -sizes[1] / 2, sizes[0], sizes[1]);
+	
+	// query pixel data
+	// note: consider (x,y) is relative to token's center
+	return mem_ctx.getImageData(x + sizes[0] / 2, y + sizes[1] / 2, 1, 1).data;
+}
+
 // --- token implementation ---------------------------------------------------
 
 var tokens       = []; // holds all tokens, updated by the server
@@ -42,43 +73,78 @@ function addToken(id, url) {
 	tokens[id] = new Token(id, url);
 }
 
+/// Calculate actual token size
+function getActualSize(token, maxw, maxh) {
+	var src_h = images[token.url].height;
+	var src_w = images[token.url].width;
+	var ratio = src_w / src_h;
+	
+	// scale token via width (most common usecase)
+	var w = token.size;
+	var h = w / ratio;
+	if (token.size == -1) {
+		if (ratio >= canvas_ratio) {
+			// most common case: image is wider than canvas (or same ratio)
+			// needs to be stretched to fit width
+			w = maxw
+			h = w / ratio;
+		} else {
+			// image is taller than canvas
+			// needs to be stretched to fit height
+			h = maxh
+			w = h * ratio;
+		}
+		
+	} else if (src_h > src_w) {
+		// scale token via height
+		h = token.size;
+		w = h * ratio;
+	}
+	
+	return [w, h];
+}
+
+/// Determiens if position is within token's bounding box
+function isOverToken(x, y, token) {
+	// 1st stage: bounding box test
+	var min_x = token.posx - token.size / 2;
+	var max_x = token.posx + token.size / 2;
+	var min_y = token.posy - token.size / 2;
+	var max_y = token.posy + token.size / 2;
+	var in_box = min_x <= x && x <= max_x && min_y <= y && y <= max_y;
+	if (!in_box) {
+		return false;
+	}
+	
+	// 2nd stage: image alpha test
+	// note: query at position relative to token's center
+	var dx = x - token.posx;
+	var dy = y - token.posy;
+	var pixel_data = getPixelData(token, dx, dy);
+	return pixel_data[3] > 0;
+}
+
 /// Determines which token is selected when clicking the given position
 function selectToken(x, y) {
 	var result = null;	
 	var bestz = min_z - 1;
 	var background = null;
 	// search for any fitting token with highest z-order (unlocked first)
-	$.each(tokens, function(index, item) {
+	$.each(culling, function(index, item) {
 		if (item != null && item.size == -1) {
 			background = item;
 		}
-		if (item != null && !item.locked) {
-			var min_x = item.posx - item.size / 2;
-			var max_x = item.posx + item.size / 2;
-			var min_y = item.posy - item.size / 2;
-			var max_y = item.posy + item.size / 2;
-			if (min_x <= x && x <= max_x && min_y <= y && y <= max_y) {
-				if (item.zorder > bestz) {
-					bestz = item.zorder;
-					result = item;
-				}
-			}
+		if (item != null && !item.locked && item.zorder > bestz && isOverToken(x, y, item)) {
+			bestz  = item.zorder;
+			result = item;
 		}
 	});
 	if (result == null) {
 		// try locked tokens next
-		$.each(tokens, function(index, item) {
-			if (item != null && item.locked) {
-				var min_x = item.posx - item.size / 2;
-				var max_x = item.posx + item.size / 2;
-				var min_y = item.posy - item.size / 2;
-				var max_y = item.posy + item.size / 2;
-				if (min_x <= x && x <= max_x && min_y <= y && y <= max_y) {
-					if (item.zorder > bestz) {
-						bestz = item.zorder;
-						result = item;
-					}
-				}
+		$.each(culling, function(index, item) {
+			if (item != null && item.locked && item.zorder > bestz && isOverToken(x, y, item)) {
+				bestz  = item.zorder;
+				result = item;
 			}
 		});
 	}
@@ -130,32 +196,7 @@ function drawToken(token, color) {
 		images[token.url].src = token.url;
 	}
 	
-	// calculate new height (keeping aspect ratio)
-	var src_h = images[token.url].height;
-	var src_w = images[token.url].width;
-	var ratio = src_w / src_h;
-	
-	// scale token via width (most common usecase)
-	var w = token.size;
-	var h = w / ratio;
-	if (token.size == -1) {
-		if (ratio >= canvas_ratio) {
-			// most common case: image is wider than canvas (or same ratio)
-			// needs to be stretched to fit width
-			w = canvas[0].width
-			h = w / ratio;
-		} else {
-			// image is taller than canvas
-			// needs to be stretched to fit height
-			h = canvas[0].height
-			w = h * ratio;
-		}
-		
-	} else if (src_h > src_w) {
-		// scale token via height
-		h = token.size;
-		w = h * ratio;
-	}
+	var sizes = getActualSize(token, canvas[0].width, canvas[0].height);
 	
 	// draw image
 	context.save();
@@ -167,7 +208,7 @@ function drawToken(token, color) {
 		context.shadowBlur = 25;
 	}
 	
-	context.drawImage(images[token.url], -w / 2, -h / 2, w, h);
+	context.drawImage(images[token.url], -sizes[0] / 2, -sizes[1] / 2, sizes[0], sizes[1]);
 	
 	context.restore();
 }
@@ -386,6 +427,9 @@ function drawScene() {
 		}
 		drawToken(token, color);
 	});
+	
+	// reverse culling for top-to-bottom token searching
+	culling.reverse();
 }
 
 /// Updates the entire game: update tokens from time to time, drawing each time
@@ -488,7 +532,7 @@ function updateTokenbar() {
 			}
 			
 			// setup position
-			var x = bx.left + token.posx - size / 2 + 5;
+			var x = bx.left + token.posx - size / 3 + 5;
 			var y = bx.top + token.posy - 36;
 			
 			$('#tokenbar').css('left', x + 'px');
