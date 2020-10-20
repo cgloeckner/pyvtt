@@ -3,12 +3,38 @@
 
 var images = [];
 var canvas_ratio = 1.0; // canvas aspect ratio
+var canvas_scale = 1.0; // saved scaling
+
+function resizeCanvas() {
+	var canvas = $('#battlemap');
+	var context = canvas[0].getContext("2d");
+	
+	// calculate new scale
+	var scale_x = (window.innerWidth - 10) / 1000;
+	var scale_y = (window.innerHeight - 65) / 560;
+	
+	if (scale_y < scale_x) {
+		scale_x = scale_y;
+	
+	}
+	// save scale
+	canvas_scale = scale_x;
+	
+	canvas[0].width  = window.innerWidth - 10;
+	canvas[0].height = window.innerHeight - 65;
+		
+}
 
 /// Will clear the canvas
 function clearCanvas() {
 	var canvas = $('#battlemap');
 	var context = canvas[0].getContext("2d");
+	
+	resizeCanvas();
+	
+	context.save();
 	context.clearRect(0, 0, canvas[0].width, canvas[0].height);
+	context.restore();
 	
 	// Recalculate aspect ratio
 	canvas_ratio = canvas[0].width / canvas[0].height;
@@ -56,7 +82,7 @@ var player_selections = []; // contains selected tokens and corresponding player
 var culling = []; // holds tokens for culling
 var min_z = -1; // lowest known z-order
 var max_z =  1; // highest known z-order
-var min_token_size = 96;
+var min_token_size = 80;
 
 /// Token constructor
 function Token(id, url) {
@@ -88,12 +114,12 @@ function getActualSize(token, maxw, maxh) {
 		if (ratio >= canvas_ratio) {
 			// most common case: image is wider than canvas (or same ratio)
 			// needs to be stretched to fit width
-			w = maxw
+			w = maxw / canvas_scale;
 			h = w / ratio;
 		} else {
 			// image is taller than canvas
 			// needs to be stretched to fit height
-			h = maxh
+			h = maxh / canvas_scale;
 			w = h * ratio;
 		}
 		
@@ -175,8 +201,8 @@ function updateToken(data) {
 	if (data.size == -1) {
 		// align background image to center
 		var canvas = $('#battlemap');
-		tokens[data.id].posx = canvas[0].width / 2;
-		tokens[data.id].posy = canvas[0].height / 2;
+		tokens[data.id].posx = canvas[0].width  / 2 / canvas_scale;
+		tokens[data.id].posy = canvas[0].height / 2 / canvas_scale;
 	}
 }
 
@@ -192,10 +218,12 @@ function drawToken(token, color) {
 	}
 	
 	var sizes = getActualSize(token, canvas[0].width, canvas[0].height);
+	sizes[0] *= canvas_scale;
+	sizes[1] *= canvas_scale;
 	
 	// draw image
 	context.save();
-	context.translate(token.posx, token.posy);
+	context.translate(token.posx * canvas_scale, token.posy * canvas_scale);
 	context.rotate(token.rotate * 3.14/180.0);
 	
 	if (color != null) {
@@ -276,7 +304,7 @@ function showRoll(sides, result, player, color, time) {
 	if (result == sides) {
 		div_class += ' max-roll';
 	}
-	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" style="filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"/><span class="result" style="color: ' + color + ';">' + result + '</span><span class="player">' + player + '<br />' + time + '</span></div>';
+	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" style="filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"/><span class="result" style="color: ' + color + ';">' + result + '</span><span class="player" style="background-color: ' + color + '">' + player + ' (' + time + ')</span></div>';
 }
 
 function updateRolls(rolls) {
@@ -477,14 +505,12 @@ function disconnect() {
 
 function uploadDrag(event) {
 	event.preventDefault();
-	
-	mouse_x = event.offsetX;
-	mouse_y = event.offsetY;
 }
 
 function uploadDrop(event) {
 	event.preventDefault();
-
+	pickCanvasPos(event);
+	
 	var queue = $('#uploadqueue')[0];
 	queue.files = event.dataTransfer.files;
 	
@@ -542,7 +568,7 @@ function updateTokenbar() {
 				if (ratio >= canvas_ratio) {
 					// most common case: image is wider than canvas (or same ratio)
 					// needs to be stretched to fit width
-					size = canvas[0].width
+					size = canvas[0].width;
 				} else {
 					// image is taller than canvas
 					// needs to be stretched to fit height
@@ -554,8 +580,8 @@ function updateTokenbar() {
 			var bx = canvas[0].getBoundingClientRect();
 			var canvas = $('#battlemap');
 			var sizes = getActualSize(token, canvas[0].width, canvas[0].height);
-			$('#tokenbar').css('left', bx.left + token.posx - 32 + 'px');
-			$('#tokenbar').css('top',  bx.top  + token.posy - 24 + 32 * token.size / min_token_size + 'px');
+			$('#tokenbar').css('left', bx.left + token.posx * canvas_scale - 32 + 'px');
+			$('#tokenbar').css('top',  bx.top  + token.posy * canvas_scale - 24 + 32 * token.size / min_token_size + 'px');
 			
 			if (token.locked) {
 				$('#tokenLock')[0].src = '/static/locked.png';
@@ -594,8 +620,11 @@ function pickCanvasPos(event) {
 	
 	// make pos relative
 	var bx = $('#battlemap')[0].getBoundingClientRect();
-	mouse_x -= bx.left;
-	mouse_y -= bx.top;
+	//mouse_x -= bx.left;
+	//mouse_y -= bx.top;
+	
+	mouse_x = parseInt(mouse_x / canvas_scale);
+	mouse_y = parseInt(mouse_y / canvas_scale);
 }
 
 /// Event handle for start grabbing a token
@@ -667,8 +696,8 @@ function tokenWheel(event) {
 		if (event.shiftKey) {
 			// handle scaling
 			token.size = token.size - 5 * event.deltaY;
-			if (token.size > min_token_size * 4) {
-				token.size = min_token_size * 4;
+			if (token.size > min_token_size * 5) {
+				token.size = min_token_size * 5;
 			}
 			if (token.size < min_token_size) {
 				token.size = min_token_size;

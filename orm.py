@@ -119,7 +119,7 @@ class Token(db.Entity):
 	posx   = Required(int)
 	posy   = Required(int)
 	zorder = Required(int, default=0)
-	size   = Required(int, default=64)
+	size   = Required(int, default=80)
 	rotate = Required(float, default=0.0)
 	locked = Required(bool, default=False)
 	timeid = Required(int, default=0) # dirty flag

@@ -2,34 +2,26 @@
 
 %include("header", title=title)
 
-<div class="dicebox">
-	<div id="rollbox">
-	</div>
-	
-	<div class="dice">
-%for sides in [20, 12, 10, 8, 6, 4]:
-		<img src="/static/d{{sides}}.png" id="d{{sides}}" title="Roll 1D{{sides}}" /><br />
-%end
-	</div>
+<div id="rollbox">
 </div>
 
-<div class="scene">
-
-%width = 1200
-	<div class="battlemap">
-		<canvas id="battlemap" width="{{width}}" height=720"></canvas>
+<div class="battlemap">
+	<canvas id="battlemap" width="1000" height="560"></canvas>
 		
-		<div id="tokenbar">
-			<img src="/static/locked.png" id="tokenLock" onClick="tokenLock();" />
-			<img src="/static/top.png" id="tokenTop" class="out" onClick="tokenTop();" />
-			<img src="/static/bottom.png" id="tokenBottom" class="out" onClick="tokenBottom();" />
-			<img src="/static/stretch.png" id="tokenStretch" onClick="tokenStretch();" /><br />
-		</div>
-				
+	<div id="tokenbar">
+		<img src="/static/locked.png" id="tokenLock" onClick="tokenLock();" />
+		<img src="/static/top.png" id="tokenTop" class="out" onClick="tokenTop();" />
+		<img src="/static/bottom.png" id="tokenBottom" class="out" onClick="tokenBottom();" />
+		<img src="/static/stretch.png" id="tokenStretch" onClick="tokenStretch();" /><br />
 	</div>
 </div>
 
 <div class="mapfooter">
+	<div class="dice">
+%for sides in [20, 12, 10, 8, 6, 4]:
+		<img src="/static/d{{sides}}.png" id="d{{sides}}" title="Roll 1D{{sides}}" />
+%end
+	</div>					
 					
 	<div id="players"></div>
 

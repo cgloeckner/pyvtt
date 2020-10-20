@@ -8,6 +8,8 @@ form {
 	width: 50%;
 }
 
+/* --- GM Area -------------------------------------------------------------- */
+
 div.menu {
 	display: block;
 	width: 800px;
@@ -39,56 +41,17 @@ div.menu table input {
 	width: 100px;
 }
 
-div.scene {
-	width: 1440px;
-	height: 720px;
-	margin-left: auto;
-	margin-right: auto;
-}
-
-div#tokenmenu {
-	background-color: rgba(150, 150, 150, 0.95);
-	border-radius: 10px;
-	padding: 15px;
-	width: 100px;
-	position: absolute;
-	display: none;
-}
-
 /* --- Dicebox Layout ------------------------------------------------------- */
 
-div.dicebox {
-	width: 240px;
-	height: 100%;
+div#rollbox {	
+	width: 100px;
+	height: calc(100% - 60px);
 	float: left;
 }
 
-div.dicebox div.dice {
-	position: absolute;
-	left: 10px;
-	top: calc(50% - 150px);
-	height: 300px;
-}
-
-div.dicebox div.dice img {
-	width: 48px;
-	height: 48px;
-}
-
-div.dicebox div.dice img:hover {
-	cursor: pointer;
-	filter: drop-shadow(1px 1px 10px gold) 
-          drop-shadow(-1px -1px 0 gold);
-}
-
-div.dicebox div#rollbox {	
-	padding: 15px;
-	margin-left: 45px;	
-}
-
-div.dicebox div#rollbox div.roll {
+div#rollbox div.roll {
 	display: inline-block;
-	width: 155px;
+	width: 95px;
 	margin-left: auto;
 	margin-right: auto;
 	height: 33px;
@@ -99,22 +62,26 @@ div.dicebox div#rollbox div.roll {
 	text-align: center;
 }
 
-div.dicebox div#rollbox div.min-roll {
+div#rollbox div.roll :hover {
+	display: 155px;
+}
+
+div#rollbox div.min-roll {
 	background-color: rgba(250, 0, 0, 0.5);
 }
 
-div.dicebox div#rollbox div.max-roll {
+div#rollbox div.max-roll {
 	background-color: rgba(0, 250, 0, 0.5);
 }
 
-div.dicebox div#rollbox div.roll img {
+div#rollbox div.roll img {
 	float: left;
 	width: 30px;
 	height: 30px;
 	vertical-align: text-bottom;
 }
 
-div.dicebox div#rollbox div.roll span.result {
+div#rollbox div.roll span.result {
 	margin-left: auto;
 	margin-right: auto;
 	font-size: xx-large;
@@ -122,17 +89,46 @@ div.dicebox div#rollbox div.roll span.result {
     -webkit-text-stroke-color: black;
 }
 
-div.dicebox div#rollbox div.roll span.player {
-	float: right;
-	font-size: smaller;
+div#rollbox div.roll span.player {
+	position: absolute;
+	display: none;
 }
 
-/* --- Players List --------------------------------------------------------- */
+div#rollbox div.roll:hover span.player {
+	display: inline-block;
+	
+	padding: 10px;
+	border-radius: 10px;
+	float: right;
+	font-size: smaller;
+	z-index: 1;
+	
+	filter: opacity(0.4);
+}
+
+/* --- Map Footer ----------------------------------------------------------- */
 
 div.mapfooter {
 	position: absolute;
 	bottom: 5px;
 	width: 100%;
+}
+
+div.mapfooter div.dice {
+	position: absolute;
+	left: 5px;
+	width: 350px;
+}
+
+div.mapfooter div.dice img {
+	width: 48px;
+	height: 48px;
+}
+
+div.mapfooter div.dice img:hover {
+	cursor: pointer;
+	filter: drop-shadow(1px 1px 10px gold) 
+          drop-shadow(-1px -1px 0 gold);
 }
 
 div.mapfooter div#players {
@@ -162,73 +158,35 @@ div.mapfooter div#players span.player a {
 	color: black;
 }
 
+div.mapfooter form#uploadform {
+	display: none;
+}
 
 /* --- Battlemap Layout ----------------------------------------------------- */
 
 div.battlemap {
-	float: left;
-	width: 1200px;
-	height: 720px;
+	position: absolute;
+	width: calc(100% - 10px);
+	left: 5px;
+	top: 5px;
+	
+	z-index: -1;
 }
 
-canvas#battlemap {
+div.battlemap canvas#battlemap {
+	width: 100%;
+	height: 100%;
+
 	background-color: rgba(100, 100, 100, 0.25);
 	border: 1px solid black;
 	z-index: 0;
 }
 
-div.scene div#rolls {
-	width: 200px;
-	height: 750px;
-	overflow-y: scroll;
-	float: right;
-}
-
-div.dicebox div.rolls {
-	height: 0px;
-	display: inline-block;
-	flex-direction: column;
-	
-	pointer-events: none;
-}
-
-div.dicebox div.rolls div.roll {
-	width: 28px;
-	height: 28px;
-	padding: 8px;
-	margin-bottom: 2px;
-	
-	font-size: x-large;
-	text-align: center;
-	
-	background-color: rgba(50, 50, 50, 0.75);
-	border-radius: 10px;
-	
-	pointer-events: none;
-}
-
-div.dicebox div.rolls div.min-roll {
-	background-color: rgba(250, 0, 0, 0.5);
-	
-	-webkit-text-stroke-width: 0.5px;
-    -webkit-text-stroke-color: black;
-}
-
-div.dicebox div.rolls div.max-roll {
-	background-color: rgba(0, 250, 0, 0.5);
-	
-	-webkit-text-stroke-width: 0.5px;
-    -webkit-text-stroke-color: black;
-}
-
-
-
-
-div#tokenbar {
+div.battlemap div#tokenbar {
 	position: absolute;
 }
 
-div#tokenbar img {
+div.battlemap div#tokenbar img {
 	height: 16px;
 	margin: 0px;
 	padding: 0px;
@@ -237,30 +195,15 @@ div#tokenbar img {
 		drop-shadow(-1px -1px 10px #BDBDBD);
 }
 
-div#tokenbar img.out {
+div.battlemap div#tokenbar img.out {
 	position: relative;
 	top: 7px;
 }
 
-div#tokenbar img:hover {
+div.battlemap div#tokenbar img:hover {
 	cursor: pointer;
 	filter: invert(1.0)
 		drop-shadow(1px 1px 10px gold) 
 		drop-shadow(-1px -1px 10px gold);
-}
-
-form#uploadform {
-	display: none;
-}
-
-div#error {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	width: 150px;
-	color: red;
-	border: 2px solid red;
-	padding: 5px;
-	background-color: black;
 }
 
