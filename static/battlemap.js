@@ -525,17 +525,25 @@ function uploadDrop(event) {
 	});
 }
 
-function updateTokenbar() {
-	$('#tokenbar').css('visibility', 'hidden');
+function showTokenbar(token_id) {
+	if (mouse_over_id == token_id) {
+		$('#tokenbar').css('visibility', 'visible');
+	} else {
+		$('#tokenbar').css('visibility', 'hidden');
+		showTokenbar(mouse_over_id);
+	}
+}
 
+function updateTokenbar() {
 	// query mouse over token
 	var token = selectToken(mouse_x, mouse_y);
 	if (token != null) {
 		mouse_over_id = token.id;
-		
 		if (!grabbed) {
 			// update tokenbar if not grabbed
-			$('#tokenbar').css('visibility', 'visible');
+			
+			// show tokenbar delayed
+			setTimeout("showTokenbar(" + token.id + ")", 500.0);
 			
 			// adjust position based on size and aspect ratio
 			var canvas = $('#battlemap');
@@ -584,7 +592,14 @@ function updateTokenbar() {
 				$('#tokenBottom').css('visibility', '');
 				$('#tokenStretch').css('visibility', '');
 			}
+		} else {
+			// hide tokenbar when token grabbed
+			$('#tokenbar').css('visibility', 'hidden');
 		}
+	} else {
+		// hide tokenbar when no token selected
+		mouse_over_id = 0;
+		$('#tokenbar').css('visibility', 'hidden');
 	}
 }
 
