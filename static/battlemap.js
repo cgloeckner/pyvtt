@@ -23,14 +23,15 @@ function getPixelData(token, x, y) {
 	
 	var dom_canvas = $('#battlemap')[0];
 	
-	// setup in-memory canvas
+	// setup in-memory canvas (x1.414 due to extreme rotation and pythagoras)
+	var size = token.size * 1.415;
 	mem_canvas = document.createElement('canvas');
-	mem_canvas.width  = token.size;
-	mem_canvas.height = token.size;
+	mem_canvas.width  = size;
+	mem_canvas.height = size;
 
 	// query clean context
 	var mem_ctx = mem_canvas.getContext('2d');
-	mem_ctx.clearRect(0, 0, token.size, token.size);
+	mem_ctx.clearRect(0, 0, size, size);
 	
 	// draw image (scaled and rotated)
 	sizes = getActualSize(token, dom_canvas.width, dom_canvas.height);
@@ -55,6 +56,7 @@ var player_selections = []; // contains selected tokens and corresponding player
 var culling = []; // holds tokens for culling
 var min_z = -1; // lowest known z-order
 var max_z =  1; // highest known z-order
+var min_token_size = 96;
 
 /// Token constructor
 function Token(id, url) {
@@ -517,7 +519,6 @@ function uploadDrop(event) {
 function showTokenbar(token_id) {
 	if (mouse_over_id == token_id) {
 		$('#tokenbar').css('visibility', 'visible');
-		console.log(token_id);
 	} else {
 		$('#tokenbar').css('visibility', 'hidden');
 		setTimeout("showTokenbar(" + mouse_over_id + ")", 500.0);
@@ -561,15 +562,12 @@ function updateTokenbar() {
 				}
 			}
 			
-			// adjust position based on size and aspect ratio
+			// position tokenbar centered to token
 			var bx = canvas[0].getBoundingClientRect();
-			
-			// setup position
-			var x = bx.left + token.posx - size / 3 + 5;
-			var y = bx.top + token.posy - 36;
-			
-			$('#tokenbar').css('left', x + 'px');
-			$('#tokenbar').css('top', y + 'px');
+			var canvas = $('#battlemap');
+			var sizes = getActualSize(token, canvas[0].width, canvas[0].height);
+			$('#tokenbar').css('left', bx.left + token.posx - 32 + 'px');
+			$('#tokenbar').css('top',  bx.top  + token.posy - 24 + 32 * token.size / min_token_size + 'px');
 			
 			if (token.locked) {
 				$('#tokenLock')[0].src = '/static/locked.png';
@@ -628,7 +626,7 @@ function tokenGrab(event) {
 		} else if (event.buttons == 2) {
 			// Right click: reset token scale & rotation
 			token.rotate = 0;
-			token.size   = 64;
+			token.size   = min_token_size;
 			
 			// mark token as changed
 			if (!change_cache.includes(token.id)) {
@@ -681,11 +679,11 @@ function tokenWheel(event) {
 		if (event.shiftKey) {
 			// handle scaling
 			token.size = token.size - 5 * event.deltaY;
-			if (token.size > 1440) {
-				token.size = 1440;
+			if (token.size > min_token_size * 4) {
+				token.size = min_token_size * 4;
 			}
-			if (token.size < 32) {
-				token.size = 32;
+			if (token.size < min_token_size) {
+				token.size = min_token_size;
 			}
 				
 			// mark token as changed

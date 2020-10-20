@@ -208,7 +208,7 @@ div#tokenbar img {
 
 div#tokenbar img.out {
 	position: relative;
-	left: -7px;
+	top: 7px;
 }
 
 div#tokenbar img:hover {

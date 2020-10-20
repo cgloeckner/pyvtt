@@ -23,9 +23,9 @@
 			<div id="players"></div>
 
 			<div id="tokenbar">
-				<img src="/static/locked.png" id="tokenLock" onClick="tokenLock();" /><br />
-				<img src="/static/top.png" id="tokenTop" class="out" onClick="tokenTop();" /><br />
-				<img src="/static/bottom.png" id="tokenBottom" class="out" onClick="tokenBottom();" /><br />
+				<img src="/static/locked.png" id="tokenLock" onClick="tokenLock();" />
+				<img src="/static/top.png" id="tokenTop" class="out" onClick="tokenTop();" />
+				<img src="/static/bottom.png" id="tokenBottom" class="out" onClick="tokenBottom();" />
 				<img src="/static/stretch.png" id="tokenStretch" onClick="tokenStretch();" /><br />
 			</div>
 			
