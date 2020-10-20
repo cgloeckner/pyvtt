@@ -243,6 +243,7 @@ function updatePlayers(response) {
 		}
 	});
 	
+	// show players
 	$.each(players, function(name, color) {
 		if (color != null && current[name] == null) {
 			// remove existing player
@@ -400,19 +401,6 @@ function updateTokens() {
 			// reset changes
 			change_cache = [];
 			
-			$('#error').css('visibility', 'hidden');
-		}, error: function(jqXHR, text, error) {
-		/*
-			// animate 'Connecting' with multiple dots
-			var error = $('#error');
-			error.css('visibility', 'visible');
-			var dots = error[0].innerHTML.split('Connecting')[1].length;
-			error[0].innerHTML = 'Connecting';
-			dots = (dots + 1) % 10;
-			for (i = 1; i <= dots; ++i) {
-				error[0].innerHTML += '.';
-			}
-		*/
 		}
 	});
 }

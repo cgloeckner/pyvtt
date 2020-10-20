@@ -127,17 +127,48 @@ div.dicebox div#rollbox div.roll span.player {
 	font-size: smaller;
 }
 
+/* --- Players List --------------------------------------------------------- */
+
+div.mapfooter {
+	position: absolute;
+	bottom: 5px;
+	width: 100%;
+}
+
+div.mapfooter div#players {
+	display: block;
+	width: 700px;
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	/* white-space: nowrap; */
+}
+
+div.mapfooter div#players span.player {
+	display: inline-block;
+	height: 20px;
+	padding: 10px;
+	margin: 7px;
+	font-size: larger;
+	background-color: rgba(200, 200, 200, 0.5);
+	border-radius: 10px;
+	text-align: center;
+	color: black;
+}
+
+div.mapfooter div#players span.player a {
+	pointer: hand;
+	text-decoration: none;
+	color: black;
+}
+
+
 /* --- Battlemap Layout ----------------------------------------------------- */
 
 div.battlemap {
 	float: left;
 	width: 1200px;
 	height: 720px;
-}
-
-div.battlemap div.mapfooter {
-	width: 1200px;
-	height: 64px;
 }
 
 canvas#battlemap {
@@ -216,33 +247,6 @@ div#tokenbar img:hover {
 	filter: invert(1.0)
 		drop-shadow(1px 1px 10px gold) 
 		drop-shadow(-1px -1px 10px gold);
-}
-
-div#players {
-	display: block;
-	width: 700px;
-	text-align: center;
-	margin-left: auto;
-	margin-right: auto;
-	/* white-space: nowrap; */
-}
-
-div#players span.player {
-	display: inline-block;
-	height: 20px;
-	padding: 10px;
-	margin: 7px;
-	font-size: larger;
-	background-color: rgba(200, 200, 200, 0.5);
-	border-radius: 10px;
-	text-align: center;
-	color: black;
-}
-
-div#players span.player a {
-	pointer: hand;
-	text-decoration: none;
-	color: black;
 }
 
 form#uploadform {

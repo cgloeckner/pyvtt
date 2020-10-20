@@ -19,26 +19,23 @@
 	<div class="battlemap">
 		<canvas id="battlemap" width="{{width}}" height=720"></canvas>
 		
-		<div class="mapfooter">
-			
-			
-			<div id="players"></div>
-
-			<div id="tokenbar">
-				<img src="/static/locked.png" id="tokenLock" onClick="tokenLock();" />
-				<img src="/static/top.png" id="tokenTop" class="out" onClick="tokenTop();" />
-				<img src="/static/bottom.png" id="tokenBottom" class="out" onClick="tokenBottom();" />
-				<img src="/static/stretch.png" id="tokenStretch" onClick="tokenStretch();" /><br />
-			</div>
-			
-			<form id="uploadform" method="post" enctype="multipart/form-data">
-				<input id="uploadqueue" name="file[]" type="file" multiple />
-			</form>
-			
-			<div id="error">Connecting...</div>
-
+		<div id="tokenbar">
+			<img src="/static/locked.png" id="tokenLock" onClick="tokenLock();" />
+			<img src="/static/top.png" id="tokenTop" class="out" onClick="tokenTop();" />
+			<img src="/static/bottom.png" id="tokenBottom" class="out" onClick="tokenBottom();" />
+			<img src="/static/stretch.png" id="tokenStretch" onClick="tokenStretch();" /><br />
 		</div>
+				
 	</div>
+</div>
+
+<div class="mapfooter">
+					
+	<div id="players"></div>
+
+	<form id="uploadform" method="post" enctype="multipart/form-data">
+		<input id="uploadqueue" name="file[]" type="file" multiple />
+	</form>
 </div>
 
 <script>
