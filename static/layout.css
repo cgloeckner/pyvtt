@@ -58,7 +58,7 @@ div#tokenmenu {
 /* --- Dicebox Layout ------------------------------------------------------- */
 
 div.dicebox {
-	width: 260px;
+	width: 240px;
 	height: 100%;
 	float: left;
 }
@@ -88,7 +88,7 @@ div.dicebox div#rollbox {
 
 div.dicebox div#rollbox div.roll {
 	display: inline-block;
-	width: 180px;
+	width: 155px;
 	margin-left: auto;
 	margin-right: auto;
 	height: 33px;
@@ -115,7 +115,6 @@ div.dicebox div#rollbox div.roll img {
 }
 
 div.dicebox div#rollbox div.roll span.result {
-	width: 30px;
 	margin-left: auto;
 	margin-right: auto;
 	font-size: xx-large;
