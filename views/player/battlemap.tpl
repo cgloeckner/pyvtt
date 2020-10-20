@@ -2,23 +2,25 @@
 
 %include("header", title=title)
 
-<div class="scene">
+<div class="dicebox">
 	<div id="rollbox">
 	</div>
+	
+	<div class="dice">
+%for sides in [20, 12, 10, 8, 6, 4]:
+		<img src="/static/d{{sides}}.png" id="d{{sides}}" title="Roll 1D{{sides}}" /><br />
+%end
+	</div>
+</div>
+
+<div class="scene">
 
 %width = 1200
 	<div class="battlemap">
 		<canvas id="battlemap" width="{{width}}" height=720"></canvas>
 		
 		<div class="mapfooter">
-			<div class="dicebox">
-%for sides in [20, 12, 10, 8, 6, 4]:
-				<div class="dice">
-					<div class="rolls" id="roll{{sides}}"></div><br />
-					<img src="/static/d{{sides}}.png" id="d{{sides}}" title="Roll 1D{{sides}}" />
-				</div>
-%end
-			</div>
+			
 			
 			<div id="players"></div>
 

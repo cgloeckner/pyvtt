@@ -55,14 +55,38 @@ div#tokenmenu {
 	display: none;
 }
 
-div#rollbox {
-	width: 210px;
+/* --- Dicebox Layout ------------------------------------------------------- */
+
+div.dicebox {
+	width: 260px;
+	height: 100%;
 	float: left;
-	padding-top: 10px;
-	height: 750px;
 }
 
-div#rollbox div.roll {
+div.dicebox div.dice {
+	position: absolute;
+	left: 10px;
+	top: calc(50% - 150px);
+	height: 300px;
+}
+
+div.dicebox div.dice img {
+	width: 48px;
+	height: 48px;
+}
+
+div.dicebox div.dice img:hover {
+	cursor: pointer;
+	filter: drop-shadow(1px 1px 10px gold) 
+          drop-shadow(-1px -1px 0 gold);
+}
+
+div.dicebox div#rollbox {	
+	padding: 15px;
+	margin-left: 45px;	
+}
+
+div.dicebox div#rollbox div.roll {
 	display: inline-block;
 	width: 180px;
 	margin-left: auto;
@@ -75,22 +99,22 @@ div#rollbox div.roll {
 	text-align: center;
 }
 
-div#rollbox div.min-roll {
+div.dicebox div#rollbox div.min-roll {
 	background-color: rgba(250, 0, 0, 0.5);
 }
 
-div#rollbox div.max-roll {
+div.dicebox div#rollbox div.max-roll {
 	background-color: rgba(0, 250, 0, 0.5);
 }
 
-div#rollbox div.roll img {
+div.dicebox div#rollbox div.roll img {
 	float: left;
 	width: 30px;
 	height: 30px;
 	vertical-align: text-bottom;
 }
 
-div#rollbox div.roll span.result {
+div.dicebox div#rollbox div.roll span.result {
 	width: 30px;
 	margin-left: auto;
 	margin-right: auto;
@@ -99,10 +123,12 @@ div#rollbox div.roll span.result {
     -webkit-text-stroke-color: black;
 }
 
-div#rollbox div.roll span.player {
+div.dicebox div#rollbox div.roll span.player {
 	float: right;
 	font-size: smaller;
 }
+
+/* --- Battlemap Layout ----------------------------------------------------- */
 
 div.battlemap {
 	float: left;
@@ -126,22 +152,6 @@ div.scene div#rolls {
 	height: 750px;
 	overflow-y: scroll;
 	float: right;
-}
-
-div.dicebox {
-	position: absolute;
-	bottom: 30px;
-	width: 300px;
-	float: left;
-	
-	pointer-events: none;
-}
-
-div.dicebox div.dice {
-	display: inline-block;
-	width: 45px;
-	
-	pointer-events: auto;
 }
 
 div.dicebox div.rolls {
@@ -181,17 +191,8 @@ div.dicebox div.rolls div.max-roll {
     -webkit-text-stroke-color: black;
 }
 
-div.dicebox img {
-	float: right;
-	width: 48px;
-	height: 48px;
-}
 
-div.dicebox img:hover {
-	cursor: pointer;
-	filter: drop-shadow(1px 1px 10px gold) 
-          drop-shadow(-1px -1px 0 gold);
-}
+
 
 div#tokenbar {
 	position: absolute;
