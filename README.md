@@ -8,11 +8,7 @@ requires pony (DB) and paste (async HTTP)
 - enable portforwarding for port 8080 for this computer in your router
 - query your public IP, set up your game in the browser
 - send the play-link to your players to join
-- Recommended browser: Firefox
-
-# Notes
-- Images up to 150kb are handled as tokens
-- Images larger 2mb are handled as backgrounds
+- Recommended browser: Firefox (non-mobile device)
 
 # GM not local?
 start with `--lazy` to skip IP-checking for GM-routes
@@ -20,9 +16,8 @@ start with `--lazy` to skip IP-checking for GM-routes
 # Development notes
 start with `--debug` to start in auto-reloading (but non-threaded) dev mode (localhost only)
 
-
 # Known bugs
 - edge: extreme slow ajax
 - opera: extreme slow page loading
-- mobile: scrolling issue (various browsers)
+- mobile: cannot grab token (-.-)
 - no proper logout if the browser is completly closed
