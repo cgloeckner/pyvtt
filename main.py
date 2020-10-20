@@ -42,7 +42,7 @@ def asGm(callback):
 def get_game_list():
 	games = db.Game.select()
 	
-	return dict(games=games, server='{0}:{1}'.format(engine.publicip, engine.port))
+	return dict(games=games, server='{0}:{1}'.format(engine.getIp(), engine.port))
 
 @post('/setup/create', apply=[asGm])
 def post_create_game():
@@ -76,7 +76,7 @@ def get_game_details(game_title):
 	# load game
 	game = db.Game.select(lambda g: g.title == game_title).first()
 	
-	return dict(game=game, server='{0}:{1}'.format(engine.publicip, engine.port))
+	return dict(game=game, server='{0}:{1}'.format(engine.getIp(), engine.port))
 
 @post('/gm/<game_title>/create', apply=[asGm])
 def post_create_scene(game_title):

@@ -38,9 +38,6 @@ class Engine(object):
 		self.debug = True
 		self.lazy  = False
 		
-		# query public ip
-		self.publicip = requests.get('https://api.ipify.org').text
-
 		# whitelist for game titles etc.
 		self.gametitle_whitelist = []
 		for i in range(65, 91):
@@ -60,11 +57,20 @@ class Engine(object):
 		self.debug = '--debug' in argv
 		self.lazy  = '--lazy' in argv
 		
+		if self.debug:
+			self.host = 'localhost'
+		else:
+			self.host = '0.0.0.0'
+		
 		# setup logging
 		if self.debug:
 			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', level=logging.DEBUG)
 		else:
 			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', level=logging.INFO)
+		
+		# query public ip
+		self.publicip = requests.get('https://api.ipify.org').text
+		logging.info('Public IP is {0}'.format(self.publicip))
 		
 		# prepare existing games' cache
 		with db_session:
@@ -74,6 +80,12 @@ class Engine(object):
 				g.makeMd5s()
 			t = time.time() - s
 			logging.info('Image checksums and threading locks created within {0}s'.format(t))
+
+	def getIp(self):
+		if self.debug:
+			return 'localhost'
+		else:
+			return self.publicip
 
 	def applyWhitelist(self, s):
 			# secure symbols used in title
