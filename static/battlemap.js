@@ -764,7 +764,6 @@ function tokenStretch() {
 		// stretch token to entire canvas (on deepest z-order)
 		var canvas = $('#battlemap');
 		token.size = -1;
-		token.rotate = 0;
 		token.locked = true;
 		token.zorder = min_z;
 		min_z -= 1;
