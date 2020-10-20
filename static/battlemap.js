@@ -129,13 +129,6 @@ function isOverToken(x, y, token) {
 function selectToken(x, y) {
 	var result = null;	
 	var bestz = min_z - 1;
-	var background = null;
-	// search for background
-	$.each(tokens, function(index, item) {
-		if (item != null && item.size == -1) {
-			background = item;
-		}
-	});
 	// search for any fitting culling with highest z-order (unlocked first)
 	$.each(culling, function(index, item) {
 		if (item != null && !item.locked && item.zorder > bestz && isOverToken(x, y, item)) {
@@ -151,10 +144,6 @@ function selectToken(x, y) {
 				result = item;
 			}
 		});
-	}
-	if (result == null) {
-		// fallback: grab background if possible
-		result = background;
 	}
 	return result;
 }
@@ -528,9 +517,10 @@ function uploadDrop(event) {
 function showTokenbar(token_id) {
 	if (mouse_over_id == token_id) {
 		$('#tokenbar').css('visibility', 'visible');
+		console.log(token_id);
 	} else {
 		$('#tokenbar').css('visibility', 'hidden');
-		showTokenbar(mouse_over_id);
+		setTimeout("showTokenbar(" + mouse_over_id + ")", 500.0);
 	}
 }
 
@@ -545,10 +535,6 @@ function updateTokenbar() {
 			// show tokenbar delayed
 			setTimeout("showTokenbar(" + token.id + ")", 500.0);
 			
-			// adjust position based on size and aspect ratio
-			var canvas = $('#battlemap');
-			var bx = canvas[0].getBoundingClientRect();
-			
 			// cache image if necessary
 			if (!images.includes(token.url)) {
 				images[token.url] = new Image();
@@ -561,6 +547,7 @@ function updateTokenbar() {
 			var ratio = src_w / src_h;
 			
 			// determine token size
+			var canvas = $('#battlemap');
 			var size = token.size;
 			if (size == -1) {
 				if (ratio >= canvas_ratio) {
@@ -573,6 +560,9 @@ function updateTokenbar() {
 					size = canvas[0].height * ratio;
 				}
 			}
+			
+			// adjust position based on size and aspect ratio
+			var bx = canvas[0].getBoundingClientRect();
 			
 			// setup position
 			var x = bx.left + token.posx - size / 3 + 5;
