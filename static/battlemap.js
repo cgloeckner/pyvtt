@@ -2,27 +2,28 @@
 // --- image handling implementation ------------------------------------------
 
 var images = [];
-var canvas_ratio = 1.0; // canvas aspect ratio
 var canvas_scale = 1.0; // saved scaling
 
 function resizeCanvas() {
 	var canvas = $('#battlemap');
-	var context = canvas[0].getContext("2d");
 	
-	// calculate new scale
-	var scale_x = (window.innerWidth - 10) / 1000;
-	var scale_y = (window.innerHeight - 65) / 560;
+	// avoid breaking aspect ratio
+	// note: avoids tokens to be out of view for some players
+	var w = window.innerWidth - 10;
+	var h = w * 0.56;
 	
-	if (scale_y < scale_x) {
-		scale_x = scale_y;
-	
+	// handle too large height
+	if (h > window.innerHeight - 65) {
+		h = window.innerHeight - 65;
+		w = h / 0.56;
 	}
-	// save scale
-	canvas_scale = scale_x;
 	
-	canvas[0].width  = window.innerWidth - 10;
-	canvas[0].height = window.innerHeight - 65;
-		
+	// apply size
+	canvas[0].width  = w;
+	canvas[0].height = h;
+	
+	// calculate scaling
+	canvas_scale = w / 1000;
 }
 
 /// Will clear the canvas
@@ -36,8 +37,7 @@ function clearCanvas() {
 	context.clearRect(0, 0, canvas[0].width, canvas[0].height);
 	context.restore();
 	
-	// Recalculate aspect ratio
-	canvas_ratio = canvas[0].width / canvas[0].height;
+	console.log(canvas[0].width, canvas[0].height);
 }
 
 var mem_canvas = null;
@@ -111,14 +111,10 @@ function getActualSize(token, maxw, maxh) {
 	var w = token.size;
 	var h = w / ratio;
 	if (token.size == -1) {
-		if (ratio >= canvas_ratio) {
-			// most common case: image is wider than canvas (or same ratio)
-			// needs to be stretched to fit width
+		if (ratio > 0.56) {
 			w = maxw / canvas_scale;
 			h = w / ratio;
 		} else {
-			// image is taller than canvas
-			// needs to be stretched to fit height
 			h = maxh / canvas_scale;
 			w = h * ratio;
 		}
@@ -304,7 +300,7 @@ function showRoll(sides, result, player, color, time) {
 	if (result == sides) {
 		div_class += ' max-roll';
 	}
-	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" style="filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"/><span class="result" style="color: ' + color + ';">' + result + '</span><span class="player" style="background-color: ' + color + '">' + player + ' (' + time + ')</span></div>';
+	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" style="filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"/><span class="result" style="color: ' + color + ';">' + result + '</span><span class="player" style="color: ' + color + '">' + player + ' (' + time + ')</span></div>';
 }
 
 function updateRolls(rolls) {
@@ -565,15 +561,7 @@ function updateTokenbar() {
 			var canvas = $('#battlemap');
 			var size = token.size;
 			if (size == -1) {
-				if (ratio >= canvas_ratio) {
-					// most common case: image is wider than canvas (or same ratio)
-					// needs to be stretched to fit width
-					size = canvas[0].width;
-				} else {
-					// image is taller than canvas
-					// needs to be stretched to fit height
-					size = canvas[0].height * ratio;
-				}
+				size = canvas[0].height;
 			}
 			
 			// position tokenbar centered to token
@@ -620,8 +608,8 @@ function pickCanvasPos(event) {
 	
 	// make pos relative
 	var bx = $('#battlemap')[0].getBoundingClientRect();
-	//mouse_x -= bx.left;
-	//mouse_y -= bx.top;
+	mouse_x -= bx.left;
+	mouse_y -= bx.top;
 	
 	mouse_x = parseInt(mouse_x / canvas_scale);
 	mouse_y = parseInt(mouse_y / canvas_scale);
