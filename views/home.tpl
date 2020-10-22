@@ -5,21 +5,31 @@
 
 <h1>Games List</h1>
 
-<table>
-	%for g in games.order_by(lambda s: s.id):
-	<tr>
-		<td>{{g.url}}</td>
-		<td><a href="/play/{{g.url}}" target="_blank">Join as GM</a></td>
-		<td><a href="http://{{server}}/play/{{g.url}}" target="_blank">Join as Player</a></td>
-	</tr>
+	<div id="preview">
+%for g in games.order_by(lambda g: g.id):
+	%s = dbScene.select(lambda s: s.id == g.active).first()
+	%t = s.getBackground()
+	%url = "/static/empty.jpg"
+	%if t is not None:
+		%url = t.url
 	%end
-</table>
+	%print(url)
+		<div>
+			<p>{{g.url}}</p>
+			<a href="/play/{{g.url}}" target="_blank"><img class="thumbnail" src="{{url}}" /></a><br />
+			Public Link: <a href="http://{{server}}/play/{{g.url}}" target="_blank">here</a><br />
+			<a href="/setup/delete/{{g.url}}"><img class="icon" src="/static/delete.png" /></a>
+		</div>
+%end
+	</div>
 
-<form action="/setup/create" id="create_game" method="post">
-	Game title: <input type="text" name="game_url" value="my-game" /><input type="submit" value="Create" />
-</form>
+	<br />
 
-<br />
+	<form action="/setup/create" id="create_game" method="post">
+		http://{{server}}/play/<input type="text" name="game_url" value="my-game" /><input type="submit" value="Create" />
+	</form>
+
+	<br />
 
 </div>
 %else:
@@ -27,11 +37,11 @@
 	
 <div class="menu">
 
-<h1>Welcome</h1>
+	<h1>Welcome</h1>
 
-Are you a player? Ask your GM for the game link.
-<br />
-&nbsp;
+	Are you a player? Ask your GM for the game link.
+	<br />
+	&nbsp;
 
 </div>
 %end

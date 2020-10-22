@@ -858,7 +858,7 @@ function copyUrl(server, game_url) {
 }
 
 function toggleDropdown() {
-	var scenes = $('#scenes');
+	var scenes = $('#preview');
 	if (scenes.css('display') == 'block') {
 		scenes.css('display', 'none');
 		setCookie('dropdown', 'hide');

@@ -46,7 +46,7 @@ div.dropdown {
 	width: 100%;
 }
 
-div.dropdown div#scenes {
+div.dropdown > div#preview {
 	display: none;
 	
 	width: calc(100% - 75px);
@@ -72,22 +72,22 @@ div.dropdown > img {
           drop-shadow(0px 0px 0 gold);
 }
 
-div.dropdown > div#scenes > img.icon {
+img.icon {
 	width: 32px;
 	padding: 5px;
 	padding-bottom: 30px;
 }
 
-div.dropdown > div#scenes > div {
+div#preview > div {
 	display: inline-block;
 }
 
-div.dropdown > div#scenes > div > img.icon {
+div#preview > div > img.icon {
 	width: 16px;
 }
 
-div.dropdown > div#scenes > div > img.thumbnail,
-div.dropdown > div#scenes > div > img.active {
+div#preview > div > img.thumbnail,
+div#preview > div > img.active {
 	width: 100px;
 	max-height: 56px;
 	border-radius: 10px;
@@ -95,13 +95,18 @@ div.dropdown > div#scenes > div > img.active {
 	padding: 5px;
 }
 
-div.dropdown > div#scenes > div > img.active {
+div#preview > div > a > img.thumbnail {
+	width: 200px;
+	max-height: 112px;
+}
+
+div#preview > div > img.active {
 	border: 3px dotted red;
 }
 
-div.dropdown > div#scenes > img.icon:hover,
-div.dropdown > div#scenes > div > img.icon:hover,
-div.dropdown > div#scenes > div > img.thumbnail:hover {
+div#preview > img.icon:hover,
+div#preview > div > img.icon:hover,
+div#preview > div > img.thumbnail:hover {
 	cursor: pointer;
 	
 	filter: drop-shadow(0px 0px 10px gold) 

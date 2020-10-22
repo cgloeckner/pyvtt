@@ -43,7 +43,7 @@ def get_game_list():
 	games = db.Game.select()
 	is_gm = request.environ.get('REMOTE_ADDR') == '127.0.0.1'
 	
-	return dict(games=games, server='{0}:{1}'.format(engine.getIp(), engine.port), is_gm=is_gm)
+	return dict(games=games, server='{0}:{1}'.format(engine.getIp(), engine.port), is_gm=is_gm, dbScene=db.Scene)
 
 @post('/setup/create', apply=[asGm])
 def post_create_game():

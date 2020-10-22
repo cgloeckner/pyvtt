@@ -1,7 +1,7 @@
 %import time, os
 
 <div class="dropdown">
-	<div id="scenes">
+	<div id="preview">
 		<img class="icon" src="/static/add.png" onClick="addScene();" />
 %for s in game.scenes.order_by(lambda s: s.id):
 	%t = s.getBackground()
