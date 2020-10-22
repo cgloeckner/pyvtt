@@ -108,6 +108,7 @@ def activate_scene(url, scene_id):
 
 	# delete given scene
 	scene = db.Scene.select(lambda s: s.id == scene_id).first()
+	scene.backing = None
 	scene.delete()
 	
 	# check if active scene is still valid
