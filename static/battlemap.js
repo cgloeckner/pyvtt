@@ -630,6 +630,8 @@ function pickCanvasPos(event) {
 
 /// Event handle for start grabbing a token
 function tokenGrab(event) {
+	closeDropdown();
+	
 	pickCanvasPos(event);
 
 	prev_id = select_id;
@@ -866,6 +868,11 @@ function toggleDropdown() {
 		scenes.css('display', 'block');
 		setCookie('dropdown', 'show');
 	}
+}
+
+function closeDropdown() {
+	var scenes = $('#preview');
+	scenes.css('display', 'none');
 }
 
 function addScene() {

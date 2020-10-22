@@ -73,6 +73,10 @@ div.dropdown > img {
 }
 
 img.icon {
+	width: 16px;
+}
+
+div#preview > img.largeicon {
 	width: 32px;
 	padding: 5px;
 	padding-bottom: 30px;
@@ -82,9 +86,6 @@ div#preview > div {
 	display: inline-block;
 }
 
-div#preview > div > img.icon {
-	width: 16px;
-}
 
 div#preview > div > img.thumbnail,
 div#preview > div > img.active {
@@ -104,8 +105,8 @@ div#preview > div > img.active {
 	border: 3px dotted red;
 }
 
-div#preview > img.icon:hover,
-div#preview > div > img.icon:hover,
+img.icon:hover,
+div#preview > img.largeicon:hover,
 div#preview > div > img.thumbnail:hover {
 	cursor: pointer;
 	

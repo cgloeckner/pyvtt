@@ -15,10 +15,9 @@
 	%end
 	%print(url)
 		<div>
-			<p>{{g.url}}</p>
+			<p>{{g.url}} <a href="/setup/delete/{{g.url}}"><img class="icon" src="/static/delete.png" /></a></p>
 			<a href="/play/{{g.url}}" target="_blank"><img class="thumbnail" src="{{url}}" /></a><br />
 			Public Link: <a href="http://{{server}}/play/{{g.url}}" target="_blank">here</a><br />
-			<a href="/setup/delete/{{g.url}}"><img class="icon" src="/static/delete.png" /></a>
 		</div>
 %end
 	</div>

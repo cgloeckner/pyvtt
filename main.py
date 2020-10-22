@@ -69,9 +69,9 @@ def post_create_scene(url):
 	
 	# create scene
 	scene = db.Scene(game=game)
+	db.commit()
 	
-	if game.active is '':
-		game.active = scene.id
+	game.active = scene.id
 
 @get('/setup/delete/<url>', apply=[asGm])
 def delete_game(url):
@@ -140,6 +140,8 @@ def duplicate_scene(url, scene_id):
 	assert(len(scene.tokens) == len(clone.tokens))
 	
 	db.commit()
+	
+	game.active = clone.id
 
 """
 @get('/gm/<url>/clearRolls', apply=[asGm])
