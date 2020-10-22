@@ -8,8 +8,6 @@ form {
 	width: 50%;
 }
 
-/* --- GM Area -------------------------------------------------------------- */
-
 div.menu {
 	display: block;
 	width: 800px;
@@ -27,18 +25,87 @@ div.menu table {
 	margin-right: auto;
 }
 
-div.menu form {
+div.menu > form {
 	width: auto;
 }
 
-div.menu img,
-div.menu input[type=image] {
+div.menu > img,
+div.menu > table tr td img,
+div.menu > input[type=image] {
 	width: 16px;
 }
 
-div.menu table input {
+div.menu table > input {
 	display: inline;
 	width: 100px;
+}
+
+/* --- GM Area -------------------------------------------------------------- */
+
+div.dropdown {
+	width: 100%;
+}
+
+div.dropdown div#scenes {
+	display: none;
+	
+	width: calc(100% - 75px);
+	overflow-x: auto;
+	
+	height: 100px;
+	border: 1px solid black;
+	
+	background-color: rgba(200, 200, 200, 0.5);
+	border-radius: 10px;
+	padding: 5px;
+	margin: 5px;
+}
+
+div.dropdown > img {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	
+	width: 48px;
+	
+	filter: drop-shadow(0px 0px 10px gold) 
+          drop-shadow(0px 0px 0 gold);
+}
+
+div.dropdown > div#scenes > img.icon {
+	width: 32px;
+	padding: 5px;
+	padding-bottom: 30px;
+}
+
+div.dropdown > div#scenes > div {
+	display: inline-block;
+}
+
+div.dropdown > div#scenes > div > img.icon {
+	width: 16px;
+}
+
+div.dropdown > div#scenes > div > img.thumbnail,
+div.dropdown > div#scenes > div > img.active {
+	width: 100px;
+	max-height: 56px;
+	border-radius: 10px;
+	display: block;
+	padding: 5px;
+}
+
+div.dropdown > div#scenes > div > img.active {
+	border: 3px dotted red;
+}
+
+div.dropdown > div#scenes > img.icon:hover,
+div.dropdown > div#scenes > div > img.icon:hover,
+div.dropdown > div#scenes > div > img.thumbnail:hover {
+	cursor: pointer;
+	
+	filter: drop-shadow(0px 0px 10px gold) 
+          drop-shadow(0px 0px 0 gold);
 }
 
 /* --- Dicebox Layout ------------------------------------------------------- */
@@ -49,7 +116,7 @@ div#rollbox {
 	float: left;
 }
 
-div#rollbox div.roll {
+div#rollbox > div.roll {
 	display: inline-block;
 	width: 95px;
 	margin-left: auto;
@@ -62,26 +129,26 @@ div#rollbox div.roll {
 	text-align: center;
 }
 
-div#rollbox div.roll :hover {
+div#rollbox > div.roll:hover {
 	display: 155px;
 }
 
-div#rollbox div.min-roll {
+div#rollbox > div.min-roll {
 	background-color: rgba(250, 0, 0, 0.5);
 }
 
-div#rollbox div.max-roll {
+div#rollbox > div.max-roll {
 	background-color: rgba(0, 250, 0, 0.5);
 }
 
-div#rollbox div.roll img {
+div#rollbox > div.roll > img {
 	float: left;
 	width: 30px;
 	height: 30px;
 	vertical-align: text-bottom;
 }
 
-div#rollbox div.roll span.result {
+div#rollbox > div.roll > span.result {
 	margin-left: auto;
 	margin-right: auto;
 	font-size: xx-large;
@@ -89,12 +156,12 @@ div#rollbox div.roll span.result {
     -webkit-text-stroke-color: black;
 }
 
-div#rollbox div.roll span.player {
+div#rollbox > div.roll > span.player {
 	position: absolute;
 	display: none;
 }
 
-div#rollbox div.roll:hover span.player {
+div#rollbox > div.roll:hover > span.player {
 	display: inline-block;
 	
 	padding: 10px;
@@ -115,24 +182,24 @@ div.mapfooter {
 	width: 100%;
 }
 
-div.mapfooter div.dice {
+div.mapfooter > div.dice {
 	position: absolute;
 	left: 5px;
 	width: 350px;
 }
 
-div.mapfooter div.dice img {
+div.mapfooter > div.dice > img {
 	width: 48px;
 	height: 48px;
 }
 
-div.mapfooter div.dice img:hover {
+div.mapfooter > div.dice > img:hover {
 	cursor: pointer;
 	filter: drop-shadow(1px 1px 10px gold) 
           drop-shadow(-1px -1px 0 gold);
 }
 
-div.mapfooter div#players {
+div.mapfooter > div#players {
 	display: block;
 	width: 700px;
 	text-align: center;
@@ -141,7 +208,7 @@ div.mapfooter div#players {
 	/* white-space: nowrap; */
 }
 
-div.mapfooter div#players span.player {
+div.mapfooter > div#players > span.player {
 	display: inline-block;
 	height: 20px;
 	padding: 10px;
@@ -153,13 +220,13 @@ div.mapfooter div#players span.player {
 	color: black;
 }
 
-div.mapfooter div#players span.player a {
+div.mapfooter > div#players > span.player > a {
 	pointer: hand;
 	text-decoration: none;
 	color: black;
 }
 
-div.mapfooter form#uploadform {
+div.mapfooter > form#uploadform {
 	display: none;
 }
 
@@ -174,18 +241,18 @@ div.battlemap {
 	z-index: -1;
 }
 
-div.battlemap canvas#battlemap {
+div.battlemap > canvas#battlemap {
 	float: right;
 	background-color: rgba(100, 100, 100, 0.25);
 	border: 1px solid black;
 	z-index: 0;
 }
 
-div.battlemap div#tokenbar {
+div.battlemap > div#tokenbar {
 	position: absolute;
 }
 
-div.battlemap div#tokenbar img {
+div.battlemap > div#tokenbar > img {
 	height: 16px;
 	margin: 0px;
 	padding: 0px;
@@ -194,12 +261,12 @@ div.battlemap div#tokenbar img {
 		drop-shadow(-1px -1px 10px #BDBDBD);
 }
 
-div.battlemap div#tokenbar img.out {
+div.battlemap > div#tokenbar > img.out {
 	position: relative;
 	top: 7px;
 }
 
-div.battlemap div#tokenbar img:hover {
+div.battlemap > div#tokenbar > img:hover {
 	cursor: pointer;
 	filter: invert(1.0)
 		drop-shadow(1px 1px 10px gold) 

@@ -21,12 +21,15 @@ class Engine(object):
 			raise NotImplementedError('only linux supported yet')
 		
 		# ensure pyVTT folder exists
-		p = p / "pyVTT"
+		p = p / 'pyVTT'
 		
 		if not os.path.isdir(p):
 			os.mkdir(p)
 		
 		self.data_dir = p
+		
+		if not os.path.isdir(p / 'games'):
+			os.mkdir(p / 'games')
 		
 		# setup per-game stuff
 		self.checksums = dict()
@@ -36,17 +39,16 @@ class Engine(object):
 		self.host  = '0.0.0.0'
 		self.port  = 8080
 		self.debug = True
-		self.lazy  = False
 		
-		# whitelist for game titles etc.
-		self.gametitle_whitelist = []
+		# whitelist for game urls etc.
+		self.url_whitelist = []
 		for i in range(65, 91):
-			self.gametitle_whitelist.append(chr(i))
-			self.gametitle_whitelist.append(chr(i+32))
+			self.url_whitelist.append(chr(i))
+			self.url_whitelist.append(chr(i+32))
 		for i in range(10):	
-			self.gametitle_whitelist.append('{0}'.format(i))
-		self.gametitle_whitelist.append('-')
-		self.gametitle_whitelist.append('_')
+			self.url_whitelist.append('{0}'.format(i))
+		self.url_whitelist.append('-')
+		self.url_whitelist.append('_')
 
 		# game cache
 		self.players = dict()
@@ -55,7 +57,6 @@ class Engine(object):
 
 	def setup(self, argv):
 		self.debug = '--debug' in argv
-		self.lazy  = '--lazy' in argv
 		
 		if self.debug:
 			self.host = 'localhost'
@@ -88,10 +89,10 @@ class Engine(object):
 			return self.publicip
 
 	def applyWhitelist(self, s):
-			# secure symbols used in title
+			# secure symbols used in url
 			fixed = ''
 			for c in s:
-				if c in self.gametitle_whitelist:
+				if c in self.url_whitelist:
 					fixed += c
 				else:
 					fixed += '_'
@@ -154,11 +155,15 @@ class Token(db.Entity):
 
 class Scene(db.Entity):
 	id      = PrimaryKey(int, auto=True)
-	title   = Required(str)
 	game    = Required("Game")
 	timeid  = Required(int, default=0) # keeps time for dirtyflag on tokens
 	tokens  = Set("Token", cascade_delete=True) # forward deletion to tokens
 
+	def getBackground(self):
+		for t in self.tokens:
+			if t.size == -1:
+				return t
+		return None
 
 # -----------------------------------------------------------------------------
 
@@ -174,14 +179,14 @@ class Roll(db.Entity):
 # -----------------------------------------------------------------------------
 
 class Game(db.Entity):
-	id      = PrimaryKey(int, auto=True)
-	title   = Required(str, unique=True)
-	scenes  = Set("Scene", cascade_delete=True) # forward deletion to scenes
-	active  = Optional(str)
-	rolls   = Set(Roll)
+	id     = PrimaryKey(int, auto=True)
+	url    = Required(str, unique=True)
+	scenes = Set("Scene", cascade_delete=True) # forward deletion to scenes
+	active = Optional(int)
+	rolls  = Set(Roll)
 	
 	def makeLock(self):
-		engine.locks[self.title] = threading.Lock();
+		engine.locks[self.url] = threading.Lock();
 	
 	def makeMd5s(self):
 		data = dict()
@@ -189,20 +194,20 @@ class Game(db.Entity):
 			with open(self.getImagePath() / fname, "rb") as handle:
 				md5 = engine.getMd5(handle)
 				data[md5] = fname
-		engine.checksums[self.title] = data
+		engine.checksums[self.url] = data
 	
 	def postSetup(self):
 		self.makeLock()
 		
 		game_root = self.getImagePath()
-		with engine.locks[self.title]: # make IO access safe
+		with engine.locks[self.url]: # make IO access safe
 			if not os.path.isdir(game_root):
 				os.mkdir(game_root)
 		
 		self.makeMd5s()
 	
 	def getImagePath(self):
-		return engine.data_dir / 'games' / self.title
+		return engine.data_dir / 'games' / self.url
 
 	def getAllImages(self):
 		"""Note: needs to be called from a threadsafe context."""
@@ -218,7 +223,7 @@ class Game(db.Entity):
 		return max_id + 1
 
 	def getImageUrl(self, image_id):
-		return '/token/{0}/{1}'.format(self.title, image_id)
+		return '/token/{0}/{1}'.format(self.url, image_id)
 
 	def getFileSize(self, url):
 		game_root  = self.getImagePath()
@@ -234,23 +239,23 @@ class Game(db.Entity):
 		
 		game_root = self.getImagePath()
 		
-		with engine.locks[self.title]: # make IO access safe
-			if new_md5 not in engine.checksums[self.title]:
+		with engine.locks[self.url]: # make IO access safe
+			if new_md5 not in engine.checksums[self.url]:
 				# create new image on disk
 				next_id    = self.getNextId()
 				image_id   = '{0}.png'.format(next_id)
 				local_path = os.path.join(game_root, image_id)
 				handle.save(local_path)
-				engine.checksums[self.title][new_md5] = image_id
+				engine.checksums[self.url][new_md5] = image_id
 		
 		# propagate remote path
-		return self.getImageUrl(engine.checksums[self.title][new_md5])
+		return self.getImageUrl(engine.checksums[self.url][new_md5])
 
 	def getAbandonedImages(self):
 		# check all existing images
 		game_root = self.getImagePath()
 		all_images = list()
-		with engine.locks[self.title]: # make IO access safe
+		with engine.locks[self.url]: # make IO access safe
 			all_images = self.getAllImages()
 		
 		abandoned = list()
@@ -266,14 +271,14 @@ class Game(db.Entity):
 	def removeAbandonedImages(self):
 		relevant = self.getAbandonedImages()
 		cleanup = 0
-		with engine.locks[self.title]: # make IO access safe
+		with engine.locks[self.url]: # make IO access safe
 			for fname in relevant:
 				cleanup += os.path.getsize(fname)
 				os.remove(fname)
 		return cleanup, len(relevant)
 
 	def clear(self):
-		with engine.locks[self.title]: # make IO access saf
+		with engine.locks[self.url]: # make IO access saf
 			game_root = self.getImagePath()
 			if os.path.isdir(game_root):
 				# remove all images
@@ -292,9 +297,9 @@ class Tests(unittest.TestCase):
 	
 	@db_session
 	def prepare(self):
-		g = db.Game(title='demo-game')
-		s1 = db.Scene(title='scene1', game=g)
-		db.Scene(title='scene2', game=g)
+		g = db.Game(url='demo-game')
+		s1 = db.Scene(game=g)
+		db.Scene(game=g)
 		t = db.Token(scene=s1, url='/foo', posx=10, posy=20)
 	
 	def setUp(self):

@@ -1,6 +1,10 @@
-%title = '{0}: {1}'.format(playername, game.title)
+%title = '{0}: {1}'.format(playername, game.url)
 
 %include("header", title=title)
+
+%if is_gm:
+	%include("scene_dropdown")
+%end
 
 <div id="rollbox">
 </div>
@@ -71,7 +75,7 @@ battlemap.addEventListener('touchmove', tokenMove);
 battlemap.addEventListener('touchend', tokenRelease);
 
 
-start('{{game.title}}');
+start('{{game.url}}');
 </script>
 
 %include("footer")

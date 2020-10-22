@@ -36,8 +36,6 @@ function clearCanvas() {
 	context.save();
 	context.clearRect(0, 0, canvas[0].width, canvas[0].height);
 	context.restore();
-	
-	console.log(canvas[0].width, canvas[0].height);
 }
 
 var mem_canvas = null;
@@ -237,7 +235,17 @@ function drawToken(token, color) {
 var players = {};
 
 function getCookie(key) {
-	return document.cookie.split(key + '=')[1].split('; ')[0];
+	var arr = document.cookie.split(key + '=')[1];
+	if (arr == null) {
+		return '';
+	}
+	return arr.split('; ')[0];
+}
+
+function setCookie(key, value) {
+	// magical cookie properties :)
+	// this REALLY appends / updates based on the current cookie
+	document.cookie = key + '=' + value;
 }
 
 function updatePlayers(response) {
@@ -258,7 +266,7 @@ function updatePlayers(response) {
 			
 			var container = '<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">';
 			if (name == own_name) {
-				container += '<a href="/play/' + game_title + '/logout" title="Logout">' + name + '</a>';
+				container += '<a href="/play/' + game_url + '/logout" title="Logout">' + name + '</a>';
 			} else {
 				container += name;
 			}
@@ -346,7 +354,7 @@ function showRoll(sides, result, color) {
 
 // --- game state implementation ----------------------------------------------
 
-var game_title = '';
+var game_url = '';
 var timeid = 0;
 
 var mouse_x = 0; // relative to canvas
@@ -391,7 +399,7 @@ function updateTokens() {
 	// start update with server
 	$.ajax({
 		type: 'POST',
-		url:  '/play/' + game_title + '/update',
+		url:  '/play/' + game_url + '/update',
 		dataType: 'json',
 		data: {
 			'timeid'   : timeid,
@@ -484,11 +492,16 @@ function updateGame() {
 }
 
 /// Sets up the game and triggers the update loop
-function start(title) {
-	game_title = title;
+function start(url) {
+	game_url = url;
 	
 	// notify game about this player
-	navigator.sendBeacon('/play/' + game_title + '/join');
+	navigator.sendBeacon('/play/' + game_url + '/join');
+	
+	// show gm toolbar
+	if (getCookie('dropdown') == 'show') {
+		toggleDropdown();
+	}
 	
 	updateGame();
 }
@@ -496,7 +509,7 @@ function start(title) {
 /// Handles disconnecting
 function disconnect() {
 	// note: only works if another tab stays open
-	navigator.sendBeacon('/play/' + game_title + '/disconnect');
+	navigator.sendBeacon('/play/' + game_url + '/disconnect');
 }
 
 function uploadDrag(event) {
@@ -513,7 +526,7 @@ function uploadDrop(event) {
 	var f = new FormData($('#uploadform')[0]);
 	
 	$.ajax({
-		url: '/play/' + game_title + '/upload/' + mouse_x + '/' + mouse_y,
+		url: '/play/' + game_url + '/upload/' + mouse_x + '/' + mouse_y,
 		type: 'POST',
 		data: f,
 		contentType: false,
@@ -715,7 +728,7 @@ function tokenWheel(event) {
 
 /// Event handle to click a dice
 function rollDice(sides) {
-	$.post('/play/' + game_title + '/roll/' + sides);
+	$.post('/play/' + game_url + '/roll/' + sides);
 }
 
 /// Event handle shortcuts on tokens
@@ -725,7 +738,7 @@ function tokenShortcut(event) {
 			copy_token = select_id;
 		} else if (event.keyCode == 86) { // CTRL+V
 			if (copy_token > 0) {
-				$.post('/play/' + game_title + '/clone/' + copy_token + '/' + parseInt(mouse_x) + '/' + parseInt(mouse_y));
+				$.post('/play/' + game_url + '/clone/' + copy_token + '/' + parseInt(mouse_x) + '/' + parseInt(mouse_y));
 				timeid = 0; // force full refresh next time
 			}
 		}
@@ -734,7 +747,7 @@ function tokenShortcut(event) {
 			if (select_id == copy_token) {
 				copy_token = 0;
 			}
-			$.post('/play/' + game_title + '/delete/' + select_id);
+			$.post('/play/' + game_url + '/delete/' + select_id);
 				timeid = 0; // force full refresh next time
 		}
 	}
@@ -830,5 +843,62 @@ function tokenTop() {
 			change_cache.push(mouse_over_id);
 		}
 	}
+}
+
+
+// --- GM stuff ---------------------------------------------------------------
+
+// not used atm
+function copyUrl(server, game_url) {
+	var tmp = $('<input>');
+	$('body').append(tmp);
+	tmp.val('http://' + server + '/play/' + game_url).select();
+	document.execCommand('copy');
+	tmp.remove();
+}
+
+function toggleDropdown() {
+	var scenes = $('#scenes');
+	if (scenes.css('display') == 'block') {
+		scenes.css('display', 'none');
+		setCookie('dropdown', 'hide');
+	} else {
+		scenes.css('display', 'block');
+		setCookie('dropdown', 'show');
+	}
+}
+
+function addScene() {
+	$.post(
+		url='/gm/' + game_url + '/create',
+		success=function(data) {
+			location.reload();
+		}
+	);
+}
+
+function activateScene(scene_id) {
+	$.post(
+		url='/gm/' + game_url + '/activate/' + scene_id,
+		success=function(data) {
+			location.reload();
+		}
+	);
+}
+function cloneScene(scene_id) {
+	$.post(
+		url='/gm/' + game_url + '/clone/' + scene_id,
+		success=function(data) {
+			location.reload();
+		}
+	);
+}
+function deleteScene(scene_id) {
+	$.post(
+		url='/gm/' + game_url + '/delete/' + scene_id,
+		success=function(data) {
+			location.reload();
+		}
+	);
 }
 
