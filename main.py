@@ -134,12 +134,17 @@ def duplicate_scene(url, scene_id):
 	# create copy of that scene
 	clone = db.Scene(game=game)
 	# copy tokens, too
+	backing = None
 	for t in scene.tokens:
-		db.Token(scene=clone, url=t.url, posx=t.posx, posy=t.posy, zorder=t.zorder, size=t.size, rotate=t.rotate, locked=t.locked)
+		n = db.Token(scene=clone, url=t.url, posx=t.posx, posy=t.posy, zorder=t.zorder, size=t.size, rotate=t.rotate, locked=t.locked)
+		if n.size == -1:
+			n.back = clone
 	
 	assert(len(scene.tokens) == len(clone.tokens))
 	
 	db.commit()
+	
+	print(scene.backing)
 	
 	game.active = clone.id
 
@@ -313,6 +318,14 @@ def post_player_update(url):
 	for data in changes:
 		token = scene.tokens.select(lambda s: s.id == data['id']).first()
 		if token is not None:
+			# check for set-as-background
+			if data['size'] == -1:
+				# delete previous background
+				if scene.backing is not None:
+					scene.backing.delete()
+				scene.backing = token
+			
+			# update token
 			token.update(
 				timeid=int(timeid),
 				pos=(int(data['posx']), int(data['posy'])),

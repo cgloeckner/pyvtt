@@ -8,10 +8,9 @@
 	<div id="preview">
 %for g in games.order_by(lambda g: g.id):
 	%s = dbScene.select(lambda s: s.id == g.active).first()
-	%t = s.getBackground()
 	%url = "/static/empty.jpg"
-	%if t is not None:
-		%url = t.url
+	%if s.backing is not None:
+		%url = s.backing.url
 	%end
 	%print(url)
 		<div>

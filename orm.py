@@ -114,16 +114,17 @@ engine = Engine()
 # -----------------------------------------------------------------------------
 
 class Token(db.Entity):
-	id     = PrimaryKey(int, auto=True)
-	scene  = Required("Scene")
-	url    = Required(str)
-	posx   = Required(int)
-	posy   = Required(int)
-	zorder = Required(int, default=0)
-	size   = Required(int, default=80)
-	rotate = Required(float, default=0.0)
-	locked = Required(bool, default=False)
-	timeid = Required(int, default=0) # dirty flag
+	id      = PrimaryKey(int, auto=True)
+	scene   = Required("Scene")
+	url     = Required(str)
+	posx    = Required(int)
+	posy    = Required(int)
+	zorder  = Required(int, default=0)
+	size    = Required(int, default=80)
+	rotate  = Required(float, default=0.0)
+	locked  = Required(bool, default=False)
+	timeid  = Required(int, default=0) # dirty flag
+	back    = Optional("Scene") # link to same scene as above but may be None
 	
 	def update(self, timeid, pos=None, zorder=None, size=None, rotate=None, locked=None):
 		"""Handle update of several data fields. The timeid is set if anything
@@ -157,13 +158,8 @@ class Scene(db.Entity):
 	id      = PrimaryKey(int, auto=True)
 	game    = Required("Game")
 	timeid  = Required(int, default=0) # keeps time for dirtyflag on tokens
-	tokens  = Set("Token", cascade_delete=True) # forward deletion to tokens
-
-	def getBackground(self):
-		for t in self.tokens:
-			if t.size == -1:
-				return t
-		return None
+	tokens  = Set("Token", cascade_delete=True, reverse="scene") # forward deletion to tokens
+	backing = Optional("Token", reverse="back") # background token
 
 # -----------------------------------------------------------------------------
 
