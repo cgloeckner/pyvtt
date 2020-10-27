@@ -76,6 +76,7 @@ var tokens       = []; // holds all tokens, updated by the server
 var change_cache = []; // holds ids of all client-changed tokens
 
 var player_selections = []; // contains selected tokens and corresponding player colors
+var is_gm = false; // whether client is the GM
 
 var culling = []; // holds tokens for culling
 var min_z = -1; // lowest known z-order
@@ -91,6 +92,7 @@ function Token(id, url) {
 	this.size = 250;
 	this.url = url;
 	this.rotate = 0.0;
+	this.flipx = false;
 	this.locked = false;
 }
 
@@ -183,6 +185,7 @@ function updateToken(data) {
 	tokens[data.id].zorder = data.zorder;
 	tokens[data.id].size   = data.size;
 	tokens[data.id].rotate = data.rotate;
+	tokens[data.id].flipx  = data.flipx;
 	tokens[data.id].locked = data.locked;
 	
 	if (data.zorder < min_z) {
@@ -218,6 +221,9 @@ function drawToken(token, color) {
 	// draw image
 	context.save();
 	context.translate(token.posx * canvas_scale, token.posy * canvas_scale);
+	if (token.flipx) {
+		context.scale(-1, 1);
+	}
 	context.rotate(token.rotate * 3.14/180.0);
 	
 	if (color != null) {
@@ -383,6 +389,7 @@ function updateTokens() {
 			'zorder': t.zorder,
 			'size'  : t.size,
 			'rotate': t.rotate,
+			'flipx' : t.flipx,
 			'locked': t.locked
 		};
 		changes.push(data);
@@ -492,8 +499,9 @@ function updateGame() {
 }
 
 /// Sets up the game and triggers the update loop
-function start(url) {
+function start(url, gm) {
 	game_url = url;
+	is_gm    = gm == 'True';
 	
 	// notify game about this player
 	navigator.sendBeacon('/play/' + game_url + '/join');
@@ -540,69 +548,75 @@ function uploadDrop(event) {
 }
 
 function showTokenbar(token_id) {
+	/*
 	if (mouse_over_id == token_id) {
 		$('#tokenbar').css('visibility', 'visible');
 	} else {
 		$('#tokenbar').css('visibility', 'hidden');
 		setTimeout("showTokenbar(" + mouse_over_id + ")", 500.0);
 	}
+	*/
+	
+	if (select_id == token_id) {
+		$('#tokenbar').css('visibility', 'visible');
+	} else {
+		$('#tokenbar').css('visibility', 'hidden');
+	}
 }
 
 function updateTokenbar() {
-	// query mouse over token
-	var token = selectToken(mouse_x, mouse_y);
-	if (token != null) {
-		mouse_over_id = token.id;
-		if (!grabbed) {
-			// update tokenbar if not grabbed
-			
-			// show tokenbar delayed
-			setTimeout("showTokenbar(" + token.id + ")", 500.0);
-			
-			// cache image if necessary
-			if (!images.includes(token.url)) {
-				images[token.url] = new Image();
-				images[token.url].src = token.url;
-			}
+	$('#tokenbar').css('visibility', 'hidden');
+
+	if (select_id != 00 && !grabbed) {
+		token = tokens[select_id];
 		
-			// image size aspect ratio
-			var src_h = images[token.url].height;
-			var src_w = images[token.url].width;
-			var ratio = src_w / src_h;
-			
-			// determine token size
-			var canvas = $('#battlemap');
-			var size = token.size;
-			if (size == -1) {
-				size = canvas[0].height;
-			}
-			
-			// position tokenbar centered to token
-			var bx = canvas[0].getBoundingClientRect();
-			var canvas = $('#battlemap');
-			var sizes = getActualSize(token, canvas[0].width, canvas[0].height);
-			$('#tokenbar').css('left', bx.left + token.posx * canvas_scale - 32 + 'px');
-			$('#tokenbar').css('top',  bx.top  + token.posy * canvas_scale - 24 + 32 * token.size / min_token_size + 'px');
-			
-			if (token.locked) {
-				$('#tokenLock')[0].src = '/static/locked.png';
-				$('#tokenTop').css('visibility', 'hidden');
-				$('#tokenBottom').css('visibility', 'hidden');
-				$('#tokenStretch').css('visibility', 'hidden');
-			} else {	
-				$('#tokenLock')[0].src = '/static/unlocked.png';
-				$('#tokenTop').css('visibility', '');
-				$('#tokenBottom').css('visibility', '');
-				$('#tokenStretch').css('visibility', '');
-			}
-		} else {
-			// hide tokenbar when token grabbed
-			$('#tokenbar').css('visibility', 'hidden');
+		// cache image if necessary
+		if (!images.includes(token.url)) {
+			images[token.url] = new Image();
+			images[token.url].src = token.url;
 		}
-	} else {
-		// hide tokenbar when no token selected
-		mouse_over_id = 0;
-		$('#tokenbar').css('visibility', 'hidden');
+		
+		// image size aspect ratio
+		var src_h = images[token.url].height;
+		var src_w = images[token.url].width;
+		var ratio = src_w / src_h;
+			
+		// determine token size
+		var canvas = $('#battlemap');
+		var size = token.size;
+		if (size == -1) {
+			size = canvas[0].height;
+		}
+			
+		// position tokenbar centered to token
+		var bx = canvas[0].getBoundingClientRect();
+		var canvas = $('#battlemap');
+		$('#tokenbar').css('left', bx.left + token.posx * canvas_scale - 12 + 'px');
+		$('#tokenbar').css('top',  bx.top  + token.posy * canvas_scale - 12 + 'px');
+		$('#tokenbar').css('visibility', '');
+		
+		// rearrange icons based on token size
+		var offset = 35 * size / min_token_size;
+		$('#tokenFlipX').css('bottom', offset + 'px');
+		$('#tokenLock').css('right', offset + 'px');
+		$('#tokenStretch').css('top', offset + 'px');
+		$('#tokenTop').css('left', offset + 15 + 'px');
+		$('#tokenBottom').css('left', offset + 15 + 'px');
+		
+		// handle locked mode
+		if (token.locked) {
+			$('#tokenFlipX').css('visibility', 'hidden');
+			$('#tokenLock')[0].src = '/static/locked.png';
+			$('#tokenTop').css('visibility', 'hidden');
+			$('#tokenBottom').css('visibility', 'hidden');
+			$('#tokenStretch').css('visibility', 'hidden');
+		} else {	
+			$('#tokenFlipX').css('visibility', '');
+			$('#tokenLock')[0].src = '/static/unlocked.png';
+			$('#tokenTop').css('visibility', '');
+			$('#tokenBottom').css('visibility', '');
+			$('#tokenStretch').css('visibility', '');
+		}
 	}
 }
 
@@ -638,7 +652,7 @@ function tokenGrab(event) {
 	select_id = 0;
 	var token = selectToken(mouse_x, mouse_y);
 	
-	if (token != null && !token.locked) {
+	if (token != null && (!token.locked || is_gm)) {
 		if (event.buttons == 1) {
 			// Left click: select token
 			select_id = token.id;
@@ -654,8 +668,6 @@ function tokenGrab(event) {
 			}
 		}
 	}
-	
-	updateTokenbar();
 }
 
 /// Event handle for releasing a grabbed token
@@ -686,6 +698,8 @@ function tokenMove(event) {
 			change_cache.push(select_id);
 		}
 	}
+	
+	updateTokenbar();
 }
 
 /// Event handle for rotation and scaling of tokens (if not locked)
@@ -723,9 +737,9 @@ function tokenWheel(event) {
 				change_cache.push(select_id);
 			}
 		}
+		
+		updateTokenbar();
 	}
-	
-	updateTokenbar();
 }
 
 /// Event handle to click a dice
@@ -755,23 +769,42 @@ function tokenShortcut(event) {
 	}
 }
 
+/// Event handle for fliping a token x-wise
+function tokenFlipX() {
+	if (select_id != 0) {
+		var token = tokens[select_id];
+		
+		if (token.locked) {
+			// ignore if locked
+			console.log('cannot flip locked token');
+			return;
+		}
+		token.flipx = !token.flipx;
+		
+		// mark token as changed
+		if (!change_cache.includes(select_id)) {
+			change_cache.push(select_id);
+		}
+	}
+}
+
 /// Event handle for (un)locking a token
 function tokenLock() {
-	if (mouse_over_id != 0) {
-		var token = tokens[mouse_over_id];
+	if (select_id != 0) {
+		var token = tokens[select_id];
 		token.locked = !token.locked;
 		
 		// mark token as changed
-		if (!change_cache.includes(mouse_over_id)) {
-			change_cache.push(mouse_over_id);
+		if (!change_cache.includes(select_id)) {
+			change_cache.push(select_id);
 		}
 	}
 }
 
 /// Event handle for stretching a token to fit the screen
 function tokenStretch() {
-	if (mouse_over_id != 0) {
-		var token = tokens[mouse_over_id];
+	if (select_id != 0) {
+		var token = tokens[select_id];
 		
 		if (token.locked) {
 			// ignore if locked
@@ -791,16 +824,16 @@ function tokenStretch() {
 		token.posy = canvas[0].height / 2;
 			
 		// mark token as changed
-		if (!change_cache.includes(mouse_over_id)) {
-			change_cache.push(mouse_over_id);
+		if (!change_cache.includes(select_id)) {
+			change_cache.push(select_id);
 		}
 	}
 }
 
 /// Event handle for moving token to lowest z-order
 function tokenBottom() {
-	if (mouse_over_id != 0) {
-		var token = tokens[mouse_over_id];
+	if (select_id != 0) {
+		var token = tokens[select_id];
 		
 		if (token.locked) {
 			// ignore if locked
@@ -816,16 +849,16 @@ function tokenBottom() {
 		}
 		
 		// mark token as changed
-		if (!change_cache.includes(mouse_over_id)) {
-			change_cache.push(mouse_over_id);
+		if (!change_cache.includes(select_id)) {
+			change_cache.push(select_id);
 		}
 	}
 }
 
 /// Event handle for moving token to hightest z-order
 function tokenTop() {
-	if (mouse_over_id != 0) {
-		var token = tokens[mouse_over_id];
+	if (select_id != 0) {
+		var token = tokens[select_id];
 		
 		if (token.locked) {
 			// ignore if locked
@@ -841,8 +874,8 @@ function tokenTop() {
 		}
 			
 		// mark token as changed
-		if (!change_cache.includes(mouse_over_id)) {
-			change_cache.push(mouse_over_id);
+		if (!change_cache.includes(select_id)) {
+			change_cache.push(select_id);
 		}
 	}
 }

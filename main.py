@@ -96,7 +96,8 @@ def post_create_game():
 					scene=scene, url=game.getImageUrl(token_data['url']),
 					posx=token_data['posx'], posy=token_data['posy'],
 					zorder=token_data['zorder'], size=token_data['size'], 	
-					rotate=token_data['rotate'], locked=token_data['locked']
+					rotate=token_data['rotate'], flipx=token_data['flipx'],
+					locked=token_data['locked']
 				)
 				if s["backing"] == token_id:
 					db.commit()
@@ -264,7 +265,7 @@ def duplicate_scene(url, scene_id):
 	for t in scene.tokens:
 		n = db.Token(
 			scene=clone, url=t.url, posx=t.posx, posy=t.posy, zorder=t.zorder,
-			size=t.size, rotate=t.rotate, locked=t.locked
+			size=t.size, rotate=t.rotate, flipx=t.flipx, locked=t.locked
 		)
 		if n.size == -1:
 			n.back = clone
@@ -459,6 +460,7 @@ def post_player_update(url):
 				zorder=data['zorder'],
 				size=data['size'],
 				rotate=data['rotate'],
+				flipx=data['flipx'],
 				locked=data['locked']
 			)
 
@@ -593,8 +595,9 @@ def ajax_post_clone(url, token_id, x, y):
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
 	# clone token
-	db.Token(scene=token.scene, url=token.url, posx=x, posy=y, zorder=token.zorder,
-		size=token.size, rotate=token.rotate, timeid=int(time.time()))
+	db.Token(scene=token.scene, url=token.url, posx=x, posy=y,
+		zorder=token.zorder, size=token.size, rotate=token.rotate,
+		flipx=token.flipx, timeid=int(time.time()))
 
 @post('/play/<url>/delete/<token_id:int>')
 def ajax_post_delete(url, token_id):

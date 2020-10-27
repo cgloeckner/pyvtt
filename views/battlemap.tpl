@@ -13,10 +13,15 @@
 	<canvas id="battlemap" width="1000" height="560"></canvas>
 		
 	<div id="tokenbar">
+		<img src="/static/flipx.png" id="tokenFlipX" onClick="tokenFlipX();" />
 		<img src="/static/locked.png" id="tokenLock" onClick="tokenLock();" />
-		<img src="/static/top.png" id="tokenTop" class="out" onClick="tokenTop();" />
-		<img src="/static/bottom.png" id="tokenBottom" class="out" onClick="tokenBottom();" />
-		<img src="/static/stretch.png" id="tokenStretch" onClick="tokenStretch();" /><br />
+		<img src="/static/top.png" id="tokenTop" onClick="tokenTop();" />
+		<img src="/static/bottom.png" id="tokenBottom" onClick="tokenBottom();" />
+%if is_gm:
+		<img src="/static/stretch.png" id="tokenStretch" onClick="tokenStretch();" />
+%else:
+		<img src="" class="dummy" id="tokenStretch" />
+%end
 	</div>
 </div>
 
@@ -75,7 +80,7 @@ battlemap.addEventListener('touchmove', tokenMove);
 battlemap.addEventListener('touchend', tokenRelease);
 
 
-start('{{game.url}}');
+start('{{game.url}}', '{{is_gm}}');
 </script>
 
 %include("footer")

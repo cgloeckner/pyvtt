@@ -259,7 +259,9 @@ div.battlemap > div#tokenbar {
 }
 
 div.battlemap > div#tokenbar > img {
-	height: 16px;
+	position: absolute;
+	display: inline;
+	height: 24px;
 	margin: 0px;
 	padding: 0px;
 	filter: opacity(0.66)
@@ -267,9 +269,12 @@ div.battlemap > div#tokenbar > img {
 		drop-shadow(-1px -1px 10px #BDBDBD);
 }
 
-div.battlemap > div#tokenbar > img.out {
-	position: relative;
-	top: 7px;
+div.battlemap > div#tokenbar > img#tokenBottom {
+	top: 12px;
+}
+
+div.battlemap > div#tokenbar > img#tokenTop {
+	bottom: 12px;
 }
 
 div.battlemap > div#tokenbar > img:hover {
@@ -279,3 +284,7 @@ div.battlemap > div#tokenbar > img:hover {
 		drop-shadow(-1px -1px 10px gold);
 }
 
+div.battlemap > div#tokenbar > img.dummy:hover {
+	cursor: default;
+}
+#
