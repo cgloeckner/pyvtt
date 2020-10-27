@@ -176,8 +176,7 @@ div#rollbox > div.roll:hover > span.player {
 	text-decoration: bold;
 	z-index: 1;
 	
-	background-color: rgba(0, 0, 0, 0.75);
-	border: 1px dotted white;
+	background-color: rgba(100, 100, 100, 0.75);
 }
 
 /* --- Map Footer ----------------------------------------------------------- */
@@ -270,11 +269,11 @@ div.battlemap > div#tokenbar > img {
 }
 
 div.battlemap > div#tokenbar > img#tokenBottom {
-	top: 12px;
+	top: 6px;
 }
 
 div.battlemap > div#tokenbar > img#tokenTop {
-	bottom: 12px;
+	bottom: 6px;
 }
 
 div.battlemap > div#tokenbar > img:hover {
