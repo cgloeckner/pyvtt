@@ -827,6 +827,8 @@ function tokenStretch() {
 		if (!change_cache.includes(select_id)) {
 			change_cache.push(select_id);
 		}
+		
+		select_id = 0;
 	}
 }
 
