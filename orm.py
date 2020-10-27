@@ -196,14 +196,22 @@ class Game(db.Entity):
 		self.makeLock()
 		
 		game_root = self.getImagePath()
+		export_root = self.getExportPath()
+		
 		with engine.locks[self.url]: # make IO access safe
 			if not os.path.isdir(game_root):
 				os.mkdir(game_root)
+		
+			if not os.path.isdir(export_root):
+				os.mkdir(export_root)
 		
 		self.makeMd5s()
 	
 	def getImagePath(self):
 		return engine.data_dir / 'games' / self.url
+
+	def getExportPath(self):
+		return engine.data_dir / 'export'
 
 	def getAllImages(self):
 		"""Note: needs to be called from a threadsafe context."""

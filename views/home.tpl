@@ -12,9 +12,12 @@
 	%if s.backing is not None:
 		%url = s.backing.url
 	%end
-	%print(url)
 		<div>
-			<p>{{g.url}} <a href="/setup/delete/{{g.url}}"><img class="icon" src="/static/delete.png" /></a></p>
+			<p>
+				<a href="/setup/export/{{g.url}}"><img class="icon" src="/static/export.png"></a>
+				{{g.url}}
+				<a href="/setup/delete/{{g.url}}"><img class="icon" src="/static/delete.png" /></a>
+			</p>
 			<a href="/play/{{g.url}}" target="_blank"><img class="thumbnail" src="{{url}}" /></a><br />
 			Public Link: <a href="http://{{server}}/play/{{g.url}}" target="_blank">here</a><br />
 		</div>
@@ -23,8 +26,9 @@
 
 	<br />
 
-	<form action="/setup/create" id="create_game" method="post">
-		http://{{server}}/play/<input type="text" name="game_url" value="my-game" /><input type="submit" value="Create" />
+	<form action="/setup/create" id="create_game" method="post" enctype="multipart/form-data">
+		http://{{server}}/play/<input type="text" name="game_url" value="my-game" /><input type="submit" value="Create" /><br />
+		Game Import: <input type="file" name="archive" />
 	</form>
 
 	<br />

@@ -2,7 +2,7 @@
 
 from bottle import *
 
-import os, json, random, time, sys, math, logging
+import os, json, random, time, sys, math, logging, tempfile, zipfile, pathlib, shutil
 
 from pony import orm
 from orm import db, db_session, Token, Game, engine
@@ -52,15 +52,64 @@ def post_create_game():
 	# create game
 	game = db.Game(url=url)
 	
-	# create first scene
-	scene = db.Scene(game=game)
-	db.commit()
-	
-	game.active = scene.id
 	game.postSetup()
 	db.commit()
 	
+	# may import game from zip
+	if isinstance(request.files.archive, str):
+		# create first scene
+		scene = db.Scene(game=game)
+		db.commit()
+		
+		game.active = scene.id
+		
+	else:
+		# unzip uploaded file to temp dir
+		archive   = request.files.archive
+		temp_dir  = tempfile.TemporaryDirectory()
+		temp_path = pathlib.Path(temp_dir.name)
+		zip_path  = temp_path / archive.filename
+		archive.save(str(zip_path))
+		with zipfile.ZipFile(zip_path, 'r') as h:
+			h.extractall(temp_dir.name)
+		
+		# copy images to game directory
+		img_path = game.getImagePath()
+		for fname in os.listdir(temp_path):
+			if fname.endswith('.png'):
+				shutil.copyfile(temp_path / fname, img_path / fname)
+		
+		# create all game data
+		data = dict()
+		with open(temp_path / 'game.json', 'r') as h:
+			data = json.load(h)
+		
+		for sid, s in enumerate(data["scenes"]):
+			# create scene
+			scene = db.Scene(game=game)
+			
+			# create tokens for that scene
+			for token_id in s["tokens"]:
+				token_data = data["tokens"][token_id]
+				# create token
+				t = db.Token(
+					scene=scene, url=game.getImageUrl(token_data['url']),
+					posx=token_data['posx'], posy=token_data['posy'],
+					zorder=token_data['zorder'], size=token_data['size'], 	
+					rotate=token_data['rotate'], locked=token_data['locked']
+				)
+				if s["backing"] == token_id:
+					db.commit()
+					scene.backing = t
+		
+			if data["active"] == sid:
+				db.commit()
+				game.active = scene.id
+	
+	
+	db.commit()
 	redirect('/play/' + url)
+
 
 @post('/gm/<url>/create', apply=[asGm])
 def post_create_scene(url):
@@ -73,12 +122,88 @@ def post_create_scene(url):
 	
 	game.active = scene.id
 
+@get('/setup/export/<url>', apply=[asGm])
+def export_game(url):
+	# load game
+	game = db.Game.select(lambda g: g.url == url).first()
+	
+	# remove abandoned images
+	game.removeAbandonedImages()
+	
+	# collect all tokens in this game
+	tokens = list()
+	id_translation = dict() # required because the current token ids will not persist
+	game_tokens = db.Token.select(
+		lambda t: t.scene is not None
+			and t.scene.game is not None 
+			and t.scene.game == game
+	)
+	for t in game_tokens:
+		tokens.append({
+			"url"    : t.url.split('/')[-1], # remove game url (will not persist!)
+			"posx"   : t.posx,
+			"posy"   : t.posy,
+			"zorder" : t.zorder,
+			"size"   : t.size,
+			"rotate" : t.rotate,
+			"locked" : t.locked
+		})
+		id_translation[t.id] = len(tokens) - 1
+	
+	# collect all scenes in this game
+	scenes = list()
+	active = 0
+	for s in game.scenes:
+		tkns = list()
+		for t in s.tokens:
+			# query new id from translation dict
+			tkns.append(id_translation[t.id])
+		scenes.append({
+			"tokens"  : tkns,
+			"backing" : id_translation[s.backing.id]
+		})
+		if game.active == s.id:
+			active = len(scenes) - 1
+	
+	data = {
+		"tokens" : tokens,
+		"scenes" : scenes,
+		"active" : active
+	}
+	
+	# build zip file
+	zip_path = game.getExportPath()
+	zip_file = '{0}.zip'.format(game.url)
+	
+	with zipfile.ZipFile(zip_path / zip_file, "w") as h:
+		# create temporary file and add it to the zip
+		with tempfile.NamedTemporaryFile() as tmp:
+			s = json.dumps(data, indent=4)
+			tmp.write(s.encode('utf-8'))
+			h.write(tmp.name, 'game.json')
+		# add images to the zip, too
+		p = game.getImagePath()
+		for img in game.getAllImages():
+			h.write(p / img, img)
+
+	# offer file for downloading
+	return static_file(zip_file, root=zip_path, download=zip_file, mimetype='application/zip')
+
+
 @get('/setup/delete/<url>', apply=[asGm])
 def delete_game(url):
 	# load game
 	game = db.Game.select(lambda g: g.url == url).first()
-	
-	game.clear()
+		
+	# delete everything for that game
+	# @note: doing by hand to avoid some weird cycle stuff (workaround)
+	for s in game.scenes:
+		for t in s.tokens:
+			t.delete()
+		s.backing = None
+		s.delete()
+	game.active = None
+	game.clear() # also delete images from disk!
 	game.delete()
 	
 	db.commit()
@@ -137,15 +262,16 @@ def duplicate_scene(url, scene_id):
 	# copy tokens, too
 	backing = None
 	for t in scene.tokens:
-		n = db.Token(scene=clone, url=t.url, posx=t.posx, posy=t.posy, zorder=t.zorder, size=t.size, rotate=t.rotate, locked=t.locked)
+		n = db.Token(
+			scene=clone, url=t.url, posx=t.posx, posy=t.posy, zorder=t.zorder,
+			size=t.size, rotate=t.rotate, locked=t.locked
+		)
 		if n.size == -1:
 			n.back = clone
 	
 	assert(len(scene.tokens) == len(clone.tokens))
 	
 	db.commit()
-	
-	print(scene.backing)
 	
 	game.active = clone.id
 
