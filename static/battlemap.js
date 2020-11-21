@@ -111,12 +111,13 @@ function getActualSize(token, maxw, maxh) {
 	var w = token.size;
 	var h = w / ratio;
 	if (token.size == -1) {
+		console.log(ratio);
 		if (ratio > 0.56) {
-			w = maxw / canvas_scale;
-			h = w / ratio;
-		} else {
 			h = maxh / canvas_scale;
 			w = h * ratio;
+		} else {
+			w = maxw / canvas_scale;
+			h = w / ratio;
 		}
 		
 	} else if (src_h > src_w) {
