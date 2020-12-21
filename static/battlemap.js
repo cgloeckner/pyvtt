@@ -275,13 +275,10 @@ function updatePlayers(response) {
 			players[name] = color;
 			console.log(name, 'joined');
 			
-			var container = '<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">';
 			if (name == own_name) {
-				container += '<a href="/' + gm_name + '/' + game_url + '/logout" title="Logout">' + name + '</a>';
-			} else {
-				container += name;
+				onClick = ' onClick="logout();"';
 			}
-			container += '</span>';
+			var container = '<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');" ' + onClick + '>' + name + '</span>';
 			$('#players').append(container);
 		}
 	});
@@ -931,6 +928,11 @@ function tokenTop() {
 	});
 }
 
+function logout() {
+	if (confirm("LOGOUT?")) {
+		window.location = '/' + gm_name + '/' + game_url + '/logout';
+	}
+}
 
 // --- GM stuff ---------------------------------------------------------------
 
@@ -992,4 +994,5 @@ function deleteScene(scene_id) {
 		}
 	);
 }
+
 
