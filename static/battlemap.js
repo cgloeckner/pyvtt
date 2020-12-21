@@ -106,24 +106,28 @@ function addToken(id, url) {
 function getActualSize(token, maxw, maxh) {
 	var src_h = images[token.url].height;
 	var src_w = images[token.url].width;
-	var ratio = src_w / src_h;
+	var ratio = src_h / src_w;
+	
+	// Basic Concept: r = h/w  <==>  h = w*r  <==>  w = h/r
 	
 	// scale token via width (most common usecase)
-	var w = token.size;
-	var h = w / ratio;
+	var h = token.size
+	var w = h / ratio;
 	if (token.size == -1) {
 		if (ratio > 0.56) {
+			// resize to canvas height (adjust width using ratio)
 			h = maxh / canvas_scale;
-			w = h * ratio;
+			w = h / ratio;
 		} else {
+			// resize to canvas width (adjust height using ratio)
 			w = maxw / canvas_scale;
-			h = w / ratio;
+			h = w * ratio;
 		}
 		
 	} else if (src_h > src_w) {
-		// scale token via height
+		// scale token via height (adjust width using ratio)
 		h = token.size;
-		w = h * ratio;
+		w = h / ratio;
 	}
 	
 	return [w, h];
@@ -866,8 +870,8 @@ function tokenStretch() {
 		token.posy = canvas[0].height / 2;
 			
 		// mark token as changed
-		if (!change_cache.includes(id)) {
-			change_cache.push(id);
+		if (!change_cache.includes(token.id)) {
+			change_cache.push(token.id);
 		}
 		
 		// reset selection
