@@ -28,22 +28,22 @@
 <div class="mapfooter">
 	<div class="dice">
 %if game.d20:
-		<img src="/static/d20.png" id="d20" title="Roll 1D20" />
+		<img src="/static/d20.png" id="d20" title="Roll 1D20" onClick="rollDice(20);" />
 %end
 %if game.d12:
-		<img src="/static/d12.png" id="d12" title="Roll 1D12" />
+		<img src="/static/d12.png" id="d12" title="Roll 1D12" onClick="rollDice(12);" />
 %end
 %if game.d10:
-		<img src="/static/d10.png" id="d10" title="Roll 1D10" />
+		<img src="/static/d10.png" id="d10" title="Roll 1D10" onClick="rollDice(10);" />
 %end
 %if game.d8:
-		<img src="/static/d8.png" id="d20" title="Roll 1D20" />
+		<img src="/static/d8.png" id="d8" title="Roll 1D8" onClick="rollDice(8);" />
 %end
 %if game.d6:
-		<img src="/static/d6.png" id="d6" title="Roll 1D6" />
+		<img src="/static/d6.png" id="d6" title="Roll 1D6" onClick="rollDice(6);" />
 %end
 %if game.d4:
-		<img src="/static/d4.png" id="d4" title="Roll 1D4" />
+		<img src="/static/d4.png" id="d4" title="Roll 1D4" onClick="rollDice(4);" />
 %end
 	</div>					
 					
@@ -58,11 +58,6 @@
 // disable scrolling
 //$('body').css('overflow', 'hidden');
 
-%for sides in [4, 6, 8, 10, 12, 20]:
-$('#d{{sides}}').on('singleclick', function(event) {
-	rollDice({{sides}});
-});
-%end
 $('#d10').on('dblclick', function(event) {
 	rollDice(100);
 });

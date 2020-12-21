@@ -537,14 +537,11 @@ def post_player_update(gmname, url):
 	
 	# query rolls (within last 180 seconds)
 	rolls = list()
-	"""for s in [4, 6, 8, 10, 100, 12, 20]:
-		for r in db.Roll.select(lambda r: r.game == game and r.sides == s and r.timeid >= now - 180).order_by(lambda r: -r.timeid)[:13]:
-	"""
 	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 180).order_by(lambda r: -r.timeid)[:13]:
 		# query color by player
 		color = '#000000'
-		if url in engine.colors and r.player in engine.colors[game.getUrl()]:
-			color = engine.colors[game.getUrl()][r.player]
+		if game_url in engine.colors and r.player in engine.colors[game_url]:
+			color = engine.colors[game_url][r.player]
 		# consider token if it was updated after given timeid
 		rolls.append({
 			'player' : r.player,
@@ -556,7 +553,6 @@ def post_player_update(gmname, url):
 	
 	# query players alive
 	playerlist = list()
-	game_url = game.getUrl()
 	for playername in engine.players[game_url]:
 		playercolor = '#000000'
 		if game_url in engine.colors and playername in engine.colors[game_url]:

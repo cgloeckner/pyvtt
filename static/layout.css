@@ -194,14 +194,39 @@ div.mapfooter > div.dice {
 }
 
 div.mapfooter > div.dice > img {
+	position: relative;
+	user-select: none;
+	
 	width: 48px;
 	height: 48px;
 }
 
 div.mapfooter > div.dice > img:hover {
 	cursor: pointer;
+	
 	filter: drop-shadow(1px 1px 10px gold) 
           drop-shadow(-1px -1px 0 gold);
+	
+	bottom: 5px;
+}
+
+div.mapfooter > div.dice > img.shake {
+	animation: shake 0.5s;
+	animation-iteration-count: infinite;
+}
+
+@keyframes shake {
+	0% { transform: translate(1px, 1px) rotate(0deg); }
+	10% { transform: translate(-1px, -2px) rotate(-1deg); }
+	20% { transform: translate(-3px, 0px) rotate(1deg); }
+	30% { transform: translate(3px, 2px) rotate(0deg); }
+	40% { transform: translate(1px, -1px) rotate(1deg); }
+	50% { transform: translate(-1px, 2px) rotate(-1deg); }
+	60% { transform: translate(-3px, 1px) rotate(0deg); }
+	70% { transform: translate(3px, 1px) rotate(-1deg); }
+	80% { transform: translate(-1px, -1px) rotate(1deg); }
+	90% { transform: translate(1px, 2px) rotate(0deg); }
+	100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
 div.mapfooter > div#players {

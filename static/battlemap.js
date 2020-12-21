@@ -789,7 +789,9 @@ function tokenWheel(event) {
 
 /// Event handle to click a dice
 function rollDice(sides) {
+	$('#d' + sides).addClass('shake');
 	$.post('/' + gm_name + '/' + game_url + '/roll/' + sides);
+	setTimeout(function() {	$('#d' + sides).removeClass('shake'); }, 500);
 }
 
 /// Event handle shortcuts on (first) selected token
