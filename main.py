@@ -396,6 +396,15 @@ def set_player_name(gmname, url):
 	playername  = engine.applyWhitelist(request.forms.get('playername'))[:15]
 	playercolor = request.forms.get('playercolor')
 	
+	# make player color less bright
+	parts       = [int(playercolor[1:3], 16), int(playercolor[3:5], 16), int(playercolor[5:7], 16)]
+	playercolor = '#'
+	for c in parts:
+		c //= 2
+		if c < 16:
+			playercolor += '0'
+		playercolor += hex(c)[2:]
+	
 	# load game
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	
