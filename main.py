@@ -45,7 +45,7 @@ def gm_login():
 
 @post('/vtt/register')
 def post_gm_login():
-	name = engine.applyWhitelist(request.forms.gmname)
+	name = engine.applyWhitelist(request.forms.gmname).lower()
 	if name in engine.gm_blacklist or len(name) < 3:
 		redirect('/vtt/register')
 	
@@ -82,7 +82,7 @@ def get_game_list():
 def post_create_game():
 	gm = db.GM.loadFromSession(request)
 	
-	url = engine.applyWhitelist(request.forms.game_url)
+	url = engine.applyWhitelist(request.forms.game_url).lower()
 	print(request.forms.game_url, "\t", url)
 	
 	# test for URL collision with other games of this GM

@@ -1,5 +1,7 @@
 body {
 	background-image: url('/static/background.jpg');
+
+	font-family: Helvetica, Arial, Sans-Serif;
 }
 
 form {

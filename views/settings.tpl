@@ -2,7 +2,7 @@
 
 <div class="menu">
 
-<h1>Settings for {{game.url}}</h1>
+<h1>SETTINGS for {{game.url.upper()}}</h1>
 
 <form action="/vtt/modify-game/{{game.url}}" id="modify_game" method="post" enctype="multipart/form-data">
 
@@ -25,9 +25,9 @@
 	<label for="d20">D20</label><br />
 	
 	<input type="checkbox" name="multiselect" id="multiselect" {{'checked="checked"' if game.multiselect else ''}} />
-	<label for="multiselect">multiselect</label><br />
+	<label for="multiselect">MULTISELECT</label><br />
 
-	<input type="submit" value="Save" /><br />
+	<input type="submit" value="SAVE" /><br />
 
 </form>
 
