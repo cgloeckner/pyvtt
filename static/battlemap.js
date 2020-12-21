@@ -963,7 +963,7 @@ function closeDropdown() {
 
 function addScene() {
 	$.post(
-		url='/gm/' + game_url + '/create',
+		url='/vtt/create-scene/' + game_url,
 		success=function(data) {
 			location.reload();
 		}
@@ -972,7 +972,7 @@ function addScene() {
 
 function activateScene(scene_id) {
 	$.post(
-		url='/gm/' + game_url + '/activate/' + scene_id,
+		url='/vtt/activate-scene/' + game_url + '/' + scene_id,
 		success=function(data) {
 			location.reload();
 		}
@@ -980,7 +980,7 @@ function activateScene(scene_id) {
 }
 function cloneScene(scene_id) {
 	$.post(
-		url='/gm/' + game_url + '/clone/' + scene_id,
+		url='/vtt/clone-scene/' + game_url + '/' + scene_id,
 		success=function(data) {
 			location.reload();
 		}
@@ -988,7 +988,7 @@ function cloneScene(scene_id) {
 }
 function deleteScene(scene_id) {
 	$.post(
-		url='/gm/' + game_url + '/delete/' + scene_id,
+		url='/vtt/delete-scene/' + game_url + '/' + scene_id,
 		success=function(data) {
 			location.reload();
 		}
