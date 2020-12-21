@@ -17,7 +17,7 @@
 				{{g.url}}
 				<a href="/vtt/delete-game/{{g.url}}"><img class="icon" src="/static/delete.png" /></a>
 			</p>
-				<a href="/{{g.admin.name}}/{{g.url}}" target="_blank"><img class="thumbnail" src="{{url}}" /></a><br />
+				<a href="{{server}}/{{g.admin.name}}/{{g.url}}" target="_blank"><img class="thumbnail" src="{{url}}" /></a><br />
 		</div>
 %end
 	</div>
@@ -25,7 +25,7 @@
 	<br />
 
 	<form action="/vtt/create-game" id="create_game" method="post" enctype="multipart/form-data">
-		http://{{server}}/{{gm.name}}/<input type="text" name="game_url" value="my-game" /><input type="submit" value="Create" /><br />
+		Link: {{server}}/{{gm.name}}/<input type="text" name="game_url" value="my-game" /><input type="submit" value="Create" /><br />
 		Game Import: <input type="file" name="archive" />
 	</form>
 

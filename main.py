@@ -24,7 +24,6 @@ app.install(db_session)
 # setup engine with cli args and db session
 engine.setup(sys.argv)
 
-print('Public IP:', engine.getIp())
 
 # --- GM routes ---------------------------------------------------------------
 
@@ -36,20 +35,13 @@ def asGm(callback):
 			# force login
 			redirect('/vtt/register')
 		return callback(*args, **kwargs)
-		"""
-		# try to auth via IP
-		if request.environ.get('REMOTE_ADDR') == '127.0.0.1':
-			return callback(*args, **kwargs)
-		else:
-			abort(401)
-		"""
 	return wrapper
 
 
 @get('/vtt/register')
 @view('register')
 def gm_login():
-	return dict(ip=request.environ.get('REMOTE_ADDR'))
+	return dict()
 
 @post('/vtt/register')
 def post_gm_login():
@@ -64,6 +56,7 @@ def post_gm_login():
 	gm = db.GM(name=name, ip=ip, sid=sid)
 	gm.postSetup()
 	
+	response.set_cookie('session', name, path='/', expires=gm.expire)
 	response.set_cookie('session', sid, path='/', expires=gm.expire)
 
 	db.commit()
@@ -78,8 +71,12 @@ def get_game_list():
 		response.set_cookie('session', '', path='/', expires=0)
 		redirect('/vtt/register')
 	
+	server = ''
+	if engine.local_gm:
+		server = 'http://{0}:{1}'.format(engine.getIp(), engine.port)
+	
 	# show GM's games
-	return dict(gm=gm, server='{0}:{1}'.format(engine.getIp(), engine.port), dbScene=db.Scene)
+	return dict(gm=gm, server=server, dbScene=db.Scene)
 
 @post('/vtt/create-game', apply=[asGm])
 def post_create_game():

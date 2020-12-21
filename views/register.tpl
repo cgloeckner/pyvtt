@@ -11,10 +11,6 @@
 			<td><input type="text" name="gmname" /></td>
 		</tr>
 		<tr>
-			<td>IP:</td>
-			<td>{{ip}}</td>
-		</tr>
-		<tr>
 			<td>
 			<td><input type="submit" value="Start Campaign" /></td>
 		</tr>

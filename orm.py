@@ -53,6 +53,8 @@ class Engine(object):
 		# blacklist for GM names
 		self.gm_blacklist = ['static', 'token', 'vtt']
 
+		self.local_gm = False
+
 		# game cache
 		self.players = dict()
 		self.colors  = dict()
@@ -61,12 +63,15 @@ class Engine(object):
 	def setup(self, argv):
 		for line in argv:
 			if line == '--debug':
-				print('Debug Mode enabled')
 				self.debug = True
 				
 			if line.startswith('--port'):
-				print('Setting custom port')
+				# use custom port
 				self.port = int(line.split('=')[1])
+			
+			if line == '--localhost':
+				# GM is on localhost
+				self.local_gm = True
 	
 		# setup listening ip
 		if self.debug:
@@ -323,7 +328,7 @@ class GM(db.Entity):
 		engine.locks[self.name] = threading.Lock();
 	
 	def postSetup(self):
-		self.expire = int(time.time()) + 3600 * 24 * 7 * 2 # expire in two weaks
+		self.expire = int(time.time()) + 3600 * 24 * 30 # expire after 30d
 		
 		self.makeLock()
 		
@@ -374,8 +379,7 @@ class GM(db.Entity):
 	def loadFromSession(request):
 		""" Fetch GM from session id and ip address. """
 		sid = request.get_cookie('session')
-		ip  = request.environ.get('REMOTE_ADDR')
-		return db.GM.select(lambda g: g.ip == ip and g.sid == sid).first()
+		return db.GM.select(lambda g: g.sid == sid).first()
 	
 	@staticmethod
 	def genSession():

@@ -1,22 +1,25 @@
 # pyvvt
 Python-based Virtual Tabletop Tool
 
-requires pony (DB) and paste (async HTTP)
+Recommended Browser: Firefox (non-mobile device, at least at the moment)
 
-# How to run
-- start `main.py` on GM's local computer
-- enable portforwarding for port 8080 for this computer in your router
-- query your public IP, set up your game in the browser
-- send the play-link to your players to join
-- Recommended browser: Firefox (non-mobile device)
+# I want to host it myself
+Start `main.py` on your machine (currently only Linux-based OS are supported, this may change in future ... idk). Make sure to enable port forwarding for port 8080 (or specify another port via `--port=80` when starting) for this computer in your router.
 
-# GM not local?
-start with `--lazy` to skip IP-checking for GM-routes
+If you are hosting using your public IP, consider setting starting the server with `--localhost` and set up your games via `localhost`. Launching with `--localhost` will replace all `http://localhost` in the game-links by your public IP, so you can easily copy and paste those to your players. If you setup your games with your public IP, your game data can get unaccessable if your IP changes (because cookies are bound to the server name or in this case IP address).
 
-# Development notes
-start with `--debug` to start in auto-reloading (but non-threaded) dev mode (localhost only)
+*Note:* Requires `bottle` (as HTTP server), `paste` (for async HTTP) and `pony` (as database ORM). Consider using `pip` or similar tools.
+
+# GM Information
+Access your the via your Browser. There is no real login but every GM is identified with your GM-name (entered) and a session ID (generated and stored in a cookie). Once you clear your cookies, you lose access to your games. But wait ...
+
+You can export set-up games as ZIP files, which can be downloaded on your computer. They contain all scenes and images (including positions, rotations etc.). So you can easily reimport a previous game if you want.
+
+# Player Information
+Ask for a link and start playing. Make sure to enable JavaScript and allow Cookies.
 
 # Known bugs
+(may not be up to date)
 - edge: extreme slow ajax
 - opera: extreme slow page loading
 - mobile: cannot grab token (-.-)
