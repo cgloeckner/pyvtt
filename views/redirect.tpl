@@ -2,11 +2,11 @@
 
 <div class="menu">
 
-<p>Welcome, {{playername}}. You'll be redirected to the <a href="/play/{{game.url}}">Game</a> in a second...</p>
+<p>Welcome, {{playername}}. You'll be redirected to the <a href="/{{game.admin.name}}/{{game.url}}">Game</a> in a second...</p>
 
 <script type="text/javascript">
 <!--
-window.location = "/play/{{game.url}}";
+window.location = "/{{game.admin.name}}/{{game.url}}";
 //–>
 </script>
 

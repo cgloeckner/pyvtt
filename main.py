@@ -30,27 +30,64 @@ engine.setup(sys.argv)
 # decorator for GM-routes
 def asGm(callback):
 	def wrapper(*args, **kwargs):
+		session = request.get_cookie('session')
+		if session is None:
+			# force login
+			redirect('/vtt/register')
+		return callback(*args, **kwargs)
+		"""
+		# try to auth via IP
 		if request.environ.get('REMOTE_ADDR') == '127.0.0.1':
 			return callback(*args, **kwargs)
 		else:
 			abort(401)
+		"""
 	return wrapper
 
 
-@get('/')
+@get('/vtt/register')
+@view('register')
+def gm_login():
+	return dict(ip=request.environ.get('REMOTE_ADDR'))
+
+@post('/vtt/register')
+def post_gm_login():
+	name = engine.applyWhitelist(request.forms.gmname)
+	if name in engine.gm_blacklist or len(name) < 3:
+		redirect('/vtt/register')
+	
+	ip  = request.environ.get('REMOTE_ADDR')
+	sid = db.GM.genSession()
+	
+	# create new GM
+	gm = db.GM(name=name, ip=ip, sid=sid)
+	gm.postSetup()
+	
+	response.set_cookie('session', sid, path='/', expires=gm.expire)
+
+	db.commit()
+	redirect('/')
+
+@get('/', apply=[asGm])
 @view('home')
 def get_game_list():
-	games = db.Game.select()
-	is_gm = request.environ.get('REMOTE_ADDR') == '127.0.0.1'
+	gm = db.GM.loadFromSession(request)
+	if gm is None:
+		# GM not found on the server
+		response.set_cookie('session', '', path='/', expires=0)
+		redirect('/vtt/register')
 	
-	return dict(games=games, server='{0}:{1}'.format(engine.getIp(), engine.port), is_gm=is_gm, dbScene=db.Scene)
+	# show GM's games
+	return dict(gm=gm, server='{0}:{1}'.format(engine.getIp(), engine.port), dbScene=db.Scene)
 
-@post('/setup/create', apply=[asGm])
+@post('/vtt/create-game', apply=[asGm])
 def post_create_game():
+	gm = db.GM.loadFromSession(request)
+	
 	url = engine.applyWhitelist(request.forms.game_url)
 	
 	# create game
-	game = db.Game(url=url)
+	game = db.Game(url=url, admin=gm)
 	
 	game.postSetup()
 	db.commit()
@@ -109,24 +146,14 @@ def post_create_game():
 	
 	
 	db.commit()
-	redirect('/play/' + url)
+	redirect(game.getUrl())
 
-
-@post('/gm/<url>/create', apply=[asGm])
-def post_create_scene(url):
-	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
-	
-	# create scene
-	scene = db.Scene(game=game)
-	db.commit()
-	
-	game.active = scene.id
-
-@get('/setup/export/<url>', apply=[asGm])
+@get('/vtt/export-game/<url>', apply=[asGm])
 def export_game(url):
+	gm = db.GM.loadFromSession(request)
+	
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 	
 	# remove abandoned images
 	game.removeAbandonedImages()
@@ -191,10 +218,12 @@ def export_game(url):
 	return static_file(zip_file, root=zip_path, download=zip_file, mimetype='application/zip')
 
 
-@get('/setup/delete/<url>', apply=[asGm])
+@get('/vtt/delete-game/<url>', apply=[asGm])
 def delete_game(url):
+	gm = db.GM.loadFromSession(request)
+	
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 		
 	# delete everything for that game
 	# @note: doing by hand to avoid some weird cycle stuff (workaround)
@@ -210,27 +239,75 @@ def delete_game(url):
 	db.commit()
 	redirect('/')
 
-@get('/setup/list/<url>', apply=[asGm])
+@post('/vtt/toggle-rule/<gmname>/<url>/<rule_key>')
+def post_toggle_rule(gmname, url, rule_key):
+	# TODO: query game and toggle rule
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	
+	if rule_key == 'd4':
+		game.d4 = not game.d4
+		
+	elif rule_key == 'd6':
+		game.d6 = not game.d6
+		
+	elif rule_key == 'd8':
+		game.d8 = not game.d8
+		
+	elif rule_key == 'd10':
+		game.d10 = not game.d10
+		
+	elif rule_key == 'd12':
+		game.d12 = not game.d12
+		
+	elif rule_key == 'd20':
+		game.d20 = not game.d20
+		
+	elif rule_key == 'multiselect':
+		game.multiselect = not game.multiselect
+	
+	db.commit()
+	
+	return ""
+
+"""
+@get('/vtt/list-game/<url>', apply=[asGm])
 @view('game_details')
 def get_game_details(url):
+	gm = db.GM.loadFromSession(request)
+	
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 	
 	return dict(game=game, server='{0}:{1}'.format(engine.getIp(), engine.port))
+"""
 
-
-@post('/gm/<url>/activate/<scene_id>', apply=[asGm])
-def activate_scene(url, scene_id):
+@post('/vtt/create-scene/<url>', apply=[asGm])
+def post_create_scene(url):
+	gm = db.GM.loadFromSession(request)
+	
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	
+	# create scene
+	scene = db.Scene(game=game)
+	db.commit()
+	
+	game.active = scene.id
+
+@post('/vtt/activate-scene/<url>/<scene_id>', apply=[asGm])
+def activate_scene(url, scene_id):
+	gm = db.GM.loadFromSession(request)
+	# load game
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 	game.active = scene_id
 
 	db.commit()
 
-@post('/gm/<url>/delete/<scene_id>', apply=[asGm])
+@post('/vtt/delete-scene/<url>/<scene_id>', apply=[asGm])
 def activate_scene(url, scene_id):
+	gm = db.GM.loadFromSession(request)
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 
 	# delete given scene
 	scene = db.Scene.select(lambda s: s.id == scene_id).first()
@@ -250,10 +327,11 @@ def activate_scene(url, scene_id):
 		game.active = remain.id
 
 	
-@post('/gm/<url>/clone/<scene_id>', apply=[asGm])
+@post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm])
 def duplicate_scene(url, scene_id):
+	gm = db.GM.loadFromSession(request)
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 	
 	# load required scene
 	scene = db.Scene.select(lambda s: s.id == scene_id).first()
@@ -276,59 +354,31 @@ def duplicate_scene(url, scene_id):
 	
 	game.active = clone.id
 
-"""
-@get('/gm/<url>/clearRolls', apply=[asGm])
-def clear_rolls(url):
-	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
-	
-	now = int(time.time())
-	
-	# clear old rolls
-	for r in game.rolls:
-		if r.timeid < now - 60:
-			r.delete()
-	
-	db.commit()
-	redirect('/setup/list/{0}'.format(game.url))
-
-@get('/gm/<url>/clearImages', apply=[asGm])
-def clear_images(url):
-	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
-	
-	# query and remove abandoned images (those without any token)
-	cleanup, count = game.removeAbandonedImages()
-	megs = cleanup / (1024.0*1024.0)
-	logging.info('{0} abandoned images deleted, {1} MB freed'.format(count, megs))
-	
-	# refresh checksums
-	s = time.time()
-	game.makeMd5s()
-	logging.info('Image checksums for {1} created within {0}s'.format(time.time() - s, game.url))
-	
-	redirect('/setup/list/{0}'.format(game.url))
-"""
-
 # --- playing routes ----------------------------------------------------------
 
 @get('/static/<fname>')
 def static_files(fname):
 	return static_file(fname, root='./static')
 
-@get('/token/<url>/<fname>')
-def static_token(url, fname):
+@get('/token/<gmname>/<url>/<fname>')
+def static_token(gmname, url, fname):
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	path = game.getImagePath()
 	
 	return static_file(fname, root=path)
 
-@get('/play/<url>/login')
+@get('/<gmname>/<url>/login')
 @view('login')
-def player_login(url):
+def player_login(gmname, url):
+	gm = db.GM.loadFromSession(request)
+
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	
+	playername = ''
+	if gm is not None:
+		playername = gm.name
 	
 	# pick color (either from cookie or random)
 	playercolor = request.get_cookie('playercolor')
@@ -336,100 +386,109 @@ def player_login(url):
 		colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
 		playercolor = colors[random.randrange(len(colors))]
 	
-	return dict(game=game, color=playercolor)
+	return dict(game=game, color=playercolor, playername=playername)
 
-@post('/play/<url>/login')
+@post('/<gmname>/<url>/login')
 @view('redirect')
-def set_player_name(url):
+def set_player_name(gmname, url):
 	playername  = engine.applyWhitelist(request.forms.get('playername'))[:12]
 	playercolor = request.forms.get('playercolor')
 	
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	
 	# save playername in client cookie (expire after 14 days)
 	expire = int(time.time() + 3600 * 24 * 14)
-	response.set_cookie('playername', playername, path='/play/{0}'.format(url), expires=expire)
-	response.set_cookie('playercolor', playercolor, path='/play/{0}'.format(url), expires=expire)
+	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire)
+	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire)
 	
 	return dict(game=game, playername=playername)
 
-@get('/play/<url>')
+@get('/<gmname>/<url>')
 @view('battlemap')
-def get_player_battlemap(url):
+def get_player_battlemap(gmname, url):
 	# load player name and color from cookie
 	playername  = request.get_cookie('playername')
 	playercolor = request.get_cookie('playercolor')
-	is_gm       = request.environ.get('REMOTE_ADDR') == '127.0.0.1'
 	
+	gm = db.GM.loadFromSession(request)
+	
+	# load game
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+		
 	# redirect to login if player not found
 	if playername is None:
-		redirect('/play/{0}/login'.format(url))
-
-	else:
-		# load game
-		game = db.Game.select(lambda g: g.url == url).first()
-		
-		return dict(game=game, playername=playername, playercolor=playercolor, is_gm=is_gm, multiselect=False)
+		redirect('{0}/login'.format(game.getUrl()))
+	else:		
+		return dict(game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
 # on window open
-@post('/play/<url>/join')
-def join_game(url):
+@post('/<gmname>/<url>/join')
+def join_game(gmname, url):
 	# load player name from cookie
 	playername = request.get_cookie('playername')
 	playercolor = request.get_cookie('playercolor')
 	
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	game_url = game.getUrl()
+	
 	# save this playername
-	if url not in engine.players:
-		engine.players[url] = set()
-	engine.players[url].add(playername)
+	if game_url not in engine.players:
+		engine.players[game_url] = set()
+	engine.players[game_url].add(playername)
 	
 	# save this playercolor
-	if url not in engine.colors:
-		engine.colors[url] = dict()
-	engine.colors[url][playername] = playercolor
-		
+	if game_url not in engine.colors:
+		engine.colors[game_url] = dict()
+	engine.colors[game_url][playername] = playercolor
 
 # on window close
-@post('/play/<url>/disconnect')
-def quit_game(url):
+@post('/<gmname>/<url>/disconnect')
+def quit_game(gmname, url):
 	# load player name from cookie
 	playername = request.get_cookie('playername')
 	
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	game_url = game.getUrl()
+	
 	# remove player
-	if url in engine.players and playername in engine.players[url]:
-		engine.players[url].remove(playername)
+	if game_url in engine.players and playername in engine.players[game_url]:
+		engine.players[game_url].remove(playername)
 	
 	# note: color is kept
 
 
 # on logout purpose
-@get('/play/<url>/logout')
-def quit_game(url):
+@get('/<gmname>/<url>/logout')
+def quit_game(gmname, url):
 	# load player name from cookie
 	playername = request.get_cookie('playername')
 	playercolor = request.get_cookie('playercolor')
+
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	game_url = game.getUrl()
 	
 	# reset cookie
-	response.set_cookie('playername', playername, path='/play/{0}'.format(url), expires=0)
+	response.set_cookie('playername', playername, path=game.getUrl(), expires=0)
 	# note: color is kept in cookies
 	
 	# remove player
-	if url in engine.players and playername in engine.players[url]:
-		engine.players[url].remove(playername)
+	if url in engine.players and playername in engine.players[game_url]:
+		engine.players[game_url].remove(playername)
 	# note: color is kept in cache
 	
 	if url in engine.selected:
 		# reset selection
-		engine.selected[url][playercolor] = list()
+		engine.selected[game_url][playercolor] = list()
 	
 	# show login page
-	redirect('/play/{0}'.format(url))
+	redirect(game.getUrl())
 
-@post('/play/<url>/update')
-def post_player_update(url):
+@post('/<gmname>/<url>/update')
+def post_player_update(gmname, url):
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	game_url = game.getUrl()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
 	
@@ -438,10 +497,12 @@ def post_player_update(url):
 	# fetch token updates from client
 	timeid   = float(request.POST.get('timeid'))
 	changes  = json.loads(request.POST.get('changes'))
-	if game.url not in engine.selected:
-		engine.selected[game.url] = dict()
+	if game_url not in engine.selected:
+		engine.selected[game_url] = dict()
 	# mark all selected tokens in that color
-	engine.selected[game.url][request.get_cookie('playercolor')] = list(request.POST.get('selected'))
+	playercolor = request.get_cookie('playercolor')
+	ids = request.POST.get('selected')
+	engine.selected[game_url][playercolor] = ids
 	
 	# update token data
 	for data in changes:
@@ -480,8 +541,8 @@ def post_player_update(url):
 	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 180).order_by(lambda r: -r.timeid)[:13]:
 		# query color by player
 		color = '#000000'
-		if url in engine.colors and r.player in engine.colors[url]:
-			color = engine.colors[url][r.player]
+		if url in engine.colors and r.player in engine.colors[game.getUrl()]:
+			color = engine.colors[game.getUrl()][r.player]
 		# consider token if it was updated after given timeid
 		rolls.append({
 			'player' : r.player,
@@ -493,12 +554,12 @@ def post_player_update(url):
 	
 	# query players alive
 	playerlist = list()
-	if url in engine.players:
-		for playername in engine.players[url]:
-			playercolor = '#000000'
-			if url in engine.colors and playername in engine.colors[url]:
-				playercolor = engine.colors[url][playername]
-			playerlist.append('{0}:{1}'.format(playername, playercolor))
+	game_url = game.getUrl()
+	for playername in engine.players[game_url]:
+		playercolor = '#000000'
+		if game_url in engine.colors and playername in engine.colors[game_url]:
+			playercolor = engine.colors[game_url][playername]
+		playerlist.append('{0}:{1}'.format(playername, playercolor))
 	
 	# return tokens, rolls and timestamp
 	data = {
@@ -508,14 +569,14 @@ def post_player_update(url):
 		'tokens'   : tokens,
 		'rolls'    : rolls,
 		'players'  : playerlist,
-		'selected' : engine.selected[game.url]
+		'selected' : engine.selected[game_url]
 	}
 	return json.dumps(data)
 
-@post('/play/<url>/roll/<sides:int>')
-def post_roll_dice(url, sides):
+@post('/<gmname>/<url>/roll/<sides:int>')
+def post_roll_dice(gmname, url, sides):
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
 	scene.timeid = int(time.time())
@@ -527,10 +588,10 @@ def post_roll_dice(url, sides):
 	result = random.randrange(1, sides+1)
 	db.Roll(game=game, player=playername, sides=sides, result=result, timeid=int(time.time()))
 
-@post('/play/<url>/upload/<posx:int>/<posy:int>')
-def post_image_upload(url, posx, posy):
+@post('/<gmname>/<url>/upload/<posx:int>/<posy:int>')
+def post_image_upload(gmname, url, posx, posy):
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
 	scene.timeid = int(time.time())
@@ -585,10 +646,10 @@ def post_image_upload(url, posx, posy):
 		
 	db.commit()
 
-@post('/play/<url>/clone/<token_id:int>/<x:int>/<y:int>')
-def ajax_post_clone(url, token_id, x, y):
+@post('/<gmname>/<url>/clone/<token_id:int>/<x:int>/<y:int>')
+def ajax_post_clone(gmname, url, token_id, x, y):
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
 	# update position
@@ -600,10 +661,10 @@ def ajax_post_clone(url, token_id, x, y):
 		zorder=token.zorder, size=token.size, rotate=token.rotate,
 		flipx=token.flipx, timeid=int(time.time()))
 
-@post('/play/<url>/delete/<token_id:int>')
-def ajax_post_delete(url, token_id):
+@post('/<gmname>/<url>/delete/<token_id:int>')
+def ajax_post_delete(gmname, url, token_id):
 	# load game
-	game = db.Game.select(lambda g: g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
 	# load requested token

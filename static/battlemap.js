@@ -273,7 +273,7 @@ function updatePlayers(response) {
 			
 			var container = '<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">';
 			if (name == own_name) {
-				container += '<a href="/play/' + game_url + '/logout" title="Logout">' + name + '</a>';
+				container += '<a href="/' + gm_name + '/' + game_url + '/logout" title="Logout">' + name + '</a>';
 			} else {
 				container += name;
 			}
@@ -407,7 +407,7 @@ function updateTokens() {
 	// start update with server
 	$.ajax({
 		type: 'POST',
-		url:  '/play/' + game_url + '/update',
+		url:  '/' + gm_name + '/' + game_url + '/update',
 		dataType: 'json',
 		data: {
 			'timeid'   : timeid,
@@ -472,9 +472,11 @@ function drawScene() {
 	$.each(culling, function(index, token) {
 		var color = null;
 		$.each(player_selections, function(index, arr) {
-			if (arr[0] == token.id) {
-				color = arr[1];
-			}
+			$.each(JSON.parse(arr[0]), function(ind, id) {
+				if (id == token.id) {
+					color = arr[1];
+				}
+			});
 		});
 		if (color == null && select_ids.includes(token.id)) {
 			color = getCookie('playercolor');
@@ -500,13 +502,14 @@ function updateGame() {
 }
 
 /// Sets up the game and triggers the update loop
-function start(url, gm, multiselect) {
+function start(url, gm, name, multiselect) {
 	game_url = url;
 	is_gm    = gm == 'True';
+	gm_name = name;
 	allow_multiselect = multiselect == 'True';
 	
 	// notify game about this player
-	navigator.sendBeacon('/play/' + game_url + '/join');
+	navigator.sendBeacon('/' + gm_name + '/' + game_url + '/join');
 	
 	// show gm toolbar
 	if (getCookie('dropdown') == 'show') {
@@ -519,7 +522,7 @@ function start(url, gm, multiselect) {
 /// Handles disconnecting
 function disconnect() {
 	// note: only works if another tab stays open
-	navigator.sendBeacon('/play/' + game_url + '/disconnect');
+	navigator.sendBeacon('/' + gm_name + '/' + game_url + '/disconnect');
 }
 
 function uploadDrag(event) {
@@ -536,7 +539,7 @@ function uploadDrop(event) {
 	var f = new FormData($('#uploadform')[0]);
 	
 	$.ajax({
-		url: '/play/' + game_url + '/upload/' + mouse_x + '/' + mouse_y,
+		url: '/' + gm_name + '/' + game_url + '/upload/' + mouse_x + '/' + mouse_y,
 		type: 'POST',
 		data: f,
 		contentType: false,
@@ -782,7 +785,7 @@ function tokenWheel(event) {
 
 /// Event handle to click a dice
 function rollDice(sides) {
-	$.post('/play/' + game_url + '/roll/' + sides);
+	$.post('/' + gm_name + '/' + game_url + '/roll/' + sides);
 }
 
 /// Event handle shortcuts on (first) selected token
@@ -792,7 +795,7 @@ function tokenShortcut(event) {
 			copy_token = select_ids[0];
 		} else if (event.keyCode == 86) { // CTRL+V
 			if (copy_token > 0) {
-				$.post('/play/' + game_url + '/clone/' + copy_token + '/' + parseInt(mouse_x) + '/' + parseInt(mouse_y));
+				$.post('/' + gm_name + '/' + game_url + '/clone/' + copy_token + '/' + parseInt(mouse_x) + '/' + parseInt(mouse_y));
 				timeid = 0; // force full refresh next time
 			}
 		}
@@ -801,7 +804,7 @@ function tokenShortcut(event) {
 			if (select_ids[0] == copy_token) {
 				copy_token = 0;
 			}
-			$.post('/play/' + game_url + '/delete/' + select_ids[0]);
+			$.post('/' + gm_name + '/' + game_url + '/delete/' + select_ids[0]);
 				timeid = 0; // force full refresh next time
 		}
 	}
@@ -929,7 +932,7 @@ function tokenTop() {
 function copyUrl(server, game_url) {
 	var tmp = $('<input>');
 	$('body').append(tmp);
-	tmp.val('http://' + server + '/play/' + game_url).select();
+	tmp.val('http://' + server + '/' + gm_name + '/' + game_url).select();
 	document.execCommand('copy');
 	tmp.remove();
 }

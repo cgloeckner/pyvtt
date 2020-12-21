@@ -1,4 +1,4 @@
-%title = '{0}: {1}'.format(playername, game.url)
+%title = '{0}: {1} by {2}'.format(playername, game.url, game.admin.name)
 
 %include("header", title=title)
 
@@ -27,8 +27,23 @@
 
 <div class="mapfooter">
 	<div class="dice">
-%for sides in [20, 12, 10, 8, 6, 4]:
-		<img src="/static/d{{sides}}.png" id="d{{sides}}" title="Roll 1D{{sides}}" />
+%if game.d20:
+		<img src="/static/d20.png" id="d20" title="Roll 1D20" />
+%end
+%if game.d12:
+		<img src="/static/d12.png" id="d12" title="Roll 1D12" />
+%end
+%if game.d10:
+		<img src="/static/d10.png" id="d10" title="Roll 1D10" />
+%end
+%if game.d8:
+		<img src="/static/d8.png" id="d20" title="Roll 1D20" />
+%end
+%if game.d6:
+		<img src="/static/d6.png" id="d6" title="Roll 1D6" />
+%end
+%if game.d4:
+		<img src="/static/d4.png" id="d4" title="Roll 1D4" />
 %end
 	</div>					
 					
@@ -80,7 +95,7 @@ battlemap.addEventListener('touchmove', tokenMove);
 battlemap.addEventListener('touchend', tokenRelease);
 
 
-start('{{game.url}}', '{{is_gm}}', '{{multiselect}}');
+start('{{game.url}}', '{{is_gm}}', '{{game.admin.name}}', '{{game.multiselect}}');
 </script>
 
 %include("footer")

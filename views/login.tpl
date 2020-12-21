@@ -1,14 +1,14 @@
-%include("header", title='Login: {0}'.format(game.url))
+%include("header", title='Login: {0} by {1}'.format(game.url, game.admin.name))
 
 <div class="menu">
 
-<h1>{{game.url}}</h1>
+<h1>{{game.url}} by {{game.admin.name}}</h1>
 
-<form action="/play/{{game.url}}/login" method="post">
+<form action="/{{game.admin.name}}/{{game.url}}/login" method="post">
 	<table>
 		<tr>
 			<td>Name</td>
-			<td><input type="text" name="playername" /></td>
+			<td><input type="text" name="playername" value="{{playername}}" /></td>
 		</tr>
 		<tr>
 			<td>Color</td>
