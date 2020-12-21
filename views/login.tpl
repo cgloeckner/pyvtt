@@ -4,7 +4,7 @@
 
 <h1>{{game.url}} by {{game.admin.name}}</h1>
 
-<form action="/{{game.admin.name}}/{{game.url}}/login" method="post">
+<form action="/{{game.admin.name}}/{{game.url}}/login" method="post" enctype="multipart/form-data">
 	<table>
 		<tr>
 			<td>Name</td>

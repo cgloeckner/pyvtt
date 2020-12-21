@@ -83,6 +83,11 @@ def post_create_game():
 	gm = db.GM.loadFromSession(request)
 	
 	url = engine.applyWhitelist(request.forms.game_url)
+	print(request.forms.game_url, "\t", url)
+	
+	# test for URL collision with other games of this GM
+	if len(db.Game.select(lambda g: g.admin == gm and g.url == url)) > 0:
+		redirect('/')
 	
 	# create game
 	game = db.Game(url=url, admin=gm)
@@ -388,7 +393,7 @@ def player_login(gmname, url):
 @post('/<gmname>/<url>/login')
 @view('redirect')
 def set_player_name(gmname, url):
-	playername  = engine.applyWhitelist(request.forms.get('playername'))[:12]
+	playername  = engine.applyWhitelist(request.forms.get('playername'))[:15]
 	playercolor = request.forms.get('playercolor')
 	
 	# load game

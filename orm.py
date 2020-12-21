@@ -42,13 +42,28 @@ class Engine(object):
 		
 		# whitelist for game urls etc.
 		self.url_whitelist = []
+		# allow lower/upper case characters
 		for i in range(65, 91):
 			self.url_whitelist.append(chr(i))
 			self.url_whitelist.append(chr(i+32))
+		# allow numbers
 		for i in range(10):	
 			self.url_whitelist.append('{0}'.format(i))
+		# allow some symbols
 		self.url_whitelist.append('-')
 		self.url_whitelist.append('_')
+		self.url_whitelist.append('.')
+		
+		# setup blacklist replacemap
+		self.url_replacemap = {
+			'ä': 'ae',
+			'Ä': 'Ae',
+			'ö': 'oe',
+			'Ö': 'Oe',
+			'ü': 'ue',
+			'Ü': 'Ue',
+			'ß': 'ss'
+		}
 		
 		# blacklist for GM names
 		self.gm_blacklist = ['static', 'token', 'vtt']
@@ -106,14 +121,19 @@ class Engine(object):
 			return self.publicip
 
 	def applyWhitelist(self, s):
-			# secure symbols used in url
-			fixed = ''
-			for c in s:
-				if c in self.url_whitelist:
-					fixed += c
-				else:
-					fixed += '_'
-			return fixed
+		# apply replace map
+		for key in self.url_replacemap:
+			s = s.replace(key, self.url_replacemap[key])
+		# apply whitelist (replace everything else by '_')
+		fixed = ''
+		for c in s:
+			if c in self.url_whitelist:
+				fixed += c
+			else:
+				fixed += '_'
+		if len(fixed) < 3:
+			raise 'Too short'
+		return fixed
 	
 	@staticmethod
 	def getMd5(handle):

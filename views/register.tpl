@@ -4,7 +4,7 @@
 
 <h1>Join as GM</h1>
 
-<form action="/vtt/register" method="post">
+<form action="/vtt/register" method="post" enctype="multipart/form-data">
 	<table>
 		<tr>
 			<td>GM-Name</td>
