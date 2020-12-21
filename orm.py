@@ -38,7 +38,7 @@ class Engine(object):
 		# webserver stuff
 		self.host  = '0.0.0.0'
 		self.port  = 8080
-		self.debug = True
+		self.debug = False
 		
 		# whitelist for game urls etc.
 		self.url_whitelist = []
@@ -59,8 +59,16 @@ class Engine(object):
 		self.selected  = dict()
 
 	def setup(self, argv):
-		self.debug = '--debug' in argv
-		
+		for line in argv:
+			if line == '--debug':
+				print('Debug Mode enabled')
+				self.debug = True
+				
+			if line.startswith('--port'):
+				print('Setting custom port')
+				self.port = int(line.split('=')[1])
+	
+		# setup listening ip
 		if self.debug:
 			self.host = 'localhost'
 		else:

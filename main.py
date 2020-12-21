@@ -24,6 +24,7 @@ app.install(db_session)
 # setup engine with cli args and db session
 engine.setup(sys.argv)
 
+print('Public IP:', engine.getIp())
 
 # --- GM routes ---------------------------------------------------------------
 
@@ -69,7 +70,7 @@ def post_gm_login():
 	redirect('/')
 
 @get('/', apply=[asGm])
-@view('home')
+@view('gm')
 def get_game_list():
 	gm = db.GM.loadFromSession(request)
 	if gm is None:
@@ -146,7 +147,36 @@ def post_create_game():
 	
 	
 	db.commit()
-	redirect(game.getUrl())
+	redirect('/')
+
+@get('/vtt/modify-game/<url>', apply=[asGm])
+@view('settings')
+def modify_game(url):
+	gm = db.GM.loadFromSession(request)
+	
+	# load game
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	
+	return dict(gm=gm, game=game)
+
+@post('/vtt/modify-game/<url>', apply=[asGm])
+def post_modify_game(url):
+	gm = db.GM.loadFromSession(request)
+	
+	# load game
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	
+	game.d4  = request.forms.get('d4') == 'on'
+	game.d6  = request.forms.get('d6')  == 'on'
+	game.d8  = request.forms.get('d8')  == 'on'
+	game.d10 = request.forms.get('d10') == 'on'
+	game.d12 = request.forms.get('d12') == 'on'
+	game.d20 = request.forms.get('d20') == 'on'
+	
+	game.multiselect = request.forms.get('multiselect') == 'on'
+	
+	db.commit()
+	redirect('/')
 
 @get('/vtt/export-game/<url>', apply=[asGm])
 def export_game(url):
@@ -238,36 +268,6 @@ def delete_game(url):
 	
 	db.commit()
 	redirect('/')
-
-@post('/vtt/toggle-rule/<gmname>/<url>/<rule_key>')
-def post_toggle_rule(gmname, url, rule_key):
-	# TODO: query game and toggle rule
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	
-	if rule_key == 'd4':
-		game.d4 = not game.d4
-		
-	elif rule_key == 'd6':
-		game.d6 = not game.d6
-		
-	elif rule_key == 'd8':
-		game.d8 = not game.d8
-		
-	elif rule_key == 'd10':
-		game.d10 = not game.d10
-		
-	elif rule_key == 'd12':
-		game.d12 = not game.d12
-		
-	elif rule_key == 'd20':
-		game.d20 = not game.d20
-		
-	elif rule_key == 'multiselect':
-		game.multiselect = not game.multiselect
-	
-	db.commit()
-	
-	return ""
 
 """
 @get('/vtt/list-game/<url>', apply=[asGm])
