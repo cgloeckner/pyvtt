@@ -710,9 +710,15 @@ function tokenRelease() {
 function tokenMove(event) {
 	pickCanvasPos(event);
 	
-	if (grabbed && select_ids.length > 0) {
+	var token = selectToken(mouse_x, mouse_y);
+	if (token != null && (is_gm || !token.locked)) {
+		$('#battlemap').css('cursor', 'grab');
+	} else {
+		$('#battlemap').css('cursor', 'default');
+	}
 	
-		//var token = tokens[select_ids[select_ids.length - 1]];
+	if (grabbed && select_ids.length > 0) {
+		$('#battlemap').css('cursor', 'grabbing');
 		
 		// calculate relative direction
 		let dx = mouse_x - last_mouse_x;

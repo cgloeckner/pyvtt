@@ -13,12 +13,12 @@
 	<canvas id="battlemap" width="1000" height="560"></canvas>
 		
 	<div id="tokenbar">
-		<img src="/static/flipx.png" id="tokenFlipX" onClick="tokenFlipX();" />
-		<img src="/static/locked.png" id="tokenLock" onClick="tokenLock();" />
-		<img src="/static/top.png" id="tokenTop" onClick="tokenTop();" />
-		<img src="/static/bottom.png" id="tokenBottom" onClick="tokenBottom();" />
+		<img src="/static/flipx.png" id="tokenFlipX" draggable="false" onClick="tokenFlipX();" />
+		<img src="/static/locked.png" id="tokenLock" draggable="false" onClick="tokenLock();" />
+		<img src="/static/top.png" id="tokenTop" draggable="false" onClick="tokenTop();" />
+		<img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="tokenBottom();" />
 %if is_gm:
-		<img src="/static/stretch.png" id="tokenStretch" onClick="tokenStretch();" />
+		<img src="/static/stretch.png" id="tokenStretch" draggable="false" onClick="tokenStretch();" />
 %else:
 		<img src="" class="dummy" id="tokenStretch" />
 %end
@@ -28,22 +28,22 @@
 <div class="mapfooter">
 	<div class="dice">
 %if game.d20:
-		<img src="/static/d20.png" id="d20" title="Roll 1D20" onClick="rollDice(20);" />
+		<img src="/static/d20.png" id="d20" title="Roll 1D20" draggable="false" onClick="rollDice(20);" />
 %end
 %if game.d12:
-		<img src="/static/d12.png" id="d12" title="Roll 1D12" onClick="rollDice(12);" />
+		<img src="/static/d12.png" id="d12" title="Roll 1D12" draggable="false" onClick="rollDice(12);" />
 %end
 %if game.d10:
-		<img src="/static/d10.png" id="d10" title="Roll 1D10" onClick="rollDice(10);" />
+		<img src="/static/d10.png" id="d10" title="Roll 1D10" draggable="false" onClick="rollDice(10);" />
 %end
 %if game.d8:
-		<img src="/static/d8.png" id="d8" title="Roll 1D8" onClick="rollDice(8);" />
+		<img src="/static/d8.png" id="d8" title="Roll 1D8" draggable="false" onClick="rollDice(8);" />
 %end
 %if game.d6:
-		<img src="/static/d6.png" id="d6" title="Roll 1D6" onClick="rollDice(6);" />
+		<img src="/static/d6.png" id="d6" title="Roll 1D6" draggable="false" onClick="rollDice(6);" />
 %end
 %if game.d4:
-		<img src="/static/d4.png" id="d4" title="Roll 1D4" onClick="rollDice(4);" />
+		<img src="/static/d4.png" id="d4" title="Roll 1D4" draggable="false" onClick="rollDice(4);" />
 %end
 	</div>					
 					

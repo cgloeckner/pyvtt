@@ -210,12 +210,16 @@ div.mapfooter > div.dice > img {
 }
 
 div.mapfooter > div.dice > img:hover {
-	cursor: pointer;
+	cursor: grab;
 	
 	filter: drop-shadow(1px 1px 10px gold) 
           drop-shadow(-1px -1px 0 gold);
 	
 	bottom: 5px;
+}
+
+div.mapfooter > div.dice > img:active {
+	cursor: grabbing;
 }
 
 div.mapfooter > div.dice > img.shake {
