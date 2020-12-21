@@ -56,8 +56,8 @@ def post_gm_login():
 	gm = db.GM(name=name, ip=ip, sid=sid)
 	gm.postSetup()
 	
-	response.set_cookie('session', name, path='/', expires=gm.expire)
-	response.set_cookie('session', sid, path='/', expires=gm.expire)
+	response.set_cookie('session', name, path='/', expires=gm.expire, same_site='strict')
+	response.set_cookie('session', sid, path='/', expires=gm.expire, same_site='strict')
 
 	db.commit()
 	redirect('/')
@@ -68,7 +68,7 @@ def get_game_list():
 	gm = db.GM.loadFromSession(request)
 	if gm is None:
 		# GM not found on the server
-		response.set_cookie('session', '', path='/', expires=0)
+		response.set_cookie('session', '', path='/', expires=0, same_site='strict')
 		redirect('/vtt/register')
 	
 	server = ''
@@ -401,8 +401,8 @@ def set_player_name(gmname, url):
 	
 	# save playername in client cookie (expire after 30 days)
 	expire = int(time.time() + 3600 * 24 * 30)
-	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire)
-	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire)
+	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire, same_site='strict')
+	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire, same_site='strict')
 	
 	return dict(game=game, playername=playername)
 
@@ -471,7 +471,7 @@ def quit_game(gmname, url):
 	game_url = game.getUrl()
 	
 	# reset cookie
-	response.set_cookie('playername', playername, path=game.getUrl(), expires=0)
+	response.set_cookie('playername', playername, path=game.getUrl(), expires=0, same_site='strict')
 	# note: color is kept in cookies
 	
 	# remove player
