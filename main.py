@@ -394,8 +394,8 @@ def set_player_name(gmname, url):
 	# load game
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	
-	# save playername in client cookie (expire after 14 days)
-	expire = int(time.time() + 3600 * 24 * 14)
+	# save playername in client cookie (expire after 30 days)
+	expire = int(time.time() + 3600 * 24 * 30)
 	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire)
 	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire)
 	
