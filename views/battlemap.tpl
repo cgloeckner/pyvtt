@@ -58,10 +58,6 @@
 // disable scrolling
 //$('body').css('overflow', 'hidden');
 
-$('#d10').on('dblclick', function(event) {
-	rollDice(100);
-});
-
 var battlemap = $('#battlemap')[0];
 
 $(window).on('unload', function() {
