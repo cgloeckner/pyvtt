@@ -513,9 +513,7 @@ function start(url, gm, name, multiselect) {
 	navigator.sendBeacon('/' + gm_name + '/' + game_url + '/join');
 	
 	// show gm toolbar
-	if (getCookie('dropdown') == 'show') {
-		toggleDropdown();
-	}
+	openDropdown(true);
 	
 	updateGame();
 }
@@ -945,20 +943,24 @@ function copyUrl(server, game_url) {
 	tmp.remove();
 }
 
-function toggleDropdown() {
+function openDropdown(force=false) {
 	var scenes = $('#preview');
-	if (scenes.css('display') == 'block') {
-		scenes.css('display', 'none');
+	if (force || getCookie('dropdown') == 'show') {
+		scenes.animate({
+				top: "+=100"
+		}, 500);
 		setCookie('dropdown', 'hide');
-	} else {
-		scenes.css('display', 'block');
-		setCookie('dropdown', 'show');
 	}
 }
 
-function closeDropdown() {
+function closeDropdown(force=false) {
 	var scenes = $('#preview');
-	scenes.css('display', 'none');
+	if (force || getCookie('dropdown') == 'hide') {
+		scenes.animate({
+			top: "-=100"
+		}, 500);
+		setCookie('dropdown', 'show');
+	}
 }
 
 function addScene() {

@@ -1,4 +1,4 @@
-%title = '{0}: {1} by {2}'.format(playername, game.url, game.admin.name)
+%title = '{0}: {1} by {2}'.format(playername, game.url.upper(), game.admin.name)
 
 %include("header", title=title)
 

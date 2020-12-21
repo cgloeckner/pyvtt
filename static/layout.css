@@ -49,9 +49,13 @@ div.dropdown {
 }
 
 div.dropdown > div#preview {
-	display: none;
+	display: inline-block;
+	position: absolute;
+	z-index: 5;
 	
-	width: calc(100% - 75px);
+	top: -100px;
+	
+	width: calc(100% - 20px);
 	overflow-x: auto;
 	
 	height: 100px;
@@ -119,9 +123,11 @@ div#preview > div > img.thumbnail:hover {
 /* --- Dicebox Layout ------------------------------------------------------- */
 
 div#rollbox {	
+	position: relative;
 	width: 100px;
 	height: calc(100% - 60px);
 	float: left;
+	top: 25px;
 }
 
 div#rollbox > div.roll {
@@ -265,11 +271,11 @@ div.mapfooter > form#uploadform {
 /* --- Battlemap Layout ----------------------------------------------------- */
 
 div.battlemap {
-	position: absolute;
-	width: calc(100% - 10px);
-	left: 5px;
-	top: 5px;
-	
+	width: calc(100% - 50px);
+	height: calc(100% - 50px);
+
+	padding: 25px;
+
 	z-index: -1;
 }
 
