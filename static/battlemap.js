@@ -75,8 +75,9 @@ function getPixelData(token, x, y) {
 var tokens       = []; // holds all tokens, updated by the server
 var change_cache = []; // holds ids of all client-changed tokens
 
-var player_selections = []; // contains selected tokens and corresponding player colors
+var player_selections = []; // buffer that contains selected tokens and corresponding player colors
 var is_gm = false; // whether client is the GM
+var allow_multiselect = false; // whether client is allowed to select multiple tokens
 
 var culling = []; // holds tokens for culling
 var min_z = -1; // lowest known z-order
@@ -111,7 +112,6 @@ function getActualSize(token, maxw, maxh) {
 	var w = token.size;
 	var h = w / ratio;
 	if (token.size == -1) {
-		console.log(ratio);
 		if (ratio > 0.56) {
 			h = maxh / canvas_scale;
 			w = h * ratio;
@@ -368,7 +368,7 @@ var mouse_x = 0; // relative to canvas
 var mouse_y = 0;
 
 var copy_token = 0; // determines copy-selected token (CTRL+C)
-var select_id = 0; // determines selected token
+var select_ids = []; // contains selected tokens' ids
 var mouse_over_id = 0; // determines which token would be selected
 var grabbed = 0; // determines whether grabbed or not
 var update_tick = 0; // delays updates to not every loop tick
@@ -412,7 +412,7 @@ function updateTokens() {
 		data: {
 			'timeid'   : timeid,
 			'changes'  : JSON.stringify(changes),
-			'selected' : select_id
+			'selected' : JSON.stringify(select_ids)
 		},
 		success: function(response) {		
 			// update current timeid
@@ -467,7 +467,7 @@ function drawScene() {
 	
 	// draw tokens
 	if (background != null) {
-		drawToken(background, background.id == select_id);
+		drawToken(background, select_ids.includes(background.id));
 	}
 	$.each(culling, function(index, token) {
 		var color = null;
@@ -476,7 +476,7 @@ function drawScene() {
 				color = arr[1];
 			}
 		});
-		if (color == null && token.id == select_id) {
+		if (color == null && select_ids.includes(token.id)) {
 			color = getCookie('playercolor');
 		}
 		drawToken(token, color);
@@ -500,9 +500,10 @@ function updateGame() {
 }
 
 /// Sets up the game and triggers the update loop
-function start(url, gm) {
+function start(url, gm, multiselect) {
 	game_url = url;
 	is_gm    = gm == 'True';
+	allow_multiselect = multiselect == 'True';
 	
 	// notify game about this player
 	navigator.sendBeacon('/play/' + game_url + '/join');
@@ -558,7 +559,7 @@ function showTokenbar(token_id) {
 	}
 	*/
 	
-	if (select_id == token_id) {
+	if (select_ids.includes(token_id)) {
 		$('#tokenbar').css('visibility', 'visible');
 	} else {
 		$('#tokenbar').css('visibility', 'hidden');
@@ -568,8 +569,12 @@ function showTokenbar(token_id) {
 function updateTokenbar() {
 	$('#tokenbar').css('visibility', 'hidden');
 
-	if (select_id != 00 && !grabbed) {
-		token = tokens[select_id];
+	if (select_ids.length > 0 && !grabbed) {
+		token = tokens[select_ids[0]];
+		
+		if (token == null) {
+			return;
+		}
 		
 		// cache image if necessary
 		if (!images.includes(token.url)) {
@@ -623,6 +628,9 @@ function updateTokenbar() {
 
 // ----------------------------------------------------------------------------
 
+var last_mouse_x = null; // previous mouse position
+var last_mouse_y = null; // see last_mousee_x
+
 /// Select mouse/touch position relative to the canvas
 function pickCanvasPos(event) {
 	if (event.changedTouches) {
@@ -648,32 +656,48 @@ function tokenGrab(event) {
 	closeDropdown();
 	
 	pickCanvasPos(event);
-
-	prev_id = select_id;
-	select_id = 0;
-	var token = selectToken(mouse_x, mouse_y);
 	
-	if (token != null && (!token.locked || is_gm)) {
-		if (event.buttons == 1) {
-			// Left click: select token
-			select_id = token.id;
+	if (event.buttons == 1) {
+		// Left Click: select token
+		var token = selectToken(mouse_x, mouse_y);
+		
+		if (token != null && (!token.locked || is_gm)) {
+			if (allow_multiselect) {
+				// Add to selection
+				if (!select_ids.includes(token.id)) {
+					select_ids.push(token.id);
+				}
+			} else {
+				// Only select this one
+				select_ids = [token.id];
+			}
+			
 			grabbed = true;
-		} else if (event.buttons == 2) {
-			// Right click: reset token scale & rotation
+			
+		} else {
+			// Clear selection
+			select_ids = [];
+		}
+	
+	} else if (event.buttons == 2) {
+		// Right click: reset token scale & rotation
+		$.each(select_ids, function(index, id) {
+			var token = tokens[id];
+			
 			token.rotate = 0;
 			token.size   = min_token_size;
 			
-			// mark token as changed
-			if (!change_cache.includes(token.id)) {
-				change_cache.push(token.id);
+			if (!change_cache.includes(id)) {
+				change_cache.push(id);
 			}
-		}
+		});
+	
 	}
 }
 
 /// Event handle for releasing a grabbed token
 function tokenRelease() {
-	if (select_id != 0) {
+	if (select_ids.length > 0) {
 		grabbed = false;
 	}
 	
@@ -684,29 +708,42 @@ function tokenRelease() {
 function tokenMove(event) {
 	pickCanvasPos(event);
 	
-	if (select_id != 0 && grabbed) {
-		var token = tokens[select_id];
-		if (token == null || token.locked) {
-			return;
-		}
+	if (grabbed && select_ids.length > 0) {
+	
+		//var token = tokens[select_ids[select_ids.length - 1]];
 		
-		// update position
-		token.posx = mouse_x;
-		token.posy = mouse_y;
+		// calculate relative direction
+		let dx = mouse_x - last_mouse_x;
+		let dy = mouse_y - last_mouse_y;
+
+		$.each(select_ids, function(index, id) {
+			var token = tokens[id];
+			if (token == null || token.locked) {
+				return;
+			}
+			
+			// update position
+			token.posx += dx;
+			token.posy += dy;
+			
+			// mark tokens as changed
+			if (!change_cache.includes(id)) {
+				change_cache.push(id);
+			}
+		});
 		
-		// mark token as changed
-		if (!change_cache.includes(select_id)) {
-			change_cache.push(select_id);
-		}
 	}
 	
 	updateTokenbar();
+
+	last_mouse_x = mouse_x;
+	last_mouse_y = mouse_y;
 }
 
 /// Event handle for rotation and scaling of tokens (if not locked)
 function tokenWheel(event) {
-	if (select_id != 0) {
-		var token = tokens[select_id];
+	$.each(select_ids, function(index, id) {
+		var token = tokens[id];
 		if (token.locked) {
 			return;
 		}
@@ -722,8 +759,8 @@ function tokenWheel(event) {
 			}
 				
 			// mark token as changed
-			if (!change_cache.includes(select_id)) {
-				change_cache.push(select_id);
+			if (!change_cache.includes(id)) {
+				change_cache.push(id);
 			}
 			
 		} else {
@@ -734,13 +771,13 @@ function tokenWheel(event) {
 			}
 			
 			// mark token as changed
-			if (!change_cache.includes(select_id)) {
-				change_cache.push(select_id);
+			if (!change_cache.includes(id)) {
+				change_cache.push(id);
 			}
 		}
-		
-		updateTokenbar();
-	}
+	});
+	
+	updateTokenbar();
 }
 
 /// Event handle to click a dice
@@ -748,11 +785,11 @@ function rollDice(sides) {
 	$.post('/play/' + game_url + '/roll/' + sides);
 }
 
-/// Event handle shortcuts on tokens
+/// Event handle shortcuts on (first) selected token
 function tokenShortcut(event) {
 	if (event.ctrlKey) {
 		if (event.keyCode == 67) { // CTRL+C
-			copy_token = select_id;
+			copy_token = select_ids[0];
 		} else if (event.keyCode == 86) { // CTRL+V
 			if (copy_token > 0) {
 				$.post('/play/' + game_url + '/clone/' + copy_token + '/' + parseInt(mouse_x) + '/' + parseInt(mouse_y));
@@ -761,10 +798,10 @@ function tokenShortcut(event) {
 		}
 	} else {
 		if (event.keyCode == 46) { // DEL
-			if (select_id == copy_token) {
+			if (select_ids[0] == copy_token) {
 				copy_token = 0;
 			}
-			$.post('/play/' + game_url + '/delete/' + select_id);
+			$.post('/play/' + game_url + '/delete/' + select_ids[0]);
 				timeid = 0; // force full refresh next time
 		}
 	}
@@ -772,8 +809,8 @@ function tokenShortcut(event) {
 
 /// Event handle for fliping a token x-wise
 function tokenFlipX() {
-	if (select_id != 0) {
-		var token = tokens[select_id];
+	$.each(select_ids, function(index, id) {
+		var token = tokens[id];
 		
 		if (token.locked) {
 			// ignore if locked
@@ -783,29 +820,30 @@ function tokenFlipX() {
 		token.flipx = !token.flipx;
 		
 		// mark token as changed
-		if (!change_cache.includes(select_id)) {
-			change_cache.push(select_id);
+		if (!change_cache.includes(id)) {
+			change_cache.push(id);
 		}
-	}
+	});
 }
 
 /// Event handle for (un)locking a token
 function tokenLock() {
-	if (select_id != 0) {
-		var token = tokens[select_id];
+	$.each(select_ids, function(index, id) {
+		var token = tokens[id];
 		token.locked = !token.locked;
 		
 		// mark token as changed
-		if (!change_cache.includes(select_id)) {
-			change_cache.push(select_id);
+		if (!change_cache.includes(id)) {
+			change_cache.push(id);
 		}
-	}
+	});
 }
 
 /// Event handle for stretching a token to fit the screen
 function tokenStretch() {
-	if (select_id != 0) {
-		var token = tokens[select_id];
+	if (select_ids.length > 0) {
+		// handle first token only
+		var token = tokens[select_ids[0]];
 		
 		if (token.locked) {
 			// ignore if locked
@@ -825,18 +863,19 @@ function tokenStretch() {
 		token.posy = canvas[0].height / 2;
 			
 		// mark token as changed
-		if (!change_cache.includes(select_id)) {
-			change_cache.push(select_id);
+		if (!change_cache.includes(id)) {
+			change_cache.push(id);
 		}
 		
-		select_id = 0;
+		// reset selection
+		select_ids = [];
 	}
 }
 
 /// Event handle for moving token to lowest z-order
 function tokenBottom() {
-	if (select_id != 0) {
-		var token = tokens[select_id];
+	$.each(select_ids, function(index, id) {
+		var token = tokens[id];
 		
 		if (token.locked) {
 			// ignore if locked
@@ -852,16 +891,16 @@ function tokenBottom() {
 		}
 		
 		// mark token as changed
-		if (!change_cache.includes(select_id)) {
-			change_cache.push(select_id);
+		if (!change_cache.includes(id)) {
+			change_cache.push(id);
 		}
-	}
+	});
 }
 
 /// Event handle for moving token to hightest z-order
 function tokenTop() {
-	if (select_id != 0) {
-		var token = tokens[select_id];
+	$.each(select_ids, function(index, id) {
+		var token = tokens[id];
 		
 		if (token.locked) {
 			// ignore if locked
@@ -877,10 +916,10 @@ function tokenTop() {
 		}
 			
 		// mark token as changed
-		if (!change_cache.includes(select_id)) {
-			change_cache.push(select_id);
+		if (!change_cache.includes(id)) {
+			change_cache.push(id);
 		}
-	}
+	});
 }
 
 

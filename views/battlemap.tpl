@@ -80,7 +80,7 @@ battlemap.addEventListener('touchmove', tokenMove);
 battlemap.addEventListener('touchend', tokenRelease);
 
 
-start('{{game.url}}', '{{is_gm}}');
+start('{{game.url}}', '{{is_gm}}', '{{multiselect}}');
 </script>
 
 %include("footer")

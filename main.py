@@ -370,7 +370,7 @@ def get_player_battlemap(url):
 		# load game
 		game = db.Game.select(lambda g: g.url == url).first()
 		
-		return dict(game=game, playername=playername, playercolor=playercolor, is_gm=is_gm)
+		return dict(game=game, playername=playername, playercolor=playercolor, is_gm=is_gm, multiselect=False)
 
 # on window open
 @post('/play/<url>/join')
@@ -421,7 +421,7 @@ def quit_game(url):
 	
 	if url in engine.selected:
 		# reset selection
-		engine.selected[url][playercolor] = 0
+		engine.selected[url][playercolor] = list()
 	
 	# show login page
 	redirect('/play/{0}'.format(url))
@@ -440,7 +440,8 @@ def post_player_update(url):
 	changes  = json.loads(request.POST.get('changes'))
 	if game.url not in engine.selected:
 		engine.selected[game.url] = dict()
-	engine.selected[game.url][request.get_cookie('playercolor')] = int(request.POST.get('selected'))
+	# mark all selected tokens in that color
+	engine.selected[game.url][request.get_cookie('playercolor')] = list(request.POST.get('selected'))
 	
 	# update token data
 	for data in changes:
