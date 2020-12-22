@@ -2,7 +2,7 @@
 
 from bottle import *
 
-import os, json, random, time, sys, math, logging, tempfile, zipfile, pathlib, shutil
+import os, json, random, time, sys, math
 
 from pony import orm
 from orm import db, db_session, Token, Game, engine

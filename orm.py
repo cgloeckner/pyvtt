@@ -116,6 +116,10 @@ class Engine(object):
 				g.makeMd5s()
 			t = time.time() - s
 			logging.info('Image checksums and threading locks created within {0}s'.format(t))
+		
+		if not self.local_gm:
+			# trigger cleanup every 24h
+			self.cleanup()
 
 	def getIp(self):
 		if self.local_gm:
@@ -147,7 +151,29 @@ class Engine(object):
 		# rewind after reading
 		handle.seek(offset)
 		return hash_md5.hexdigest()
-
+	
+	def cleanup(self):
+		""" Cleanup all expired GM data. """
+		with db_session:
+			now = int(time.time())
+			num_gms   = 0
+			num_games = 0
+			for gm in db.GM.select():
+				if gm.expire < now:
+					num_gms += 1
+					for g in gm.games:
+						g.clear()
+						num_games += 1
+					gm.clear()
+		
+		logging.info('Database cleanup: {0} GMs and {1} Games removed'.format(num_gms, num_games))
+		
+		# schedule next cleanup
+		self.cleaner = threading.Thread(target=Engine.clean_handle, args=self)
+	
+	def clean_handle(self):
+		time.sleep(3600 * 24) # 24h
+		self.cleanup()
 
 engine = Engine()
 
