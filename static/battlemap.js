@@ -228,8 +228,10 @@ function drawToken(token, color) {
 	context.translate(token.posx * canvas_scale, token.posy * canvas_scale);
 	if (token.flipx) {
 		context.scale(-1, 1);
+		context.rotate(token.rotate * -3.14/180.0);
+	} else {
+		context.rotate(token.rotate * 3.14/180.0);
 	}
-	context.rotate(token.rotate * 3.14/180.0);
 	
 	if (color != null) {
 		context.shadowColor = color;
