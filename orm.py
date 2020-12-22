@@ -208,7 +208,7 @@ class Token(db.Entity):
 		
 		if zorder != None:
 			self.zorder = zorder
-			self.timeid = timeid	
+			self.timeid = timeid
 		
 		if size != None:
 			self.size = size

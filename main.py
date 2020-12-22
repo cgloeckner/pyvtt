@@ -55,6 +55,10 @@ def post_gm_login():
 	ip  = request.environ.get('REMOTE_ADDR')
 	sid = db.GM.genSession()
 	
+	if len(db.GM.select(lambda g: g.name == name)) > 0:
+		# collision
+		return {'gmname': ''}
+	
 	# create new GM
 	gm = db.GM(name=name, ip=ip, sid=sid)
 	gm.postSetup()

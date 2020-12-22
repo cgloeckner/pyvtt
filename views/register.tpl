@@ -4,7 +4,7 @@
 
 <hr />
 
-<h1>Join as GM</h1>
+<h1>JOIN as GM</h1>
 
 <div class="form">
 	<p>GM NAME</p>
