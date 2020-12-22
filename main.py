@@ -310,6 +310,7 @@ def get_game_details(url):
 """
 
 @post('/vtt/create-scene/<url>', apply=[asGm])
+@view('dropdown')
 def post_create_scene(url):
 	gm = db.GM.loadFromSession(request)
 	
@@ -321,17 +322,23 @@ def post_create_scene(url):
 	db.commit()
 	
 	game.active = scene.id
+	
+	return dict(game=game)
 
 @post('/vtt/activate-scene/<url>/<scene_id>', apply=[asGm])
+@view('dropdown')
 def activate_scene(url, scene_id):
 	gm = db.GM.loadFromSession(request)
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 	game.active = scene_id
 
-	db.commit()
+	db.commit() 
+	
+	return dict(game=game)
 
-@post('/vtt/delete-scene/<url>/<scene_id>', apply=[asGm])
+@post('/vtt/delete-scene/<url>/<scene_id>', apply=[asGm]) 
+@view('dropdown')
 def activate_scene(url, scene_id):
 	gm = db.GM.loadFromSession(request)
 	# load game
@@ -353,9 +360,12 @@ def activate_scene(url, scene_id):
 			db.commit()
 		# adjust active scene
 		game.active = remain.id
-
 	
-@post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm])
+	
+	return dict(game=game)
+	
+@post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm]) 
+@view('dropdown')
 def duplicate_scene(url, scene_id):
 	gm = db.GM.loadFromSession(request)
 	# load game
@@ -380,7 +390,9 @@ def duplicate_scene(url, scene_id):
 	
 	db.commit()
 	
-	game.active = clone.id
+	game.active = clone.id 
+	
+	return dict(game=game)
 
 # --- playing routes ----------------------------------------------------------
 
@@ -396,28 +408,8 @@ def static_token(gmname, url, fname):
 	
 	return static_file(fname, root=path)
 
-@get('/<gmname>/<url>/login')
-@view('login')
-def player_login(gmname, url):
-	gm = db.GM.loadFromSession(request)
-
-	# load game
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	
-	playername = ''
-	if gm is not None:
-		playername = gm.name
-	
-	# pick color (either from cookie or random)
-	playercolor = request.get_cookie('playercolor')
-	if playercolor is None:
-		colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
-		playercolor = colors[random.randrange(len(colors))]
-	
-	return dict(game=game, color=playercolor, playername=playername)
-
 @post('/<gmname>/<url>/login')
-@view('redirect')
+#@view('redirect')
 def set_player_name(gmname, url):
 	playername  = engine.applyWhitelist(request.forms.get('playername'))[:15]
 	playercolor = request.forms.get('playercolor')
@@ -426,7 +418,8 @@ def set_player_name(gmname, url):
 	parts       = [int(playercolor[1:3], 16), int(playercolor[3:5], 16), int(playercolor[5:7], 16)]
 	playercolor = '#'
 	for c in parts:
-		c //= 2
+		if c > 200:
+			c = 200
 		if c < 16:
 			playercolor += '0'
 		playercolor += hex(c)[2:]
@@ -439,25 +432,31 @@ def set_player_name(gmname, url):
 	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire)
 	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire)
 	
-	return dict(game=game, playername=playername)
+	return {'playername': playername, 'playercolor': playercolor}
 
 @get('/<gmname>/<url>')
 @view('battlemap')
 def get_player_battlemap(gmname, url):
-	# load player name and color from cookie
-	playername  = request.get_cookie('playername')
-	playercolor = request.get_cookie('playercolor')
+	# try to load playername from cookie (or from GM name)
+	playername = request.get_cookie('playername')
+	gm         = db.GM.loadFromSession(request)
+	if playername is None:
+		if gm is not None:
+			playername = gm.name
+		else:
+			playername = ''
 	
-	gm = db.GM.loadFromSession(request)
+	# try to load playercolor from cookieplayercolor = request.get_cookie('playercolor')
+	playercolor = request.get_cookie('playercolor')
+	if playercolor is None:   
+		colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
+		playercolor = colors[random.randrange(len(colors))]
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-		
-	# redirect to login if player not found
-	if playername is None:
-		redirect('{0}/login'.format(game.getUrl()))
-	else:		
-		return dict(game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
+	
+	# show battlemap with login screen ontop
+	return dict(game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
 # on window open
 @post('/<gmname>/<url>/join')

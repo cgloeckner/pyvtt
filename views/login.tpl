@@ -1,20 +1,15 @@
-%include("header", title='Login: {0} by {1}'.format(game.url.upper(), game.admin.name))
+<div id="login" class="menu">
+	<div>
+		<h1>{{game.url.upper()}} by {{game.admin.name}}</h1>
 
-<div class="menu">
-
-<h1>{{game.url.upper()}} by {{game.admin.name}}</h1>
-
-<form action="/{{game.admin.name}}/{{game.url}}/login" method="post" enctype="multipart/form-data">
-	<p>PLAYER NAME</p>
-	<input type="text" name="playername" value="{{playername}}" />
-	
-	<p>PLAYER COLOR</p>
-	<input type="color" name="playercolor" onchange="clickColor(0, -1, -1, 5)" value="{{color}}">
-	
-	<p><input type="submit" value="JOIN" /></p>
-</form>
-
+		<form>
+			<p>PLAYER NAME</p>
+			<input type="text" name="playername" id="playername" value="{{playername}}" />
+			
+			<p>PLAYER COLOR</p>
+			<input type="color" name="playercolor" id="playercolor" value="{{playercolor}}">
+			
+			<p><input type="button" value="JOIN" onClick="login('{{game.url}}', '{{is_gm}}', '{{game.admin.name}}', '{{game.multiselect}}')"; /></p>
+		</form>
+	</div>
 </div>
-
-%include("footer")
-

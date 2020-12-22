@@ -276,12 +276,7 @@ function updatePlayers(response) {
 			// add new player
 			players[name] = color;
 			console.log(name, 'joined');
-			
-			if (name == own_name) {
-				onClick = ' onClick="logout();"';
-			}
-			var container = '<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');" ' + onClick + '>' + name + '</span>';
-			$('#players').append(container);
+			$('#players').append('<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">' + name + '</span>');
 		}
 	});
 	
@@ -365,6 +360,8 @@ function showRoll(sides, result, color) {
 // --- game state implementation ----------------------------------------------
 
 var game_url = '';
+var gm_name = '';
+var dropdown = false;
 var timeid = 0;
 
 var mouse_x = 0; // relative to canvas
@@ -504,8 +501,63 @@ function updateGame() {
 	setTimeout("updateGame()", 1000.0 / fps);
 }
 
+/// Handles login and triggers the game
+function login(url, gm, name, multiselect) {
+	var playername  = $('#playername').val();
+	var playercolor = $('#playercolor').val();
+	
+	$.ajax({
+		type: 'POST',
+		url:  '/' + name + '/' + url + '/login',
+		dataType: 'json',
+		data: {
+			'playername'  : playername,
+			'playercolor' : playercolor
+		},
+		success: function(response) {
+			// wait for sanizized input
+			playername  = response['playername']
+			playercolor = response['playercolor']
+			
+			// hide login screen
+			$('#login').fadeOut(1000, 0.0, function() {
+				$('#login').hide();
+				
+				// show dice
+				$('#mapfooter').css('display', 'block');
+				$('#mapfooter').animate({ opacity: '+=1.0' }, 2000);
+			});
+			
+			// start game
+			start(url, gm, name, multiselect);
+		}
+	});
+}
+
 /// Sets up the game and triggers the update loop
 function start(url, gm, name, multiselect) {
+	// disable window context menu for token right click
+	document.addEventListener('contextmenu', event => {
+	  event.preventDefault();
+	});
+	
+	// drop zone implementation (using canvas) --> also as players :) 
+	battlemap.addEventListener('dragover', uploadDrag);
+	battlemap.addEventListener('drop', uploadDrop);
+
+	// desktop controls
+	battlemap.addEventListener('mousedown', tokenGrab);
+	battlemap.addEventListener('mousemove', tokenMove);
+	battlemap.addEventListener('mouseup', tokenRelease);
+	battlemap.addEventListener('wheel', tokenWheel);
+	document.addEventListener('keydown', tokenShortcut);
+
+	// mobile control fix
+	battlemap.addEventListener('touchstart', tokenGrab);
+	battlemap.addEventListener('touchmove', tokenMove);
+	battlemap.addEventListener('touchend', tokenRelease);
+	
+	// setup game
 	game_url = url;
 	is_gm    = gm == 'True';
 	gm_name = name;
@@ -514,8 +566,9 @@ function start(url, gm, name, multiselect) {
 	// notify game about this player
 	navigator.sendBeacon('/' + gm_name + '/' + game_url + '/join');
 	
-	// show gm toolbar
-	openDropdown(true);
+	$(window).on('unload', function() {
+		disconnect();
+	});
 	
 	updateGame();
 }
@@ -934,12 +987,6 @@ function tokenTop() {
 	});
 }
 
-function logout() {
-	if (confirm("LOGOUT?")) {
-		window.location = '/' + gm_name + '/' + game_url + '/logout';
-	}
-}
-
 // --- GM stuff ---------------------------------------------------------------
 
 // not used atm
@@ -953,29 +1000,30 @@ function copyUrl(server, game_url) {
 
 function openDropdown(force=false) {
 	var scenes = $('#preview');
-	if (force || getCookie('dropdown') == 'show') {
+	if (force || !dropdown) {
 		scenes.animate({
-				top: "+=100"
+			top: "+=100"
 		}, 500);
-		setCookie('dropdown', 'hide');
 	}
+	dropdown = true;
 }
 
 function closeDropdown(force=false) {
 	var scenes = $('#preview');
-	if (force || getCookie('dropdown') == 'hide') {
+	if (force || dropdown) {
 		scenes.animate({
 			top: "-=100"
 		}, 500);
-		setCookie('dropdown', 'show');
 	}
+	dropdown = false;
 }
 
 function addScene() {
 	$.post(
 		url='/vtt/create-scene/' + game_url,
 		success=function(data) {
-			location.reload();
+			$('#preview')[0].innerHTML = data; 
+			updateGame();
 		}
 	);
 }
@@ -983,16 +1031,18 @@ function addScene() {
 function activateScene(scene_id) {
 	$.post(
 		url='/vtt/activate-scene/' + game_url + '/' + scene_id,
-		success=function(data) {
-			location.reload();
+		success=function(data) {       
+			$('#preview')[0].innerHTML = data;
+			updateGame();
 		}
 	);
 }
 function cloneScene(scene_id) {
 	$.post(
 		url='/vtt/clone-scene/' + game_url + '/' + scene_id,
-		success=function(data) {
-			location.reload();
+		success=function(data) { 
+			$('#preview')[0].innerHTML = data; 
+			updateGame();
 		}
 	);
 }
@@ -1000,7 +1050,8 @@ function deleteScene(scene_id) {
 	$.post(
 		url='/vtt/delete-scene/' + game_url + '/' + scene_id,
 		success=function(data) {
-			location.reload();
+			$('#preview')[0].innerHTML = data;
+			updateGame();
 		}
 	);
 }

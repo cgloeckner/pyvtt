@@ -1,8 +1,6 @@
 %import time, os
 
-<div class="dropdown">
-	<div id="preview" onmouseover="openDropdown();" onmouseleave="closeDropdown();">
-		<img class="largeicon" src="/static/add.png" onClick="addScene();" />
+	<img class="largeicon" src="/static/add.png" onClick="addScene();" />
 %for s in game.scenes.order_by(lambda s: s.id):
 	%url = "/static/empty.jpg"
 	%if s.backing is not None:
@@ -18,6 +16,3 @@
 			<img class="icon" src="/static/delete.png" onClick="deleteScene({{s.id}});" />
 		</div>
 %end
-	</div>
-</div>
-
