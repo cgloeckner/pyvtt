@@ -428,7 +428,7 @@ def post_player_update(gmname, url):
 		return {}
 	game_url = game.getUrl()
 	
-	if game_url not in engine.selected or game_url not in engine.players:
+	if game_url not in engine.players:
 		# game not found (should only be relevant for debugging)
 		return {} 
 	
