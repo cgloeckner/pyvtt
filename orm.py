@@ -102,9 +102,10 @@ class Engine(object):
 		else:
 			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', level=logging.INFO)
 		
-		# query public ip
-		self.publicip = requests.get('https://api.ipify.org').text
-		logging.info('Public IP is {0}'.format(self.publicip))
+		if self.local_gm:
+			# query public ip
+			self.publicip = requests.get('https://api.ipify.org').text
+			logging.info('Public IP is {0}'.format(self.publicip))
 		
 		# prepare existing games' cache
 		with db_session:
@@ -117,10 +118,10 @@ class Engine(object):
 			logging.info('Image checksums and threading locks created within {0}s'.format(t))
 
 	def getIp(self):
-		if self.debug:
-			return 'localhost'
-		else:
+		if self.local_gm:
 			return self.publicip
+		else:
+			return 'localhost'
 
 	def applyWhitelist(self, s):
 		# apply replace map
