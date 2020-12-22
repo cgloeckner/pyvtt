@@ -25,8 +25,7 @@
 	<br />
 
 	<form action="/vtt/create-game" id="create_game" method="post" enctype="multipart/form-data">
-		LINK {{server}}/{{gm.name}}/<input type="text" name="game_url" value="my-game" /><input type="submit" value="CREATE" /><br />
-		IMPORT <input type="file" name="archive" />
+		GAME <input type="text" name="url" value="my-game" /><input type="submit" name="button" value="CREATE" /><input type="submit" name="button" value="IMPORT" />
 	</form>
 
 	<br />

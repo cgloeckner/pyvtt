@@ -82,8 +82,9 @@ def get_game_list():
 def post_create_game():
 	gm = db.GM.loadFromSession(request)
 	
-	url = engine.applyWhitelist(request.forms.game_url).lower()
-	print(request.forms.game_url, "\t", url)
+	url = engine.applyWhitelist(request.forms.url).lower()
+	if request.forms.button == 'IMPORT':
+		redirect('/vtt/import-game/{0}'.format(url))
 	
 	# test for URL collision with other games of this GM
 	if len(db.Game.select(lambda g: g.admin == gm and g.url == url)) > 0:
@@ -95,58 +96,83 @@ def post_create_game():
 	game.postSetup()
 	db.commit()
 	
-	# may import game from zip
-	if isinstance(request.files.archive, str):
-		# create first scene
-		scene = db.Scene(game=game)
-		db.commit()
-		
-		game.active = scene.id
-		
-	else:
-		# unzip uploaded file to temp dir
-		archive   = request.files.archive
-		temp_dir  = tempfile.TemporaryDirectory()
-		temp_path = pathlib.Path(temp_dir.name)
-		zip_path  = temp_path / archive.filename
-		archive.save(str(zip_path))
-		with zipfile.ZipFile(zip_path, 'r') as h:
-			h.extractall(temp_dir.name)
-		
-		# copy images to game directory
-		img_path = game.getImagePath()
-		for fname in os.listdir(temp_path):
-			if fname.endswith('.png'):
-				shutil.copyfile(temp_path / fname, img_path / fname)
-		
-		# create all game data
-		data = dict()
-		with open(temp_path / 'game.json', 'r') as h:
-			data = json.load(h)
-		
-		for sid, s in enumerate(data["scenes"]):
-			# create scene
-			scene = db.Scene(game=game)
-			
-			# create tokens for that scene
-			for token_id in s["tokens"]:
-				token_data = data["tokens"][token_id]
-				# create token
-				t = db.Token(
-					scene=scene, url=game.getImageUrl(token_data['url']),
-					posx=token_data['posx'], posy=token_data['posy'],
-					zorder=token_data['zorder'], size=token_data['size'], 	
-					rotate=token_data['rotate'], flipx=token_data['flipx'],
-					locked=token_data['locked']
-				)
-				if s["backing"] == token_id:
-					db.commit()
-					scene.backing = t
-		
-			if data["active"] == sid:
-				db.commit()
-				game.active = scene.id
+	# create first scene
+	scene = db.Scene(game=game)
+	db.commit()
 	
+	game.active = scene.id
+	
+	db.commit()
+	redirect('/')
+
+@get('/vtt/import-game/<url>', apply=[asGm])
+@view('import')
+def view_import_game(url):
+	gm = db.GM.loadFromSession(request)  
+	if gm is None:
+		# GM not found on the server
+		response.set_cookie('session', '', path='/', expires=0)
+		redirect('/vtt/register')
+	
+	# show import UI
+	return dict(gm=gm, url=url)
+
+@post('/vtt/import-game/<url>', apply=[asGm])
+def post_import_game(url):
+	gm = db.GM.loadFromSession(request) 
+	if gm is None:
+		# GM not found on the server
+		response.set_cookie('session', '', path='/', expires=0)
+		redirect('/vtt/register')
+	
+	# create game
+	game = db.Game(url=url, admin=gm)
+	
+	game.postSetup()
+	db.commit()
+	
+	# unzip uploaded file to temp dir
+	archive   = request.files.archive
+	temp_dir  = tempfile.TemporaryDirectory()
+	temp_path = pathlib.Path(temp_dir.name)
+	zip_path  = temp_path / archive.filename
+	archive.save(str(zip_path))
+	with zipfile.ZipFile(zip_path, 'r') as h:
+		h.extractall(temp_dir.name)
+	
+	# copy images to game directory
+	img_path = game.getImagePath()
+	for fname in os.listdir(temp_path):
+		if fname.endswith('.png'):
+			shutil.copyfile(temp_path / fname, img_path / fname)
+	
+	# create all game data
+	data = dict()
+	with open(temp_path / 'game.json', 'r') as h:
+		data = json.load(h)
+	
+	for sid, s in enumerate(data["scenes"]):
+		# create scene
+		scene = db.Scene(game=game)
+		
+		# create tokens for that scene
+		for token_id in s["tokens"]:
+			token_data = data["tokens"][token_id]
+			# create token
+			t = db.Token(
+				scene=scene, url=game.getImageUrl(token_data['url']),
+				posx=token_data['posx'], posy=token_data['posy'],
+				zorder=token_data['zorder'], size=token_data['size'], 	
+				rotate=token_data['rotate'], flipx=token_data['flipx'],
+				locked=token_data['locked']
+			)
+			if s["backing"] == token_id:
+				db.commit()
+				scene.backing = t
+	
+		if data["active"] == sid:
+			db.commit()
+			game.active = scene.id
 	
 	db.commit()
 	redirect('/')
