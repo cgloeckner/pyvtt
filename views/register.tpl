@@ -2,6 +2,8 @@
 
 <div class="menu">
 
+<hr />
+
 <h1>Join as GM</h1>
 
 <div class="form">
@@ -11,9 +13,10 @@
 	<p><input type="button" onClick="registerGm();" value="Start Campaign" /></p>
 </div>
 
-<hr />
 
 Are you a player? Ask your GM for the game link.
+
+<hr />
 
 </div>
 

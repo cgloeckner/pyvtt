@@ -421,6 +421,8 @@ def quit_game(gmname, url):
 def post_player_update(gmname, url):
 	# load game
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	if game is None:
+		return {}
 	game_url = game.getUrl()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()

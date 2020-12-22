@@ -1,5 +1,6 @@
-<div id="login" class="menu">
-	<div>
+<div id="login">
+	<div class="menu">
+		<hr />
 		<h1>{{game.url.upper()}} by {{game.admin.name}}</h1>
 
 		<div class="form">
@@ -10,6 +11,7 @@
 			<input type="color" name="playercolor" id="playercolor" value="{{playercolor}}">
 			
 			<p><input type="button" value="JOIN" onClick="login('{{game.url}}', '{{is_gm}}', '{{game.admin.name}}', '{{game.multiselect}}')"; /></p>
-		</div>
-	</div>
+		</div> 
+		<hr />
+	</div>  
 </div>

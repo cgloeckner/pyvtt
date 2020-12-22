@@ -1,6 +1,8 @@
 %include("header", title="GM: {0}".format(gm.name))
 
-<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event);">
+<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event);">  
+
+<hr />
 
 <h1>GAMES by {{gm.name}}</h1>
 
@@ -38,6 +40,9 @@
 			<input id="uploadqueue" name="file[]" type="file" multiple />
 		</form>
 	</div>
+
+<hr />
+
 </div>
 
 %include("footer")

@@ -127,13 +127,13 @@ class Engine(object):
 		# apply replace map
 		for key in self.url_replacemap:
 			s = s.replace(key, self.url_replacemap[key])
-		# apply whitelist (replace everything else by '_')
+		# apply whitelist (replace everything else by '-')
 		fixed = ''
 		for c in s:
 			if c in self.url_whitelist:
 				fixed += c
 			else:
-				fixed += '_'
+				fixed += '-'
 		if len(fixed) < 3:
 			return None
 		return fixed
