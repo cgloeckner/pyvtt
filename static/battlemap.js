@@ -668,7 +668,7 @@ function updateTokenbar() {
 		var offset = 35 * size / min_token_size;
 		$('#tokenFlipX').css('bottom', offset + 'px');
 		$('#tokenLock').css('right', offset + 'px');
-		$('#tokenStretch').css('top', offset + 'px');
+		//$('#tokenResize').css('top', offset + 'px');
 		$('#tokenTop').css('left', offset + 15 + 'px');
 		$('#tokenBottom').css('left', offset + 15 + 'px');
 		
@@ -678,13 +678,13 @@ function updateTokenbar() {
 			$('#tokenLock')[0].src = '/static/locked.png';
 			$('#tokenTop').css('visibility', 'hidden');
 			$('#tokenBottom').css('visibility', 'hidden');
-			$('#tokenStretch').css('visibility', 'hidden');
+			//$('#tokenResize').css('visibility', 'hidden');
 		} else {	
 			$('#tokenFlipX').css('visibility', '');
 			$('#tokenLock')[0].src = '/static/unlocked.png';
 			$('#tokenTop').css('visibility', '');
 			$('#tokenBottom').css('visibility', '');
-			$('#tokenStretch').css('visibility', '');
+			//$('#tokenResize').css('visibility', '');
 		}
 	}
 }
@@ -910,6 +910,7 @@ function tokenLock() {
 	});
 }
 
+/*
 /// Event handle for stretching a token to fit the screen
 function tokenStretch() {
 	if (select_ids.length > 0) {
@@ -942,6 +943,7 @@ function tokenStretch() {
 		select_ids = [];
 	}
 }
+*/
 
 /// Event handle for moving token to lowest z-order
 function tokenBottom() {

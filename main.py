@@ -270,17 +270,13 @@ def duplicate_scene(url, scene_id):
 	
 	# create copy of that scene
 	clone = db.Scene(game=game)
-	# copy tokens, too
-	backing = None
+	# copy tokens (but ignore background)
 	for t in scene.tokens:
-		n = db.Token(
-			scene=clone, url=t.url, posx=t.posx, posy=t.posy, zorder=t.zorder,
-			size=t.size, rotate=t.rotate, flipx=t.flipx, locked=t.locked
-		)
-		if n.size == -1:
-			n.back = clone
-	
-	assert(len(scene.tokens) == len(clone.tokens))
+		if t.size != -1:
+			n = db.Token(
+				scene=clone, url=t.url, posx=t.posx, posy=t.posy, zorder=t.zorder,
+				size=t.size, rotate=t.rotate, flipx=t.flipx, locked=t.locked
+			)
 	
 	db.commit()
 	
@@ -579,10 +575,15 @@ def post_image_upload(gmname, url, posx, posy):
 				# files larger 250kb are handled as decoration (index cards) etc.)
 				kwargs["size"]   = 300
 				kwargs["zorder"] = bottom
-				
+			
 			# create token
-			db.Token(**kwargs)
-		
+			t = db.Token(**kwargs)
+			
+			# use as background if none set yet
+			if scene.backing is None:
+				t.size = -1
+				scene.backing = t
+	
 	db.commit()
 
 @post('/<gmname>/<url>/clone/<token_id:int>/<x:int>/<y:int>')

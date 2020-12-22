@@ -25,11 +25,7 @@
 			<img src="/static/locked.png" id="tokenLock" draggable="false" onClick="tokenLock();" />
 			<img src="/static/top.png" id="tokenTop" draggable="false" onClick="tokenTop();" />
 			<img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="tokenBottom();" />
-%if is_gm:
-			<img src="/static/stretch.png" id="tokenStretch" draggable="false" onClick="tokenStretch();" />
-%else:
-			<img src="" class="dummy" id="tokenStretch" />
-%end
+		<!--	<img src="/static/resize.png" id="tokenResize" draggable="false" onClick="tokenResize();" /> -->
 		</div>
 	</div>
 
