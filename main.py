@@ -352,6 +352,9 @@ def get_player_battlemap(gmname, url):
 	# load game
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	
+	if game is None:
+		abort(404)
+	
 	# show battlemap with login screen ontop
 	return dict(game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
@@ -604,6 +607,10 @@ def ajax_post_delete(gmname, url, token_id):
 		# delete token
 		token.delete()
 
+@error(404)
+@view('error')
+def error404(error):
+	return dict()
 
 # --- setup stuff -------------------------------------------------------------
 
