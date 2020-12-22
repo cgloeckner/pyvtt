@@ -619,7 +619,6 @@ app = default_app()
 if engine.debug:
 	run(host=engine.host, reloader=True, debug=True, port=engine.port)	
 else:
-	from paste import httpserver
-	httpserver.serve(app, host=engine.host, port=engine.port)
-
+	import bjoern
+	bjoern.run(app, engine.host, engine.port)
 
