@@ -427,6 +427,11 @@ def post_player_update(gmname, url):
 	if game is None:
 		return {}
 	game_url = game.getUrl()
+	
+	if game_url not in engine.selected or game_url not in engine.players:
+		# game not found (should only be relevant for debugging)
+		return {} 
+	
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
 	
