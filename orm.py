@@ -134,7 +134,7 @@ class Engine(object):
 				fixed += c
 			else:
 				fixed += '-'
-		if len(fixed) < 3:
+		if len(fixed) == 0: # is this really necessary? gonna return '' here instead @TODO
 			return None
 		return fixed
 	
