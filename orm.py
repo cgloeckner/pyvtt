@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid
+import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil
 
 from pony.orm import *
+
+from PIL import Image
 
 __author__ = "Christian Glöckner"
 
@@ -280,18 +282,41 @@ class Game(db.Entity):
 	def upload(self, handle):
 		"""Save the given image via file handle and return the url to the image.
 		"""
+		# save image to tempfile
+		suffix  = '.{0}'.format(handle.filename.split(".")[-1])
+		tmpfile = tempfile.NamedTemporaryFile(suffix=suffix)
+		print(tmpfile.name)
+		handle.save(tmpfile.name, overwrite=True)
+		
+		# shrink image
+		img = Image.open(tmpfile.name)
+		w = img.size[0]
+		h = img.size[1]
+		ratio = h / w
+		if h > w:
+			if h > 2000:
+				h = 2000
+				w = int(h / ratio)
+		else:
+			if w > 2000:
+				w = 2000
+				h = int(w * ratio)
+		img.resize((w, h)).save(tmpfile.name)
+		
 		# test for duplicates via md5 checksum
-		new_md5 = engine.getMd5(handle.file)
+		new_md5 = engine.getMd5(tmpfile.file)
 		
 		game_root = self.getImagePath()
 		
 		with engine.locks[self.admin.name]: # make IO access safe
 			if new_md5 not in engine.checksums[self.getUrl()]:
-				# create new image on disk
+				# copy image to target
 				next_id    = self.getNextId()
 				image_id   = '{0}.png'.format(next_id)
 				local_path = os.path.join(game_root, image_id)
-				handle.save(local_path)
+				shutil.copyfile(tmpfile.name, local_path)
+				
+				# create checksum
 				engine.checksums[self.getUrl()][new_md5] = image_id
 		
 		# propagate remote path
