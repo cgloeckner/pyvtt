@@ -282,45 +282,47 @@ class Game(db.Entity):
 	def upload(self, handle):
 		"""Save the given image via file handle and return the url to the image.
 		"""
-		# save image to tempfile
 		suffix  = '.{0}'.format(handle.filename.split(".")[-1])
-		tmpfile = tempfile.NamedTemporaryFile(suffix=suffix)
-		print(tmpfile.name)
-		handle.save(tmpfile.name, overwrite=True)
-		
-		# shrink image
-		img = Image.open(tmpfile.name)
-		w = img.size[0]
-		h = img.size[1]
-		ratio = h / w
-		if h > w:
-			if h > 2000:
-				h = 2000
-				w = int(h / ratio)
-		else:
-			if w > 2000:
-				w = 2000
-				h = int(w * ratio)
-		img.resize((w, h)).save(tmpfile.name)
-		
-		# test for duplicates via md5 checksum
-		new_md5 = engine.getMd5(tmpfile.file)
-		
-		game_root = self.getImagePath()
-		
-		with engine.locks[self.admin.name]: # make IO access safe
-			if new_md5 not in engine.checksums[self.getUrl()]:
-				# copy image to target
-				next_id    = self.getNextId()
-				image_id   = '{0}.png'.format(next_id)
-				local_path = os.path.join(game_root, image_id)
-				shutil.copyfile(tmpfile.name, local_path)
-				
-				# create checksum
-				engine.checksums[self.getUrl()][new_md5] = image_id
-		
-		# propagate remote path
-		return self.getImageUrl(engine.checksums[self.getUrl()][new_md5])
+		with tempfile.NamedTemporaryFile(suffix=suffix) as tmpfile:
+			# save image to tempfile
+			handle.save(tmpfile.name, overwrite=True)
+			
+			# shrink image
+			with Image.open(tmpfile.name) as img:
+				w = img.size[0]
+				h = img.size[1]
+				ratio = h / w
+				downscale = False
+				if h > w:
+					if h > 2000:
+						h = 2000
+						w = int(h / ratio)
+						downscale = True
+				else:
+					if w > 2000:
+						w = 2000
+						h = int(w * ratio)
+						downscale = True
+				if downscale:
+					img.resize((w, h)).save(tmpfile.name)
+			
+			# create md5 checksum for duplication test
+			new_md5 = engine.getMd5(tmpfile.file)
+			
+			game_root = self.getImagePath()
+			with engine.locks[self.admin.name]: # make IO access safe
+				if new_md5 not in engine.checksums[self.getUrl()]:
+					# copy image to target
+					next_id    = self.getNextId()
+					image_id   = '{0}.png'.format(next_id)
+					local_path = os.path.join(game_root, image_id)
+					shutil.copyfile(tmpfile.name, local_path)
+					
+					# store checksum
+					engine.checksums[self.getUrl()][new_md5] = image_id
+			
+			# propagate remote path
+			return self.getImageUrl(engine.checksums[self.getUrl()][new_md5])
 
 	def getAbandonedImages(self):
 		# check all existing images
