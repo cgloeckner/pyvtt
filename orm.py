@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil
+import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil, zipfile, json
 
 from pony.orm import *
 
@@ -135,7 +135,7 @@ class Engine(object):
 			else:
 				fixed += '_'
 		if len(fixed) < 3:
-			raise 'Too short'
+			return None
 		return fixed
 	
 	@staticmethod
@@ -362,6 +362,154 @@ class Game(db.Entity):
 				# remove image dir (= game dir)
 				os.rmdir(img_path)
 
+	def toZip(self):
+		# remove abandoned images
+		self.removeAbandonedImages()
+		
+		# collect all tokens in this game
+		tokens = list()
+		id_translation = dict() # required because the current token ids will not persist
+		game_tokens = db.Token.select(
+			lambda t: t.scene is not None
+				and t.scene.game is not None 
+				and t.scene.game == self
+		)
+		for t in game_tokens:
+			tokens.append({
+				"url"    : t.url.split('/')[-1], # remove game url (will not persist!)
+				"posx"   : t.posx,
+				"posy"   : t.posy,
+				"zorder" : t.zorder,
+				"size"   : t.size,
+				"rotate" : t.rotate,
+				"locked" : t.locked
+			})
+			id_translation[t.id] = len(tokens) - 1
+		
+		# collect all scenes in this game
+		scenes = list()
+		active = 0
+		for s in self.scenes:
+			tkns = list()
+			for t in s.tokens:
+				# query new id from translation dict
+				tkns.append(id_translation[t.id])
+			backing_file = None
+			if s.backing is not None:
+				backing_file = id_translation[s.backing.id]
+			scenes.append({
+				"tokens"  : tkns,
+				"backing" : backing_file
+			})
+			if self.active == s.id:
+				active = len(scenes) - 1
+		
+		data = {
+			"tokens" : tokens,
+			"scenes" : scenes,
+			"active" : active
+		}
+		print(data)
+		
+		# build zip file
+		zip_path = self.admin.getExportPath()
+		zip_file = '{0}.zip'.format(self.url)
+		
+		with zipfile.ZipFile(zip_path / zip_file, "w") as h:
+			# create temporary file and add it to the zip
+			with tempfile.NamedTemporaryFile() as tmp:
+				s = json.dumps(data, indent=4)
+				tmp.write(s.encode('utf-8'))
+				tmp.seek(0) # rewind!
+				h.write(tmp.name, 'game.json')
+				
+				with open(tmp.name) as asdf:
+					print(tmp.name)
+					for line in asdf:
+						print(line)
+					print('EOF')
+			
+			# add images to the zip, too
+			p = self.getImagePath()
+			for img in self.getAllImages():
+				h.write(p / img, img)
+		
+		return zip_file, zip_path
+	
+	@staticmethod
+	def isUniqueUrl(gm, url):
+		return len(db.Game.select(lambda g: g.admin == gm and g.url == url)) == 0
+	
+	@staticmethod
+	def fromZip(gm, handle):
+		# unzip uploaded file to temp dir
+		with tempfile.TemporaryDirectory() as tmp_dir:
+			zip_path = os.path.join(tmp_dir, handle.filename)
+			print(zip_path)
+			handle.save(str(zip_path))
+			with zipfile.ZipFile(zip_path, 'r') as fp:
+				fp.extractall(tmp_dir)
+			
+			# generate url from filename
+			url = handle.filename.split('.zip')[0]
+			if not db.Game.isUniqueUrl(gm, url):
+				n = 1
+				while (n < 10):
+					new_url = '{0}{1}'.format(url, n)
+					if db.Game.isUniqueUrl(gm, new_url):
+						url = new_url
+						break
+					# else try next
+					n += 1
+				if n >= 10:
+					engine.logging.info('Cannot import game. Too many games with such a name "{0}"'.format(url))
+					return None
+			
+			# create game
+			game = db.Game(url=url, admin=gm)
+			game.postSetup()
+			db.commit()
+			
+			# copy images to game directory
+			img_path = game.getImagePath()
+			for fname in os.listdir(tmp_dir):
+				if fname.endswith('.png'):
+					src_path = os.path.join(tmp_dir, fname)
+					dst_path = img_path / fname
+					shutil.copyfile(src_path, dst_path)
+			
+			# create all game data
+			data = dict()
+			json_path = os.path.join(tmp_dir, 'game.json')
+			with open(json_path , 'r') as h:
+				data = json.load(h)
+			
+			# create scenes
+			for sid, s in enumerate(data["scenes"]):
+				scene = db.Scene(game=game)
+				
+				# create tokens for that scene
+				for token_id in s["tokens"]:
+					token_data = data["tokens"][token_id]
+					t = db.Token(
+						scene=scene, url=game.getImageUrl(token_data['url']),
+						posx=token_data['posx'], posy=token_data['posy'],
+						zorder=token_data['zorder'], size=token_data['size'], 	
+						rotate=token_data['rotate'], flipx=token_data['flipx'],
+						locked=token_data['locked']
+					)
+					if s["backing"] == token_id:
+						db.commit()
+						scene.backing = t
+			
+				if data["active"] == sid:
+					db.commit()
+					game.active = scene.id
+			
+			db.commit()
+			
+			return game
+ 
 # -----------------------------------------------------------------------------
 
 class GM(db.Entity):

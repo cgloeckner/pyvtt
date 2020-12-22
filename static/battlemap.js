@@ -519,17 +519,23 @@ function login(url, gm, name, multiselect) {
 			playername  = response['playername']
 			playercolor = response['playercolor']
 			
-			// hide login screen
-			$('#login').fadeOut(1000, 0.0, function() {
-				$('#login').hide();
+			if (playername == '') {
+				$('#playername').addClass('shake');
+				setTimeout(function() {	$('#playername').removeClass('shake'); }, 1000);
 				
-				// show dice
-				$('#mapfooter').css('display', 'block');
-				$('#mapfooter').animate({ opacity: '+=1.0' }, 2000);
-			});
-			
-			// start game
-			start(url, gm, name, multiselect);
+			} else {
+				// hide login screen
+				$('#login').fadeOut(1000, 0.0, function() {
+					$('#login').hide();
+					
+					// show dice
+					$('#mapfooter').css('display', 'block');
+					$('#mapfooter').animate({ opacity: '+=1.0' }, 2000);
+				});
+				
+				// start game
+				start(url, gm, name, multiselect);
+			}
 		}
 	});
 }

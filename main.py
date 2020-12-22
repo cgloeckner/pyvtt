@@ -45,9 +45,12 @@ def gm_login():
 
 @post('/vtt/register')
 def post_gm_login():
-	name = engine.applyWhitelist(request.forms.gmname).lower()
+	name = engine.applyWhitelist(request.forms.gmname)
+	if name is None:
+		return {'gmname': ''}
+	name = name.lower()
 	if name in engine.gm_blacklist or len(name) < 3:
-		redirect('/vtt/register')
+		return {'gmname': ''}
 	
 	ip  = request.environ.get('REMOTE_ADDR')
 	sid = db.GM.genSession()
@@ -60,15 +63,13 @@ def post_gm_login():
 	response.set_cookie('session', sid, path='/', expires=gm.expire)
 
 	db.commit()
-	redirect('/')
+	return {'gmname': gm.name}
 
 @get('/', apply=[asGm])
 @view('gm')
 def get_game_list():
 	gm = db.GM.loadFromSession(request)
 	if gm is None:
-		# GM not found on the server
-		response.set_cookie('session', '', path='/', expires=0)
 		redirect('/vtt/register')
 	
 	server = ''
@@ -81,14 +82,17 @@ def get_game_list():
 @post('/vtt/create-game', apply=[asGm])
 def post_create_game():
 	gm = db.GM.loadFromSession(request)
+	if gm is None:
+		return {'url': ''}
 	
-	url = engine.applyWhitelist(request.forms.url).lower()
-	if request.forms.button == 'IMPORT':
-		redirect('/vtt/import-game/{0}'.format(url))
+	url = engine.applyWhitelist(request.forms.url)
+	if url is None:
+		return {'url': ''}
+	url = url.lower()
 	
 	# test for URL collision with other games of this GM
 	if len(db.Game.select(lambda g: g.admin == gm and g.url == url)) > 0:
-		redirect('/')
+		return {'url': ''}
 	
 	# create game
 	game = db.Game(url=url, admin=gm)
@@ -103,11 +107,12 @@ def post_create_game():
 	game.active = scene.id
 	
 	db.commit()
-	redirect('/')
+	
+	return {'url': game.url}
 
-@get('/vtt/import-game/<url>', apply=[asGm])
+@get('/vtt/import-game', apply=[asGm])
 @view('import')
-def view_import_game(url):
+def view_import_game():
 	gm = db.GM.loadFromSession(request)  
 	if gm is None:
 		# GM not found on the server
@@ -115,67 +120,23 @@ def view_import_game(url):
 		redirect('/vtt/register')
 	
 	# show import UI
-	return dict(gm=gm, url=url)
+	return dict(gm=gm)
 
-@post('/vtt/import-game/<url>', apply=[asGm])
-def post_import_game(url):
+@post('/vtt/import-game', apply=[asGm])
+def post_import_game():   
+	result = {}
+	
 	gm = db.GM.loadFromSession(request) 
 	if gm is None:
-		# GM not found on the server
-		response.set_cookie('session', '', path='/', expires=0)
-		redirect('/vtt/register')
+		return result
 	
-	# create game
-	game = db.Game(url=url, admin=gm)
-	
-	game.postSetup()
-	db.commit()
-	
-	# unzip uploaded file to temp dir
-	archive   = request.files.archive
-	temp_dir  = tempfile.TemporaryDirectory()
-	temp_path = pathlib.Path(temp_dir.name)
-	zip_path  = temp_path / archive.filename
-	archive.save(str(zip_path))
-	with zipfile.ZipFile(zip_path, 'r') as h:
-		h.extractall(temp_dir.name)
-	
-	# copy images to game directory
-	img_path = game.getImagePath()
-	for fname in os.listdir(temp_path):
-		if fname.endswith('.png'):
-			shutil.copyfile(temp_path / fname, img_path / fname)
-	
-	# create all game data
-	data = dict()
-	with open(temp_path / 'game.json', 'r') as h:
-		data = json.load(h)
-	
-	for sid, s in enumerate(data["scenes"]):
-		# create scene
-		scene = db.Scene(game=game)
-		
-		# create tokens for that scene
-		for token_id in s["tokens"]:
-			token_data = data["tokens"][token_id]
-			# create token
-			t = db.Token(
-				scene=scene, url=game.getImageUrl(token_data['url']),
-				posx=token_data['posx'], posy=token_data['posy'],
-				zorder=token_data['zorder'], size=token_data['size'], 	
-				rotate=token_data['rotate'], flipx=token_data['flipx'],
-				locked=token_data['locked']
-			)
-			if s["backing"] == token_id:
-				db.commit()
-				scene.backing = t
-	
-		if data["active"] == sid:
-			db.commit()
-			game.active = scene.id
-	
-	db.commit()
-	redirect('/')
+	# generate URL from filename
+	files = request.files.getall('file[]')
+	for i, h in enumerate(files):
+		game = db.Game.fromZip(gm, h)
+		result[h.filename] = game.url if game is not None else ''
+	   
+	return result
 
 @get('/vtt/modify-game/<url>', apply=[asGm])
 @view('settings')
@@ -209,72 +170,17 @@ def post_modify_game(url):
 @get('/vtt/export-game/<url>', apply=[asGm])
 def export_game(url):
 	gm = db.GM.loadFromSession(request)
+	if gm is None:
+		redirect('/')
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 	
-	# remove abandoned images
-	game.removeAbandonedImages()
+	# export game to zip-file
+	zip_file, zip_path = game.toZip()
 	
-	# collect all tokens in this game
-	tokens = list()
-	id_translation = dict() # required because the current token ids will not persist
-	game_tokens = db.Token.select(
-		lambda t: t.scene is not None
-			and t.scene.game is not None 
-			and t.scene.game == game
-	)
-	for t in game_tokens:
-		tokens.append({
-			"url"    : t.url.split('/')[-1], # remove game url (will not persist!)
-			"posx"   : t.posx,
-			"posy"   : t.posy,
-			"zorder" : t.zorder,
-			"size"   : t.size,
-			"rotate" : t.rotate,
-			"locked" : t.locked
-		})
-		id_translation[t.id] = len(tokens) - 1
-	
-	# collect all scenes in this game
-	scenes = list()
-	active = 0
-	for s in game.scenes:
-		tkns = list()
-		for t in s.tokens:
-			# query new id from translation dict
-			tkns.append(id_translation[t.id])
-		scenes.append({
-			"tokens"  : tkns,
-			"backing" : id_translation[s.backing.id]
-		})
-		if game.active == s.id:
-			active = len(scenes) - 1
-	
-	data = {
-		"tokens" : tokens,
-		"scenes" : scenes,
-		"active" : active
-	}
-	
-	# build zip file
-	zip_path = game.getExportPath()
-	zip_file = '{0}.zip'.format(game.url)
-	
-	with zipfile.ZipFile(zip_path / zip_file, "w") as h:
-		# create temporary file and add it to the zip
-		with tempfile.NamedTemporaryFile() as tmp:
-			s = json.dumps(data, indent=4)
-			tmp.write(s.encode('utf-8'))
-			h.write(tmp.name, 'game.json')
-		# add images to the zip, too
-		p = game.getImagePath()
-		for img in game.getAllImages():
-			h.write(p / img, img)
-
 	# offer file for downloading
 	return static_file(zip_file, root=zip_path, download=zip_file, mimetype='application/zip')
-
 
 @get('/vtt/delete-game/<url>', apply=[asGm])
 def delete_game(url):
@@ -296,18 +202,6 @@ def delete_game(url):
 	
 	db.commit()
 	redirect('/')
-
-"""
-@get('/vtt/list-game/<url>', apply=[asGm])
-@view('game_details')
-def get_game_details(url):
-	gm = db.GM.loadFromSession(request)
-	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
-	
-	return dict(game=game, server='{0}:{1}'.format(engine.getIp(), engine.port))
-"""
 
 @post('/vtt/create-scene/<url>', apply=[asGm])
 @view('dropdown')
@@ -411,7 +305,10 @@ def static_token(gmname, url, fname):
 @post('/<gmname>/<url>/login')
 #@view('redirect')
 def set_player_name(gmname, url):
-	playername  = engine.applyWhitelist(request.forms.get('playername'))[:15]
+	playername  = engine.applyWhitelist(request.forms.playername)
+	if playername is None:
+		return {'playername': '', 'playercolor': ''}
+	
 	playercolor = request.forms.get('playercolor')
 	
 	# make player color less bright

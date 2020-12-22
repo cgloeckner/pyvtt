@@ -10,17 +10,17 @@ body {
 	height: 100%;
 }
 
-form {
+div.form {
 	margin-left: auto;
 	margin-right: auto;
 	width: 50%;
 }
 
-form input {
+input {
 	color: black;
 }
 
-form input[type=text] {
+input[type=text] {
 	border: 1px solid white;
 	padding: 10px;
 	background: white;
@@ -31,9 +31,8 @@ form input[type=text] {
 	width: 200px;
 }
 
-form input[type=submit],
-form input[type=button],
-form input[type=color] {
+input[type=button],
+input[type=color] {
 	background: white;
 	border-radius: 2px;
 	border: 0px;
@@ -42,11 +41,11 @@ form input[type=color] {
 	width: 200px;
 }
 
-form input[type=color] {
+input[type=color] {
 	height: 50px;
 }
 
-form input[type=file] {
+input[type=file] {
 	border: 1px solid white; 
 	outline: 1px solid white;
 	outline-offset: 3px;
@@ -55,9 +54,8 @@ form input[type=file] {
 	text-transform: uppercase;
 }
 
-form input[type=submit]:hover,
-form input[type=button]:hover,
-form input[type=color]:hover {
+input[type=button]:hover,
+input[type=color]:hover {
 	cursor: pointer;
 	background: #99ff66;
 }
@@ -78,10 +76,6 @@ div.menu {
 div.menu table {
 	margin-left: auto;
 	margin-right: auto;
-}
-
-div.menu > form {
-	width: auto;
 }
 
 div.menu > img,
@@ -119,7 +113,6 @@ div.dropdown > div#preview {
 	padding: 5px;
 	margin: 5px;
 	
-	outline: none;
 	padding: 10px; 
 }
 
@@ -136,13 +129,6 @@ div.dropdown > img {
 
 img.icon {
 	width: 16px;
-}
-
-div#preview {
-	border: 1px solid white; 
-	outline: 1px solid white;
-	outline-offset: 3px;
-	padding: 10px;
 }
 
 div#preview > img.largeicon {
@@ -290,7 +276,7 @@ div.mapfooter > div.dice > img:active {
 	cursor: grabbing;
 }
 
-div.mapfooter > div.dice > img.shake {
+.shake {
 	animation: shake 0.5s;
 	animation-iteration-count: infinite;
 }
@@ -336,7 +322,7 @@ div.mapfooter > div#players > span.player > a {
 	color: black;
 }
 
-div.mapfooter > form#uploadform {
+form#uploadform {
 	display: none;
 }
 

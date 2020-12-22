@@ -1,18 +1,16 @@
 %include("header", title="GM: {0}".format(gm.name))
 
-<div class="menu">
+<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event);">
 
 <h1>GAMES by {{gm.name}}</h1>
 
-	<form action="/vtt/create-game" id="create_game" method="post" enctype="multipart/form-data">
+	<div class="form">
 		<p>ENTER GAME NAME</p>
-		<input type="text" name="url" value="" /><br />
-		<p>
-			<input type="submit" name="button" value="CREATE" /> 
-			<input type="submit" name="button" value="IMPORT" />
-		</p>
-	</form>
+		<input type="text" id="url" value="" /><br />
+		<p><input type="button" onClick="createGame();" value="CREATE" /></p>
+	</div>
 	
+%if len(gm.games) > 0:
 	<p>PICK GAME</p>
 	
 	<div id="preview">
@@ -31,6 +29,14 @@
 				<a href="{{server}}/{{g.admin.name}}/{{g.url}}" target="_blank"><img class="thumbnail" src="{{url}}" /></a><br />
 		</div>
 %end
+	</div>
+%end
+
+	<div class="form">
+		<p>DRAG ARCHIVE TO IMPORT</p>
+		<form id="uploadform" method="post" enctype="multipart/form-data">
+			<input id="uploadqueue" name="file[]" type="file" multiple />
+		</form>
 	</div>
 </div>
 

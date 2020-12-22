@@ -4,18 +4,12 @@
 
 <h1>Join as GM</h1>
 
-<form action="/vtt/register" method="post" enctype="multipart/form-data">
-	<table>
-		<tr>
-			<td>GM-Name</td>
-			<td><input type="text" name="gmname" /></td>
-		</tr>
-		<tr>
-			<td>
-			<td><input type="submit" value="Start Campaign" /></td>
-		</tr>
-	</table>
-</form>
+<div class="form">
+	<p>GM NAME</p>
+	<input type="text" id="gmname" />
+	
+	<p><input type="button" onClick="registerGm();" value="Start Campaign" /></p>
+</div>
 
 <hr />
 
