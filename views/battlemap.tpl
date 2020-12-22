@@ -17,6 +17,7 @@
 	</div>
 
 	<div class="battlemap">
+		<div id="drag_hint">DRAG AN IMAGE TO START</div>
 		<canvas id="battlemap" width="1000" height="560"></canvas>
 			
 		<div id="tokenbar">

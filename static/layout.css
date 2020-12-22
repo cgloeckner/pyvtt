@@ -359,6 +359,17 @@ div.battlemap {
 	z-index: -1;
 }
 
+div.battlemap > div#drag_hint {
+	position: absolute;
+	top: 50%;
+	left: calc(50% - 50px);
+	
+	z-index: -10;
+	
+	font-size: large;
+	color: white;
+}
+
 div.battlemap > canvas#battlemap {
 	float: right;
 	background-color: rgba(100, 100, 100, 0.25);
