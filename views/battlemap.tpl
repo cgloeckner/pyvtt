@@ -3,7 +3,7 @@
 %include("header", title=title)
 
 %if is_gm:
-	%include("scene_dropdown")
+	%include("dropdown")
 %end
 
 <div id="rollbox">

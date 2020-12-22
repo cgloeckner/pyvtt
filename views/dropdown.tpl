@@ -1,7 +1,7 @@
 %import time, os
 
 <div class="dropdown">
-	<div id="preview" onClick="openDropdown();" >
+	<div id="preview" onmouseover="openDropdown();" onmouseleave="closeDropdown();">
 		<img class="largeicon" src="/static/add.png" onClick="addScene();" />
 %for s in game.scenes.order_by(lambda s: s.id):
 	%url = "/static/empty.jpg"

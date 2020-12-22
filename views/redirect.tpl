@@ -2,7 +2,7 @@
 
 <div class="menu">
 
-<p>Welcome, {{playername}}. You'll be redirected to the <a href="/{{game.admin.name}}/{{game.url}}">Game</a> in a second...</p>
+<p style="text-transform: uppercase;">Welcome, {{playername}}. You'll be redirected to the <a href="/{{game.admin.name}}/{{game.url}}">Game</a> in a second...</p>
 
 <script type="text/javascript">
 <!--

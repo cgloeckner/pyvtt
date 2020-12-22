@@ -4,6 +4,17 @@
 
 <h1>GAMES by {{gm.name}}</h1>
 
+	<form action="/vtt/create-game" id="create_game" method="post" enctype="multipart/form-data">
+		<p>ENTER GAME NAME</p>
+		<input type="text" name="url" value="" /><br />
+		<p>
+			<input type="submit" name="button" value="CREATE" /> 
+			<input type="submit" name="button" value="IMPORT" />
+		</p>
+	</form>
+	
+	<p>PICK GAME</p>
+	
 	<div id="preview">
 %for g in gm.games.order_by(lambda g: g.id):
 	%s = dbScene.select(lambda s: s.id == g.active).first()
@@ -21,14 +32,6 @@
 		</div>
 %end
 	</div>
-
-	<br />
-
-	<form action="/vtt/create-game" id="create_game" method="post" enctype="multipart/form-data">
-		GAME <input type="text" name="url" value="my-game" /><input type="submit" name="button" value="CREATE" /><input type="submit" name="button" value="IMPORT" />
-	</form>
-
-	<br />
 </div>
 
 %include("footer")

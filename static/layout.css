@@ -1,5 +1,9 @@
 body {
 	background-image: url('/static/background.jpg');
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-color: black;
 
 	font-family: Helvetica, Arial, Sans-Serif;
 }
@@ -10,6 +14,52 @@ form {
 	width: 50%;
 }
 
+form input {
+	color: black;
+}
+
+form input[type=text] {
+	border: 1px solid white;
+	padding: 10px;
+	background: white;
+	outline: 1px solid white;
+	outline-offset: 3px;
+	text-align: center;
+	margin: 5px;
+	width: 200px;
+}
+
+form input[type=submit],
+form input[type=button],
+form input[type=color] {
+	background: white;
+	border-radius: 2px;
+	border: 0px;
+	padding: 10px 30px;
+	margin: 5px;      
+	width: 200px;
+}
+
+form input[type=color] {
+	height: 50px;
+}
+
+form input[type=file] {
+	border: 1px solid white; 
+	outline: 1px solid white;
+	outline-offset: 3px;
+	padding: 10px;
+	color: white;
+	text-transform: uppercase;
+}
+
+form input[type=submit]:hover,
+form input[type=button]:hover,
+form input[type=color]:hover {
+	cursor: pointer;
+	background: #99ff66;
+}
+
 div.menu {
 	display: block;
 	width: 800px;
@@ -17,7 +67,8 @@ div.menu {
 	margin-left: auto;
 	margin-right: auto;
 	padding: 5px;
-	background-color: rgba(200, 200, 200, 0.66);
+	/*background-color: rgba(200, 200, 200, 0.66);*/
+	color: white;
 	border-radius: 10px;
 	text-align: center;
 }
@@ -55,16 +106,19 @@ div.dropdown > div#preview {
 	
 	top: -100px;
 	
-	width: calc(100% - 20px);
+	width: calc(100% - 30px);
 	overflow-x: auto;
 	
-	height: 100px;
+	height: 95px;
 	border: 1px solid black;
 	
 	background-color: rgba(200, 200, 200, 0.5);
 	border-radius: 10px;
 	padding: 5px;
 	margin: 5px;
+	
+	outline: none;
+	padding: 10px; 
 }
 
 div.dropdown > img {
@@ -80,6 +134,13 @@ div.dropdown > img {
 
 img.icon {
 	width: 16px;
+}
+
+div#preview {
+	border: 1px solid white; 
+	outline: 1px solid white;
+	outline-offset: 3px;
+	padding: 10px;
 }
 
 div#preview > img.largeicon {
