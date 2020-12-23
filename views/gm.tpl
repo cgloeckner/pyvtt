@@ -12,8 +12,15 @@
 		<p><input type="button" onClick="createGame();" value="CREATE" /></p>
 	</div>
 	
+	
+	<div class="form dropzone">                                           
+		<p>DRAG HERE TO START</p>
+		<form id="uploadform" method="post" enctype="multipart/form-data">
+			<input id="uploadqueue" name="file" type="file" />
+		</form>
+	</div>
+	
 %if len(gm.games) > 0:
-	<p>PICK GAME</p>
 	
 	<div id="preview">
 %for g in gm.games.order_by(lambda g: g.id):
@@ -32,14 +39,7 @@
 		</div>
 %end
 	</div>
-%end
-
-	<div class="form">
-		<p>DRAG ARCHIVE TO IMPORT</p>
-		<form id="uploadform" method="post" enctype="multipart/form-data">
-			<input id="uploadqueue" name="file[]" type="file" multiple />
-		</form>
-	</div>
+%end         
 
 <hr />
 

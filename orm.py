@@ -452,6 +452,45 @@ class Game(db.Entity):
 		return len(db.Game.select(lambda g: g.admin == gm and g.url == url)) == 0
 	
 	@staticmethod
+	def fromImage(gm, handle):
+		# generate url from filename
+		dot_pos = handle.filename.rfind('.')
+		url = handle.filename[:dot_pos].lower()
+		url = engine.applyWhitelist(url)
+		if not db.Game.isUniqueUrl(gm, url):
+			n = 1
+			while (n < 10):
+				new_url = '{0}{1}'.format(url, n)
+				if db.Game.isUniqueUrl(gm, new_url):
+					url = new_url
+					break
+				# else try next
+				n += 1
+			if n >= 10:
+				engine.logging.info('Cannot import image. Too many games with such a name "{0}"'.format(url))
+				return None
+		
+		# create game with that image as background
+		game = db.Game(url=url, admin=gm)
+		game.postSetup()      
+		db.commit()
+		
+		# create initial scene
+		scene = db.Scene(game=game)
+		db.commit()
+		game.active = scene.id
+		
+		# set image as background
+		token_url = game.upload(handle)
+		t = db.Token(scene=scene, timeid=0, url=token_url, posx=0, posy=0, size=-1)
+		db.commit()
+		
+		scene.backing = t
+		db.commit()
+		
+		return game
+	
+	@staticmethod
 	def fromZip(gm, handle):
 		# unzip uploaded file to temp dir
 		with tempfile.TemporaryDirectory() as tmp_dir:

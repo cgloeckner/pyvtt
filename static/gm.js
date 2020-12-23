@@ -69,8 +69,12 @@ function GmUploadDrop(event) {
 		cache: false,
 		processData: false,
 		success: function(response) {
-			// response tells actual URLs per ZIP, but this is ignored here atm
-			window.location.reload();
+			if (response == null || response == 'zip') {
+				window.location.reload();
+			} else {
+				// load game
+				window.location = response;
+			}
 		}
 	});
 }

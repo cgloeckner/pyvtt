@@ -33,6 +33,13 @@ input[type=text] {
 	width: 200px;
 }
 
+div.dropzone {
+	border: 1px solid white;
+	padding: 10px;
+	outline: 1px solid white;
+	outline-offset: 3px;
+}
+
 input[type=submit],
 input[type=button],
 input[type=color] {

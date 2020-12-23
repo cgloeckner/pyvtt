@@ -109,7 +109,6 @@ def post_create_game():
 	db.commit()
 	
 	game.active = scene.id
-	
 	db.commit()
 	
 	return {'url': game.url}
@@ -128,18 +127,31 @@ def view_import_game():
 
 @post('/vtt/import-game', apply=[asGm])
 def post_import_game():   
-	result = {}
+	result = None
 	
 	gm = db.GM.loadFromSession(request) 
 	if gm is None:
 		return result
 	
 	# generate URL from filename
-	files = request.files.getall('file[]')
+	files = request.files.getall('file')
+	if len(files) == 1:
+		fname = files[0].filename
+		if fname.endswith('zip'):
+			game = db.Game.fromZip(gm, files[0])
+			result = 'zip' if game is not None else None
+		
+		else:
+			game = db.Game.fromImage(gm, files[0])
+			result = game.getUrl() if game is not None else None
+	
+	"""
+	print(len(files))
 	for i, h in enumerate(files):
 		game = db.Game.fromZip(gm, h)
 		result[h.filename] = game.url if game is not None else ''
-	   
+	"""
+	
 	return result
 
 @get('/vtt/export-game/<url>', apply=[asGm])
