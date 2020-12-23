@@ -21,6 +21,8 @@ function resizeCanvas() {
 	// apply size
 	canvas[0].width  = w;
 	canvas[0].height = h;
+	mem_canvas.width  = w;
+	mem_canvas.height = h;
 	
 	// calculate scaling
 	canvas_scale = w / 1000;
@@ -45,29 +47,32 @@ function getPixelData(token, x, y) {
 	// note: tokens are drawn centered
 	// x, y is relative to the token position
 	
-	var dom_canvas = $('#battlemap')[0];
-	
-	// setup in-memory canvas (x1.414 due to extreme rotation and pythagoras)
-	var size = token.size * 1.415;
-	mem_canvas = document.createElement('canvas');
-	mem_canvas.width  = size;
-	mem_canvas.height = size;
-
-	// query clean context
+	// clear memory canvas
 	var mem_ctx = mem_canvas.getContext('2d');
-	mem_ctx.clearRect(0, 0, size, size);
+	mem_ctx.clearRect(0, 0, mem_canvas.width, mem_canvas.height);
 	
-	// draw image (scaled and rotated)
-	sizes = getActualSize(token, dom_canvas.width, dom_canvas.height);
+	var dom_canvas = $('#battlemap')[0];
+	var sizes = getActualSize(token, dom_canvas.width, dom_canvas.height);
+	
+	// draw image
 	mem_ctx.save();
-	mem_ctx.translate(sizes[0] / 2, sizes[1] / 2);
-	mem_ctx.rotate(token.rotate * 3.14/180.0);
-	// note: drawn centered for proper rotation
+	mem_ctx.translate(dom_canvas.width / 2, dom_canvas.height / 2);
+	if (token.flipx) {
+		mem_ctx.scale(-1, 1);
+		mem_ctx.rotate(token.rotate * -3.14/180.0);
+	} else {
+		mem_ctx.rotate(token.rotate * 3.14/180.0);
+	}
+	
 	mem_ctx.drawImage(images[token.url], -sizes[0] / 2, -sizes[1] / 2, sizes[0], sizes[1]);
+	
+	mem_ctx.restore();
+	
+	console.log(x, y, sizes);
 	
 	// query pixel data
 	// note: consider (x,y) is relative to token's center
-	return mem_ctx.getImageData(x + sizes[0] / 2, y + sizes[1] / 2, 1, 1).data;
+	return mem_ctx.getImageData(x + dom_canvas.width / 2, y + dom_canvas.height / 2, 1, 1).data;
 }
 
 // --- token implementation ---------------------------------------------------
@@ -110,23 +115,28 @@ function getActualSize(token, maxw, maxh) {
 	// Basic Concept: r = h/w  <==>  h = w*r  <==>  w = h/r
 	
 	// scale token via width (most common usecase)
-	var h = token.size
-	var w = h / ratio;
-	if (token.size == -1) {
+	var h = 0;
+	var w = 0;
+	if (token.size > -1) {
+		if (src_h > src_w) {
+			// scale token via height
+			h = token.size;
+			w = h / ratio;
+		} else {
+			// scale token via width
+			w = token.size;
+			h = w * ratio;
+		}
+	} else {
 		if (ratio > 0.56) {
-			// resize to canvas height (adjust width using ratio)
+			// resize to canvas height
 			h = maxh / canvas_scale;
 			w = h / ratio;
 		} else {
-			// resize to canvas width (adjust height using ratio)
+			// resize to canvas width
 			w = maxw / canvas_scale;
 			h = w * ratio;
 		}
-		
-	} else if (src_h > src_w) {
-		// scale token via height (adjust width using ratio)
-		h = token.size;
-		w = h / ratio;
 	}
 	
 	return [w, h];
@@ -134,23 +144,28 @@ function getActualSize(token, maxw, maxh) {
 
 /// Determiens if position is within token's bounding box
 function isOverToken(x, y, token) {
+	var canvas   = $('#battlemap');
+	var size     = getActualSize(token, canvas[0].width, canvas[0].height);
+	var max_size = Math.max(size[0], size[1]); // because the token might be rotated
+	
 	// 1st stage: bounding box test
 	if (token.size > 0) {
-		var min_x = token.posx - token.size / 2;
-		var max_x = token.posx + token.size / 2;
-		var min_y = token.posy - token.size / 2;
-		var max_y = token.posy + token.size / 2;
+		var min_x = token.posx - max_size / 2;
+		var max_x = token.posx + max_size / 2;
+		var min_y = token.posy - max_size / 2;
+		var max_y = token.posy + max_size / 2;
 		var in_box = min_x <= x && x <= max_x && min_y <= y && y <= max_y;
 		if (!in_box) {
 			return false;
 		}
 	}
+	
 	// 2nd stage: image alpha test
 	// note: query at position relative to token's center
 	var dx = x - token.posx;
 	var dy = y - token.posy;
 	var pixel_data = getPixelData(token, dx, dy);
-	return pixel_data[3] > 0;
+	return pixel_data[3] > 0; 
 }
 
 /// Determines which token is selected when clicking the given position
@@ -540,7 +555,10 @@ function login(url, name) {
 }
 
 /// Sets up the game and triggers the update loop
-function start(url, name) {
+function start(url, name) {	
+	// setup in-memory canvas (for transparency checking)
+	mem_canvas = document.createElement('canvas');
+	
 	// disable window context menu for token right click
 	document.addEventListener('contextmenu', event => {
 	  event.preventDefault();
