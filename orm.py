@@ -71,6 +71,7 @@ class Engine(object):
 		self.gm_blacklist = ['static', 'token', 'vtt']
 
 		self.local_gm = False
+		self.title    = 'PyVTT'
 
 		# game cache
 		self.players = dict()
@@ -85,6 +86,10 @@ class Engine(object):
 			if line.startswith('--port'):
 				# use custom port
 				self.port = int(line.split('=')[1])
+			
+			if line.startswith('--title'):
+				# use custom title
+				self.title = line.split('=')[1]
 			
 			if line == '--localhost':
 				# GM is on localhost

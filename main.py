@@ -41,7 +41,7 @@ def asGm(callback):
 @get('/vtt/register')
 @view('register')
 def gm_login():
-	return dict()
+	return dict(engine=engine)
 
 @post('/vtt/register')
 def post_gm_login():
@@ -81,7 +81,7 @@ def get_game_list():
 		server = 'http://{0}:{1}'.format(engine.getIp(), engine.port)
 	
 	# show GM's games
-	return dict(gm=gm, server=server, dbScene=db.Scene)
+	return dict(engine=engine, gm=gm, server=server, dbScene=db.Scene)
 
 @post('/vtt/create-game', apply=[asGm])
 def post_create_game():
@@ -123,7 +123,7 @@ def view_import_game():
 		redirect('/vtt/register')
 	
 	# show import UI
-	return dict(gm=gm)
+	return dict(engine=engine, gm=gm)
 
 @post('/vtt/import-game', apply=[asGm])
 def post_import_game():   
@@ -144,13 +144,6 @@ def post_import_game():
 		else:
 			game = db.Game.fromImage(gm, files[0])
 			result = game.getUrl() if game is not None else None
-	
-	"""
-	print(len(files))
-	for i, h in enumerate(files):
-		game = db.Game.fromZip(gm, h)
-		result[h.filename] = game.url if game is not None else ''
-	"""
 	
 	return result
 
@@ -204,7 +197,7 @@ def post_create_scene(url):
 	
 	game.active = scene.id
 	
-	return dict(game=game)
+	return dict(engine=engine, game=game)
 
 @post('/vtt/activate-scene/<url>/<scene_id>', apply=[asGm])
 @view('dropdown')
@@ -216,7 +209,7 @@ def activate_scene(url, scene_id):
 
 	db.commit() 
 	
-	return dict(game=game)
+	return dict(engine=engine, game=game)
 
 @post('/vtt/delete-scene/<url>/<scene_id>', apply=[asGm]) 
 @view('dropdown')
@@ -242,7 +235,7 @@ def activate_scene(url, scene_id):
 		# adjust active scene
 		game.active = remain.id
 	
-	return dict(game=game)
+	return dict(engine=engine, game=game)
 	
 @post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm]) 
 @view('dropdown')
@@ -268,7 +261,7 @@ def duplicate_scene(url, scene_id):
 	
 	game.active = clone.id 
 	
-	return dict(game=game)
+	return dict(engine=engine, game=game)
 
 # --- playing routes ----------------------------------------------------------
 
@@ -338,7 +331,7 @@ def get_player_battlemap(gmname, url):
 		abort(404)
 	
 	# show battlemap with login screen ontop
-	return dict(game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
+	return dict(engine=engine, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
 # on window open
 @post('/<gmname>/<url>/join')
@@ -614,7 +607,7 @@ def ajax_post_delete(gmname, url, token_id):
 @error(404)
 @view('error')
 def error404(error):
-	return dict()
+	return dict(engine=engine)
 
 # --- setup stuff -------------------------------------------------------------
 

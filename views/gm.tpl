@@ -1,4 +1,4 @@
-%include("header", title="GM: {0}".format(gm.name))
+%include("header", title="GM {0}".format(gm.name))
 
 <div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event);">  
 

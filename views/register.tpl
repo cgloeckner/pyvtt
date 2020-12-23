@@ -1,4 +1,4 @@
-%include("header", title='Join as GM')
+%include("header", title='JOIN as GM')
 
 <div class="menu">
 

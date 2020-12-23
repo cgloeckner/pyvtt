@@ -1,3 +1,5 @@
+<!-- Powered by PyVTT. Further information: https://github.com/cgloeckner/pyvtt -->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,7 +10,7 @@
 	<script src="/static/gm.js"></script>
 	<link rel="stylesheet" type="text/css" href="/static/normalize.css">
 	<link rel="stylesheet" type="text/css" href="/static/layout.css">
-	<title>{{title}} (PyVTT)</title>
+	<title>{{engine.title}}: {{title}}</title>
 </head>
 
 <body>
