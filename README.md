@@ -18,6 +18,10 @@ You can export set-up games as ZIP files, which can be downloaded on your comput
 # Player Information
 Ask for a link and start playing. Make sure to enable JavaScript and allow Cookies.
 
+# Debugging
+
+`update_cycles` (`default: 30`) can be adjusted in the browser client (e.g. via developer tools CTRL+SHIFT+I).
+
 # Known bugs
 (may not be up to date)
 - edge: extreme slow ajax

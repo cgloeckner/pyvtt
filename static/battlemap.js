@@ -398,7 +398,8 @@ var grabbed = 0; // determines whether grabbed or not
 var update_tick = 0; // delays updates to not every loop tick
 var full_tick = 0; // counts updates until the next full update is requested
 
-const fps = 60;
+var fps = 60;
+var update_cycles = 30;
 
 /// Triggers token updates (pushing and pulling token data via the server)
 function updateTokens() {
@@ -523,7 +524,7 @@ function drawScene() {
 function updateGame() {
 	if (update_tick < 0) {
 		updateTokens();
-		update_tick = 250.0 / (1000.0 / fps);
+		update_tick = update_cycles;
 	} else {
 		update_tick -= 1;
 	}
