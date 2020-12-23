@@ -23,7 +23,7 @@ class Engine(object):
 			raise NotImplementedError('only linux supported yet')
 		
 		# ensure pyVTT folder exists
-		p = p / 'pyVTT'
+		p = p / 'pyvtt'
 		
 		if not os.path.isdir(p):
 			os.mkdir(p)
