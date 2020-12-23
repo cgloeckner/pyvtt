@@ -79,6 +79,11 @@ div.menu {
 	text-align: center;
 }
 
+div.menu > img.logo {
+	height: 300px;
+	width: auto;
+}
+
 div.menu table {
 	margin-left: auto;
 	margin-right: auto;
@@ -437,10 +442,6 @@ div#login {
 	padding: 0px;
 	
 	z-index: 10;
-}
-
-div#login > div {
-	margin-top: 10%;
 }
 
 div.battlemap {

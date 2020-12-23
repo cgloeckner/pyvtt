@@ -6,7 +6,7 @@
 
 <h1>WHUU!</h1>
 
-	<img src="/static/d20.png" style="width: 100px;" class="shake" />
+	<img class="logo" src="/static/logo.png" />
 
 	<p>THERE IS NOTHING HERE.</p>
 

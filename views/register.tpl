@@ -6,6 +6,8 @@
 
 <h1>JOIN as GM</h1>
 
+<img class="logo" src="/static/logo.png" />
+
 <div class="form">
 	<p>GM NAME</p>
 	<input type="text" id="gmname" />

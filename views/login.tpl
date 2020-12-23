@@ -2,6 +2,8 @@
 	<div class="menu">
 		<hr />
 		<h1>{{game.url.upper()}} by {{game.admin.name}}</h1>
+		
+		<img class="logo" src="/static/logo.png" />
 
 		<div class="form">
 			<p>PLAYER NAME</p>
