@@ -499,6 +499,20 @@ def post_player_update(gmname, url):
 	}
 	return json.dumps(data)
 
+@get('/<gmname>/<url>/range_query/<x:int>/<y:int>/<w:int>/<h:int>')
+def range_query_token(gmname, url, x, y, w, h):
+	# load game
+	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	# load active scene
+	scene = db.Scene.select(lambda s: s.id == game.active).first()
+	
+	# query all tokens in range
+	token_ids = list()
+	for t in db.Token.select(lambda t: t.scene == scene and x <= t.posx and t.posx <= x + w and y <= t.posy and t.posy <= y + h):
+		token_ids.append(t.id)
+	
+	return json.dumps(token_ids)
+
 @post('/<gmname>/<url>/roll/<sides:int>')
 def post_roll_dice(gmname, url, sides):
 	# load game

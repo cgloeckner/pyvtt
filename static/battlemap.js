@@ -393,10 +393,14 @@ var mouse_y = 0;
 
 var copy_token = 0; // determines copy-selected token (CTRL+C)
 var select_ids = []; // contains selected tokens' ids
+var primary_id = 0; // used to specify "leader" in group (for relative movement)
 var mouse_over_id = 0; // determines which token would be selected
 var grabbed = 0; // determines whether grabbed or not
 var update_tick = 0; // delays updates to not every loop tick
 var full_tick = 0; // counts updates until the next full update is requested
+
+var select_from_x = null;
+var select_from_y = null;
 
 var fps = 60;
 var update_cycles = 30;
@@ -518,6 +522,20 @@ function drawScene() {
 	
 	// reverse culling for top-to-bottom token searching
 	culling.reverse();
+	
+	if (select_from_x != null) {
+		// draw selection box
+		var canvas = $('#battlemap');
+		var context = canvas[0].getContext("2d");
+		var select_width  = mouse_x - select_from_x;
+		var select_height = mouse_y - select_from_y;
+		context.beginPath();
+		context.rect(select_from_x * canvas_scale, select_from_y * canvas_scale, select_width * canvas_scale, select_height * canvas_scale);
+		context.strokeStyle = "#070707";
+		context.fillStyle = "rgba(255, 255, 255, 0.25)"; 
+		context.fillRect(select_from_x * canvas_scale, select_from_y * canvas_scale, select_width * canvas_scale, select_height * canvas_scale);
+		context.stroke();
+	}
 }
 
 /// Updates the entire game: update tokens from time to time, drawing each time
@@ -737,8 +755,8 @@ var token_icons = ['Rotate', 'Top', 'Bottom', 'Resize', 'FlipX', 'Lock'];
 function updateTokenbar() {
 	$('#tokenbar').css('visibility', 'hidden');
 
-	if (select_ids.length > 0 && !grabbed) {
-		token = tokens[select_ids[0]];
+	if (primary_id && !grabbed) {
+		token = tokens[primary_id];
 		
 		if (token == null) {
 			return;
@@ -835,14 +853,22 @@ function tokenGrab(event) {
 		var token = selectToken(mouse_x, mouse_y);
 		
 		if (token != null) {
-			// select only this token
-			select_ids = [token.id];
-			grabbed    = true;
-			
-			// TODO: test if token is already selected --> do not reselect (group movement!!!)
+			// reselect only if token wasn't selected before
+			if (!select_ids.includes(token.id)) {
+				select_ids = [token.id];
+				primary_id = token.id;
+			} else {
+				primary_id = token.id;
+			}
+			grabbed = true;
 		} else {
 			// Clear selection
 			select_ids = [];
+			primary_id = 0;
+			
+			// start selection box
+			select_from_x = mouse_x;
+			select_from_y = mouse_y;
 		}
 	
 	} else if (event.buttons == 2) {
@@ -867,6 +893,37 @@ function tokenRelease() {
 		grabbed = false;
 	}
 	
+	if (select_from_x != null) {
+		// finish selection box
+		var select_width  = mouse_x - select_from_x;
+		var select_height = mouse_y - select_from_y;
+		
+		// handle box created to the left
+		if (select_width < 0) {
+			select_from_x = select_from_x + select_width;
+			select_width *= -1;
+		}
+			 
+		// handle box created to the top
+		if (select_height < 0) {
+			select_from_y = select_from_y + select_height;
+			select_height *= -1;
+		}
+		
+		// query tokens in range
+		$.ajax({
+			url: '/' + gm_name + '/' + game_url + '/range_query/' + select_from_x + '/' + select_from_y + '/' + select_width + '/' + select_height,
+			type: 'GET',
+			success: function(response) {
+				primary_id = 0;
+				select_ids = JSON.parse(response);
+			}
+		});
+	}
+	
+	select_from_x = null;
+	select_from_y = null;
+	
 	updateTokenbar();
 }
 
@@ -874,32 +931,39 @@ function tokenRelease() {
 function tokenMove(event) {
 	pickCanvasPos(event);
 	
-	// move selection
-	var token = selectToken(mouse_x, mouse_y);
-	if (token != null) {
-		if (!token.locked) {
-			$('#battlemap').css('cursor', 'grab');
-		} else {
+	if (primary_id != 0 && grabbed) {
+		var token = tokens[primary_id];
+		 
+		// transform cursor
+		if (token == null) {
+			$('#battlemap').css('cursor', 'default');
+		} else if (token.locked) {
 			$('#battlemap').css('cursor', 'not-allowed');
-		}
-	} else {
-		$('#battlemap').css('cursor', 'default');
-	}
-	
-	if (grabbed && select_ids.length > 0) {
-		$('#battlemap').css('cursor', 'grabbing');
-		
-		var token = tokens[select_ids[0]];
-		if (token == null || token.locked) {
-			return;
+		} else {                                         
+			$('#battlemap').css('cursor', 'grab');
 		}
 		
-		token.posx = mouse_x;
-		token.posy = mouse_y;
-		
-		// mark tokens as changed
-		if (!change_cache.includes(token.id)) {
-			change_cache.push(token.id);
+		if (token != null && !token.locked) {
+			var prev_posx = token.posx;
+			var prev_posy = token.posy;
+			
+			$.each(select_ids, function(index, id) {
+				var t = tokens[id];
+				if (!t.locked) {
+					// get position relative to primary token
+					var dx = t.posx - prev_posx;
+					var dy = t.posy - prev_posy;
+					// move relative to primary token
+					t.posx = mouse_x + dx;
+					t.posy = mouse_y + dy;
+					console.log("primary#",  primary_id, "#", t.id, "\tdx", dx, dy, "\tto", t.posx, t.posy);
+					
+					// mark tokens as changed
+					if (!change_cache.includes(t.id)) {
+						change_cache.push(t.id);
+					}
+				}
+			});
 		}
 	}
 	
