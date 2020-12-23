@@ -648,8 +648,8 @@ function mouseDrag(event) {
 	event.preventDefault();
 	pickCanvasPos(event);
 	
-	if (select_ids.length > 0) {
-		var first_token = tokens[select_ids[0]] 
+	if (primary_id != 0) {
+		var first_token = tokens[primary_id] 
 		var dx = first_token.posx - mouse_x;
 		var dy = first_token.posy - mouse_y;
 		var scale = Math.sqrt(dx*dx + dy*dy);
@@ -915,8 +915,13 @@ function tokenRelease() {
 			url: '/' + gm_name + '/' + game_url + '/range_query/' + select_from_x + '/' + select_from_y + '/' + select_width + '/' + select_height,
 			type: 'GET',
 			success: function(response) {
-				primary_id = 0;
 				select_ids = JSON.parse(response);
+				// pick primary token
+				if (select_ids.length > 0) {
+					primary_id = select_ids[0];
+				} else {
+					primary_id = 0;
+				}
 			}
 		});
 	}
