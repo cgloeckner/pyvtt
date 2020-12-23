@@ -460,7 +460,7 @@ def post_player_update(gmname, url):
 			'color'  : color,
 			'sides'  : r.sides,
 			'result' : r.result,
-			'time'   : time.strftime('%H:%M:%S', time.localtime(r.timeid))
+			'time'   : r.timeid
 		})
 	
 	# query players alive

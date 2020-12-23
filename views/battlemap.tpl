@@ -13,7 +13,17 @@
 	</div>
 %end
 
-	<div id="rollbox">
+	<div id="dicebox">
+		<div class="dice" id="dice">
+%for d in [20, 12, 10, 8, 6, 4]:
+			<img src="/static/d{{d}}.png" id="d{{d}}" title="Roll 1D{{d}}" draggable="false" onClick="rollDice({{d}});" />
+%end
+		</div>
+		<div class="rollbox" id="rollbox">
+%for d in [20, 12, 10, 8, 6, 4]:
+			<div id="d{{d}}box"></div>
+%end
+		</div>
 	</div>
 
 	<div class="battlemap">
@@ -31,12 +41,6 @@
 	</div>
 
 	<div class="mapfooter" id="mapfooter">
-		<div class="dice">
-%for d in [20, 12, 10, 8, 6, 4]:
-			<img src="/static/d{{d}}.png" id="d{{d}}" title="Roll 1D{{d}}" draggable="false" onClick="rollDice({{d}});" />
-%end
-		</div>					
-						
 		<div id="players"></div>
 
 		<form id="uploadform" method="post" enctype="multipart/form-data">

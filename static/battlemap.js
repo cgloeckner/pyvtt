@@ -68,8 +68,6 @@ function getPixelData(token, x, y) {
 	
 	mem_ctx.restore();
 	
-	console.log(x, y, sizes);
-	
 	// query pixel data
 	// note: consider (x,y) is relative to token's center
 	return mem_ctx.getImageData(x + dom_canvas.width / 2, y + dom_canvas.height / 2, 1, 1).data;
@@ -309,7 +307,9 @@ function updatePlayers(response) {
 
 // --- dice rolls implementation ---------------------------------------------- 
 
-var rolls   = [];
+var rolls        = [];
+var last_roll    = 0; // timestamp since last roll update
+var roll_timeout = 10000.0; // ms until roll will diappear
 
 /// Roll constructor
 function Roll(sides, playername, result) {
@@ -318,25 +318,44 @@ function Roll(sides, playername, result) {
 	this.result     = result;
 }
 
-function showRoll(sides, result, player, color, time) {
-	var target = $('#rollbox')[0];
-	var div_class = 'roll';
+function addRoll(sides, result, color) {
+	// create dice result
+	var container = $('#d' + sides + 'box');
+	css = 'filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
 	if (result == 1) {
-		div_class += ' min-roll';
+		css += ' color: red;';
+	} else if (result == sides) {
+		css += ' color: green;';
 	}
-	if (result == sides) {
-		div_class += ' max-roll';
+	var span = '<span style="' + css + '">' + result + '</span>';
+	container.prepend(span);
+	
+	// prepare automatic cleanup
+	var dom_span = container.children(':first-child')
+	if (result == 1 || result == sides) {
+		dom_span.addClass('shake');
 	}
-	target.innerHTML += '<div class="' + div_class + '"><img src="/static/d' + sides + '.png" style="filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"/><span class="result" style="color: ' + color + ';">' + result + '</span><span class="player" style="color: ' + color + '">' + player + ' (' + time + ')</span></div>';
+	dom_span.delay(roll_timeout).fadeOut(2000, function() { this.remove(); });
+	// TODO: make delay come from the server
 }
 
 function updateRolls(rolls) {
+	var time = last_roll;
+	$.each(rolls, function(index, roll) {
+		if (roll['time'] > last_roll) {
+			addRoll(roll['sides'], roll['result'], roll['color']);
+		}
+		time = Math.max(time, roll['time']);
+	});
+	last_roll = time;
+	/*
 	// show rolls
 	var rolls_div = $('#rollbox')[0];
 	rolls_div.innerHTML = '';
 	$.each(rolls, function(index, roll) {
 		showRoll(roll['sides'], roll['result'], roll['player'], roll['color'], roll['time']);
-	});		
+	});
+	*/
 }
 
 /*
@@ -542,9 +561,13 @@ function login(url, name) {
 				$('#login').fadeOut(1000, 0.0, function() {
 					$('#login').hide();
 					
-					// show dice
+					// show players
 					$('#mapfooter').css('display', 'block');
 					$('#mapfooter').animate({ opacity: '+=1.0' }, 2000);
+					
+					// show dicebox
+					$('#dicebox').css('display', 'block');
+					$('#dicebox').animate({ opacity: '+=1.0' }, 2000);
 				});
 				
 				// start game
@@ -615,7 +638,7 @@ function mouseDrag(event) {
 		if (drag_action == 'resize') {
 			var ratio = 1.0;
 			if (scale > last_scale) {
-				ratio = 1.05;
+				ratio = 1.;
 			}
 			if (scale < last_scale) {
 				ratio = 0.95;

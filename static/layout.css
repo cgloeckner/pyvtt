@@ -4,6 +4,7 @@ body {
 	background-repeat: no-repeat;
 	background-size: cover;
 	background-color: black;
+	height: 100%;
 
 	font-family: Sans-Serif;
 	
@@ -175,6 +176,114 @@ div#preview > div > img.thumbnail:hover {
 
 /* --- Dicebox Layout ------------------------------------------------------- */
 
+div.dice,
+div.rollbox {
+	position: absolute;
+	z-index: 3;
+	bottom: calc(50% - 150px);
+	left: 15px;
+}
+
+div#dicebox {
+	opacity: 0.0;
+	display: none;
+}
+
+div.dice > img {
+	display: block;
+	user-select: none;
+	
+	width: 48px;
+	height: 48px;
+	padding: 1px;
+}
+
+div.dice > img:hover {
+	cursor: grab;
+	
+	filter: drop-shadow(1px 1px 10px gold) 
+          drop-shadow(-1px -1px 0 gold);
+	
+	bottom: 5px;
+}
+
+div.dice > img:active {
+	cursor: grabbing;
+}
+
+.shake {
+	animation: shake 0.5s;
+	animation-iteration-count: infinite;
+}
+
+@keyframes shake {
+	0% { transform: translate(1px, 1px) rotate(0deg); }
+	10% { transform: translate(-1px, -2px) rotate(-1deg); }
+	20% { transform: translate(-3px, 0px) rotate(1deg); }
+	30% { transform: translate(3px, 2px) rotate(0deg); }
+	40% { transform: translate(1px, -1px) rotate(1deg); }
+	50% { transform: translate(-1px, 2px) rotate(-1deg); }
+	60% { transform: translate(-3px, 1px) rotate(0deg); }
+	70% { transform: translate(3px, 1px) rotate(-1deg); }
+	80% { transform: translate(-1px, -1px) rotate(1deg); }
+	90% { transform: translate(1px, 2px) rotate(0deg); }
+	100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+div.rollbox {
+	pointer-events: none;
+}
+
+div.rollbox > div {
+	display: flex;
+	flex-direction: row; 
+}
+
+div.rollbox > div {
+	display: block;
+	position: relative;
+	left: 50px;
+	height: 50px;
+	
+	opacity: 0.75;
+}
+
+div.rollbox > div > span {
+	display: inline-block;
+	width: 36px;
+	height: 30px;
+	margin: 2px;
+	padding-top: 3px;
+	margin-top: 7px;
+	margin-left: 10px;
+	
+	text-align: center;
+	font-size: x-large;
+	font-family: Serif;
+	  
+	pointer-events: auto;
+	
+	background-color: rgba(255, 255, 255, 0.75);
+	border: 1px solid white; 
+	outline: 1px solid white;
+	outline-offset: 3px;
+}
+
+/*
+div.rollbox > div#d4box,
+div.rollbox > div#d8box,
+div.rollbox > div#d12box {
+	background-color: lime;
+}
+
+div.rollbox > div#d6box,
+div.rollbox > div#d10box,
+div.rollbox > div#d20box {
+	background-color: yellow;
+}
+*/
+
+/*
 div#rollbox {	
 	position: relative;
 	width: 100px;
@@ -239,6 +348,7 @@ div#rollbox > div.roll:hover > span.player {
 	
 	background-color: rgba(100, 100, 100, 0.75);
 }
+*/
 
 /* --- Map Footer ----------------------------------------------------------- */
 
@@ -251,52 +361,6 @@ div.mapfooter {
 div#mapfooter {
 	opacity: 0.0;
 	display: none;
-}
-
-div.mapfooter > div.dice {
-	position: absolute;
-	left: 5px;
-	width: 350px;
-}
-
-div.mapfooter > div.dice > img {
-	position: relative;
-	user-select: none;
-	
-	width: 48px;
-	height: 48px;
-}
-
-div.mapfooter > div.dice > img:hover {
-	cursor: grab;
-	
-	filter: drop-shadow(1px 1px 10px gold) 
-          drop-shadow(-1px -1px 0 gold);
-	
-	bottom: 5px;
-}
-
-div.mapfooter > div.dice > img:active {
-	cursor: grabbing;
-}
-
-.shake {
-	animation: shake 0.5s;
-	animation-iteration-count: infinite;
-}
-
-@keyframes shake {
-	0% { transform: translate(1px, 1px) rotate(0deg); }
-	10% { transform: translate(-1px, -2px) rotate(-1deg); }
-	20% { transform: translate(-3px, 0px) rotate(1deg); }
-	30% { transform: translate(3px, 2px) rotate(0deg); }
-	40% { transform: translate(1px, -1px) rotate(1deg); }
-	50% { transform: translate(-1px, 2px) rotate(-1deg); }
-	60% { transform: translate(-3px, 1px) rotate(0deg); }
-	70% { transform: translate(3px, 1px) rotate(-1deg); }
-	80% { transform: translate(-1px, -1px) rotate(1deg); }
-	90% { transform: translate(1px, 2px) rotate(0deg); }
-	100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
 div.mapfooter > div#players {
@@ -355,11 +419,7 @@ div#login > div {
 }
 
 div.battlemap {
-	width: calc(100% - 50px);
-	height: calc(100% - 50px);
-
-	padding: 25px;
-
+	padding-top: 25px;
 	z-index: -1;
 }
 
@@ -375,10 +435,13 @@ div.battlemap > div#drag_hint {
 }
 
 div.battlemap > canvas#battlemap {
-	float: right;
 	background-color: rgba(100, 100, 100, 0.25);
 	border: 1px solid black;
 	z-index: 0;
+	
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 div.battlemap > div#tokenbar {
