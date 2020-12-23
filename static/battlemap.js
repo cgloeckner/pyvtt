@@ -638,7 +638,7 @@ function mouseDrag(event) {
 		if (drag_action == 'resize') {
 			var ratio = 1.0;
 			if (scale > last_scale) {
-				ratio = 1.;
+				ratio = 1.1;
 			}
 			if (scale < last_scale) {
 				ratio = 0.95;
