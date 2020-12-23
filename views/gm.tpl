@@ -24,7 +24,7 @@
 	%end
 		<div>
 			<p>
-				<a href="/vtt/modify-game/{{g.url}}"><img class="icon" src="/static/modify.png"></a> <a href="/vtt/export-game/{{g.url}}"><img class="icon" src="/static/export.png"></a>
+				<a href="/vtt/export-game/{{g.url}}"><img class="icon" src="/static/export.png"></a>
 				{{g.url.upper()}}
 				<a href="/vtt/delete-game/{{g.url}}"><img class="icon" src="/static/delete.png" /></a>
 			</p>
