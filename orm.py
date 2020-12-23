@@ -190,7 +190,7 @@ class Token(db.Entity):
 	rotate  = Required(float, default=0.0)
 	flipx   = Required(bool, default=False)
 	locked  = Required(bool, default=False)
-	timeid  = Required(int, default=0) # dirty flag
+	timeid  = Required(float, default=0.0) # dirty flag
 	back    = Optional("Scene") # link to same scene as above but may be None
 	
 	def update(self, timeid, pos=None, zorder=None, size=None, rotate=None, flipx=None, locked=None):
@@ -228,7 +228,7 @@ class Token(db.Entity):
 class Scene(db.Entity):
 	id      = PrimaryKey(int, auto=True)
 	game    = Required("Game")
-	timeid  = Required(int, default=0) # keeps time for dirtyflag on tokens
+	timeid  = Required(float, default=0.0) # keeps time for dirtyflag on tokens
 	tokens  = Set("Token", cascade_delete=True, reverse="scene") # forward deletion to tokens
 	backing = Optional("Token", reverse="back") # background token
 
@@ -240,7 +240,7 @@ class Roll(db.Entity):
 	player = Required(str)
 	sides  = Required(int)
 	result = Required(int)
-	timeid = Required(int, unique=0)
+	timeid = Required(float, unique=0.0)
 
 
 # -----------------------------------------------------------------------------
@@ -427,7 +427,6 @@ class Game(db.Entity):
 			"scenes" : scenes,
 			"active" : active
 		}
-		print(data)
 		
 		# build zip file
 		zip_path = self.admin.getExportPath()
@@ -440,12 +439,6 @@ class Game(db.Entity):
 				tmp.write(s.encode('utf-8'))
 				tmp.seek(0) # rewind!
 				h.write(tmp.name, 'game.json')
-				
-				with open(tmp.name) as asdf:
-					print(tmp.name)
-					for line in asdf:
-						print(line)
-					print('EOF')
 			
 			# add images to the zip, too
 			p = self.getImagePath()
@@ -463,7 +456,6 @@ class Game(db.Entity):
 		# unzip uploaded file to temp dir
 		with tempfile.TemporaryDirectory() as tmp_dir:
 			zip_path = os.path.join(tmp_dir, handle.filename)
-			print(zip_path)
 			handle.save(str(zip_path))
 			with zipfile.ZipFile(zip_path, 'r') as fp:
 				fp.extractall(tmp_dir)

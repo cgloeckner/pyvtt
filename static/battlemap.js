@@ -307,8 +307,7 @@ function updatePlayers(response) {
 
 // --- dice rolls implementation ---------------------------------------------- 
 
-var rolls        = [];
-var last_roll    = 0; // timestamp since last roll update
+var rolls        = []; // current rolls
 var roll_timeout = 10000.0; // ms until roll will diappear
 
 /// Roll constructor
@@ -318,36 +317,26 @@ function Roll(sides, playername, result) {
 	this.result     = result;
 }
 
-function addRoll(sides, result, color) {
+function addRoll(sides, result, color, id) {
 	// create dice result
 	var container = $('#d' + sides + 'box');
-	css = 'filter: drop-shadow(1px 1px 10px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
-	if (result == 1) {
-		css += ' color: red;';
-	} else if (result == sides) {
-		css += ' color: green;';
-	}
-	var span = '<span style="' + css + '">' + result + '</span>';
+	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
+	var span = '<span id="roll_id_' + id + '" style="' + css + '">' + result + '</span>';
 	container.prepend(span);
 	
 	// prepare automatic cleanup
 	var dom_span = container.children(':first-child')
 	if (result == 1 || result == sides) {
-		dom_span.addClass('shake');
+		dom_span.addClass('natroll');
 	}
-	dom_span.delay(roll_timeout).fadeOut(2000, function() { this.remove(); });
-	// TODO: make delay come from the server
+	dom_span.delay(roll_timeout).fadeOut(5000, function() { this.remove(); });
 }
 
 function updateRolls(rolls) {
-	var time = last_roll;
 	$.each(rolls, function(index, roll) {
-		if (roll['time'] > last_roll) {
-			addRoll(roll['sides'], roll['result'], roll['color']);
-		}
-		time = Math.max(time, roll['time']);
-	});
-	last_roll = time;
+		addRoll(roll['sides'], roll['result'], roll['color'], roll['id']);
+	});                      
+	
 	/*
 	// show rolls
 	var rolls_div = $('#rollbox')[0];
@@ -396,6 +385,8 @@ var game_url = '';
 var gm_name = '';
 var dropdown = false;
 var timeid = 0;
+var full_update = true;
+var scene_id = 0;
 
 var mouse_x = 0; // relative to canvas
 var mouse_y = 0;
@@ -429,9 +420,8 @@ function updateTokens() {
 		changes.push(data);
 	});
 	
-	// fake zero-timeid if full update is requested
 	if (full_tick == 0) {
-		timeid = 0;
+		full_update = true;
 		full_tick = 5;
 	} else {
 		full_tick -= 1;
@@ -443,16 +433,23 @@ function updateTokens() {
 		url:  '/' + gm_name + '/' + game_url + '/update',
 		dataType: 'json',
 		data: {
-			'timeid'   : timeid,
-			'changes'  : JSON.stringify(changes),
-			'selected' : JSON.stringify(select_ids)
+			'timeid'      : timeid,
+			'full_update' : full_update,
+			'changes'     : JSON.stringify(changes),
+			'selected'    : JSON.stringify(select_ids),
+			'scene_id'    : scene_id
 		},
-		success: function(response) {		
+		success: function(response) {
 			// update current timeid
-			timeid = response['timeid'];
+			timeid   = response['timeid'];
+			if (scene_id != response['scene_id']) {
+				scene_id = response['scene_id'];
+				full_update = true;
+			}
 			
 			// clear all local tokens if a full update was received
-			if (response['full']) {
+			if (full_update) {
+				console.log('Received full update');
 				tokens = [];
 			}
 			
@@ -474,6 +471,7 @@ function updateTokens() {
 			// reset changes
 			change_cache = [];
 			
+			full_update = false;
 		}
 	});
 }
@@ -558,6 +556,8 @@ function login(url, name) {
 				
 			} else {
 				// hide login screen
+				$('#drophint').fadeIn(1000, 0.0);
+				
 				$('#login').fadeOut(1000, 0.0, function() {
 					$('#login').hide();
 					
@@ -668,13 +668,17 @@ function mouseDrag(event) {
 			
 		} else if (drag_action == 'rotate') {
 			var delta = -10.0;
-			if (dx == last_scale) {
+			var rot_val = dx;
+			if (Math.abs(dy) > Math.abs(dx)) {
+				rot_val = dy;
+			}
+			if (rot_val == last_scale) {
 				delta = 0.0;
 			}
-			if (dx < last_scale) {
+			if (rot_val < last_scale) {
 				delta = -delta;
 			}
-			last_scale = dx;
+			last_scale = rot_val;
 			
 			// rotate all selected tokens
 			$.each(select_ids, function(index, id) {
@@ -694,42 +698,6 @@ function mouseDrag(event) {
 	}
 	
 	updateTokenbar();
-	
-	/*
-	$.each(select_ids, function(index, id) {
-		var token = tokens[id];
-		if (token.locked) {
-			return;
-		}
-
-		if (event.shiftKey) {
-			// handle scaling
-			token.size = token.size - 5 * event.deltaY;
-			if (token.size > min_token_size * 5) {
-				token.size = min_token_size * 5;
-			}
-			if (token.size < min_token_size) {
-				token.size = min_token_size;
-			}
-			
-			// mark token as changed
-			if (!change_cache.includes(id)) {
-				change_cache.push(id);
-			}
-			
-		} else {
-			// handle rotation
-			token.rotate = token.rotate - 5 * event.deltaY;
-			if (token.rotate >= 360.0 || token.rotate <= -360.0) {
-				token.rotate = 0.0;
-			}
-			
-			// mark token as changed
-			if (!change_cache.includes(id)) {
-				change_cache.push(id);
-			}
-		}
-	});*/
 }
 
 function uploadDrop(event) {
@@ -749,22 +717,13 @@ function uploadDrop(event) {
 		cache: false,
 		processData: false,
 		success: function(response) {
-			// reset upload queue
+			// reset uploadqueue
 			$('#uploadqueue').val("");
 		}
 	});
 }
 
 function showTokenbar(token_id) {
-	/*
-	if (mouse_over_id == token_id) {
-		$('#tokenbar').css('visibility', 'visible');
-	} else {
-		$('#tokenbar').css('visibility', 'hidden');
-		setTimeout("showTokenbar(" + mouse_over_id + ")", 500.0);
-	}
-	*/
-	
 	if (select_ids.includes(token_id)) {
 		$('#tokenbar').css('visibility', 'visible');
 	} else {
@@ -813,8 +772,8 @@ function updateTokenbar() {
 		$.each(token_icons, function(index, name) {
 			// calculate position based on angle
 			var degree = 360.0 / token_icons.length;
-			var s = Math.sin(index * degree * 3.14 / 180);
-			var c = Math.cos(index * degree * 3.14 / 180);
+			var s = Math.sin((-90.0 + index * degree) * 3.14 / 180);
+			var c = Math.cos((-90.0 + index * degree) * 3.14 / 180);
 			
 			// place icon
 			$('#token' + name).css('left', size * c * 0.8 + 'px');
@@ -841,9 +800,6 @@ function updateTokenbar() {
 }
 
 // ----------------------------------------------------------------------------
-
-var last_mouse_x = null; // previous mouse position
-var last_mouse_y = null; // see last_mousee_x
 
 var drag_action = ''; // used to identify dragging for resize or rotate
 
@@ -932,31 +888,21 @@ function tokenMove(event) {
 	if (grabbed && select_ids.length > 0) {
 		$('#battlemap').css('cursor', 'grabbing');
 		
-		// calculate relative direction
-		let dx = mouse_x - last_mouse_x;
-		let dy = mouse_y - last_mouse_y;
-	
-		$.each(select_ids, function(index, id) {
-			var token = tokens[id];
-			if (token == null || token.locked) {
-				return;
-			}
-			
-			// update position
-			token.posx += dx;
-			token.posy += dy;
-			
-			// mark tokens as changed
-			if (!change_cache.includes(id)) {
-				change_cache.push(id);
-			}
-		});
+		var token = tokens[select_ids[0]];
+		if (token == null || token.locked) {
+			return;
+		}
+		
+		token.posx = mouse_x;
+		token.posy = mouse_y;
+		
+		// mark tokens as changed
+		if (!change_cache.includes(token.id)) {
+			change_cache.push(token.id);
+		}
 	}
 	
 	updateTokenbar();
-
-	last_mouse_x = mouse_x;
-	last_mouse_y = mouse_y;
 }
 
 /// Event handle for rotation via mouse wheel
@@ -997,7 +943,7 @@ function tokenShortcut(event) {
 		} else if (event.keyCode == 86) { // CTRL+V
 			if (copy_token > 0) {
 				$.post('/' + gm_name + '/' + game_url + '/clone/' + copy_token + '/' + parseInt(mouse_x) + '/' + parseInt(mouse_y));
-				timeid = 0; // force full refresh next time
+				full_update = true; // force full refresh next time
 			}
 		}
 	} else {
@@ -1006,7 +952,7 @@ function tokenShortcut(event) {
 				copy_token = 0;
 			}
 			$.post('/' + gm_name + '/' + game_url + '/delete/' + select_ids[0]);
-				timeid = 0; // force full refresh next time
+				full_update = true; // force full refresh next time
 		}
 	}
 }
@@ -1046,54 +992,11 @@ function tokenLock() {
 /// Event handle for resize a token
 function tokenResize() {
 	drag_action = 'resize';
-	
-	/*
-	if (select_ids.length > 0) {
-		// handle first token only
-		var token = tokens[select_ids[0]];
-		
-		if (token.locked) {
-			// ignore if locked
-			console.log('cannot stretch locked token');
-			return;
-		}
-		
-		// stretch token to entire canvas (on deepest z-order)
-		var canvas = $('#battlemap');
-		token.size = -1;
-		token.locked = true;
-		token.zorder = min_z;
-		min_z -= 1;
-		
-		// client-side prediction for position
-		token.posx = canvas[0].width / 2;
-		token.posy = canvas[0].height / 2;
-			
-		// mark token as changed
-		if (!change_cache.includes(token.id)) {
-			change_cache.push(token.id);
-		}
-		
-		// reset selection
-		select_ids = [];
-	}
-	*/
 }
 
 /// Event handle for rotating a token
 function tokenRotate() {
 	drag_action = 'rotate'; 
-	
-	/*
-	$.each(select_ids, function(index, id) {
-		if (token.locked) {
-			// ignore locked token
-			return;
-		}
-		
-		console.log(event.movementX, event.movementY);
-	});   
-	*/      
 }
 
 /// Event handle for quitting rotation/resize dragging
@@ -1164,22 +1067,32 @@ function copyUrl(server, game_url) {
 
 function openDropdown(force=false) {
 	var scenes = $('#preview');
+	var hint   = $('#drophint');
 	if (force || !dropdown) {
 		scenes.animate({
 			top: "+=100"
 		}, 500);
+		hint.animate({
+			top: "+=100"
+		}, 500);
 	}
 	dropdown = true;
+	hint.fadeOut(500, 0.0);
 }
 
 function closeDropdown(force=false) {
-	var scenes = $('#preview');
+	var scenes = $('#preview'); 
+	var hint   = $('#drophint');
 	if (force || dropdown) {
 		scenes.animate({
+			top: "-=100"
+		}, 500); 
+		hint.animate({
 			top: "-=100"
 		}, 500);
 	}
 	dropdown = false;
+	hint.fadeIn(500, 0.0);
 }
 
 function addScene() {
@@ -1205,7 +1118,7 @@ function cloneScene(scene_id) {
 	$.post(
 		url='/vtt/clone-scene/' + game_url + '/' + scene_id,
 		success=function(data) { 
-			$('#preview')[0].innerHTML = data; 
+			$('#preview')[0].innerHTML = data;
 			updateGame();
 		}
 	);

@@ -230,7 +230,6 @@ def activate_scene(url, scene_id):
 		# adjust active scene
 		game.active = remain.id
 	
-	
 	return dict(game=game)
 	
 @post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm]) 
@@ -406,10 +405,17 @@ def post_player_update(gmname, url):
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
 	
-	now = int(time.time())
+	# consider time and full updates
+	now = time.time()                
+	timeid = request.POST.get('timeid')
+	timeid = float(timeid) if timeid is not None else 0.0
+	full_update = bool(request.POST.get('full_update'))
+	scene_id = request.POST.get('scene_id')
+	if scene_id is None or int(request.POST.get('scene_id')) != scene.id:
+		# scene has changed
+		full_update = True
 	
 	# fetch token updates from client
-	timeid   = float(request.POST.get('timeid'))
 	changes  = json.loads(request.POST.get('changes'))
 	if game_url not in engine.selected:
 		engine.selected[game_url] = dict()
@@ -431,7 +437,7 @@ def post_player_update(gmname, url):
 			
 			# update token
 			token.update(
-				timeid=int(timeid),
+				timeid=timeid,
 				pos=(int(data['posx']), int(data['posy'])),
 				zorder=data['zorder'],
 				size=data['size'],
@@ -444,12 +450,16 @@ def post_player_update(gmname, url):
 	tokens = list()
 	for t in scene.tokens.select(lambda t: t.scene == scene):
 		# consider token if it was updated after given timeid
-		if t.timeid >= timeid:
+		if t.timeid >= timeid or full_update:
 			tokens.append(t.to_dict())
 	
-	# query rolls (within last 180 seconds)
+	# query rolls since last update (or last 10s)
 	rolls = list()
-	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 180).order_by(lambda r: -r.timeid)[:13]:
+	roll_timeid = timeid
+	if roll_timeid == 0:
+		roll_timeid = now - 10
+	#for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 10).order_by(lambda r: r.timeid)[:13]:
+	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= roll_timeid).order_by(lambda r: r.timeid):
 		# query color by player
 		color = '#000000'
 		if game_url in engine.colors and r.player in engine.colors[game_url]:
@@ -460,7 +470,8 @@ def post_player_update(gmname, url):
 			'color'  : color,
 			'sides'  : r.sides,
 			'result' : r.result,
-			'time'   : r.timeid
+			'id'     : r.id,
+			'timeid' : r.timeid
 		})
 	
 	# query players alive
@@ -475,11 +486,11 @@ def post_player_update(gmname, url):
 	data = {
 		'active'   : game.active,
 		'timeid'   : time.time(),
-		'full'     : timeid == 0,
 		'tokens'   : tokens,
 		'rolls'    : rolls,
 		'players'  : playerlist,
-		'selected' : engine.selected[game_url]
+		'selected' : engine.selected[game_url],
+		'scene_id' : scene.id
 	}
 	return json.dumps(data)
 
@@ -489,14 +500,14 @@ def post_roll_dice(gmname, url, sides):
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
-	scene.timeid = int(time.time())
+	scene.timeid = time.time()
 	
 	# load player name from cookie
 	playername = request.get_cookie('playername')
 	
 	# add player roll
 	result = random.randrange(1, sides+1)
-	db.Roll(game=game, player=playername, sides=sides, result=result, timeid=int(time.time()))
+	db.Roll(game=game, player=playername, sides=sides, result=result, timeid=time.time())
 
 @post('/<gmname>/<url>/upload/<posx:int>/<posy:int>')
 def post_image_upload(gmname, url, posx, posy):
@@ -504,7 +515,7 @@ def post_image_upload(gmname, url, posx, posy):
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
-	scene.timeid = int(time.time())
+	scene.timeid = time.time()
 	
 	# upload all files to the current game
 	# and create a token each
@@ -568,13 +579,13 @@ def ajax_post_clone(gmname, url, token_id, x, y):
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
 	# update position
-	scene.timeid = int(time.time())
+	scene.timeid = time.time()
 	# load requested token
 	token = db.Token.select(lambda t: t.id == token_id).first()
 	# clone token
 	db.Token(scene=token.scene, url=token.url, posx=x, posy=y,
 		zorder=token.zorder, size=token.size, rotate=token.rotate,
-		flipx=token.flipx, timeid=int(time.time()))
+		flipx=token.flipx, timeid=time.time())
 
 @post('/<gmname>/<url>/delete/<token_id:int>')
 def ajax_post_delete(gmname, url, token_id):

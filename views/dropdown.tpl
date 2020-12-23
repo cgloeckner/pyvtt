@@ -10,9 +10,9 @@
 	%if game.active == s.id:
 		%css = "active"
 	%end
-		<div>
-			<img class="{{css}}" src="{{url}}" onClick="activateScene({{s.id}})" />
-			<img class="icon" src="/static/copy.png" onClick="cloneScene({{s.id}});" />
-			<img class="icon" src="/static/delete.png" onClick="deleteScene({{s.id}});" />
-		</div>
-%end
+	<div>
+		<img class="{{css}}" src="{{url}}" onClick="activateScene({{s.id}})" />
+		<img class="icon" src="/static/copy.png" onClick="cloneScene({{s.id}});" />
+		<img class="icon" src="/static/delete.png" onClick="deleteScene({{s.id}});" />
+	</div>
+%end 

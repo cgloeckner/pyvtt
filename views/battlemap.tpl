@@ -10,6 +10,7 @@
 		<div id="preview">
 	%include("dropdown")
 		</div>
+		<img id="drophint" src="/static/bottom.png" />
 	</div>
 %end
 
