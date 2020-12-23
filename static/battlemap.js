@@ -76,7 +76,6 @@ var tokens       = []; // holds all tokens, updated by the server
 var change_cache = []; // holds ids of all client-changed tokens
 
 var player_selections = []; // buffer that contains selected tokens and corresponding player colors
-var is_gm = false; // whether client is the GM
 var allow_multiselect = false; // whether client is allowed to select multiple tokens
 
 var culling = []; // holds tokens for culling
@@ -502,7 +501,7 @@ function updateGame() {
 }
 
 /// Handles login and triggers the game
-function login(url, gm, name, multiselect) {
+function login(url, name) {
 	var playername  = $('#playername').val();
 	var playercolor = $('#playercolor').val();
 	
@@ -534,14 +533,14 @@ function login(url, gm, name, multiselect) {
 				});
 				
 				// start game
-				start(url, gm, name, multiselect);
+				start(url, name);
 			}
 		}
 	});
 }
 
 /// Sets up the game and triggers the update loop
-function start(url, gm, name, multiselect) {
+function start(url, name) {
 	// disable window context menu for token right click
 	document.addEventListener('contextmenu', event => {
 	  event.preventDefault();
@@ -565,9 +564,7 @@ function start(url, gm, name, multiselect) {
 	
 	// setup game
 	game_url = url;
-	is_gm    = gm == 'True';
 	gm_name = name;
-	allow_multiselect = multiselect == 'True';
 	
 	// notify game about this player
 	navigator.sendBeacon('/' + gm_name + '/' + game_url + '/join');
@@ -839,19 +836,12 @@ function tokenGrab(event) {
 		// Left Click: select token
 		var token = selectToken(mouse_x, mouse_y);
 		
-		if (token != null && (!token.locked || is_gm)) {
-			if (allow_multiselect) {
-				// Add to selection
-				if (!select_ids.includes(token.id)) {
-					select_ids.push(token.id);
-				}
-			} else {
-				// Only select this one
-				select_ids = [token.id];
-			}
+		if (token != null) {
+			// select only this token
+			select_ids = [token.id];
+			grabbed    = true;
 			
-			grabbed = true;
-			
+			// TODO: test if token is already selected --> do not reselect (group movement!!!)
 		} else {
 			// Clear selection
 			select_ids = [];
@@ -888,8 +878,12 @@ function tokenMove(event) {
 	
 	// move selection
 	var token = selectToken(mouse_x, mouse_y);
-	if (token != null && (is_gm || !token.locked)) {
-		$('#battlemap').css('cursor', 'grab');
+	if (token != null) {
+		if (!token.locked) {
+			$('#battlemap').css('cursor', 'grab');
+		} else {
+			$('#battlemap').css('cursor', 'not-allowed');
+		}
 	} else {
 		$('#battlemap').css('cursor', 'default');
 	}

@@ -10,7 +10,7 @@
 			<p>PLAYER COLOR</p>
 			<input type="color" name="playercolor" id="playercolor" value="{{playercolor}}">
 			
-			<p><input type="button" value="JOIN" onClick="login('{{game.url}}', '{{is_gm}}', '{{game.admin.name}}', '{{game.multiselect}}')"; /></p>
+			<p><input type="button" value="JOIN" onClick="login('{{game.url}}', '{{game.admin.name}}')"; /></p>
 		</div> 
 		<hr />
 	</div>  

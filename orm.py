@@ -252,14 +252,6 @@ class Game(db.Entity):
 	active = Optional(int)
 	rolls  = Set(Roll)
 	admin  = Required("GM", reverse="games")
-	# GM options
-	d4     = Optional(bool, default=True)
-	d6     = Optional(bool, default=True)
-	d8     = Optional(bool, default=True)
-	d10    = Optional(bool, default=True)
-	d12    = Optional(bool, default=True)
-	d20    = Optional(bool, default=True)
-	multiselect = Optional(bool, default=False)
 	
 	def getUrl(self):
 		return '/{0}/{1}'.format(self.admin.name, self.url)

@@ -142,35 +142,6 @@ def post_import_game():
 	   
 	return result
 
-@get('/vtt/modify-game/<url>', apply=[asGm])
-@view('settings')
-def modify_game(url):
-	gm = db.GM.loadFromSession(request)
-	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
-	
-	return dict(gm=gm, game=game)
-
-@post('/vtt/modify-game/<url>', apply=[asGm])
-def post_modify_game(url):
-	gm = db.GM.loadFromSession(request)
-	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
-	
-	game.d4  = request.forms.get('d4') == 'on'
-	game.d6  = request.forms.get('d6')  == 'on'
-	game.d8  = request.forms.get('d8')  == 'on'
-	game.d10 = request.forms.get('d10') == 'on'
-	game.d12 = request.forms.get('d12') == 'on'
-	game.d20 = request.forms.get('d20') == 'on'
-	
-	game.multiselect = request.forms.get('multiselect') == 'on'
-	
-	db.commit()
-	redirect('/')
-
 @get('/vtt/export-game/<url>', apply=[asGm])
 def export_game(url):
 	gm = db.GM.loadFromSession(request)

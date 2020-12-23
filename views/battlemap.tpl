@@ -32,23 +32,8 @@
 
 	<div class="mapfooter" id="mapfooter">
 		<div class="dice">
-%if game.d20:
-			<img src="/static/d20.png" id="d20" title="Roll 1D20" draggable="false" onClick="rollDice(20);" />
-%end
-%if game.d12:
-			<img src="/static/d12.png" id="d12" title="Roll 1D12" draggable="false" onClick="rollDice(12);" />
-%end
-%if game.d10:
-			<img src="/static/d10.png" id="d10" title="Roll 1D10" draggable="false" onClick="rollDice(10);" />
-%end
-%if game.d8:
-			<img src="/static/d8.png" id="d8" title="Roll 1D8" draggable="false" onClick="rollDice(8);" />
-%end
-%if game.d6:
-			<img src="/static/d6.png" id="d6" title="Roll 1D6" draggable="false" onClick="rollDice(6);" />
-%end
-%if game.d4:
-			<img src="/static/d4.png" id="d4" title="Roll 1D4" draggable="false" onClick="rollDice(4);" />
+%for d in [20, 12, 10, 8, 6, 4]:
+			<img src="/static/d{{d}}.png" id="d{{d}}" title="Roll 1D{{d}}" draggable="false" onClick="rollDice({{d}});" />
 %end
 		</div>					
 						
