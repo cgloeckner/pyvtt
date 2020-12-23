@@ -509,7 +509,8 @@ def range_query_token(gmname, url, x, y, w, h):
 	# query all tokens in range
 	token_ids = list()
 	for t in db.Token.select(lambda t: t.scene == scene and x <= t.posx and t.posx <= x + w and y <= t.posy and t.posy <= y + h):
-		token_ids.append(t.id)
+		if t.size != -1:
+			token_ids.append(t.id)
 	
 	return json.dumps(token_ids)
 

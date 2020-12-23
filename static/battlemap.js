@@ -893,6 +893,8 @@ function tokenRelease() {
 		grabbed = false;
 	}
 	
+	$('#battlemap').css('cursor', 'default');
+	
 	if (select_from_x != null) {
 		// finish selection box
 		var select_width  = mouse_x - select_from_x;
@@ -969,6 +971,17 @@ function tokenMove(event) {
 					}
 				}
 			});
+		}
+	} else {
+		var token = selectToken(mouse_x, mouse_y);
+		 
+		// transform cursor
+		if (token == null) {
+			$('#battlemap').css('cursor', 'default');
+		} else if (token.locked) {
+			$('#battlemap').css('cursor', 'not-allowed');
+		} else {                                         
+			$('#battlemap').css('cursor', 'grab');
 		}
 	}
 	
