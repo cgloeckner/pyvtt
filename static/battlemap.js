@@ -460,9 +460,7 @@ function updateTokens() {
 			}
 			
 			// clear all local tokens if a full update was received
-			if (full_update) {
-				console.log('Received full update');
-				
+			if (full_update) {				
 				if (!switch_scene) {
 					// search deleted tokens
 					var all_ids = [];
@@ -677,27 +675,22 @@ function disconnect() {
 	navigator.sendBeacon('/' + gm_name + '/' + game_url + '/disconnect');
 }
 
-var last_scale = 1.0;
-
 function mouseDrag(event) {
 	event.preventDefault();
 	pickCanvasPos(event);
 	
 	if (primary_id != 0) {
 		var first_token = tokens[primary_id] 
-		var dx = first_token.posx - mouse_x;
-		var dy = first_token.posy - mouse_y;
-		var scale = Math.sqrt(dx*dx + dy*dy);
 		
 		if (drag_action == 'resize') {
-			var ratio = 1.0;
-			if (scale > last_scale) {
-				ratio = 1.1;
-			}
-			if (scale < last_scale) {
-				ratio = 0.95;
-			}
-			last_scale = scale;
+			// calculate distance between mouse and token   
+			var dx = first_token.posx - mouse_x;
+			var dy = first_token.posy - mouse_y;
+			var scale = Math.sqrt(dx*dx + dy*dy);
+			var radius = first_token.size * 0.8;
+			
+			// normalize distance using distance mouse/icon
+			ratio = scale / radius;
 			
 			// resize all selected tokens
 			$.each(select_ids, function(index, id) {
@@ -721,18 +714,25 @@ function mouseDrag(event) {
 			});
 			
 		} else if (drag_action == 'rotate') {
-			var delta = -10.0;
-			var rot_val = dx;
-			if (Math.abs(dy) > Math.abs(dx)) {
-				rot_val = dy;
+			// calculate vectors between origin/icon and origni/mouse
+			// note: assuming the rotation icon is at top
+			var icon_box = $('#tokenRotate')[0].getBoundingClientRect();
+			var canvas_box = $('#battlemap')[0].getBoundingClientRect();
+			icon_dx  = 0
+			icon_dy  = -first_token.size * 0.8;
+			mouse_dx = mouse_x - first_token.posx;
+			mouse_dy = mouse_y - first_token.posy;
+			
+			// calculate rotation angle
+			dotp       = icon_dx * mouse_dx + icon_dy * mouse_dy;
+			norm_icon  = first_token.size * 0.8;
+			norm_mouse = Math.sqrt(mouse_dx * mouse_dx + mouse_dy * mouse_dy);
+			radians    = Math.acos(dotp / (norm_icon * norm_mouse));
+			angle      = radians * 180 / 3.14;
+			
+			if (mouse_dx < 0) {
+				angle *= -1;
 			}
-			if (rot_val == last_scale) {
-				delta = 0.0;
-			}
-			if (rot_val < last_scale) {
-				delta = -delta;
-			}
-			last_scale = rot_val;
 			
 			// rotate all selected tokens
 			$.each(select_ids, function(index, id) {
@@ -741,7 +741,7 @@ function mouseDrag(event) {
 					return;
 				}
 				
-				token.rotate += delta;
+				token.rotate = angle;
 				
 				// mark token as changed
 				if (!change_cache.includes(id)) {
@@ -916,6 +916,11 @@ function tokenGrab(event) {
 		// Right click: reset token scale & rotation
 		$.each(select_ids, function(index, id) {
 			var token = tokens[id];
+			
+			if (token.locked) {
+				// ignore if locked
+				return;
+			}
 			
 			token.rotate = 0;
 			token.size   = Math.round(min_token_size * 1.5);
@@ -1141,7 +1146,6 @@ function tokenFlipX() {
 		
 		if (token.locked) {
 			// ignore if locked
-			console.log('cannot flip locked token');
 			return; 
 		}
 		token.flipx = !token.flipx;
@@ -1155,9 +1159,15 @@ function tokenFlipX() {
 
 /// Event handle for (un)locking a token
 function tokenLock() {
+	// determine primary lock state
+	var primary_lock = false;
+	if (primary_id > 0) {
+		primary_lock = tokens[primary_id].locked
+	}
+	
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
-		token.locked = !token.locked;
+		token.locked = !primary_lock;
 		
 		// mark token as changed
 		if (!change_cache.includes(id)) {
@@ -1188,7 +1198,6 @@ function tokenBottom() {
 		
 		if (token.locked) {
 			// ignore if locked
-			console.log('cannot move locked token to bottom');
 			return;
 		}
 		// move beneath lowest known z-order
@@ -1213,7 +1222,6 @@ function tokenTop() {
 		
 		if (token.locked) {
 			// ignore if locked
-			console.log('cannot move locked token to top');
 			return;
 		}
 		// move above highest known z-order
