@@ -591,7 +591,7 @@ class Game(db.Entity):
 					t = db.Token(
 						scene=scene, url=game.getImageUrl(token_data['url']),
 						posx=token_data['posx'], posy=token_data['posy'],
-						zorder=token_data['zorder'], size=token_data['size'], 	
+						zorder=token_data['zorder'], size=token_data['size'],
 						rotate=token_data['rotate'], flipx=token_data['flipx'],
 						locked=token_data['locked']
 					)

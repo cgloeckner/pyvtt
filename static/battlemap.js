@@ -782,10 +782,9 @@ function updateTokenbar() {
 		
 		// position tokenbar centered to token
 		var bx = canvas[0].getBoundingClientRect();
-		var canvas = $('#battlemap');
 		
-		$('#tokenbar').css('left', bx.left + token.posx * canvas_scale - 12 + 'px');
-		$('#tokenbar').css('top',  bx.top  + token.posy * canvas_scale - 12 + 'px');
+		$('#tokenbar').css('left', bx.left + 'px');
+		$('#tokenbar').css('top',  bx.top  + 'px');
 		$('#tokenbar').css('visibility', '');
 		
 		$.each(token_icons, function(index, name) {
@@ -794,9 +793,16 @@ function updateTokenbar() {
 			var s = Math.sin((-90.0 + index * degree) * 3.14 / 180);
 			var c = Math.cos((-90.0 + index * degree) * 3.14 / 180);
 			
+			var x = size * c * 0.8 + token.posx * canvas_scale - 12;
+			var y = size * s * 0.8 + token.posy * canvas_scale - 12;
+			
+			// force position to be on the screen
+			x = Math.max(0, Math.min(canvas.width(), x));
+			y = Math.max(0, Math.min(canvas.height(), y));
+			
 			// place icon
-			$('#token' + name).css('left', size * c * 0.8 + 'px');
-			$('#token' + name).css('top',  size * s * 0.8 + 'px');
+			$('#token' + name).css('left', x + 'px');
+			$('#token' + name).css('top',  y + 'px');
 		});
 		
 		// handle locked mode
@@ -963,7 +969,6 @@ function tokenMove(event) {
 					// move relative to primary token
 					t.posx = mouse_x + dx;
 					t.posy = mouse_y + dy;
-					console.log("primary#",  primary_id, "#", t.id, "\tdx", dx, dy, "\tto", t.posx, t.posy);
 					
 					// mark tokens as changed
 					if (!change_cache.includes(t.id)) {

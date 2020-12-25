@@ -20,7 +20,7 @@ db.generate_mapping(create_tables=True)
 # setup db_session to all routes
 app = default_app()
 app.catchall = not engine.debug
-app.install(db_session)          
+app.install(db_session)
 
 # setup engine with cli args and db session
 engine.setup(sys.argv) 
@@ -53,6 +53,7 @@ def post_gm_login():
 	if name in engine.gm_blacklist or len(name) < 3:
 		return {'gmname': ''}
 	
+	ip  = request.environ.get('REMOTE_ADDR')
 	sid = db.GM.genSession()
 	
 	if len(db.GM.select(lambda g: g.name == name)) > 0:
@@ -60,7 +61,7 @@ def post_gm_login():
 		return {'gmname': ''}
 	
 	# create new GM
-	gm = db.GM(name=name, sid=sid)
+	gm = db.GM(name=name, ip=ip, sid=sid)
 	gm.postSetup()
 	
 	response.set_cookie('session', name, path='/', expires=gm.expire)

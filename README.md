@@ -12,6 +12,8 @@ If you are hosting using your public IP, consider setting starting the server wi
 
 # Running with nginx through unix socket
 
+**NOTE**: `REMOTE_ADDR` is currently broken PyVTT is ran via unix socket. I need to fix my nginx-configuration first.
+
 Customize your nginx configuration and run it:
 ```
 nginx -c /path/to/vtt-nginx.conf
