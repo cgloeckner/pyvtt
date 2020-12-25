@@ -382,13 +382,13 @@ var scene_id = 0;
 var mouse_x = 0; // relative to canvas
 var mouse_y = 0;
 
-var copy_token = 0; // determines copy-selected token (CTRL+C)
-var select_ids = []; // contains selected tokens' ids
-var primary_id = 0; // used to specify "leader" in group (for relative movement)
-var mouse_over_id = 0; // determines which token would be selected
-var grabbed = 0; // determines whether grabbed or not
-var update_tick = 0; // delays updates to not every loop tick
-var full_tick = 0; // counts updates until the next full update is requested
+var copy_tokens   = [];    // determines copy-selected token (CTRL+C)
+var select_ids    = [];    // contains selected tokens' ids
+var primary_id    = 0;     // used to specify "leader" in group (for relative movement)
+var mouse_over_id = 0;     // determines which token would be selected
+var grabbed       = false; // determines whether grabbed or not
+var update_tick   = 0;     // delays updates to not every loop tick
+var full_tick     = 0;     // counts updates until the next full update is requested
 
 var select_from_x = null;
 var select_from_y = null;
@@ -1047,24 +1047,78 @@ function rollDice(sides) {
 	setTimeout(function() {	$('#d' + sides).removeClass('shake'); }, 500);
 }
 
+/// Event handle to select all tokens
+function selectAllTokens() {
+	event.preventDefault();
+	
+	select_ids = [];
+	$.each(tokens, function(index, token) {
+		if (token != null && token.size != -1) {
+			select_ids.push(token.id);
+		}
+	});
+}
+
+/// Event handle to copy selected tokens
+function copySelectedTokens() { 
+	event.preventDefault();
+	
+	copy_tokens = select_ids;
+}
+
+/// Event handle to paste copied tokens
+function pasteCopiedTokens() {
+	event.preventDefault();
+	
+	if (copy_tokens.length > 0) {
+		$.ajax({                                                                      
+			type: 'POST',
+			url: '/' + gm_name + '/' + game_url + '/clone/' + mouse_x + '/' + mouse_y,
+			dataType: 'json',
+			data: {
+				'ids' : JSON.stringify(copy_tokens),
+			},
+			success: function(response) {
+			}
+		});
+		full_update = true; // force full refresh next time
+	}
+}
+
+/// Event handle to delete selected tokens
+function deleteSelectedTokens() { 
+	event.preventDefault();
+	
+	if (select_ids.length > 0) {
+		$.ajax({                                                                      
+			type: 'POST',
+			url: '/' + gm_name + '/' + game_url + '/delete',
+			dataType: 'json',
+			data: {
+				'ids' : JSON.stringify(select_ids),
+			},
+			success: function(response) {
+			}
+		});
+		full_update = true; // force full refresh next time
+	}
+}
+
 /// Event handle shortcuts on (first) selected token
 function tokenShortcut(event) {
 	if (event.ctrlKey) {
-		if (event.keyCode == 67) { // CTRL+C
-			copy_token = select_ids[0];
+		if (event.keyCode == 65) { // CTRL+A
+			selectAllTokens();
+			
+		} else if (event.keyCode == 67) { // CTRL+C
+			copySelectedTokens();
+			
 		} else if (event.keyCode == 86) { // CTRL+V
-			if (copy_token > 0) {
-				$.post('/' + gm_name + '/' + game_url + '/clone/' + copy_token + '/' + parseInt(mouse_x) + '/' + parseInt(mouse_y));
-				full_update = true; // force full refresh next time
-			}
+			pasteCopiedTokens();
 		}
 	} else {
 		if (event.keyCode == 46) { // DEL
-			if (select_ids[0] == copy_token) {
-				copy_token = 0;
-			}
-			$.post('/' + gm_name + '/' + game_url + '/delete/' + select_ids[0]);
-				full_update = true; // force full refresh next time
+			deleteSelectedTokens();
 		}
 	}
 }

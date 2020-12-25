@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil, zipfile, json
+import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil, zipfile, json, math
 
 import bottle
 
@@ -269,7 +269,25 @@ class Token(db.Entity):
 		if flipx != None:
 			self.flipx  = flipx
 			self.timeid = timeid
-
+	
+	@staticmethod
+	def getPosByDegree(origin, k, n):
+		""" Get Position in circle around origin of the k-th item of n. """
+		# determine degree and radius
+		degree = k * 360 / n
+		radius = 32 * n ** 0.5
+		if n == 1:
+			radius = 0
+		
+		# calculate position in unit circle
+		s = math.sin(degree * 3.14 / 180)
+		c = math.cos(degree * 3.14 / 180) 
+		
+		# calculate actual position
+		x = int(origin[0] - radius * s)
+		y = int(origin[1] + radius * c)
+		
+		return (x, y)
 
 # -----------------------------------------------------------------------------
 
