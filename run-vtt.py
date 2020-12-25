@@ -268,7 +268,11 @@ def duplicate_scene(url, scene_id):
 
 @get('/static/<fname>')
 def static_files(fname):
-	return static_file(fname, root='./static')
+	root = engine.data_dir / 'static'
+	if not os.path.isdir(root) or not os.path.exists(root / fname):
+		root = './static'
+	
+	return static_file(fname, root=root)
 
 @get('/token/<gmname>/<url>/<fname>')
 def static_token(gmname, url, fname):

@@ -72,9 +72,10 @@ class Engine(object):
 		
 		# blacklist for GM names
 		self.gm_blacklist = ['static', 'token', 'vtt']
-
-		self.local_gm = False
-		self.title    = 'PyVTT'
+		
+		self.local_gm    = False
+		self.title       = 'PyVTT'
+		self.imprint_url = ''
 
 		# game cache
 		self.players = dict()
@@ -89,10 +90,6 @@ class Engine(object):
 			if line.startswith('--port'):
 				# use custom port
 				self.port = int(line.split('=')[1])
-			
-			if line.startswith('--title'):
-				# use custom title
-				self.title = line.split('=')[1]
 			
 			if line == '--localhost':
 				# GM is on localhost
@@ -113,6 +110,25 @@ class Engine(object):
 			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', level=logging.DEBUG)
 		else:
 			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', level=logging.INFO)
+		
+		# handle settings
+		settings_path = self.data_dir / 'settings.json'
+		if not os.path.exists(settings_path):
+			# create default settings
+			settings = {
+				'title':       self.title,
+				'imprint_url': self.imprint_url
+			}
+			with open(settings_path, 'w') as h:
+				json.dump(settings, h, indent=4)
+				logging.info('Created default settings file')
+		else:
+			# load settings
+			with open(settings_path, 'r') as h:
+				settings = json.load(h)
+				self.title       = settings['title']
+				self.imprint_url = settings['imprint_url']
+			logging.info('Settings loaded')
 		
 		if self.local_gm:
 			# query public ip

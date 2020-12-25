@@ -12,6 +12,19 @@ body {
 	overflow: hidden;
 }
 
+span.imprint {   
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	z-index: 100;
+	
+	color: white;
+}
+
+span.imprint a {
+	color: white;
+}
+
 div.form {
 	margin-left: auto;
 	margin-right: auto;
@@ -444,7 +457,7 @@ div#login {
 	
 	width: 100%;
 	height: 100%;
-	
+													
 	margin: 0px;
 	padding: 0px;
 	
