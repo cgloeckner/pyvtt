@@ -585,7 +585,9 @@ function updateGame() {
 }
 
 /// Handles login and triggers the game
-function login(url, name) {
+function login(event, url, name) {
+	event.preventDefault();
+	
 	var playername  = $('#playername').val();
 	var playercolor = $('#playercolor').val();
 	

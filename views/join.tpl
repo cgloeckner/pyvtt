@@ -9,10 +9,12 @@
 <img class="logo" src="/static/logo.png" />
 
 <div class="form">
-	<p>GM NAME</p>
-	<input type="text" id="gmname" />
-	
-	<p><input type="button" onClick="registerGm();" value="Start Campaign" /></p>
+	<form onsubmit="registerGm(event);">
+		<p>GM NAME</p>
+		<input type="text" id="gmname" />
+		
+		<p><input type="submit" value="Start Campaign" /></p>
+	</form>
 </div>
 
 

@@ -39,12 +39,12 @@ def asGm(callback):
 	return wrapper
 
 
-@get('/vtt/register')
-@view('register')
+@get('/vtt/join')
+@view('join')
 def gm_login():
 	return dict(engine=engine)
 
-@post('/vtt/register')
+@post('/vtt/join')
 def post_gm_login():
 	name = engine.applyWhitelist(request.forms.gmname)
 	if name is None:
@@ -75,7 +75,7 @@ def post_gm_login():
 def get_game_list():
 	gm = db.GM.loadFromSession(request)
 	if gm is None:
-		redirect('/vtt/register')
+		redirect('/vtt/join')
 	
 	server = ''
 	if engine.local_gm:
@@ -121,7 +121,7 @@ def view_import_game():
 	if gm is None:
 		# GM not found on the server
 		response.set_cookie('session', '', path='/', expires=0)
-		redirect('/vtt/register')
+		redirect('/vtt/join')
 	
 	# show import UI
 	return dict(engine=engine, gm=gm)

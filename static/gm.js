@@ -1,9 +1,11 @@
-function registerGm() {
+function registerGm(event) {
+	event.preventDefault();
+	
 	var gmname = $('#gmname').val();
 	
 	$.ajax({
 		type: 'POST',
-		url:  '/vtt/register',
+		url:  '/vtt/join',
 		dataType: 'json',
 		data: {
 			'gmname' : gmname
@@ -23,7 +25,9 @@ function registerGm() {
 	});
 }
 
-function createGame() {
+function createGame() {    
+	event.preventDefault();
+	
 	var url = $('#url').val();
 	
 	$.ajax({

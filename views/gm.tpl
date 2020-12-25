@@ -7,11 +7,12 @@
 <h1>GAMES by {{gm.name}}</h1>
 
 	<div class="form">
-		<p>ENTER GAME NAME</p>
-		<input type="text" id="url" value="" /><br />
-		<p><input type="button" onClick="createGame();" value="CREATE" /></p>
+		<form onsubmit="createGame(event);">
+			<p>ENTER GAME NAME</p>
+			<input type="text" id="url" value="" /><br />
+			<p><input type="submit" value="CREATE" /></p>
+		</form>
 	</div>
-	
 	
 	<div class="form dropzone">                                           
 		<p>DRAG HERE TO START</p>

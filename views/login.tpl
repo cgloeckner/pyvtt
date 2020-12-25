@@ -6,13 +6,15 @@
 		<img class="logo" src="/static/logo.png" />
 
 		<div class="form">
-			<p>PLAYER NAME</p>
-			<input type="text" name="playername" id="playername" value="{{playername}}" maxlength="18" />
-			
-			<p>PLAYER COLOR</p>
-			<input type="color" name="playercolor" id="playercolor" value="{{playercolor}}">
-			
-			<p><input type="button" value="JOIN" onClick="login('{{game.url}}', '{{game.admin.name}}')"; /></p>
+			<form onsubmit="login(event, '{{game.url}}', '{{game.admin.name}}');">
+				<p>PLAYER NAME</p>
+				<input type="text" name="playername" id="playername" value="{{playername}}" maxlength="18" />
+				
+				<p>PLAYER COLOR</p>
+				<input type="color" name="playercolor" id="playercolor" value="{{playercolor}}">
+				
+				<p><input type="submit" value="JOIN" /></p>
+			</form>
 		</div> 
 		<hr />
 	</div>  
