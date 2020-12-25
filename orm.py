@@ -4,7 +4,6 @@
 import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil, zipfile, json
 
 import bottle
-from bottle.ext.websocket import GeventWebSocketServer
 
 from pony.orm import *
 
@@ -41,9 +40,10 @@ class Engine(object):
 		self.locks     = dict()
 		
 		# webserver stuff
-		self.host  = '0.0.0.0'
-		self.port  = 8080
-		self.debug = False
+		self.host   = '0.0.0.0'
+		self.port   = 8080
+		self.debug  = False
+		self.socket = None
 		
 		# whitelist for game urls etc.
 		self.url_whitelist = []
@@ -97,6 +97,10 @@ class Engine(object):
 			if line == '--localhost':
 				# GM is on localhost
 				self.local_gm = True
+			
+			if line.startswith('--socket'):
+				# use unix socket
+				self.socket = line.split('=')[1]
 	
 		# setup listening ip
 		if self.debug:
@@ -130,14 +134,40 @@ class Engine(object):
 			self.cleanup()
 		
 	def run(self):
-		bottle.run(
-			host     = self.host,
-			port     = self.port,
-			reloader = self.debug,
-			debug    = self.debug,
-			quiet    = not self.debug,
-			server   = 'wsgiref' if self.debug else 'bjoern'
-		)
+		if self.socket is None:
+			# run via host and port
+			bottle.run(
+				host     = self.host,
+				port     = self.port,
+				reloader = self.debug,
+				debug    = self.debug,
+				quiet    = not self.debug,
+				server   = 'gevent'
+			)
+		else:
+			# run via unix socket
+			from gevent.pywsgi import WSGIServer
+			from gevent import socket
+			
+			if os.path.exists(self.socket):
+				os.remove(self.socket)
+			
+			listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+			listener.bind(self.socket)
+			listener.listen(1)
+			
+			server = WSGIServer(listener, bottle.default_app())
+			# TODO: use `log` and `error_log` to redirect logging in non-debug mode
+			if self.debug:
+				# mimic bottle startup if not quiet
+				print('Bottle {0} server starting up (using WSGIServer from gevent.pywsgi)...'.format(bottle.__version__))
+				print('Listening on unix:{0}'.format(self.socket))
+				print('Hit Ctrl-C to quit.')
+				print('')
+			try:
+				server.serve_forever()
+			except KeyboardInterrupt:
+				pass
 
 	def getIp(self):
 		if self.local_gm:
@@ -582,7 +612,7 @@ class Game(db.Entity):
 class GM(db.Entity):
 	id     = PrimaryKey(int, auto=True)
 	name   = Required(str, unique=True)
-	ip     = Required(str) # note: could be used twice (same internet connection, multiple users)
+	ip     = Required(str, default='127.0.0.1') # note: could be used twice (same internet connection, multiple users)
 	sid    = Required(str)
 	expire = Optional(int)
 	games  = Set("Game", cascade_delete=True, reverse="admin") # forward deletion to games

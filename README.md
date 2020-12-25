@@ -8,7 +8,19 @@ Start `run-vtt.py` on your machine (currently only Linux-based OS are supported,
 
 If you are hosting using your public IP, consider setting starting the server with `--localhost` and set up your games via `localhost`. Launching with `--localhost` will replace all `http://localhost` in the game-links by your public IP, so you can easily copy and paste those to your players. If you setup your games with your public IP, your game data can get unaccessable if your IP changes (because cookies are bound to the server name or in this case IP address).
 
-*Note:* Requires `bottle` (as HTTP server), `bjoern` (for async HTTP) and `pony` (as database ORM). Consider using `pip` or similar tools.
+*Note:* Requires `bottle` (as HTTP server), `gevent` (for async HTTP) and `pony` (as database ORM). Consider using `pip` or similar tools.
+
+# Running with nginx through unix socket
+
+Customize your nginx configuration and run it:
+```
+nginx -c /path/to/vtt-nginx.conf
+```
+
+Run PyVTT specifying the unix socket file
+```
+./run-vtt.py --socket=/tmp/pyvtt.sock
+```
 
 # GM Information
 Access your the via your Browser. There is no real login but every GM is identified with your GM-name (entered) and a session ID (generated and stored in a cookie). Once you clear your cookies, you lose access to your games. But wait ...
