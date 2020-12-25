@@ -13,8 +13,8 @@ function resizeCanvas() {
 	var h = w * 0.56;
 	
 	// handle too large height
-	if (h > window.innerHeight - 65) {
-		h = window.innerHeight - 65;
+	if (h > window.innerHeight - 45) {
+		h = window.innerHeight - 45;
 		w = h / 0.56;
 	}
 	

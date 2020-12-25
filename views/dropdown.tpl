@@ -12,7 +12,9 @@
 	%end
 	<div>
 		<img class="{{css}}" src="{{url}}" onClick="activateScene({{s.id}})" />
-		<img class="icon" src="/static/copy.png" onClick="cloneScene({{s.id}});" />
-		<img class="icon" src="/static/delete.png" onClick="deleteScene({{s.id}});" />
+		<div class="controls">
+			<img class="icon" src="/static/copy.png" onClick="cloneScene({{s.id}});" />
+			<img class="icon" src="/static/delete.png" onClick="deleteScene({{s.id}});" />
+		</div>
 	</div>
 %end 
