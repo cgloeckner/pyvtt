@@ -626,11 +626,4 @@ def error404(error):
 
 # --- setup stuff -------------------------------------------------------------
 
-app = default_app()
-
-if engine.debug:
-	run(host=engine.host, reloader=True, debug=True, port=engine.port)	
-else:
-	import bjoern
-	bjoern.run(app, engine.host, engine.port)
-
+run(host=engine.host, reloader=engine.debug, debug=engine.debug, port=engine.port, server='bjoern')
