@@ -88,6 +88,8 @@ var min_z = -1; // lowest known z-order
 var max_z =  1; // highest known z-order
 var min_token_size = 50;
 
+var background_set = false;
+
 /// Token constructor
 function Token(id, url) {
 	this.id = id;
@@ -219,6 +221,8 @@ function updateToken(data) {
 		var canvas = $('#battlemap');
 		tokens[data.id].posx = canvas[0].width  / 2 / canvas_scale;
 		tokens[data.id].posy = canvas[0].height / 2 / canvas_scale;
+		
+		background_set = true;
 	}
 }
 
@@ -477,9 +481,16 @@ function updateTokens() {
 			}
 			
 			// update tokens
+			background_set = false;
 			$.each(response['tokens'], function(index, token) {
 				updateToken(token);    
 			});
+			
+			if (background_set) {
+				$('#drag_hint').hide();
+			} else {
+				$('#drag_hint').show();
+			}
 			
 			updateTokenbar();
 			updateRolls(response['rolls']);

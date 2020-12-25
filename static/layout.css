@@ -480,7 +480,8 @@ div.battlemap {
 div.battlemap > div#drag_hint {
 	position: absolute;
 	top: 50%;
-	left: calc(50% - 50px);
+	left: 50%;
+	transform: translate(-50%, -50%);
 	
 	z-index: -10;
 	
