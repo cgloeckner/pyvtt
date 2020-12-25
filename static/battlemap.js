@@ -75,8 +75,10 @@ function getPixelData(token, x, y) {
 
 // --- token implementation ---------------------------------------------------
 
-var tokens       = []; // holds all tokens, updated by the server
-var change_cache = []; // holds ids of all client-changed tokens
+var tokens         = []; // holds all tokens, updated by the server
+var tokens_added   = []; // holds token id => opacity when recently added
+var tokens_removed = []; // holds token id => (token, opacity) when recently removed
+var change_cache   = []; // holds ids of all client-changed tokens
 
 var player_selections = []; // buffer that contains selected tokens and corresponding player colors
 var allow_multiselect = false; // whether client is allowed to select multiple tokens
@@ -235,9 +237,37 @@ function drawToken(token, color) {
 	sizes[0] *= canvas_scale;
 	sizes[1] *= canvas_scale;
 	
-	// draw image
+	// handle position and scale
 	context.save();
 	context.translate(token.posx * canvas_scale, token.posy * canvas_scale);
+	
+	// handle token spawn
+	if (tokens_added[token.id] != null) {
+		var value = tokens_added[token.id];
+		context.globalAlpha = value;
+		context.scale(5 - 4 * value, 5 - 4 * value);
+		value += 0.075;
+		if (value < 1.0) {
+			tokens_added[token.id] = value;
+		} else {
+			delete tokens_added[token.id];
+		}
+	}
+	
+	// handle token despawn
+	if (tokens_removed[token.id] != null) {
+		var value = tokens_removed[token.id][1];
+		context.globalAlpha = value;
+		context.scale(5 - 4 * value, 5 - 4 * value);
+		value -= 0.075;
+		if (value > 0.0) {
+			tokens_removed[token.id][1] = value;
+		} else {
+			delete tokens_removed[token.id];
+		}
+	}
+	
+	// handle fip, rotation
 	if (token.flipx) {
 		context.scale(-1, 1);
 		context.rotate(token.rotate * -3.14/180.0);
@@ -245,11 +275,13 @@ function drawToken(token, color) {
 		context.rotate(token.rotate * 3.14/180.0);
 	}
 	
+	// handle selection
 	if (color != null) {
 		context.shadowColor = color;
 		context.shadowBlur = 25;
 	}
-	
+		
+	// draw image
 	context.drawImage(images[token.url], -sizes[0] / 2, -sizes[1] / 2, sizes[0], sizes[1]);
 	
 	context.restore();
@@ -336,48 +368,7 @@ function updateRolls(rolls) {
 	$.each(rolls, function(index, roll) {
 		addRoll(roll['sides'], roll['result'], roll['color'], roll['id']);
 	});                      
-	
-	/*
-	// show rolls
-	var rolls_div = $('#rollbox')[0];
-	rolls_div.innerHTML = '';
-	$.each(rolls, function(index, roll) {
-		showRoll(roll['sides'], roll['result'], roll['player'], roll['color'], roll['time']);
-	});
-	*/
 }
-
-/*
-function updateRolls(rolls) {
-	// show rolls
-	$('#roll4')[0].innerHTML = '';
-	$('#roll6')[0].innerHTML = '';
-	$('#roll8')[0].innerHTML = '';
-	$('#roll10')[0].innerHTML = '';
-	$('#roll12')[0].innerHTML = '';
-	$('#roll20')[0].innerHTML = '';
-	$.each(rolls, function(index, roll) {
-		showRoll(roll['sides'], roll['result'], roll['color']);
-	});
-}
-
-function showRoll(sides, result, color) {
-	var raw = '<div class="roll';
-	if (result == sides) {
-		raw += ' max-roll';
-	} else if (result == 1) {
-		raw += ' min-roll';
-	}
-	raw += '" style="color: ' + color + ';">' + result + '</div>';
-
-	if (sides == 100) {
-		sides = 10;
-	}
-	$('#roll' + sides)[0].innerHTML += raw;
-	
-	return $('#roll' + sides)[0]; 
-}
-*/
 
 // --- game state implementation ----------------------------------------------
 
@@ -427,7 +418,7 @@ function updateTokens() {
 	
 	if (full_tick == 0) {
 		full_update = true;
-		full_tick = 5;
+		full_tick = 1;
 	} else {
 		full_tick -= 1;
 	}
@@ -445,22 +436,49 @@ function updateTokens() {
 			'scene_id'    : scene_id
 		},
 		success: function(response) {
+			var switch_scene = false;
+			
 			// update current timeid
-			timeid   = response['timeid'];
+			timeid = response['timeid'];
 			if (scene_id != response['scene_id']) {
 				scene_id = response['scene_id'];
 				full_update = true;
+				switch_scene = true;
+			}
+			   
+			if (!switch_scene) {        
+				// search added tokens
+				$.each(response['tokens'], function(index, token) {
+					if (!(token.id in tokens)) {
+						tokens_added[token.id] = 0.0;
+					}
+				});
 			}
 			
 			// clear all local tokens if a full update was received
 			if (full_update) {
 				console.log('Received full update');
+				
+				if (!switch_scene) {
+					// search deleted tokens
+					var all_ids = [];
+					$.each(response['tokens'], function(index, token) {
+						all_ids.push(token.id);
+					});
+					$.each(tokens, function(index, token) {
+						if (token != null && !(all_ids.includes(token.id))) {
+							// token got deleted
+							tokens_removed[token.id] = [token, 1.0];
+						}
+					});
+				}
+				
 				tokens = [];
 			}
 			
 			// update tokens
 			$.each(response['tokens'], function(index, token) {
-				updateToken(token);
+				updateToken(token);    
 			});
 			
 			updateTokenbar();
@@ -518,6 +536,12 @@ function drawScene() {
 			color = getCookie('playercolor');
 		}
 		drawToken(token, color);
+	});
+	// draw recently removed tokens (animated)
+	$.each(tokens_removed, function(index, token) {
+		if (tokens_removed[index] != null) {
+			drawToken(tokens_removed[index][0]);
+		}
 	});
 	
 	// reverse culling for top-to-bottom token searching
@@ -1053,7 +1077,7 @@ function tokenFlipX() {
 		if (token.locked) {
 			// ignore if locked
 			console.log('cannot flip locked token');
-			return;
+			return; 
 		}
 		token.flipx = !token.flipx;
 		
