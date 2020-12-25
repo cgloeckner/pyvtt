@@ -3,6 +3,9 @@
 
 import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil, zipfile, json
 
+import bottle
+from bottle.ext.websocket import GeventWebSocketServer
+
 from pony.orm import *
 
 from PIL import Image
@@ -14,7 +17,7 @@ db = Database()
 
 class Engine(object):
 
-	def __init__(self):
+	def __init__(self):  
 		# Setups path object where persistent application data can be stored.
 		p = pathlib.Path.home()
 		if sys.platform.startswith('linux'):
@@ -125,6 +128,16 @@ class Engine(object):
 		if not self.local_gm:
 			# trigger cleanup every 24h
 			self.cleanup()
+		
+	def run(self):
+		bottle.run(
+			host     = self.host,
+			port     = self.port,
+			reloader = self.debug,
+			debug    = self.debug,
+			quiet    = not self.debug,
+			server   = 'wsgiref' if self.debug else 'bjoern'
+		)
 
 	def getIp(self):
 		if self.local_gm:
@@ -133,7 +146,7 @@ class Engine(object):
 			return 'localhost'
 
 	def applyWhitelist(self, s):
-		# apply replace map
+		# apply replace map                      
 		for key in self.url_replacemap:
 			s = s.replace(key, self.url_replacemap[key])
 		# apply whitelist (replace everything else by '-')

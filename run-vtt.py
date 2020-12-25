@@ -626,4 +626,4 @@ def error404(error):
 
 # --- setup stuff -------------------------------------------------------------
 
-run(host=engine.host, reloader=engine.debug, debug=engine.debug, port=engine.port, server='bjoern')
+engine.run()
