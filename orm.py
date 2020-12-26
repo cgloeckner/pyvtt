@@ -7,7 +7,7 @@ import bottle
 
 from pony.orm import *
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 __author__ = "Christian Glöckner"
 
@@ -486,23 +486,26 @@ class Game(db.Entity):
 			handle.save(tmpfile.name, overwrite=True)
 			
 			# shrink image
-			with Image.open(tmpfile.name) as img:
-				w = img.size[0]
-				h = img.size[1]
-				ratio = h / w
-				downscale = False
-				if h > w:
-					if h > 2000:
-						h = 2000
-						w = int(h / ratio)
-						downscale = True
-				else:
-					if w > 2000:
-						w = 2000
-						h = int(w * ratio)
-						downscale = True
-				if downscale:
-					img.resize((w, h)).save(tmpfile.name)
+			try:
+				with Image.open(tmpfile.name) as img:
+					w = img.size[0]
+					h = img.size[1]
+					ratio = h / w
+					downscale = False
+					if h > w:
+						if h > 2000:
+							h = 2000
+							w = int(h / ratio)
+							downscale = True
+					else:
+						if w > 2000:
+							w = 2000
+							h = int(w * ratio)
+							downscale = True
+					if downscale:
+						img.resize((w, h)).save(tmpfile.name)
+			except UnidentifiedImageError:
+				return None
 			
 			# create md5 checksum for duplication test
 			new_md5 = engine.getMd5(tmpfile.file)
@@ -631,24 +634,7 @@ class Game(db.Entity):
 		return len(db.Game.select(lambda g: g.admin == gm and g.url == url)) == 0
 	
 	@staticmethod
-	def fromImage(gm, handle):
-		# generate url from filename
-		dot_pos = handle.filename.rfind('.')
-		url = handle.filename[:dot_pos].lower()
-		url = engine.applyWhitelist(url)
-		if not db.Game.isUniqueUrl(gm, url):
-			n = 1
-			while (n < 10):
-				new_url = '{0}{1}'.format(url, n)
-				if db.Game.isUniqueUrl(gm, new_url):
-					url = new_url
-					break
-				# else try next
-				n += 1
-			if n >= 10:
-				engine.logging.info('Cannot import image. Too many games with such a name "{0}"'.format(url))
-				return None
-		
+	def fromImage(gm, url, handle):
 		# create game with that image as background
 		game = db.Game(url=url, admin=gm)
 		game.postSetup()      
@@ -661,6 +647,11 @@ class Game(db.Entity):
 		
 		# set image as background
 		token_url = game.upload(handle)
+		if token_url is None:
+			# rollback
+			game.delete()
+			return None
+		
 		t = db.Token(scene=scene, timeid=0, url=token_url, posx=0, posy=0, size=-1)
 		db.commit()
 		
@@ -670,28 +661,13 @@ class Game(db.Entity):
 		return game
 	
 	@staticmethod
-	def fromZip(gm, handle):
+	def fromZip(gm, url, handle):
 		# unzip uploaded file to temp dir
 		with tempfile.TemporaryDirectory() as tmp_dir:
 			zip_path = os.path.join(tmp_dir, handle.filename)
 			handle.save(str(zip_path))
 			with zipfile.ZipFile(zip_path, 'r') as fp:
 				fp.extractall(tmp_dir)
-			
-			# generate url from filename
-			url = handle.filename.split('.zip')[0]
-			if not db.Game.isUniqueUrl(gm, url):
-				n = 1
-				while (n < 10):
-					new_url = '{0}{1}'.format(url, n)
-					if db.Game.isUniqueUrl(gm, new_url):
-						url = new_url
-						break
-					# else try next
-					n += 1
-				if n >= 10:
-					engine.logging.info('Cannot import game. Too many games with such a name "{0}"'.format(url))
-					return None
 			
 			# create game
 			game = db.Game(url=url, admin=gm)

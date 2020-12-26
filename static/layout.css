@@ -53,6 +53,11 @@ div.dropzone {
 	outline-offset: 3px;
 }
 
+div.dropzone > p {
+	padding-top: 80px;
+	padding-bottom: 80pX;
+}
+ 
 input[type=submit],
 input[type=button],
 input[type=color] {
@@ -188,6 +193,7 @@ div#preview > div {
 }
 
 
+div#preview > div > a > img.thumbnail,
 div#preview > div > img.thumbnail,
 div#preview > div > img.active {
 	width: 100px;
@@ -195,11 +201,6 @@ div#preview > div > img.active {
 	border-radius: 10px;
 	display: block;
 	padding: 5px;
-}
-
-div#preview > div > a > img.thumbnail {
-	width: 200px;
-	max-height: 112px;
 }
 
 div#preview > div > img.active { 

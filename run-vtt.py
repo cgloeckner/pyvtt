@@ -84,69 +84,31 @@ def get_game_list():
 	# show GM's games
 	return dict(engine=engine, gm=gm, server=server, dbScene=db.Scene)
 
-@post('/vtt/create-game', apply=[asGm])
-def post_create_game():
-	gm = db.GM.loadFromSession(request)
-	if gm is None:
-		return {'url': ''}
+@post('/vtt/import-game/<url>', apply=[asGm])
+def post_import_game(url):  
+	url_ok = False
+	game   = None
 	
-	url = engine.applyWhitelist(request.forms.url)
-	if url is None:
-		return {'url': ''}
-	url = url.lower()
-	
-	# test for URL collision with other games of this GM
-	if len(db.Game.select(lambda g: g.admin == gm and g.url == url)) > 0:
-		return {'url': ''}
-	
-	# create game
-	game = db.Game(url=url, admin=gm)
-	
-	game.postSetup()
-	db.commit()
-	
-	# create first scene
-	scene = db.Scene(game=game)
-	db.commit()
-	
-	game.active = scene.id
-	db.commit()
-	
-	return {'url': game.url}
-
-@get('/vtt/import-game', apply=[asGm])
-@view('import')
-def view_import_game():
-	gm = db.GM.loadFromSession(request)  
-	if gm is None:
-		# GM not found on the server
-		response.set_cookie('session', '', path='/', expires=0)
-		redirect('/vtt/join')
-	
-	# show import UI
-	return dict(engine=engine, gm=gm)
-
-@post('/vtt/import-game', apply=[asGm])
-def post_import_game():   
-	result = None
-	
+	# check GM and url
 	gm = db.GM.loadFromSession(request) 
-	if gm is None:
-		return result
+	if gm is not None and db.Game.isUniqueUrl(gm, url):
+		url_ok = True
 	
-	# generate URL from filename
+	# upload file
 	files = request.files.getall('file')
-	if len(files) == 1:
+	if url_ok and len(files) == 1:
 		fname = files[0].filename
 		if fname.endswith('zip'):
-			game = db.Game.fromZip(gm, files[0])
-			result = 'zip' if game is not None else None
+			game = db.Game.fromZip(gm, url, files[0])
 		
 		else:
-			game = db.Game.fromImage(gm, files[0])
-			result = game.getUrl() if game is not None else None
+			game = db.Game.fromImage(gm, url, files[0])
 	
-	return result
+	# returning status
+	return {
+		'url' : url_ok,
+		'file': game is not None
+	}
 
 @get('/vtt/export-game/<url>', apply=[asGm])
 def export_game(url):
@@ -163,7 +125,8 @@ def export_game(url):
 	# offer file for downloading
 	return static_file(zip_file, root=zip_path, download=zip_file, mimetype='application/zip')
 
-@get('/vtt/delete-game/<url>', apply=[asGm])
+@post('/vtt/delete-game/<url>', apply=[asGm])
+@view('games')
 def delete_game(url):
 	gm = db.GM.loadFromSession(request)
 	
@@ -181,11 +144,14 @@ def delete_game(url):
 	game.clear() # also delete images from disk!
 	game.delete()
 	
-	db.commit()
-	redirect('/')
+	server = ''
+	if engine.local_gm:
+		server = 'http://{0}:{1}'.format(engine.getIp(), engine.port)
+	
+	return dict(gm=gm, server=server)
 
 @post('/vtt/create-scene/<url>', apply=[asGm])
-@view('dropdown')
+@view('scenes')
 def post_create_scene(url):
 	gm = db.GM.loadFromSession(request)
 	
@@ -201,7 +167,7 @@ def post_create_scene(url):
 	return dict(engine=engine, game=game)
 
 @post('/vtt/activate-scene/<url>/<scene_id>', apply=[asGm])
-@view('dropdown')
+@view('scenes')
 def activate_scene(url, scene_id):
 	gm = db.GM.loadFromSession(request)
 	# load game
@@ -213,7 +179,7 @@ def activate_scene(url, scene_id):
 	return dict(engine=engine, game=game)
 
 @post('/vtt/delete-scene/<url>/<scene_id>', apply=[asGm]) 
-@view('dropdown')
+@view('scenes')
 def activate_scene(url, scene_id):
 	gm = db.GM.loadFromSession(request)
 	# load game
@@ -235,11 +201,12 @@ def activate_scene(url, scene_id):
 			db.commit()
 		# adjust active scene
 		game.active = remain.id
+		db.commit()
 	
 	return dict(engine=engine, game=game)
 	
 @post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm]) 
-@view('dropdown')
+@view('scenes')
 def duplicate_scene(url, scene_id):
 	gm = db.GM.loadFromSession(request)
 	# load game

@@ -1,5 +1,3 @@
-%import time, os
-
 	<img class="largeicon" src="/static/add.png" onClick="addScene();" />
 %for s in game.scenes.order_by(lambda s: s.id):
 	%url = "/static/empty.jpg"

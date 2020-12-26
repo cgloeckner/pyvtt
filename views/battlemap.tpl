@@ -6,7 +6,7 @@
 %if is_gm:
 	<div class="dropdown" onClick="openDropdown();">
 		<div id="preview">
-	%include("dropdown")
+	%include("scenes")
 		</div>
 		<img id="drophint" src="/static/bottom.png" />
 	</div>

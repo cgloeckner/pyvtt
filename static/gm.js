@@ -25,97 +25,68 @@ function registerGm(event) {
 	});
 }
 
-function createGame() {    
-	event.preventDefault();
-	
-	var url = $('#url').val();
-	
-	$.ajax({
-		type: 'POST',
-		url:  '/vtt/create-game',
-		dataType: 'json',
-		data: {
-			'url' : url
-		},
-		success: function(response) {
-			// wait for sanizized input
-			url  = response['url']
-			
-			if (url == '') {
-				$('#url').addClass('shake');
-				setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
-				
-			} else {
-				window.location.reload()
-			}
+function deleteGame(url) {
+	$.post(
+		url='/vtt/delete-game/' + url,
+		success=function(data) {
+			$('#preview')[0].innerHTML = data;
 		}
-	});
+	);
 }
 
 function GmUploadDrag(event) {
 	event.preventDefault();
 }
 
-function GmUploadDrop(event) {
+function GmUploadDrop(event, gm_name) {
 	event.preventDefault();
 	
+	// fetch upload data
 	var queue = $('#uploadqueue')[0];
 	queue.files = event.dataTransfer.files;
-	
 	var f = new FormData($('#uploadform')[0]);
-	console.log(event.dataTransfer.files);
+	
+	var url = $('#url').val();
+	if (url == '') {
+		// generate url from filename
+		// note: single-file-upload
+		var fname = event.dataTransfer.files[0].name;
+		var parts = fname.split('.');
+		var ext   = parts[parts.length - 1];
+		url   = fname.replace('.' + ext, '')
+		$('#url').val(url);
+	}
 	
 	$.ajax({
-		url: '/vtt/import-game',
+		url: '/vtt/import-game/' + url,
 		type: 'POST',
 		data: f,
 		contentType: false,
 		cache: false,
 		processData: false,
 		success: function(response) {
-			if (response == null || response == 'zip') {
-				window.location.reload();
-			} else {
-				// load game
-				window.location = response;
-			}
-		}
-	});
-}
-
-/*
-function importGame() {
-	var url = $('#url').val();
-	var file = $('#archive')[0].value;
-	
-	if (file == '') {
-		$('#archive').addClass('shake');
-		setTimeout(function() {	$('#archive').removeClass('shake'); }, 1000);
-		return;
-	}
-	
-	var data = new FormData($('#import')[0]);
-	
-	$.ajax({
-		url: '/vtt/import-game/' + url,
-		type: 'POST',
-		data: data,
-		contentType: false,
-		cache: false,
-		processData: false,
-		success: function(response) {
-			// reset upload queue
-			// wait for sanizized input
-			url  = response['url']
+			console.log(response);
+			url_ok  = response['url'];
+			file_ok = response['file'];
 			
-			if (url == '') {
+			if (!url_ok) {
+				// shake URL input
 				$('#url').addClass('shake');
 				setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
-				
 			} else {
-				//window.location = 
+				if (!file_ok) {
+					// reset uploadqueue
+					$('#uploadqueue').val("");
+					
+					// reset and shake URL input
+					$('#dropzone').addClass('shake');
+					setTimeout(function() {	$('#dropzone').removeClass('shake'); }, 1000);
+				
+				} else {
+					// load game
+					window.location = '/' + gm_name + '/' + url;
+				}
 			}
 		}
 	});
 }
-*/

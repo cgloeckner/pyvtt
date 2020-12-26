@@ -652,13 +652,6 @@ function start(url, name) {
 	battlemap.addEventListener('wheel', tokenWheel);
 	document.addEventListener('keydown', tokenShortcut);
 	
-	/*
-	// mobile control fix
-	battlemap.addEventListener('touchstart', tokenGrab);
-	battlemap.addEventListener('touchmove', tokenMove);
-	battlemap.addEventListener('touchend', tokenRelease);
-	*/
-	
 	// setup game
 	game_url = url;
 	gm_name = name;
@@ -1254,36 +1247,6 @@ function copyUrl(server, game_url) {
 	tmp.remove();
 }
 
-function openDropdown(force=false) {
-	var scenes = $('#preview');
-	var hint   = $('#drophint');
-	if (force || !dropdown) {
-		scenes.animate({
-			top: "+=100"
-		}, 500);
-		hint.animate({
-			top: "+=100"
-		}, 500);
-	}
-	dropdown = true;
-	hint.fadeOut(500, 0.0);
-}
-
-function closeDropdown(force=false) {
-	var scenes = $('#preview'); 
-	var hint   = $('#drophint');
-	if (force || dropdown) {
-		scenes.animate({
-			top: "-=100"
-		}, 500); 
-		hint.animate({
-			top: "-=100"
-		}, 500);
-	}
-	dropdown = false;
-	hint.fadeIn(500, 0.0);
-}
-
 function addScene() {
 	$.post(
 		url='/vtt/create-scene/' + game_url,
@@ -1303,6 +1266,7 @@ function activateScene(scene_id) {
 		}
 	);
 }
+
 function cloneScene(scene_id) {
 	$.post(
 		url='/vtt/clone-scene/' + game_url + '/' + scene_id,
@@ -1312,6 +1276,7 @@ function cloneScene(scene_id) {
 		}
 	);
 }
+
 function deleteScene(scene_id) {
 	$.post(
 		url='/vtt/delete-scene/' + game_url + '/' + scene_id,
@@ -1321,5 +1286,3 @@ function deleteScene(scene_id) {
 		}
 	);
 }
-
-
