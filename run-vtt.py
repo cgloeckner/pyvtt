@@ -285,7 +285,7 @@ def static_token(gmname, url, fname):
 @post('/<gmname>/<url>/login')
 #@view('redirect')
 def set_player_name(gmname, url):
-	playername  = engine.applyWhitelist(request.forms.playername)
+	playername = template('{{value}}', value=format(request.forms.playername))
 	if playername is None:
 		return {'playername': '', 'playercolor': ''}
 	
