@@ -140,9 +140,9 @@ class Engine(object):
 		
 		# webserver stuff
 		self.host   = '0.0.0.0'
-		self.port   = 8080
+		self.port   = 8080 
+		self.socket = ''
 		self.debug  = False
-		self.socket = None
 		
 		# whitelist for game urls etc.
 		self.url_whitelist = []
@@ -180,27 +180,8 @@ class Engine(object):
 		self.cache = EngineCache()
 
 	def setup(self, argv):
-		for line in argv:
-			if line == '--debug':
-				self.debug = True
-				
-			if line.startswith('--port'):
-				# use custom port
-				self.port = int(line.split('=')[1])
-			
-			if line == '--localhost':
-				# GM is on localhost
-				self.local_gm = True
-			
-			if line.startswith('--socket'):
-				# use unix socket
-				self.socket = line.split('=')[1]
-	
-		# setup listening ip
-		if self.debug:
-			self.host = 'localhost'
-		else:
-			self.host = '0.0.0.0'
+		self.debug    = '--debug' in argv
+		self.local_gm = '--local_gm' in argv
 		
 		# setup logging
 		if self.debug:
@@ -208,29 +189,57 @@ class Engine(object):
 		else:
 			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', level=logging.INFO)
 		
+		logging.info('Started Modes: debug={0}, local_gm={1}'.format(self.debug, self.local_gm))
+		
 		# handle settings
 		settings_path = self.data_dir / 'settings.json'
 		if not os.path.exists(settings_path):
 			# create default settings
 			settings = {
-				'title':       self.title,
-				'imprint_url': self.imprint_url
+				'title'       : self.title,
+				'imprint_url' : self.imprint_url,
+				'listener'    : 'ip',
+				'host'        : self.host,
+				'port'        : self.port,
+				'socket'      : self.socket
 			}
 			with open(settings_path, 'w') as h:
 				json.dump(settings, h, indent=4)
-				logging.info('Created default settings file')
+				logging.warn('Created default settings file')
 		else:
 			# load settings
 			with open(settings_path, 'r') as h:
 				settings = json.load(h)
 				self.title       = settings['title']
 				self.imprint_url = settings['imprint_url']
+				self.host        = settings['host']
+				self.port        = settings['port']
+				self.socket      = settings['socket']
 			logging.info('Settings loaded')
+		
+		# show argv help
+		if '--help' in argv:
+			print('Commandline args:')
+			print('    --debug       Starts in debug mode.')
+			print('    --local_gm    Starts in local-GM-mode.')
+			print('')
+			print('Debug Mode:    Enables debug level logging and restricts to localhost (overrides unix socket settings).')
+			print('Local-GM Mode: Replaces `localhost` in all created links by the public ip.')
+			print('')
+			print('See {0} for custom settings.'.format(settings_path))
+			sys.exit(0)
 		
 		if self.local_gm:
 			# query public ip
 			self.publicip = requests.get('https://api.ipify.org').text
 			logging.info('Public IP is {0}'.format(self.publicip))
+		 
+		# setup listening ip
+		if self.debug:
+			self.host = 'localhost'
+			logging.info('Restricted to localhost')
+		else:
+			self.host = '0.0.0.0'
 		
 		# prepare existing games' cache
 		with db_session:
@@ -247,8 +256,9 @@ class Engine(object):
 			self.cleanup()
 		
 	def run(self):
-		if self.socket is None:
+		if self.debug or self.socket == '':
 			# run via host and port
+			logging.info('Running server on {0}:{1}'.format(self.host, self.port))
 			bottle.run(
 				host     = self.host,
 				port     = self.port,
@@ -270,13 +280,10 @@ class Engine(object):
 			listener.listen(1)
 			
 			server = WSGIServer(listener, bottle.default_app())
-			# TODO: use `log` and `error_log` to redirect logging in non-debug mode
-			if self.debug:
-				# mimic bottle startup if not quiet
-				print('Bottle {0} server starting up (using WSGIServer from gevent.pywsgi)...'.format(bottle.__version__))
-				print('Listening on unix:{0}'.format(self.socket))
-				print('Hit Ctrl-C to quit.')
-				print('')
+			# TODO: use `log` and `error_log` to redirect logging (because unix socket is only used in non-debug mode)
+			
+			logging.info('Running server via {0}'.format(self.socket))
+			print('Running server via unix socket')
 			try:
 				server.serve_forever()
 			except KeyboardInterrupt:
@@ -285,9 +292,17 @@ class Engine(object):
 	def getIp(self):
 		if self.local_gm:
 			return self.publicip
-		else:
+		elif self.host == '0.0.0.0':
 			return 'localhost'
-
+		else:
+			return self.host 
+	
+	def getClientIp(self, request):
+		if self.socket is not None:
+			return request.environ.get('HTTP_X_FORWARDED_FOR')
+		else:
+			return request.environ.get('REMOTE_ADDR')
+	
 	def applyWhitelist(self, s):
 		# apply replace map                      
 		for key in self.url_replacemap:

@@ -44,6 +44,12 @@ def asGm(callback):
 def gm_login():
 	return dict(engine=engine)
 
+
+@get('/myip')
+def getMyIp():
+	return 'IP: [{0}]'.format(engine.getClientIp(request))
+
+
 @post('/vtt/join')
 def post_gm_login():
 	name = engine.applyWhitelist(request.forms.gmname)
@@ -53,7 +59,7 @@ def post_gm_login():
 	if name in engine.gm_blacklist or len(name) < 3:
 		return {'gmname': ''}
 	
-	ip  = request.environ.get('REMOTE_ADDR')
+	ip  = engine.getClientIp(request)
 	sid = db.GM.genSession()
 	
 	if len(db.GM.select(lambda g: g.name == name)) > 0:
