@@ -349,14 +349,7 @@ def join_game(gmname, url):
 	game_url = game.getUrl()
 	
 	# save this playername
-	if game_url not in engine.players:
-		engine.players[game_url] = set()
-	engine.players[game_url].add(playername)
-	
-	# save this playercolor
-	if game_url not in engine.colors:
-		engine.colors[game_url] = dict()
-	engine.colors[game_url][playername] = playercolor
+	engine.cache.insert(game, playername, playercolor)
 
 # on window close
 @post('/<gmname>/<url>/disconnect')
@@ -367,38 +360,8 @@ def quit_game(gmname, url):
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	game_url = game.getUrl()
 	
-	# remove player
-	if game_url in engine.players and playername in engine.players[game_url]:
-		engine.players[game_url].remove(playername)
-	
-	# note: color is kept
-
-
-# on logout purpose
-@get('/<gmname>/<url>/logout')
-def quit_game(gmname, url):
-	# load player name from cookie
-	playername = request.get_cookie('playername')
-	playercolor = request.get_cookie('playercolor')
-
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	game_url = game.getUrl()
-	
-	# reset cookie
-	response.set_cookie('playername', playername, path=game.getUrl(), expires=0)
-	# note: color is kept in cookies
-	
-	# remove player
-	if url in engine.players and playername in engine.players[game_url]:
-		engine.players[game_url].remove(playername)
-	# note: color is kept in cache
-	
-	if url in engine.selected:
-		# reset selection
-		engine.selected[game_url][playercolor] = list()
-	
-	# show login page
-	redirect(game.getUrl())
+	# remove playername and -color
+	engine.cache.remove(game, playername)
 
 @post('/<gmname>/<url>/update')
 def post_player_update(gmname, url):
@@ -408,7 +371,7 @@ def post_player_update(gmname, url):
 		return {}
 	game_url = game.getUrl()
 	
-	if game_url not in engine.players:
+	if not engine.cache.contains(game):
 		# game not found (should only be relevant for debugging)
 		return {} 
 	
@@ -427,12 +390,11 @@ def post_player_update(gmname, url):
 	
 	# fetch token updates from client
 	changes = json.loads(request.POST.get('changes'))
-	if game_url not in engine.selected:
-		engine.selected[game_url] = dict()
+	
 	# mark all selected tokens in that color
-	playercolor = request.get_cookie('playercolor')
+	playername = request.get_cookie('playername')
 	ids = request.POST.get('selected')
-	engine.selected[game_url][playercolor] = ids
+	engine.cache.setSelection(game, playername, ids)
 	
 	# update token data
 	for data in changes:
@@ -471,9 +433,8 @@ def post_player_update(gmname, url):
 	#for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 10).order_by(lambda r: r.timeid)[:13]:
 	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= roll_timeid).order_by(lambda r: r.timeid):
 		# query color by player
-		color = '#000000'
-		if game_url in engine.colors and r.player in engine.colors[game_url]:
-			color = engine.colors[game_url][r.player]
+		color = engine.cache.getColor(game, r.player)
+		
 		# consider token if it was updated after given timeid
 		rolls.append({
 			'player' : r.player,
@@ -485,12 +446,7 @@ def post_player_update(gmname, url):
 		})
 	
 	# query players alive
-	playerlist = list()
-	for playername in engine.players[game_url]:
-		playercolor = '#000000'
-		if game_url in engine.colors and playername in engine.colors[game_url]:
-			playercolor = engine.colors[game_url][playername]
-		playerlist.append('{0}:{1}'.format(playername, playercolor))
+	playerlist = engine.cache.getList(game)
 	
 	# return tokens, rolls and timestamp
 	data = {
@@ -499,7 +455,7 @@ def post_player_update(gmname, url):
 		'tokens'   : tokens,
 		'rolls'    : rolls,
 		'players'  : playerlist,
-		'selected' : engine.selected[game_url],
+		'selected' : engine.cache.getSelected(game),
 		'scene_id' : scene.id
 	}
 	return json.dumps(data)

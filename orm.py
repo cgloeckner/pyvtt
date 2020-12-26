@@ -14,7 +14,106 @@ __author__ = "Christian Glöckner"
 
 db = Database()
 
-class Engine(object):
+
+class GameCache(object):
+	
+	def __init__(self):
+		self.lock     = threading.Lock()
+		self.players  = dict() # key: name, value: color
+		self.colors   = dict() # key: color, value: name
+		self.selected = dict() # key: name, value: list of token IDs
+	
+	def insert(self, name, color):
+		with self.lock:
+			self.players[color] = name
+			self.colors[name]   = color
+			self.selected[name] = list()
+		
+	def remove(self, name):
+		with self.lock:
+			color = self.colors[name]
+			del self.players[color]
+			del self.colors[name]
+			del self.selected[name]
+		
+	def getList(self):
+		result = list()
+		with self.lock:
+			for name in self.colors:
+				result.append('{0}:{1}'.format(name, self.colors[name]))
+		return result
+		
+	def getColor(self, name):
+		with self.lock:
+			return self.colors[name]
+		
+	def getSelected(self):
+		with self.lock:
+			return self.selected  
+		
+	def setSelection(self, name, ids):
+		with self.lock:
+			self.selected[name] = ids
+
+
+class EngineCache(object):
+	
+	def __init__(self):
+		self.lock  = threading.Lock()
+		self.games = dict() # key: url, value: PlayerCache
+		
+	def insert(self, game, name, color):
+		url   = game.getUrl()
+		cache = None
+		with self.lock:
+			if url not in self.games:
+				self.games[url] = GameCache()
+			cache = self.games[url]
+		cache.insert(name, color)
+		
+	def remove(self, game, name):
+		url = game.getUrl()
+		cahe = None
+		with self.lock:
+			cache = self.games[url]
+		cache.remove(name)
+		
+	def contains(self, game): 
+		url = game.getUrl()
+		with self.lock:
+			return url in self.games
+		
+	def getList(self, game):
+		result = list()
+		cache  = None   
+		url = game.getUrl()
+		with self.lock:
+			cache = self.games[url]
+		return cache.getList()
+		
+	def getColor(self, game, name):
+		cache = None   
+		url = game.getUrl()
+		with self.lock:
+			cache = self.games[url]
+		return cache.getColor(name)
+		
+	def getSelected(self, game):
+		cache = None   
+		url = game.getUrl()
+		with self.lock:
+			cache = self.games[url]
+		return cache.getSelected()
+		
+	def setSelection(self, game, name, ids):
+		cache = None    
+		url = game.getUrl()
+		with self.lock:
+			cache = self.games[url]
+		cache.setSelection(name, ids)
+
+
+class Engine(object):         
 
 	def __init__(self):  
 		# Setups path object where persistent application data can be stored.
@@ -78,9 +177,7 @@ class Engine(object):
 		self.imprint_url = ''
 
 		# game cache
-		self.players = dict()
-		self.colors  = dict()
-		self.selected  = dict()
+		self.cache = EngineCache()
 
 	def setup(self, argv):
 		for line in argv:
