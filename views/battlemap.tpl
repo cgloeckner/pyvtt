@@ -1,5 +1,5 @@
 %include("header", title=game.url.upper())
-		   
+  
 %include("login")
 
 <div id="game">

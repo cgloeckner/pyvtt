@@ -1,4 +1,11 @@
 <div id="login">
+	
+%if 'mobile' in user_agent.lower():
+	<div class="warning">
+		<p>MOBILE DEVICES NOT SUPPORTED</p>
+	</div>
+%end
+	
 	<div class="menu">
 		<hr />
 		<h1>{{game.url.upper()}} by {{game.admin.name}}</h1>

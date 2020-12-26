@@ -34,7 +34,7 @@ def asGm(callback):
 		session = request.get_cookie('session')
 		if session is None:
 			# force login
-			redirect('/vtt/register')
+			redirect('/vtt/join')
 		return callback(*args, **kwargs)
 	return wrapper
 
@@ -335,8 +335,10 @@ def get_player_battlemap(gmname, url):
 	if game is None:
 		abort(404)
 	
+	user_agent = request.environ.get('HTTP_USER_AGENT')
+	
 	# show battlemap with login screen ontop
-	return dict(engine=engine, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
+	return dict(engine=engine, user_agent=user_agent, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
 # on window open
 @post('/<gmname>/<url>/join')

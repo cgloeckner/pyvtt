@@ -638,24 +638,26 @@ function start(url, name) {
 	
 	// disable window context menu for token right click
 	document.addEventListener('contextmenu', event => {
-	  event.preventDefault();
+		event.preventDefault();
 	});
 	
 	// drop zone implementation (using canvas) --> also as players :) 
 	battlemap.addEventListener('dragover', mouseDrag);
 	battlemap.addEventListener('drop', uploadDrop);
-
+	
 	// desktop controls
 	battlemap.addEventListener('mousedown', tokenGrab);
 	battlemap.addEventListener('mousemove', tokenMove);
 	battlemap.addEventListener('mouseup', tokenRelease);
 	battlemap.addEventListener('wheel', tokenWheel);
 	document.addEventListener('keydown', tokenShortcut);
-
+	
+	/*
 	// mobile control fix
 	battlemap.addEventListener('touchstart', tokenGrab);
 	battlemap.addEventListener('touchmove', tokenMove);
 	battlemap.addEventListener('touchend', tokenRelease);
+	*/
 	
 	// setup game
 	game_url = url;

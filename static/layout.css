@@ -472,6 +472,35 @@ div#login {
 	z-index: 10;
 }
 
+div.warning {
+	position: absolute;
+	top: 25%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 20;
+	
+	color: red;
+	font-size: xxx-large;
+	text-align: center;
+	
+	-webkit-text-stroke-width: 2px;
+	-webkit-text-stroke-color: black;
+	
+	animation: blink 1s linear infinite;
+} 
+
+@keyframes blink {
+	0% {
+		opacity: 0;
+	}
+	50% {
+		opacity: .5;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
 div.battlemap {
 	padding-top: 25px;
 	z-index: -1;
