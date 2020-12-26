@@ -650,6 +650,7 @@ function start(url, name) {
 	battlemap.addEventListener('mousemove', tokenMove);
 	battlemap.addEventListener('mouseup', tokenRelease);
 	battlemap.addEventListener('wheel', tokenWheel);
+	battlemap.addEventListener('mouseout', tokenRelease);
 	document.addEventListener('keydown', tokenShortcut);
 	
 	// setup game
