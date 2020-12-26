@@ -16,7 +16,7 @@
 <h1>GAMES by {{gm.name}}</h1>
 
 	<div class="form">
-		<p>ENTER GAME NAME</p>
+		<p>ENTER GAME NAME (optional)</p>
 		<p><input type="text" id="url" value="" /></p>
 		
 		<div class="dropzone" id="dropzone">                                           
