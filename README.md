@@ -16,10 +16,10 @@ nginx -c /path/to/vtt-nginx.conf
 Consider updating PyVTT's configuration at `~/.local/share/pyvtt/settings.json`, for example add a value to `socket` matching your nginx-settings:
 ```
 {
-	"title": "RHVTT",
-	"imprint_url": "",
-	"host": "0.0.0.0",
-	"port": 8080,
+	"title": "My Custom VTT",
+	"imprint_url": "mydomain.com/imprint.html",
+	"host": "play.mydomain.com",
+	"port": 80,
 	"socket": "/tmp/vtt.sock"
 }
 ```
