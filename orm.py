@@ -144,20 +144,6 @@ class Engine(object):
 		self.socket = ''
 		self.debug  = False
 		
-		# whitelist for game urls etc.
-		self.url_whitelist = []
-		# allow lower/upper case characters
-		for i in range(65, 91):
-			self.url_whitelist.append(chr(i))
-			self.url_whitelist.append(chr(i+32))
-		# allow numbers
-		for i in range(10):	
-			self.url_whitelist.append('{0}'.format(i))
-		# allow some symbols
-		self.url_whitelist.append('-')
-		self.url_whitelist.append('_')
-		self.url_whitelist.append('.')
-		
 		# setup blacklist replacemap
 		self.url_replacemap = {
 			'ä': 'ae',
@@ -170,7 +156,7 @@ class Engine(object):
 		}
 		
 		# blacklist for GM names
-		self.gm_blacklist = ['static', 'token', 'vtt']
+		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'websocket']
 		
 		self.local_gm    = False
 		self.title       = 'PyVTT'
@@ -298,25 +284,10 @@ class Engine(object):
 			return self.host 
 	
 	def getClientIp(self, request):
-		if self.socket is not None:
+		if self.socket != '':
 			return request.environ.get('HTTP_X_FORWARDED_FOR')
 		else:
 			return request.environ.get('REMOTE_ADDR')
-	
-	def applyWhitelist(self, s):
-		# apply replace map                      
-		for key in self.url_replacemap:
-			s = s.replace(key, self.url_replacemap[key])
-		# apply whitelist (replace everything else by '-')
-		fixed = ''
-		for c in s:
-			if c in self.url_whitelist:
-				fixed += c
-			else:
-				fixed += '-'
-		if len(fixed) == 0: # is this really necessary? gonna return '' here instead @TODO
-			return None
-		return fixed
 	
 	@staticmethod
 	def getMd5(handle):

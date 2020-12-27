@@ -15,10 +15,12 @@ function registerGm(event) {
 			gmname = response['gmname']
 			
 			if (gmname == '') {
+				// shake input
 				$('#gmname').addClass('shake');
 				setTimeout(function() {	$('#gmname').removeClass('shake'); }, 1000);
 				
 			} else {
+				// redirect
 				window.location = '/';
 			}
 		}
@@ -57,36 +59,47 @@ function GmUploadDrop(event, gm_name) {
 		$('#url').val(url);
 	}
 	
+	// sanitize url
 	$.ajax({
-		url: '/vtt/import-game/' + url,
+		url: '/vtt/sanitize',
 		type: 'POST',
-		data: f,
-		contentType: false,
-		cache: false,
-		processData: false,
+		data: {'url': url },
 		success: function(response) {
-			console.log(response);
-			url_ok  = response['url'];
-			file_ok = response['file'];
+			url = response;
 			
-			if (!url_ok) {
-				// shake URL input
-				$('#url').addClass('shake');
-				setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
-			} else {
-				if (!file_ok) {
-					// reset uploadqueue
-					$('#uploadqueue').val("");
-					
-					// reset and shake URL input
-					$('#dropzone').addClass('shake');
-					setTimeout(function() {	$('#dropzone').removeClass('shake'); }, 1000);
+			// create game from upload
+			$.ajax({
+			url: '/vtt/import-game/' + url,
+			type: 'POST',
+			data: f,
+			contentType: false,
+			cache: false,
+			processData: false,
+			success: function(response) {
+				console.log(response);
+				url_ok  = response['url'];
+				file_ok = response['file'];
 				
+				if (!url_ok) {
+					// shake URL input
+					$('#url').addClass('shake');
+					setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
 				} else {
-					// load game
-					window.location = '/' + gm_name + '/' + url;
+					if (!file_ok) {
+						// reset uploadqueue
+						$('#uploadqueue').val("");
+						
+						// reset and shake URL input
+						$('#dropzone').addClass('shake');
+						setTimeout(function() {	$('#dropzone').removeClass('shake'); }, 1000);
+					
+					} else {
+						// load game
+						window.location = '/' + gm_name + '/' + url;
+					}
 				}
 			}
+		});
 		}
 	});
 }

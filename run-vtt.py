@@ -5,6 +5,8 @@ from bottle import *
 
 import os, json, random, time, sys
 
+from urllib.parse import quote, quote_plus
+
 from pony import orm
 from orm import db, db_session, Token, Game, engine
 
@@ -52,11 +54,12 @@ def getMyIp():
 
 @post('/vtt/join')
 def post_gm_login():
-	name = engine.applyWhitelist(request.forms.gmname)
-	if name is None:
-		return {'gmname': ''}
+	# escape gmname and test whether something was replaced
+	name = quote(request.forms.gmname)
 	name = name.lower()
-	if name in engine.gm_blacklist or len(name) < 3:
+	
+	if name in engine.gm_blacklist:
+		# blacklisted name
 		return {'gmname': ''}
 	
 	ip  = engine.getClientIp(request)
@@ -89,6 +92,10 @@ def get_game_list():
 	
 	# show GM's games
 	return dict(engine=engine, gm=gm, server=server, dbScene=db.Scene)
+
+@post('/vtt/sanitize')
+def sanitize_url():
+	return quote_plus(request.forms.url)
 
 @post('/vtt/import-game/<url>', apply=[asGm])
 def post_import_game(url):  
