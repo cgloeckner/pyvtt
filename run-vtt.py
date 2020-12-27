@@ -3,7 +3,7 @@
 from gevent import monkey; monkey.patch_all()
 from bottle import *
 
-import os, json, random, time, sys
+import os, json, random, time, sys, psutil
 
 from urllib.parse import quote, quote_plus
 
@@ -567,6 +567,30 @@ def ajax_post_delete(gmname, url):
 @view('error')
 def error404(error):
 	return dict(engine=engine)
+
+@get('/status')
+@view('status')
+def status_report():
+	data = dict()  
+	t = time.time()
+	data['cpu_load']    = '{0}%'.format(psutil.cpu_percent())
+	data['memory_load'] = '{0}%'.format(psutil.virtual_memory().percent)
+	
+	size, prefix = engine.getDatabaseSize()
+	data['db_size']     = '{0} {1}B'.format(size, prefix)
+	
+	size, prefix = engine.getImageSizes()
+	data['img_size']    = '{0} {1}B'.format(size, prefix)
+	
+	data['num_gms']     = orm.count(db.GM.select())
+	data['num_games']   = orm.count(db.Game.select())
+	data['num_scenes']  = orm.count(db.Scene.select())
+	data['num_tokens']  = orm.count(db.Token.select())
+	data['num_rolls']   = orm.count(db.Roll.select())
+	data['num_players'] = engine.cache.countPlayers()
+	data['gen_time']    = time.time() - t
+	
+	return dict(engine=engine, data=data)
 
 # --- setup stuff -------------------------------------------------------------
 

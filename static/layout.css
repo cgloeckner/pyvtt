@@ -12,6 +12,15 @@ body {
 	overflow: hidden;
 }
 
+table.status > tbody > tr > th,
+table.status > tbody > tr > td {
+	width: 150px;
+}
+
+table.status > tbody > tr > td {
+	text-align: left;
+}
+
 span.imprint {   
 	position: absolute;
 	right: 0;

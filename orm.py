@@ -111,6 +111,26 @@ class EngineCache(object):
 		with self.lock:
 			cache = self.games[url]
 		cache.setSelection(name, ids)
+		
+	def countPlayers(self):
+		n = 0
+		with self.lock:
+			for g in self.games:
+				with g.lock:
+					n += len(g.players)
+		return n
+
+
+def convertBytes(size):
+	prefix = ''
+	if size > 1024 * 10:
+		size //= 1024
+		prefix = 'Ki'
+		if size > 1024 * 10:
+			size //= 1024
+			prefix = 'Mi'
+			
+	return (size, prefix)
 
 
 class Engine(object):         
@@ -156,7 +176,7 @@ class Engine(object):
 		}
 		
 		# blacklist for GM names
-		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'websocket']
+		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'status', 'websocket']
 		
 		self.local_gm    = False
 		self.title       = 'PyVTT'
@@ -298,7 +318,15 @@ class Engine(object):
 		# rewind after reading
 		handle.seek(offset)
 		return hash_md5.hexdigest()
-	
+		
+	def getDatabaseSize(self):
+		size = os.stat(engine.data_dir / 'data.db').st_size
+		return convertBytes(size)
+		
+	def getImageSizes(self):
+		size = os.stat(engine.data_dir / 'gms').st_size
+		return convertBytes(size)
+		
 	def cleanup(self):
 		""" Cleanup all expired GM data. """
 		with db_session:
