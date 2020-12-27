@@ -4,7 +4,7 @@ Python-based Virtual Tabletop Tool
 Recommended Browser: Firefox (non-mobile device, at least at the moment)
 
 # I want to host it myself
-Start `run-vtt.py` on your machine (currently only Linux-based OS are supported, this may change in future ... idk). Make sure to enable port forwarding for port 8080 (or specify another port via `--port=80` when starting) for this computer in your router.
+Start `vtt.py` on your machine (currently only Linux-based OS are supported, this may change in future ... idk). Make sure to enable port forwarding for port 8080 (or specify another port via `--port=80` when starting) for this computer in your router.
 If you are hosting using your public IP, consider setting starting the server with `--local-gm` and set up your games via `localhost`. Launching with `--local-gm` will replace all `http://localhost` in the game-links by your public IP, so you can easily copy and paste those to your players. If you setup your games with your public IP, your game data can get unaccessable if your IP changes (because cookies are bound to the server name or in this case IP address).
 *Note:* Requires `bottle` (as HTTP server), `gevent` (for async HTTP) and `pony` (as database ORM). Consider using `pip` or similar tools.
 
@@ -25,7 +25,7 @@ Consider updating PyVTT's configuration at `~/.local/share/pyvtt/settings.json`,
 ```
 Finally just run PyVTT
 ```
-./run-vtt.py
+./vtt.py
 ```
 
 # GM Information
@@ -37,6 +37,9 @@ Ask for a link and start playing. Make sure to enable JavaScript and allow Cooki
 
 # Debugging
 `update_cycles` (`default: 30`) can be adjusted in the browser client (e.g. via developer tools CTRL+SHIFT+I).
+
+# Cleanup
+To cleanup the database from expired records, stop the VTT, run `cleanup.py` and restart the VTT then.
 
 # Known bugs
 (may not be up to date)

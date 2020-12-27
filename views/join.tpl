@@ -13,7 +13,7 @@
 		<p>GM NAME</p>
 		<input type="text" id="gmname" />
 		
-		<p><input type="submit" value="Start Campaign" /></p>
+		<p><input type="submit" value="START CAMPAIGN" /></p>
 	</form>
 </div>
 
