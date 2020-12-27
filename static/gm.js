@@ -40,7 +40,7 @@ function GmUploadDrag(event) {
 	event.preventDefault();
 }
 
-function GmUploadDrop(event, gm_name) {
+function GmUploadDrop(event, url_regex, gm_name) {
 	event.preventDefault();
 	
 	// fetch upload data
@@ -59,47 +59,46 @@ function GmUploadDrop(event, gm_name) {
 		$('#url').val(url);
 	}
 	
-	// sanitize url
+	// check url via regex
+	r = new RegExp(url_regex, 'g');
+	if (!r.test(url)) { 
+		// shake URL input
+		$('#url').addClass('shake');
+		setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
+		return;
+	}
+	
+	// import game
 	$.ajax({
-		url: '/vtt/sanitize',
+		url: '/vtt/import-game/' + url,
 		type: 'POST',
-		data: {'url': url },
+		data: f,
+		contentType: false,
+		cache: false,
+		processData: false,
 		success: function(response) {
-			url = response;
+			console.log(response);
+			url_ok  = response['url'];
+			file_ok = response['file'];
 			
-			// create game from upload
-			$.ajax({
-			url: '/vtt/import-game/' + url,
-			type: 'POST',
-			data: f,
-			contentType: false,
-			cache: false,
-			processData: false,
-			success: function(response) {
-				console.log(response);
-				url_ok  = response['url'];
-				file_ok = response['file'];
-				
-				if (!url_ok) {
-					// shake URL input
-					$('#url').addClass('shake');
-					setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
-				} else {
-					if (!file_ok) {
-						// reset uploadqueue
-						$('#uploadqueue').val("");
-						
-						// reset and shake URL input
-						$('#dropzone').addClass('shake');
-						setTimeout(function() {	$('#dropzone').removeClass('shake'); }, 1000);
+			if (!url_ok) {
+				// shake URL input
+				$('#url').addClass('shake');
+				setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
+			} else {
+				if (!file_ok) {
+					// reset uploadqueue
+					$('#uploadqueue').val("");
 					
-					} else {
-						// load game
-						window.location = '/' + gm_name + '/' + url;
-					}
+					// reset and shake URL input
+					$('#dropzone').addClass('shake');
+					setTimeout(function() {	$('#dropzone').removeClass('shake'); }, 1000);
+				
+				} else {
+					// load game
+					window.location = '/' + gm_name + '/' + url;
 				}
 			}
-		});
 		}
 	});
 }

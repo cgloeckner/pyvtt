@@ -5,8 +5,6 @@ from bottle import *
 
 import os, json, random, time, sys, psutil
 
-from urllib.parse import quote, quote_plus
-
 from pony import orm
 from orm import db, db_session, Token, Game, engine
 
@@ -55,8 +53,10 @@ def getMyIp():
 @post('/vtt/join')
 def post_gm_login():
 	# escape gmname and test whether something was replaced
-	name = quote(request.forms.gmname)
-	name = name.lower()
+	if not engine.verifyUrlSection(request.forms.gmname):
+		# contains invalid characters
+		return {'gmname': ''}
+	name = request.forms.gmname.lower()
 	
 	if name in engine.gm_blacklist:
 		# blacklisted name
@@ -93,10 +93,6 @@ def get_game_list():
 	# show GM's games
 	return dict(engine=engine, gm=gm, server=server, dbScene=db.Scene)
 
-@post('/vtt/sanitize')
-def sanitize_url():
-	return quote_plus(request.forms.url)
-
 @post('/vtt/import-game/<url>', apply=[asGm])
 def post_import_game(url):  
 	url_ok = False
@@ -104,7 +100,7 @@ def post_import_game(url):
 	
 	# check GM and url
 	gm = db.GM.loadFromSession(request) 
-	if gm is not None and db.Game.isUniqueUrl(gm, url):
+	if gm is not None and engine.verifyUrlSection(url) and db.Game.isUniqueUrl(gm, url):
 		url_ok = True
 	
 	# upload file

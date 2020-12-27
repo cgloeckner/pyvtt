@@ -9,7 +9,7 @@
 </div>
 %end
 
-<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{gm.name}}');" onClick="closeDropdown();">  
+<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.name}}');" onClick="closeDropdown();">  
 
 <hr />
 

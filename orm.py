@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil, zipfile, json, math
+import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil, zipfile, json, math, re
 
 import bottle
 
@@ -164,19 +164,9 @@ class Engine(object):
 		self.socket = ''
 		self.debug  = False
 		
-		# setup blacklist replacemap
-		self.url_replacemap = {
-			'ä': 'ae',
-			'Ä': 'Ae',
-			'ö': 'oe',
-			'Ö': 'Oe',
-			'ü': 'ue',
-			'Ü': 'Ue',
-			'ß': 'ss'
-		}
-		
-		# blacklist for GM names
+		# blacklist for GM names and game URLs
 		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'status', 'websocket']
+		self.url_regex    = '^[A-Za-z0-9_\-.]+$'
 		
 		self.local_gm    = False
 		self.title       = 'PyVTT'
@@ -294,7 +284,10 @@ class Engine(object):
 				server.serve_forever()
 			except KeyboardInterrupt:
 				pass
-
+		
+	def verifyUrlSection(self, s):
+		return bool(re.match(self.url_regex, s))
+		
 	def getIp(self):
 		if self.local_gm:
 			return self.publicip
@@ -302,13 +295,13 @@ class Engine(object):
 			return 'localhost'
 		else:
 			return self.host 
-	
+		
 	def getClientIp(self, request):
 		if self.socket != '':
 			return request.environ.get('HTTP_X_FORWARDED_FOR')
 		else:
 			return request.environ.get('REMOTE_ADDR')
-	
+		
 	@staticmethod
 	def getMd5(handle):
 		hash_md5 = hashlib.md5()
