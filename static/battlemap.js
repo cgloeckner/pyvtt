@@ -530,7 +530,7 @@ function drawScene() {
 	
 	// draw tokens
 	if (background != null) {
-		drawToken(background, select_ids.includes(background.id));
+		drawToken(background, false);
 	}
 	$.each(culling, function(index, token) {
 		var color = null;

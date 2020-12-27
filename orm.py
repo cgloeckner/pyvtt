@@ -27,14 +27,14 @@ class GameCache(object):
 		with self.lock:
 			self.players[color] = name
 			self.colors[name]   = color
-			self.selected[name] = list()
+			self.selected[color] = list()
 		
 	def removePlayer(self, name):
 		with self.lock:
 			color = self.colors[name]
 			del self.players[color]
 			del self.colors[name]
-			del self.selected[name]
+			del self.selected[color]
 		
 	def getList(self):
 		result = list()
@@ -53,7 +53,7 @@ class GameCache(object):
 		
 	def setSelection(self, name, ids):
 		with self.lock:
-			self.selected[name] = ids
+			self.selected[self.colors[name]] = ids
 
 
 class EngineCache(object):
