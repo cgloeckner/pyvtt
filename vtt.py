@@ -73,8 +73,9 @@ def post_gm_login():
 	gm = db.GM(name=name, ip=ip, sid=sid)
 	gm.postSetup()
 	
-	response.set_cookie('session', name, path='/', expires=gm.expire)
-	response.set_cookie('session', sid, path='/', expires=gm.expire)
+	# set cookie (will never expire)
+	response.set_cookie('session', name, path='/')
+	response.set_cookie('session', sid, path='/')
 
 	db.commit()
 	return {'gmname': gm.name}
@@ -150,7 +151,7 @@ def delete_game(url):
 		s.backing = None
 		s.delete()
 	game.active = None
-	game.clear() # also delete images from disk!
+	game.clear()
 	game.delete()
 	
 	server = ''
@@ -280,8 +281,8 @@ def set_player_name(gmname, url):
 	# load game
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	
-	# save playername in client cookie (expire after 30 days)
-	expire = int(time.time() + 3600 * 24 * 30)
+	# save playername in client cookie
+	expire = int(time.time() + engine.expire)
 	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire)
 	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire)
 	
@@ -324,10 +325,9 @@ def join_game(gmname, url):
 	playercolor = request.get_cookie('playercolor')
 	
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	game_url = game.getUrl()
 	
 	# save this playername
-	engine.cache.insert(game, playername, playercolor)
+	engine.cache.addPlayer(game, playername, playercolor)
 
 # on window close
 @post('/<gmname>/<url>/disconnect')
@@ -336,10 +336,11 @@ def quit_game(gmname, url):
 	playername = request.get_cookie('playername')
 	
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	game_url = game.getUrl()
+	if game is None:
+		return
 	
 	# remove playername and -color
-	engine.cache.remove(game, playername)
+	engine.cache.removePlayer(game, playername)
 
 @post('/<gmname>/<url>/update')
 def post_player_update(gmname, url):
@@ -347,9 +348,8 @@ def post_player_update(gmname, url):
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	if game is None:
 		return {}
-	game_url = game.getUrl()
 	
-	if not engine.cache.contains(game):
+	if not engine.cache.containsGame(game):
 		# game not found (should only be relevant for debugging)
 		return {} 
 	
@@ -442,6 +442,9 @@ def post_player_update(gmname, url):
 def range_query_token(gmname, url, x, y, w, h):
 	# load game
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	if game is None:
+		return '[]'
+	
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
 	
@@ -590,4 +593,8 @@ def status_report():
 
 # --- setup stuff -------------------------------------------------------------
 
-engine.run()
+if __name__ == '__main__':
+	try:
+		engine.run()
+	except KeyboardInterrupt:
+		pass

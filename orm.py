@@ -23,13 +23,13 @@ class GameCache(object):
 		self.colors   = dict() # key: color, value: name
 		self.selected = dict() # key: name, value: list of token IDs
 	
-	def insert(self, name, color):
+	def addPlayer(self, name, color):
 		with self.lock:
 			self.players[color] = name
 			self.colors[name]   = color
 			self.selected[name] = list()
 		
-	def remove(self, name):
+	def removePlayer(self, name):
 		with self.lock:
 			color = self.colors[name]
 			del self.players[color]
@@ -62,23 +62,31 @@ class EngineCache(object):
 		self.lock  = threading.Lock()
 		self.games = dict() # key: url, value: PlayerCache
 		
-	def insert(self, game, name, color):
+	def addGame(self, game):
+		url = game.getUrl()
+		with self.lock:
+			self.games[url] = GameCache()
+		
+	def addPlayer(self, game, name, color):
 		url   = game.getUrl()
 		cache = None
 		with self.lock:
-			if url not in self.games:
-				self.games[url] = GameCache()
 			cache = self.games[url]
-		cache.insert(name, color)
+		cache.addPlayer(name, color)
 		
-	def remove(self, game, name):
+	def removeGame(self, game): 
 		url = game.getUrl()
-		cahe = None
+		with self.lock:
+			del self.games[url]
+		
+	def removePlayer(self, game, name):
+		url = game.getUrl()
+		cache = None
 		with self.lock:
 			cache = self.games[url]
-		cache.remove(name)
+		cache.removePlayer(name)
 		
-	def contains(self, game): 
+	def containsGame(self, game): 
 		url = game.getUrl()
 		with self.lock:
 			return url in self.games
@@ -116,8 +124,9 @@ class EngineCache(object):
 		n = 0
 		with self.lock:
 			for g in self.games:
-				with g.lock:
-					n += len(g.players)
+				cache = self.games[g]
+				with cache.lock:
+					n += len(cache.players)
 		return n
 
 
@@ -171,6 +180,7 @@ class Engine(object):
 		self.local_gm    = False
 		self.title       = 'PyVTT'
 		self.imprint_url = ''
+		self.expire      = 3600 * 24 * 30 # default: 30d
 
 		# game cache
 		self.cache = EngineCache()
@@ -180,10 +190,11 @@ class Engine(object):
 		self.local_gm = '--local-gm' in argv
 		
 		# setup logging
+		log_format = '[%(asctime)s] %(message)s'
 		if self.debug:
-			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', level=logging.DEBUG)
+			logging.basicConfig(stream=sys.stdout, format=log_format, level=logging.DEBUG)
 		else:
-			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', level=logging.INFO)
+			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', format=log_format, level=logging.INFO)
 		
 		logging.info('Started Modes: debug={0}, local_gm={1}'.format(self.debug, self.local_gm))
 		
@@ -194,6 +205,7 @@ class Engine(object):
 			settings = {
 				'title'       : self.title,
 				'imprint_url' : self.imprint_url,
+				'expire'      : self.expire,
 				'listener'    : 'ip',
 				'host'        : self.host,
 				'port'        : self.port,
@@ -208,6 +220,7 @@ class Engine(object):
 				settings = json.load(h)
 				self.title       = settings['title']
 				self.imprint_url = settings['imprint_url']
+				self.expire      = settings['expire']
 				self.host        = settings['host']
 				self.port        = settings['port']
 				self.socket      = settings['socket']
@@ -237,19 +250,16 @@ class Engine(object):
 		else:
 			self.host = '0.0.0.0'
 		
-		# prepare existing games' cache
+		# prepare engine cache
 		with db_session:
 			s = time.time()
 			for gm in db.GM.select():
 				gm.makeLock()
 			for g in db.Game.select():
-				g.makeMd5s()
+				g.makeMd5s()         
+				self.cache.addGame(g)
 			t = time.time() - s
 			logging.info('Image checksums and threading locks created within {0}s'.format(t))
-		
-		if not self.local_gm:
-			# trigger cleanup every 24h
-			self.cleanup()
 		
 	def run(self):
 		if self.debug or self.socket == '':
@@ -321,28 +331,27 @@ class Engine(object):
 		return convertBytes(size)
 		
 	def cleanup(self):
-		""" Cleanup all expired GM data. """
+		now = time.time()      
 		with db_session:
-			now = int(time.time())
-			num_gms   = 0
-			num_games = 0
 			for gm in db.GM.select():
-				if gm.expire < now:
-					num_gms += 1
-					for g in gm.games:
-						g.clear()
-						num_games += 1
+				if gm.timeid > 0 and gm.timeid + engine.expire < now:
+					# clear expired GM
 					gm.clear()
+				else:
+					# try to cleanup
+					gm.cleanup(now)
+			
+			# finally delete all expired GMs
+			# note: idk why but pony's cascade_delete isn't working
+			for gm in db.GM.select(lambda g: g.timeid > 0 and g.timeid + engine.expire < now):
+				for game in db.Game.select(lambda g: g.admin.name == gm.name):
+					for scene in game.scenes:
+						for token in scene.tokens:
+							token.delete() 
+						scene.delete()
+					game.delete()
+				gm.delete()
 		
-		logging.info('Database cleanup: {0} GMs and {1} Games removed'.format(num_gms, num_games))
-		
-		# schedule next cleanup
-		self.cleaner = threading.Thread(target=Engine.clean_handle, args=self)
-	
-	def clean_handle(self):
-		time.sleep(3600 * 24) # 24h
-		self.cleanup()
-
 engine = Engine()
 
 # -----------------------------------------------------------------------------
@@ -409,6 +418,7 @@ class Token(db.Entity):
 		
 		return (x, y)
 
+
 # -----------------------------------------------------------------------------
 
 class Scene(db.Entity):
@@ -417,6 +427,7 @@ class Scene(db.Entity):
 	timeid  = Required(float, default=0.0) # keeps time for dirtyflag on tokens
 	tokens  = Set("Token", cascade_delete=True, reverse="scene") # forward deletion to tokens
 	backing = Optional("Token", reverse="back") # background token
+
 
 # -----------------------------------------------------------------------------
 
@@ -453,7 +464,7 @@ class Game(db.Entity):
 	def postSetup(self):
 		img_path = self.getImagePath()
 		
-		with engine.locks[self.admin.name]: # make IO access safe	
+		with engine.locks[self.admin.name]: # make IO access safe
 			if not os.path.isdir(img_path):
 				os.mkdir(img_path)
 		
@@ -543,22 +554,26 @@ class Game(db.Entity):
 		for image_id in all_images:
 			url = self.getImageUrl(image_id)
 			# check for any tokens
-			if db.Token.select(lambda t: t.url == url).first() is None:
+			t = db.Token.select(lambda t: t.url == url).first()
+			if t is None:
 				# found abandoned image
 				abandoned.append(os.path.join(game_root, image_id))
 			
 		return abandoned
-
-	def removeAbandonedImages(self):
+		
+	def cleanup(self):
+		""" Cleanup game's unused image data. """   
+		logging.info('\tCleaning {0}'.format(self.url))
+		
 		relevant = self.getAbandonedImages()
-		cleanup = 0
 		with engine.locks[self.admin.name]: # make IO access safe
 			for fname in relevant:
-				cleanup += os.path.getsize(fname)
 				os.remove(fname)
-		return cleanup, len(relevant)
-
+		
 	def clear(self):
+		""" Remove this game from disk. """
+		logging.info('\tRemoving {0}'.format(self.url))
+		
 		img_path = self.getImagePath()
 		with engine.locks[self.admin.name]: # make IO access safe
 			if os.path.isdir(img_path):
@@ -568,7 +583,10 @@ class Game(db.Entity):
 					os.remove(path)
 				# remove image dir (= game dir)
 				os.rmdir(img_path)
-
+		
+		# remove from cache
+		engine.cache.removeGame(self)
+		
 	def toZip(self):
 		# remove abandoned images
 		self.removeAbandonedImages()
@@ -663,7 +681,8 @@ class Game(db.Entity):
 		db.commit()
 		
 		scene.backing = t
-		db.commit()
+		db.commit() 
+		engine.cache.addGame(game)
 		
 		return game
 	
@@ -718,6 +737,7 @@ class Game(db.Entity):
 					game.active = scene.id
 			
 			db.commit()
+			engine.cache.addGame(game)
 			
 			return game
  
@@ -728,14 +748,14 @@ class GM(db.Entity):
 	name   = Required(str, unique=True)
 	ip     = Required(str, default='127.0.0.1') # note: could be used twice (same internet connection, multiple users)
 	sid    = Required(str)
-	expire = Optional(int)
+	timeid = Optional(float) # dirtyflag
 	games  = Set("Game", cascade_delete=True, reverse="admin") # forward deletion to games
 	
 	def makeLock(self):
 		engine.locks[self.name] = threading.Lock();
 	
 	def postSetup(self):
-		self.expire = int(time.time()) + 3600 * 24 * 30 # expire after 30d
+		self.timeid = int(time.time())
 		
 		self.makeLock()
 		
@@ -753,26 +773,31 @@ class GM(db.Entity):
 			if not os.path.isdir(export_path):
 				os.mkdir(export_path)
 		
+	def cleanup(self, now):
+		""" Cleanup GM's expired games. """
+		logging.info('Cleaning GM {0}'.format(self.name))
+		
+		for g in self.games:
+			# query timeid of active scene
+			timeid = g.scenes.select(lambda s: s.id == g.active).first().timeid
+			
+			if timeid > 0 and timeid + engine.expire < now:
+				# remove this game
+				g.clear()
+			else:
+				# cleanup this game
+				g.cleanup()
+		
 	def clear(self):
+		""" Remove this GM from disk. """  
+		logging.info('Removing GM {0}'.format(self.name))
+		
+		# remove GM's directory
 		root_path = self.getBasePath()
-		games_path = self.getGamesPath()
-		export_path = self.getExportPath()
 		
 		with engine.locks[self.name]: # make IO access safe
-			if os.path.isdir(export_path):
-				# remove all export files
-				for fname in self.getAllImages():
-					path = os.path.join(export_path, fname)
-					os.remove(path)
-				# remove export dir
-				os.rmdir(export_path)
-			if os.path.isdir(games_path):
-				# remove games dir
-				os.rmdir(games_path)
-			if os.path.isdir(root_path):
-				# remove root dir
-				os.rmdir(root_path)
-
+			shutil.rmtree(root_path)
+		
 	def getBasePath(self):
 		return engine.data_dir / 'gms' / self.name
 	
