@@ -5,7 +5,7 @@ Recommended Browser: Firefox (non-mobile device, at least at the moment)
 
 # I want to host it myself
 Start `run-vtt.py` on your machine (currently only Linux-based OS are supported, this may change in future ... idk). Make sure to enable port forwarding for port 8080 (or specify another port via `--port=80` when starting) for this computer in your router.
-If you are hosting using your public IP, consider setting starting the server with `--local_gm` and set up your games via `localhost`. Launching with `--local_gm` will replace all `http://localhost` in the game-links by your public IP, so you can easily copy and paste those to your players. If you setup your games with your public IP, your game data can get unaccessable if your IP changes (because cookies are bound to the server name or in this case IP address).
+If you are hosting using your public IP, consider setting starting the server with `--local-gm` and set up your games via `localhost`. Launching with `--local-gm` will replace all `http://localhost` in the game-links by your public IP, so you can easily copy and paste those to your players. If you setup your games with your public IP, your game data can get unaccessable if your IP changes (because cookies are bound to the server name or in this case IP address).
 *Note:* Requires `bottle` (as HTTP server), `gevent` (for async HTTP) and `pony` (as database ORM). Consider using `pip` or similar tools.
 
 # Running with nginx through unix socket

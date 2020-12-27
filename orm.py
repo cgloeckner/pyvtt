@@ -187,7 +187,7 @@ class Engine(object):
 
 	def setup(self, argv):
 		self.debug    = '--debug' in argv
-		self.local_gm = '--local_gm' in argv
+		self.local_gm = '--local-gm' in argv
 		
 		# setup logging
 		if self.debug:
@@ -227,7 +227,7 @@ class Engine(object):
 		if '--help' in argv:
 			print('Commandline args:')
 			print('    --debug       Starts in debug mode.')
-			print('    --local_gm    Starts in local-GM-mode.')
+			print('    --local-gm    Starts in local-GM-mode.')
 			print('')
 			print('Debug Mode:    Enables debug level logging and restricts to localhost (overrides unix socket settings).')
 			print('Local-GM Mode: Replaces `localhost` in all created links by the public ip.')
