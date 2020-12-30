@@ -312,12 +312,11 @@ function setCookie(key, value) {
 function updatePlayers(response) {
 	var own_name = getCookie('playername');
 	
-	// parse players to key-value pairs (name => color)
+	// set players
 	var current = {};
-	$.each(response, function(index, line) {
-		var parts = line.split(':');
-		name  = parts[0];
-		color = parts[1];
+	$.each(response, function(index, data) {
+		name  = data[0];
+		color = data[1];
 		current[name] = color;
 		
 		if (players[name] == null) {

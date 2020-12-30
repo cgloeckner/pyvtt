@@ -40,7 +40,7 @@ class GameCache(object):
 		result = list()
 		with self.lock:
 			for name in self.colors:
-				result.append('{0}:{1}'.format(name, self.colors[name]))
+				result.append([name, self.colors[name]])
 		return result
 		
 	def getColor(self, name):
@@ -729,7 +729,7 @@ class Game(db.Entity):
 				# create tokens for that scene
 				for token_id in s["tokens"]:
 					token_data = data["tokens"][token_id]
-					t = db.Token(
+					t = db.Token(                                
 						scene=scene, url=game.getImageUrl(token_data['url']),
 						posx=token_data['posx'], posy=token_data['posy'],
 						zorder=token_data['zorder'], size=token_data['size'],
