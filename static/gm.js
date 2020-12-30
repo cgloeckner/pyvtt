@@ -27,6 +27,10 @@ function registerGm(event) {
 	});
 }
 
+function kickPlayers(url) {
+	$.post(url='/vtt/kick-players/' + url);
+}
+
 function deleteGame(url) {
 	$.post(
 		url='/vtt/delete-game/' + url,

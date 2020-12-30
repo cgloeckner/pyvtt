@@ -35,6 +35,7 @@ class PlayerCache(object):
 		self.parent   = parent # parent cache object
 		self.name     = name
 		self.color    = color
+		self.uuid     = uuid.uuid1().hex # used for HTML DOM id
 		self.selected = list()
 		
 		self.socket   = None
@@ -142,7 +143,7 @@ class GameCache(object):
 		result = dict()
 		with self.lock:
 			for name in self.players:
-				result[name] = self.players[name].color
+				result[name] = [self.players[name].uuid, self.players[name].color]
 		return result
 		
 	def getSelections(self):
@@ -158,6 +159,17 @@ class GameCache(object):
 		
 	# --- websocket implementation ------------------------------------
 		
+	def closeAllSockets(self):
+		""" Closes all sockets. """
+		with self.lock:
+			for name in self.players:
+				socket = self.players[name].socket
+				if socket is not None and not socket.closed:
+					socket.close()
+				else:
+					del self.players[name]
+			self.players = dict()
+		
 	def broadcast(self, data):
 		""" Broadcast given data to all clients. """
 		with self.lock:
@@ -169,14 +181,13 @@ class GameCache(object):
 		# notify player about all players and  latest rolls
 		rolls  = list()
 		since = time.time() - 20
-		all_colors = self.getColors()
 		# query latest rolls and all tokens
 		with db_session:
 			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
 			
 			for r in db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
 				rolls.append({
-					'color'  : all_colors[r.player],
+					'color'  : r.color,
 					'sides'  : r.sides,
 					'result' : r.result
 				})
@@ -193,6 +204,7 @@ class GameCache(object):
 		self.broadcast({
 			'OPID'  : 'JOIN',
 			'name'  : player.name,
+			'uuid'  : player.uuid,
 			'color' : player.color
 		})
 		
@@ -217,7 +229,8 @@ class GameCache(object):
 		# broadcast logout to all players
 		self.broadcast({
 			'OPID' : 'QUIT',
-			'name' : player.name
+			'name' : player.name,
+			'uuid'  : player.uuid
 		})
 		
 		# remve player
@@ -237,7 +250,7 @@ class GameCache(object):
 			scene = db.Scene.select(lambda s: s.id == g.active).first()
 			scene.timeid = now
 			# roll dice
-			db.Roll(game=g, player=player.name, sides=sides, result=result, timeid=now)
+			db.Roll(game=g, color=player.color, sides=sides, result=result, timeid=now)
 			
 		# broadcast dice result
 		self.broadcast({
@@ -778,7 +791,7 @@ class Scene(db.Entity):
 class Roll(db.Entity):
 	id     = PrimaryKey(int, auto=True)
 	game   = Required("Game")
-	player = Required(str)
+	color  = Required(str)
 	sides  = Required(int)
 	result = Required(int)
 	timeid = Required(float, unique=0.0)
@@ -959,7 +972,7 @@ class Game(db.Entity):
 		# collect all scenes in this game
 		scenes = list()
 		active = 0
-		for s in self.scenes:
+		for s in self.scenes.order_by(lambda s: s.id):
 			tkns = list()
 			for t in s.tokens:
 				# query new id from translation dict

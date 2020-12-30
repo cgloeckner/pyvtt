@@ -81,7 +81,6 @@ var tokens_added   = []; // holds token id => opacity when recently added
 var tokens_removed = []; // holds token id => (token, opacity) when recently removed
 
 var player_selections = {}; // buffer that contains selected tokens and corresponding player colors
-var allow_multiselect = false; // whether client is allowed to select multiple tokens
 
 var culling = []; // holds tokens for culling
 var min_z = -1; // lowest known z-order
@@ -309,17 +308,17 @@ function setCookie(key, value) {
 	document.cookie = key + '=' + value;
 }
 
-function showPlayer(name, color) {
+function showPlayer(name, uuid, color) {
 	if (name in players) {
-		hidePlayer(name);
+		hidePlayer(name, uuid);
 	}
-	$('#players').append('<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">' + name + '</span>');
+	$('#players').append('<span id="player_' + uuid + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">' + name + '</span>');
 	players[name] = color;
 }
 
-function hidePlayer(name) {
+function hidePlayer(name, uuid) {
 	if (name in players) {
-		$('#player_' + name).remove();
+		$('#player_' + uuid).remove();
 		delete players[name];
 	}
 }
@@ -375,7 +374,6 @@ var select_from_x = null;
 var select_from_y = null;
 
 var fps = 60;
-var update_cycles = 30;
 
 /// Draw the entire scene (locked tokens in the background, unlocked in foreground)
 function drawScene() {
@@ -484,8 +482,9 @@ function onSocketMessage(event) {
 
 function onAccept(data) {
 	// show all players
-	$.each(data.players, function(name, color) {
-		showPlayer(name, color);
+	$.each(data.players, function(name, pair) {
+		showPlayer(name, pair[0], pair[1]); // uuid, color
+		console.log(name, pair[0], pair[1]);
 	});
 	
 	// show all rolls
@@ -494,6 +493,8 @@ function onAccept(data) {
 	});
 	
 	onRefresh(data);
+	
+	updateTokenbar();
 }
 
 function onUpdate(data) {
@@ -520,14 +521,17 @@ function onDelete(data) {
 
 function onJoin(data) {
 	var name  = data['name'];
+	var uuid  = data['uuid'];
 	var color = data['color'];
-	showPlayer(name, color);
+	showPlayer(name, uuid, color); 
+	console.log(name, uuid, color);
 }
 
 function onQuit(data) {
 	var name  = data['name'];
+	var uuid  = data['uuid'];
 	players[name] = null;
-	hidePlayer(name); 
+	hidePlayer(name, uuid); 
 }
 
 function onDice(data) {
@@ -610,8 +614,30 @@ function login(event, gmname, url, server_url) {
 				};
 				
 				socket.onclose = function(event) {
-					alert('CONNECTION LOST');
-					location.reload();
+					// forget everything about the old session
+					images            = [];
+					tokens            = [];
+					tokens_added      = [];
+					tokens_removed    = [];
+					player_selections = {};
+					culling           = [];
+					players           = {};
+					rolls             = []; 
+					copy_tokens       = [];
+					select_ids        = [];
+					
+					$('#d4box')[0].innerHTML   = '';
+					$('#d6box')[0].innerHTML   = '';
+					$('#d8box')[0].innerHTML   = '';
+					$('#d10box')[0].innerHTML  = '';
+					$('#d12box')[0].innerHTML  = '';
+					$('#d20box')[0].innerHTML  = '';
+					$('#players')[0].innerHTML = '';
+					
+					// return to login screen
+					$('#login').fadeIn(1000, 0.0, function() {
+						alert('CONNECTION LOST');
+					});
 				};
 			}
 		}
@@ -902,7 +928,7 @@ function tokenGrab(event) {
 					'selected' : select_ids
 				});
 			}
-				
+			
 		} else {
 			// Clear selection
 			select_ids = [];

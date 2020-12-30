@@ -135,6 +135,17 @@ def export_game(url):
 	# offer file for downloading
 	return static_file(zip_file, root=zip_path, download=zip_file, mimetype='application/zip')
 
+@post('/vtt/kick-players/<url>', apply=[asGm])
+def kick_players(url):
+	gm = db.GM.loadFromSession(request)
+	
+	# load game
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	
+	# fetch game cache and close sockets
+	game_cache = engine.cache.get(game)
+	game_cache.closeAllSockets()
+
 @post('/vtt/delete-game/<url>', apply=[asGm])
 @view('games')
 def delete_game(url):
@@ -142,7 +153,7 @@ def delete_game(url):
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
-		
+	
 	# delete everything for that game
 	# @note: doing by hand to avoid some weird cycle stuff (workaround)
 	for s in game.scenes:
@@ -349,7 +360,6 @@ def get_player_battlemap(gmname, url):
 	
 	user_agent = request.environ.get('HTTP_USER_AGENT')
 	server_url = '{0}:{1}'.format(engine.getIp(), engine.port)
-	print(server_url)
 	
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, server_url=server_url, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
