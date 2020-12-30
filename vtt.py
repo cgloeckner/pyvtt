@@ -3,7 +3,7 @@
 from gevent import monkey; monkey.patch_all()
 from bottle import *
 
-import os, json, random, time, sys, psutil
+import os, json, time, sys, psutil
 
 from pony import orm
 from orm import db, db_session, Token, Game, engine
@@ -422,6 +422,7 @@ def post_player_update(gmname, url):
 		if t.timeid >= timeid or full_update:
 			tokens.append(t.to_dict())
 	
+	"""
 	# query rolls since last update (or last 10s)
 	game_cache = engine.cache.get(game)
 	
@@ -443,13 +444,14 @@ def post_player_update(gmname, url):
 			'id'     : r.id,
 			'timeid' : r.timeid
 		})
+	"""
 	
 	# return tokens, rolls and timestamp
 	data = {
 		'active'   : game.active,
 		'timeid'   : time.time(),
 		'tokens'   : tokens,
-		'rolls'    : rolls,
+		#'rolls'    : rolls,
 		#'players'  : game_cache.getColors(),
 		'selected' : game_cache.getSelections(),
 		'scene_id' : scene.id
@@ -474,6 +476,7 @@ def range_query_token(gmname, url, x, y, w, h):
 	
 	return json.dumps(token_ids)
 
+"""
 @post('/<gmname>/<url>/roll/<sides:int>')
 def post_roll_dice(gmname, url, sides):
 	# load game
@@ -488,6 +491,7 @@ def post_roll_dice(gmname, url, sides):
 	# add player roll
 	result = random.randrange(1, sides+1)
 	db.Roll(game=game, player=playername, sides=sides, result=result, timeid=time.time())
+"""
 
 @post('/<gmname>/<url>/upload/<posx:int>/<posy:int>')
 def post_image_upload(gmname, url, posx, posy):

@@ -336,11 +336,11 @@ function Roll(sides, playername, result) {
 	this.result     = result;
 }
 
-function addRoll(sides, result, color, id) {
+function addRoll(sides, result, color) {
 	// create dice result
 	var container = $('#d' + sides + 'box');
 	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
-	var span = '<span id="roll_id_' + id + '" style="' + css + '">' + result + '</span>';
+	var span = '<span style="' + css + '">' + result + '</span>';
 	container.prepend(span);
 	
 	// prepare automatic cleanup
@@ -349,12 +349,6 @@ function addRoll(sides, result, color, id) {
 		dom_span.addClass('natroll');
 	}
 	dom_span.delay(roll_timeout).fadeOut(5000, function() { this.remove(); });
-}
-
-function updateRolls(rolls) {
-	$.each(rolls, function(index, roll) {
-		addRoll(roll['sides'], roll['result'], roll['color'], roll['id']);
-	});                      
 }
 
 // --- game state implementation ----------------------------------------------
@@ -476,7 +470,7 @@ function updateTokens() {
 			}
 			
 			updateTokenbar();
-			updateRolls(response['rolls']);
+			//updateRolls(response['rolls']);
 			//updatePlayers(response['players']);
 			
 			// highlight token selection (switch key and value, see server impl)
@@ -565,9 +559,6 @@ function updateGame() {
 		update_tick -= 1;
 	}
 	
-	// keep socket alive
-	writeSocket({'OPID': 'KEEP-ALIVE'});
-	
 	drawScene();
 	setTimeout("updateGame()", 1000.0 / fps);
 }
@@ -587,12 +578,21 @@ function onSocketMessage(event) {
 		case 'QUIT':
 			onQuit(data);
 			break;
+		case 'DICE':
+			onDice(data);
+			break;
 	};
 }
 
 function onAccept(data) {
+	// show all players
 	$.each(data.players, function(name, color) {
 		showPlayer(name, color);
+	});
+	
+	// show all rolls
+	$.each(data.rolls, function(item, obj) {
+		addRoll(obj.sides, obj.result, obj.color);
 	});
 }
 
@@ -601,15 +601,20 @@ function onJoin(data) {
 	var color = data['color'];
 	showPlayer(name, color);
 	
-	console.log(name + ' joined');
+	console.log(data);
 }
 
 function onQuit(data) {
 	var name  = data['name'];
 	players[name] = null;
-	hidePlayer(name);
-	  
-	console.log(name + ' quit');
+	hidePlayer(name); 
+	   
+	console.log(data);
+}
+
+function onDice(data) {
+	console.log(data);
+	addRoll(data.sides, data.result, data.color, data.roll_id)
 }
 
 /// Send data JSONified to server via the websocket
@@ -1099,7 +1104,12 @@ function tokenWheel(event) {
 /// Event handle to click a dice
 function rollDice(sides) {
 	$('#d' + sides).addClass('shake');
-	$.post('/' + gm_name + '/' + game_url + '/roll/' + sides);
+	
+	writeSocket({
+		'OPID'  : 'ROLL',
+		'sides' : sides
+	})
+	
 	setTimeout(function() {	$('#d' + sides).removeClass('shake'); }, 500);
 }
 

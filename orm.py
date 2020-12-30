@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil, zipfile, json, math, re
+import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil, zipfile, json, math, re, random
 
 import bottle 
 from bottle.ext.websocket import GeventWebSocketServer
@@ -41,7 +41,7 @@ class PlayerCache(object):
 		self.thread   = None
 		
 		self.dispatch_map = {
-			'KEEP-ALIVE' : self.parent.onKeepAlive
+			'ROLL' : self.parent.onRoll
 		}
 		
 	def __del__(self):
@@ -73,7 +73,6 @@ class PlayerCache(object):
 		if self.socket is not None and not self.socket.closed:
 			raw = json.dumps(data)
 			self.socket.send(raw)
-			print('DATA TO {0} ==> {1}'.format(self.name, raw))
 		
 	def fetch(self, data, key):
 		""" Try to fetch key from data or raise ProtocolError. """
@@ -117,7 +116,8 @@ class GameCache(object):
 	
 	def __init__(self, game):
 		self.lock    = threading.Lock()
-		self.game    = game
+		self.gmname  = game.admin.name
+		self.url     = game.url
 		self.players = dict() # name => player
 		
 	# --- cache implementation ----------------------------------------
@@ -159,15 +159,27 @@ class GameCache(object):
 			for name in self.players:
 				self.players[name].write(data)
 		
-	def onKeepAlive(self, player, data):
-		pass
-		
 	def login(self, player):
 		""" Handle player login. """
-		# notify player about all other players
+		# notify player about all players and latest rolls 
+		rolls = list()
+		since = time.time() - 20
+		all_colors = self.getColors()
+		
+		# query latest rolls
+		with db_session:
+			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			for r in db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
+				rolls.append({
+					'color'  : all_colors[r.player],
+					'sides'  : r.sides,
+					'result' : r.result
+				})
+		
 		player.write({
 			'OPID'    : 'ACCEPT',
-			'players' : self.getColors()
+			'players' : self.getColors(),
+			'rolls'   : rolls
 		});
 		
 		# broadcast join to all players
@@ -187,6 +199,30 @@ class GameCache(object):
 		
 		# remve player
 		self.remove(player.name)
+		
+	def onRoll(self, player, data):
+		""" Handle player rolling a dice. """
+		# roll dice
+		now = time.time()
+		sides  = data['sides']
+		result = random.randrange(1, sides+1)
+		roll_id = None
+		
+		with db_session: 
+			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			# update active scene's timeid
+			scene = db.Scene.select(lambda s: s.id == g.active).first()
+			scene.timeid = now
+			# roll dice
+			db.Roll(game=g, player=player.name, sides=sides, result=result, timeid=now)
+			
+		# broadcast dice result
+		self.broadcast({
+			'OPID'    : 'DICE',
+			'color'   : player.color,
+			'sides'   : sides,
+			'result'  : result
+		})
 
 
 class EngineCache(object):
