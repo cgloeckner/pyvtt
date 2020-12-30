@@ -3,7 +3,9 @@
 
 import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, tempfile, shutil, zipfile, json, math, re
 
-import bottle
+import bottle 
+from bottle.ext.websocket import GeventWebSocketServer
+from geventwebsocket.exceptions import WebSocketError
 
 from pony.orm import *
 
@@ -15,20 +17,100 @@ __author__ = "Christian Glöckner"
 db = Database()
 
 
+class ProtocolError(Exception):
+	""" Used if the communication between server and client behaves
+	unexpected.
+	"""
+	
+	def __init__(self, msg):
+		super().__init__(msg)
+
 
 class PlayerCache(object):
 	instance_count = 0
 	
-	def __init__(self, game, name, color):
+	def __init__(self, parent, name, color):
 		PlayerCache.instance_count += 1
-		self.game     = game
+		
+		self.parent   = parent # parent cache object
 		self.name     = name
 		self.color    = color
 		self.selected = list()
 		
+		self.socket   = None
+		self.thread   = None
+		
+		self.dispatch_map = {
+			'KEEP-ALIVE' : self.parent.onKeepAlive
+		}
+		
 	def __del__(self):
 		PlayerCache.instance_count -= 1
-	
+		
+	# --- websocket implementation ------------------------------------
+		
+	def listen(self, socket):
+		""" Start socket handling thread. """
+		self.socket = socket
+		self.thread = threading.Thread(target=self.handle, args=[self])
+		self.thread.start()
+		
+	def read(self):
+		""" Return JSON object read from socket. """
+		try:
+			raw = self.socket.receive()
+			if raw is None:
+				return None
+			return json.loads(raw)
+		except Exception as e:
+			# send error msg back to client
+			self.socket.send(str(e)) 
+			self.socket.close()
+			raise ProtocolError('Broken JSON message')
+		
+	def write(self, data):
+		""" Write JSON object to socket. """
+		if self.socket is not None and not self.socket.closed:
+			raw = json.dumps(data)
+			self.socket.send(raw)
+			print('DATA TO {0} ==> {1}'.format(self.name, raw))
+		
+	def fetch(self, data, key):
+		""" Try to fetch key from data or raise ProtocolError. """
+		try:
+			return data[key]
+		except KeyError as e:
+			# send error msg back to client
+			self.socket.send(str(e))
+			self.socket.close()
+			raise ProtocolError('Key "{0}" not provided by client'.format(key))
+		
+	def handle(self, player):
+		""" Thread-handle for dispatching player actions. """
+		try:
+			while True:
+				# query data and operation id
+				data = self.read()
+				if data is not None:
+					# dispatch operation
+					opid = self.fetch(data, 'OPID')
+					func = self.dispatch_map[opid]
+					func(self, data)
+				else:
+					break
+			
+		except WebSocketError as e:
+			# player quit   
+			print('\t{0}\tERROR\t{1}'.format(name, e))
+			
+		except ProtocolError as e:
+			# error occured
+			print('\t{0}\\\tPROTOCOL\t{1}'.format(name, e))
+		
+		# logout player
+		player.parent.logout(player)
+		
+
 
 class GameCache(object):
 	""" Thread-safe player dict using name as key. """
@@ -37,12 +119,15 @@ class GameCache(object):
 		self.lock    = threading.Lock()
 		self.game    = game
 		self.players = dict() # name => player
-	
+		
+	# --- cache implementation ----------------------------------------
+		
 	def insert(self, name, color):
 		with self.lock:
 			if name in self.players:
 				raise KeyError
-			self.players[name] = PlayerCache(self.game, name, color)
+			self.players[name] = PlayerCache(self, name, color)
+			return self.players[name]
 		
 	def get(self, name):
 		with self.lock:
@@ -65,6 +150,37 @@ class GameCache(object):
 	def remove(self, name):
 		with self.lock:
 			del self.players[name]
+		
+	# --- websocket implementation ------------------------------------
+		
+	def broadcast(self, data):
+		""" Broadcast given data to all clients. """
+		with self.lock:
+			for name in self.players:
+				self.players[name].write(data)
+		
+	def onKeepAlive(self, player, data):
+		pass
+		
+	def login(self, player):
+		""" Handle player login. """
+		# broadcast join to all players
+		self.broadcast({
+			'OPID'  : 'JOIN',
+			'name'  : player.name,
+			'color' : player.color
+		})
+		
+	def logout(self, player):
+		""" Handle player logout. """
+		# broadcast logout to all players
+		self.broadcast({
+			'OPID' : 'QUIT',
+			'name' : player.name
+		})
+		
+		# remve player
+		self.remove(player.name)
 
 
 class EngineCache(object):
@@ -74,13 +190,17 @@ class EngineCache(object):
 		self.lock  = threading.Lock()
 		self.games = dict()
 		
+	# --- cache implementation ----------------------------------------
+		
 	def insert(self, game):
 		url = game.getUrl()
 		with self.lock:
 			self.games[url] = GameCache(game)
+			return self.games[url]
 		
-	def get(self, game):
-		url = game.getUrl()
+	def get(self, game, url=None):
+		if game is not None:
+			url = game.getUrl()
 		with self.lock:
 			return self.games[url]
 		
@@ -88,6 +208,22 @@ class EngineCache(object):
 		url = game.getUrl()
 		with self.lock:
 			del self.games[url]
+		
+	# --- websocket implementation ------------------------------------
+		
+	def accept(self, socket):
+		""" Handle new connection. """
+		# read name and color
+		raw = socket.receive()
+		data = json.loads(raw)
+		name  = data['name']
+		url   = data['url']
+		
+		# insert player
+		game_cache   = self.get(game=None, url=url)
+		player_cache = game_cache.get(name)
+		game_cache.login(player_cache)
+		player_cache.listen(socket)
 		
 
 
@@ -231,10 +367,12 @@ class Engine(object):
 				port     = self.port,
 				reloader = self.debug,
 				debug    = self.debug,
-				quiet    = not self.debug,
-				server   = 'gevent'
+				quiet    = True,
+				server   = GeventWebSocketServer
 			)
 		else:
+			raise NotImplementedError('unix socket NOT compatible with websocket ATM')
+			"""
 			# run via unix socket
 			from gevent.pywsgi import WSGIServer
 			from gevent import socket
@@ -255,6 +393,7 @@ class Engine(object):
 				server.serve_forever()
 			except KeyboardInterrupt:
 				pass
+			"""
 		
 	def verifyUrlSection(self, s):
 		return bool(re.match(self.url_regex, s))
@@ -412,7 +551,7 @@ class Game(db.Entity):
 	admin  = Required("GM", reverse="games")
 	
 	def getUrl(self):
-		return '/{0}/{1}'.format(self.admin.name, self.url)
+		return '{0}/{1}'.format(self.admin.name, self.url)
 	
 	def makeMd5s(self):
 		data = dict()

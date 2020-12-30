@@ -264,6 +264,18 @@ def static_token(gmname, url, fname):
 	
 	return static_file(fname, root=path)
 
+#from bottle.ext.websocket import websocket
+
+@get('/websocket')
+def accept_websocket():
+	socket = request.environ.get('wsgi.websocket')
+	if socket is not None:
+		engine.cache.accept(socket)
+	
+	# sleep until socket is closed
+	while not socket.closed:
+		time.sleep(10)
+
 @post('/<gmname>/<url>/login')
 def set_player_name(gmname, url):
 	result = {'playername': '', 'playercolor': ''}
@@ -305,6 +317,7 @@ def set_player_name(gmname, url):
 	
 	return {'playername': playername, 'playercolor': playercolor}
 
+
 @get('/<gmname>/<url>')
 @view('battlemap')
 def get_player_battlemap(gmname, url):
@@ -335,20 +348,6 @@ def get_player_battlemap(gmname, url):
 	return dict(engine=engine, user_agent=user_agent, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
 """
-# on window open
-@post('/<gmname>/<url>/join')
-def join_game(gmname, url):
-	# load player name from cookie
-	playername = request.get_cookie('playername')
-	playercolor = request.get_cookie('playercolor')
-	
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	
-	# save this playername
-	game_cache = engine.cache.get(game)
-	game_cache.add(playername, playercolor)
-"""
-
 # on window close
 @post('/<gmname>/<url>/disconnect')
 def quit_game(gmname, url):
@@ -362,6 +361,7 @@ def quit_game(gmname, url):
 	# remove playername and -color
 	game_cache = engine.cache.get(game)
 	game_cache.remove(playername)
+"""
 
 @post('/<gmname>/<url>/update')
 def post_player_update(gmname, url):
@@ -450,7 +450,7 @@ def post_player_update(gmname, url):
 		'timeid'   : time.time(),
 		'tokens'   : tokens,
 		'rolls'    : rolls,
-		'players'  : game_cache.getColors(),
+		#'players'  : game_cache.getColors(),
 		'selected' : game_cache.getSelections(),
 		'scene_id' : scene.id
 	}

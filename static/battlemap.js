@@ -172,7 +172,7 @@ function isOverToken(x, y, token) {
 
 /// Determines which token is selected when clicking the given position
 function selectToken(x, y) {
-	var result = null;	
+	var result = null;
 	var bestz = min_z - 1;
 	// search for any fitting culling with highest z-order (unlocked first)
 	$.each(culling, function(index, item) {
@@ -309,36 +309,6 @@ function setCookie(key, value) {
 	document.cookie = key + '=' + value;
 }
 
-function updatePlayers(response) {
-	var own_name = getCookie('playername');
-	
-	// set players
-	var current = {};
-	$.each(response, function(index, data) {
-		name  = data[0];
-		color = data[1];
-		current[name] = color;
-		
-		if (players[name] == null) {
-			// add new player
-			players[name] = color;
-			console.log(name, 'joined');
-			$('#players').append('<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">' + name + '</span>');
-		}
-	});
-	
-	// show players
-	$.each(players, function(name, color) {
-		if (color != null && current[name] == null) {
-			// remove existing player
-			players[name] = null;
-			console.log(name, 'left');
-			
-			$('#player_' + name).remove();
-		}
-	});
-}
-
 
 // --- dice rolls implementation ---------------------------------------------- 
 
@@ -374,6 +344,8 @@ function updateRolls(rolls) {
 }
 
 // --- game state implementation ----------------------------------------------
+
+var socket = null; // websocket used for client-server-interaction
 
 var game_url = '';
 var gm_name = '';
@@ -459,7 +431,7 @@ function updateTokens() {
 			}
 			
 			// clear all local tokens if a full update was received
-			if (full_update) {				
+			if (full_update) {
 				if (!switch_scene) {
 					// search deleted tokens
 					var all_ids = [];
@@ -491,7 +463,7 @@ function updateTokens() {
 			
 			updateTokenbar();
 			updateRolls(response['rolls']);
-			updatePlayers(response['players']);
+			//updatePlayers(response['players']);
 			
 			// highlight token selection (switch key and value, see server impl)
 			player_selections = [];
@@ -579,12 +551,53 @@ function updateGame() {
 		update_tick -= 1;
 	}
 	
+	// keep socket alive
+	writeSocket({'OPID': 'KEEP-ALIVE'});
+	
 	drawScene();
 	setTimeout("updateGame()", 1000.0 / fps);
 }
 
+/// Handle function for interaction via socket
+function onSocketMessage(event) {
+	var data = JSON.parse(event.data);
+	var opid = data['OPID'];
+	
+	switch (opid) {
+		case 'JOIN':
+			onJoin(data);
+			break;
+		case 'QUIT':
+			onQuit(data);
+			break;
+	};
+}
+
+function onJoin(data) {
+	var name  = data['name'];
+	var color = data['color'];
+	players[name] = color;
+	$('#players').append('<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">' + name + '</span>');
+	
+	console.log(name + ' joined');
+}
+
+function onQuit(data) {
+	var name  = data['name'];
+	players[name] = null;
+	$('#player_' + name).remove();
+	  
+	console.log(name + ' quit');
+}
+
+/// Send data JSONified to server via the websocket
+function writeSocket(data) {
+	var raw = JSON.stringify(data);
+	socket.send(raw);
+}
+
 /// Handles login and triggers the game
-function login(event, url, name) {
+function login(event, gmname, url) {
 	event.preventDefault();
 	
 	var playername  = $('#playername').val();
@@ -592,7 +605,7 @@ function login(event, url, name) {
 	
 	$.ajax({
 		type: 'POST',
-		url:  '/' + name + '/' + url + '/login',
+		url:  '/' + gmname + '/' + url + '/login',
 		dataType: 'json',
 		data: {
 			'playername'  : playername,
@@ -623,15 +636,33 @@ function login(event, url, name) {
 					$('#dicebox').animate({ opacity: '+=1.0' }, 2000);
 				});
 				
-				// start game
-				start(url, name);
+				
+				// start socket communication
+				// @TODO: query server name and port   
+				socket = new WebSocket('ws://localhost:8080/websocket')
+				
+				socket.onmessage = onSocketMessage;
+				
+				socket.onopen = function() {
+					start(gmname, url, playername, playercolor);
+				};
+				
+				socket.onclose = function(event) {
+					alert('CONNECTION LOST');
+					location.reload();
+				};
 			}
 		}
 	});
 }
 
 /// Sets up the game and triggers the update loop
-function start(url, name) {	
+function start(gmname, url, playername, color) {
+	writeSocket({
+		'name'  : playername,
+		'url'   : gmname + '/' + url
+	});
+	
 	// setup in-memory canvas (for transparency checking)
 	mem_canvas = document.createElement('canvas');
 	
@@ -652,24 +683,14 @@ function start(url, name) {
 	battlemap.addEventListener('mouseout', tokenRelease);
 	document.addEventListener('keydown', tokenShortcut);
 	
-	// setup game
+	// setup game  
+	gm_name = gmname;
 	game_url = url;
-	gm_name = name;
 	
 	// notify game about this player
 	//navigator.sendBeacon('/' + gm_name + '/' + game_url + '/join');
 	
-	$(window).on('unload', function() {
-		disconnect();
-	});
-	
 	updateGame();
-}
-
-/// Handles disconnecting
-function disconnect() {
-	// note: only works if another tab stays open
-	navigator.sendBeacon('/' + gm_name + '/' + game_url + '/disconnect');
 }
 
 function mouseDrag(event) {

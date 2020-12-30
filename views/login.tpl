@@ -13,7 +13,7 @@
 		<img class="logo" src="/static/logo.png" />
 
 		<div class="form">
-			<form onsubmit="login(event, '{{game.url}}', '{{game.admin.name}}');">
+			<form onsubmit="login(event, '{{game.admin.name}}', '{{game.url}}');">
 				<p>PLAYER NAME</p>
 				<input type="text" name="playername" id="playername" value="{{playername}}" maxlength="30" />
 				
