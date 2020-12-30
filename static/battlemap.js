@@ -312,7 +312,12 @@ function showPlayer(name, uuid, color, country) {
 	if (name in players) {
 		hidePlayer(name, uuid);
 	}
-	$('#players').append('<span id="player_' + uuid + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"><img src="https://www.countryflags.io/' + country + '/flat/16.png" />' + name + '</span>');
+	var flag = '';
+	if (country != '?') {
+		flag = '<img src="https://www.countryflags.io/' + country + '/flat/16.png" />';
+	}
+	
+	$('#players').append('<span id="player_' + uuid + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">' + flag + name + '</span>');
 	players[name] = color;
 }
 
