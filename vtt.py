@@ -264,11 +264,14 @@ def static_token(gmname, url, fname):
 def set_player_name(gmname, url):
 	result = {'playername': '', 'playercolor': ''}
 	
-	playername = template('{{value}}', value=format(request.forms.playername))
+	playername  = template('{{value}}', value=format(request.forms.playername))
+	playercolor = request.forms.get('playercolor')
+	
 	if playername is None:
 		return result
 	
-	playercolor = request.forms.get('playercolor')
+	# trim
+	playername = playername.strip()
 	
 	# make player color less bright
 	parts       = [int(playercolor[1:3], 16), int(playercolor[3:5], 16), int(playercolor[5:7], 16)]
