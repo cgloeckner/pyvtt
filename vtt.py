@@ -45,11 +45,6 @@ def gm_login():
 	return dict(engine=engine)
 
 
-@get('/myip')
-def getMyIp():
-	return 'IP: [{0}]'.format(engine.getClientIp(request))
-
-
 @post('/vtt/join')
 def post_gm_login():
 	# escape gmname and test whether something was replaced
@@ -275,8 +270,6 @@ def static_token(gmname, url, fname):
 	path = game.getImagePath()
 	
 	return static_file(fname, root=path)
-
-#from bottle.ext.websocket import websocket
 
 @get('/websocket')
 def accept_websocket():
