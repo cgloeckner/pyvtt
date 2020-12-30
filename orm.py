@@ -78,7 +78,6 @@ class PlayerCache(object):
 		if self.socket is not None and not self.socket.closed:
 			raw = json.dumps(data)
 			self.socket.send(raw)
-			print(data)
 		
 	def fetch(self, data, key):
 		""" Try to fetch key from data or raise ProtocolError. """
@@ -420,8 +419,6 @@ class GameCache(object):
 		# collect all tokens for the given scene
 		refresh_data = self.fetchRefresh(game.active)
 		
-		print(refresh_data)
-		
 		# broadcast switch
 		self.broadcast(refresh_data);
 
@@ -512,6 +509,7 @@ class Engine(object):
 		self.port   = 8080 
 		self.socket = ''
 		self.debug  = False
+		self.quiet  = False
 		
 		# blacklist for GM names and game URLs
 		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'status', 'websocket']
@@ -527,6 +525,7 @@ class Engine(object):
 
 	def setup(self, argv):
 		self.debug    = '--debug' in argv
+		self.quiet    = '--quiet' in argv
 		self.local_gm = '--local-gm' in argv
 		
 		# setup logging
@@ -536,7 +535,7 @@ class Engine(object):
 		else:
 			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', format=log_format, level=logging.INFO)
 		
-		logging.info('Started Modes: debug={0}, local_gm={1}'.format(self.debug, self.local_gm))
+		logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2}'.format(self.debug, self.quiet, self.local_gm))
 		
 		# handle settings
 		settings_path = self.data_dir / 'settings.json'
@@ -570,9 +569,11 @@ class Engine(object):
 		if '--help' in argv:
 			print('Commandline args:')
 			print('    --debug       Starts in debug mode.')
+			print('    --quiet       Starts in quiet mode.')
 			print('    --local-gm    Starts in local-GM-mode.')
 			print('')
 			print('Debug Mode:    Enables debug level logging and restricts to localhost (overrides unix socket settings).')
+			print('Quiet Mode:    Disables verbose outputs.')
 			print('Local-GM Mode: Replaces `localhost` in all created links by the public ip.')
 			print('')
 			print('See {0} for custom settings.'.format(settings_path))
@@ -610,7 +611,7 @@ class Engine(object):
 				port     = self.port,
 				reloader = self.debug,
 				debug    = self.debug,
-				quiet    = True,
+				quiet    = self.quiet,
 				server   = GeventWebSocketServer
 			)
 		else:
