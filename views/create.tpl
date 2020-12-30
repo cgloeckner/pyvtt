@@ -9,7 +9,7 @@
 	<div class="form">
 		<form onsubmit="createGame(event);">
 			<p>ENTER GAME NAME</p>
-			<input type="text" id="url" value="{{generated_url}}" /><br />
+			<input type="text" id="url" value="{{generated_url}}" autocomplete="off" /><br />
 			<p><input type="submit" value="CREATE" /></p>
 		</form>
 	</div>
