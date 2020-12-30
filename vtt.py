@@ -291,7 +291,11 @@ def set_player_name(gmname, url):
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	
 	# check for player name collision
-	if engine.cache.containsPlayer(game, playername):
+	try:
+		game_cache = engine.cache.get(game)
+		game_cache.insert(playername, playercolor)
+	except KeyError:
+		# name collision
 		return result
 	
 	# save playername in client cookie
@@ -330,6 +334,7 @@ def get_player_battlemap(gmname, url):
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
+"""
 # on window open
 @post('/<gmname>/<url>/join')
 def join_game(gmname, url):
@@ -340,7 +345,9 @@ def join_game(gmname, url):
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	
 	# save this playername
-	engine.cache.addPlayer(game, playername, playercolor)
+	game_cache = engine.cache.get(game)
+	game_cache.add(playername, playercolor)
+"""
 
 # on window close
 @post('/<gmname>/<url>/disconnect')
@@ -353,7 +360,8 @@ def quit_game(gmname, url):
 		return
 	
 	# remove playername and -color
-	engine.cache.removePlayer(game, playername)
+	game_cache = engine.cache.get(game)
+	game_cache.remove(playername)
 
 @post('/<gmname>/<url>/update')
 def post_player_update(gmname, url):
@@ -361,10 +369,6 @@ def post_player_update(gmname, url):
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	if game is None:
 		return {}
-	
-	if not engine.cache.containsGame(game):
-		# game not found (should only be relevant for debugging)
-		return {} 
 	
 	# load active scene
 	scene = db.Scene.select(lambda s: s.id == game.active).first()
@@ -385,7 +389,9 @@ def post_player_update(gmname, url):
 	# mark all selected tokens in that color
 	playername = request.get_cookie('playername')
 	ids = request.POST.get('selected')
-	engine.cache.setSelection(game, playername, ids)
+	game_cache   = engine.cache.get(game)
+	player_cache = game_cache.get(playername)
+	player_cache.selected = ids
 	
 	# update token data
 	for data in changes:
@@ -417,14 +423,16 @@ def post_player_update(gmname, url):
 			tokens.append(t.to_dict())
 	
 	# query rolls since last update (or last 10s)
+	game_cache = engine.cache.get(game)
+	
 	rolls = list()
 	roll_timeid = timeid
 	if roll_timeid == 0:
 		roll_timeid = now - 10
-	#for r in db.Roll.select(lambda r: r.game == game and r.timeid >= now - 10).order_by(lambda r: r.timeid)[:13]:
+	
 	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= roll_timeid).order_by(lambda r: r.timeid):
 		# query color by player
-		color = engine.cache.getColor(game, r.player)
+		color = game_cache.get(r.player).color
 		
 		# consider token if it was updated after given timeid
 		rolls.append({
@@ -436,17 +444,14 @@ def post_player_update(gmname, url):
 			'timeid' : r.timeid
 		})
 	
-	# query players alive
-	playerlist = engine.cache.getList(game)
-	
 	# return tokens, rolls and timestamp
 	data = {
 		'active'   : game.active,
 		'timeid'   : time.time(),
 		'tokens'   : tokens,
 		'rolls'    : rolls,
-		'players'  : playerlist,
-		'selected' : engine.cache.getSelected(game),
+		'players'  : game_cache.getColors(),
+		'selected' : game_cache.getSelections(),
 		'scene_id' : scene.id
 	}
 	return json.dumps(data)
@@ -599,7 +604,7 @@ def status_report():
 	data['num_scenes']  = orm.count(db.Scene.select())
 	data['num_tokens']  = orm.count(db.Token.select())
 	data['num_rolls']   = orm.count(db.Roll.select())
-	data['num_players'] = engine.cache.countPlayers()
+	data['num_players'] = PlayerCache.instance_count
 	data['gen_time']    = time.time() - t
 	
 	return dict(engine=engine, data=data)

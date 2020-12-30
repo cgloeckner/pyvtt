@@ -657,7 +657,7 @@ function start(url, name) {
 	gm_name = name;
 	
 	// notify game about this player
-	navigator.sendBeacon('/' + gm_name + '/' + game_url + '/join');
+	//navigator.sendBeacon('/' + gm_name + '/' + game_url + '/join');
 	
 	$(window).on('unload', function() {
 		disconnect();

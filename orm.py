@@ -15,127 +15,80 @@ __author__ = "Christian Glöckner"
 db = Database()
 
 
+
+class PlayerCache(object):
+	instance_count = 0
+	
+	def __init__(self, game, name, color):
+		PlayerCache.instance_count += 1
+		self.game     = game
+		self.name     = name
+		self.color    = color
+		self.selected = list()
+		
+	def __del__(self):
+		PlayerCache.instance_count -= 1
+	
+
 class GameCache(object):
+	""" Thread-safe player dict using name as key. """
 	
-	def __init__(self):
-		self.lock     = threading.Lock()
-		self.players  = dict() # key: color, value: name
-		self.colors   = dict() # key: name, value: color
-		self.selected = dict() # key: name, value: list of token IDs
+	def __init__(self, game):
+		self.lock    = threading.Lock()
+		self.game    = game
+		self.players = dict() # name => player
 	
-	def addPlayer(self, name, color):
+	def insert(self, name, color):
 		with self.lock:
-			self.players[color] = name
-			self.colors[name]   = color
-			self.selected[color] = list()
+			if name in self.players:
+				raise KeyError
+			self.players[name] = PlayerCache(self.game, name, color)
 		
-	def removePlayer(self, name):
+	def get(self, name):
 		with self.lock:
-			color = self.colors[name]
-			del self.players[color]
-			del self.colors[name]
-			del self.selected[color]
+			return self.players[name]
 		
-	def getList(self):
-		result = list()
+	def getColors(self):
+		result = dict()
 		with self.lock:
-			for name in self.colors:
-				result.append([name, self.colors[name]])
+			for name in self.players:
+				result[name] = self.players[name].color
 		return result
 		
-	def getColor(self, name):
+	def getSelections(self):
+		result = dict()
 		with self.lock:
-			return self.colors[name]
+			for name in self.players:
+				result[name] = self.players[name].selected
+		return result
 		
-	def getSelected(self):
+	def remove(self, name):
 		with self.lock:
-			return self.selected  
-		
-	def setSelection(self, name, ids):
-		with self.lock:
-			self.selected[self.colors[name]] = ids
+			del self.players[name]
 
 
 class EngineCache(object):
+	""" Thread-safe game dict using gm/url as key. """
 	
 	def __init__(self):
 		self.lock  = threading.Lock()
-		self.games = dict() # key: url, value: PlayerCache
+		self.games = dict()
 		
-	def addGame(self, game):
+	def insert(self, game):
 		url = game.getUrl()
 		with self.lock:
-			self.games[url] = GameCache()
+			self.games[url] = GameCache(game)
 		
-	def addPlayer(self, game, name, color):
-		url   = game.getUrl()
-		cache = None
+	def get(self, game):
+		url = game.getUrl()
 		with self.lock:
-			cache = self.games[url]
-		cache.addPlayer(name, color)
+			return self.games[url]
 		
-	def removeGame(self, game): 
+	def remove(self, game):
 		url = game.getUrl()
 		with self.lock:
 			del self.games[url]
 		
-	def removePlayer(self, game, name):
-		url = game.getUrl()
-		cache = None
-		with self.lock:
-			cache = self.games[url]
-		cache.removePlayer(name)
-		
-	def containsGame(self, game): 
-		url = game.getUrl()
-		with self.lock:
-			return url in self.games
-		
-	def containsPlayer(self, game, name):
-		url = game.getUrl()
-		cache = self.games
-		with self.lock:
-			cache = self.games[url]
-		with cache.lock:
-			return name in cache.colors
-		
-	def getList(self, game):
-		result = list()
-		cache  = None   
-		url = game.getUrl()
-		with self.lock:
-			cache = self.games[url]
-		return cache.getList()
-		
-	def getColor(self, game, name):
-		cache = None   
-		url = game.getUrl()
-		with self.lock:
-			cache = self.games[url]
-		return cache.getColor(name)
-		
-	def getSelected(self, game):
-		cache = None   
-		url = game.getUrl()
-		with self.lock:
-			cache = self.games[url]
-		return cache.getSelected()
-		
-	def setSelection(self, game, name, ids):
-		cache = None    
-		url = game.getUrl()
-		with self.lock:
-			cache = self.games[url]
-		cache.setSelection(name, ids)
-		
-	def countPlayers(self):
-		n = 0
-		with self.lock:
-			for g in self.games:
-				cache = self.games[g]
-				with cache.lock:
-					n += len(cache.players)
-		return n
 
 
 def convertBytes(size):
@@ -265,7 +218,7 @@ class Engine(object):
 				gm.makeLock()
 			for g in db.Game.select():
 				g.makeMd5s()         
-				self.cache.addGame(g)
+				self.cache.insert(g)
 			t = time.time() - s
 			logging.info('Image checksums and threading locks created within {0}s'.format(t))
 		
@@ -593,7 +546,7 @@ class Game(db.Entity):
 				os.rmdir(img_path)
 		
 		# remove from cache
-		engine.cache.removeGame(self)
+		engine.cache.remove(self)
 		
 	def toZip(self):
 		# remove abandoned images
@@ -690,7 +643,7 @@ class Game(db.Entity):
 		
 		scene.backing = t
 		db.commit() 
-		engine.cache.addGame(game)
+		engine.cache.insert(game)
 		
 		return game
 	
@@ -745,7 +698,7 @@ class Game(db.Entity):
 					game.active = scene.id
 			
 			db.commit()
-			engine.cache.addGame(game)
+			engine.cache.insert(game)
 			
 			return game
  
