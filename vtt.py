@@ -262,9 +262,11 @@ def static_token(gmname, url, fname):
 @post('/<gmname>/<url>/login')
 #@view('redirect')
 def set_player_name(gmname, url):
+	result = {'playername': '', 'playercolor': ''}
+	
 	playername = template('{{value}}', value=format(request.forms.playername))
 	if playername is None:
-		return {'playername': '', 'playercolor': ''}
+		return result
 	
 	playercolor = request.forms.get('playercolor')
 	
@@ -277,9 +279,13 @@ def set_player_name(gmname, url):
 		if c < 16:
 			playercolor += '0'
 		playercolor += hex(c)[2:]
-	
+	 
 	# load game
 	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	
+	# check for player name collision
+	if engine.cache.containsPlayer(game, playername):
+		return result
 	
 	# save playername in client cookie
 	expire = int(time.time() + engine.expire)

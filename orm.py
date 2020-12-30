@@ -19,8 +19,8 @@ class GameCache(object):
 	
 	def __init__(self):
 		self.lock     = threading.Lock()
-		self.players  = dict() # key: name, value: color
-		self.colors   = dict() # key: color, value: name
+		self.players  = dict() # key: color, value: name
+		self.colors   = dict() # key: name, value: color
 		self.selected = dict() # key: name, value: list of token IDs
 	
 	def addPlayer(self, name, color):
@@ -90,6 +90,14 @@ class EngineCache(object):
 		url = game.getUrl()
 		with self.lock:
 			return url in self.games
+		
+	def containsPlayer(self, game, name):
+		url = game.getUrl()
+		cache = self.games
+		with self.lock:
+			cache = self.games[url]
+		with cache.lock:
+			return name in cache.colors
 		
 	def getList(self, game):
 		result = list()
@@ -589,7 +597,7 @@ class Game(db.Entity):
 		
 	def toZip(self):
 		# remove abandoned images
-		self.removeAbandonedImages()
+		self.cleanup()
 		
 		# collect all tokens in this game
 		tokens = list()
@@ -607,6 +615,7 @@ class Game(db.Entity):
 				"zorder" : t.zorder,
 				"size"   : t.size,
 				"rotate" : t.rotate,
+				"flipx"  : t.flipx,
 				"locked" : t.locked
 			})
 			id_translation[t.id] = len(tokens) - 1
@@ -631,8 +640,7 @@ class Game(db.Entity):
 		
 		data = {
 			"tokens" : tokens,
-			"scenes" : scenes,
-			"active" : active
+			"scenes" : scenes
 		}
 		
 		# build zip file
@@ -731,9 +739,9 @@ class Game(db.Entity):
 					if s["backing"] == token_id:
 						db.commit()
 						scene.backing = t
-			
-				if data["active"] == sid:
-					db.commit()
+				
+				if game.active == 0:
+					# select first scene as active
 					game.active = scene.id
 			
 			db.commit()

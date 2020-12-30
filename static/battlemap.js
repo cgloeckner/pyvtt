@@ -344,7 +344,8 @@ function updatePlayers(response) {
 // --- dice rolls implementation ---------------------------------------------- 
 
 var rolls        = []; // current rolls
-var roll_timeout = 10000.0; // ms until roll will diappear
+var roll_timeout = 10000.0; // ms until roll will disappear
+	// deprecated
 
 /// Roll constructor
 function Roll(sides, playername, result) {
