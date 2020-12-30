@@ -308,11 +308,11 @@ function setCookie(key, value) {
 	document.cookie = key + '=' + value;
 }
 
-function showPlayer(name, uuid, color) {
+function showPlayer(name, uuid, color, country) {
 	if (name in players) {
 		hidePlayer(name, uuid);
 	}
-	$('#players').append('<span id="player_' + uuid + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">' + name + '</span>');
+	$('#players').append('<span id="player_' + uuid + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"><img src="https://www.countryflags.io/' + country + '/flat/16.png" />' + name + '</span>');
 	players[name] = color;
 }
 
@@ -482,9 +482,8 @@ function onSocketMessage(event) {
 
 function onAccept(data) {
 	// show all players
-	$.each(data.players, function(name, pair) {
-		showPlayer(name, pair[0], pair[1]); // uuid, color
-		console.log(name, pair[0], pair[1]);
+	$.each(data.players, function(name, details) {
+		showPlayer(name, details.uuid, details.color, details.country); // uuid, color
 	});
 	
 	// show all rolls
@@ -520,16 +519,16 @@ function onDelete(data) {
 }
 
 function onJoin(data) {
-	var name  = data['name'];
-	var uuid  = data['uuid'];
-	var color = data['color'];
-	showPlayer(name, uuid, color); 
-	console.log(name, uuid, color);
+	var name    = data.name;
+	var uuid    = data.uuid;
+	var color   = data.color
+	var country = data.country;
+	showPlayer(name, uuid, color, country); 
 }
 
 function onQuit(data) {
-	var name  = data['name'];
-	var uuid  = data['uuid'];
+	var name  = data.name;
+	var uuid  = data.uuid;
 	players[name] = null;
 	hidePlayer(name, uuid); 
 }
@@ -614,6 +613,8 @@ function login(event, gmname, url, server_url) {
 				};
 				
 				socket.onclose = function(event) {
+					$('#drophint').fadeOut(1000, 0.0);
+					
 					// forget everything about the old session
 					images            = [];
 					tokens            = [];

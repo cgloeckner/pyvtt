@@ -11,7 +11,7 @@
 		<h1>{{game.url.upper()}} by {{game.admin.name}}</h1>
 		
 		<img class="logo" src="/static/logo.png" />
-
+		
 		<div class="form">
 			<form onsubmit="login(event, '{{game.admin.name}}', '{{game.url}}', '{{server_url}}');">
 				<p>PLAYER NAME</p>

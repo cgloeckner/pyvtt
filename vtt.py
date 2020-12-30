@@ -33,8 +33,7 @@ def asGm(callback):
 	def wrapper(*args, **kwargs):
 		session = request.get_cookie('session')
 		if session is None:
-			# force login
-			redirect('/vtt/join')
+			abort(404)
 		return callback(*args, **kwargs)
 	return wrapper
 
@@ -82,6 +81,7 @@ def post_gm_login():
 def get_game_list():
 	gm = db.GM.loadFromSession(request)
 	if gm is None:
+		print(gm)
 		redirect('/vtt/join')
 	
 	server = ''

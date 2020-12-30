@@ -38,6 +38,14 @@ class PlayerCache(object):
 		self.uuid     = uuid.uuid1().hex # used for HTML DOM id
 		self.selected = list()
 		
+		# fetch country from ip
+		self.ip       = engine.getClientIp(bottle.request)
+		d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(self.ip)).text)
+		if 'countryCode' in d:
+			self.country = d['countryCode'].lower()
+		else:
+			self.country = '?'
+		
 		self.socket   = None
 		self.thread   = None
 		
@@ -139,11 +147,18 @@ class GameCache(object):
 		with self.lock:
 			return self.players[name]
 		
-	def getColors(self):
+	def getData(self):
 		result = dict()
 		with self.lock:
 			for name in self.players:
-				result[name] = [self.players[name].uuid, self.players[name].color]
+				p = self.players[name]
+				result[name] = {
+					'name'    : name,
+					'uuid'    : p.uuid,
+					'color'   : p.color,
+					'ip'      : p.ip,
+					'country' : p.country
+				}
 		return result
 		
 	def getSelections(self):
@@ -194,7 +209,7 @@ class GameCache(object):
 		
 		player.write({
 			'OPID'    : 'ACCEPT',
-			'players' : self.getColors(),
+			'players' : self.getData(),
 			'rolls'   : rolls,
 		}); 
 		
@@ -202,10 +217,11 @@ class GameCache(object):
 		
 		# broadcast join to all players
 		self.broadcast({
-			'OPID'  : 'JOIN',
-			'name'  : player.name,
-			'uuid'  : player.uuid,
-			'color' : player.color
+			'OPID'    : 'JOIN',
+			'name'    : player.name,
+			'uuid'    : player.uuid,
+			'color'   : player.color,
+			'country' : player.country
 		})
 		
 	def fetchRefresh(self, scene_id):
