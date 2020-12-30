@@ -41,7 +41,9 @@ class PlayerCache(object):
 		self.thread   = None
 		
 		self.dispatch_map = {
-			'ROLL' : self.parent.onRoll
+			'ROLL'         : self.parent.onRoll,
+			'SELECT'       : self.parent.onSelect,
+			'RANGE_SELECT' : self.parent.onRangeSelect
 		}
 		
 	def __del__(self):
@@ -223,6 +225,45 @@ class GameCache(object):
 			'sides'   : sides,
 			'result'  : result
 		})
+		
+	def onSelect(self, player, data):
+		""" Handle player selecting a token. """
+		# store selection
+		player.selected = data['selected']
+		
+		# broadcast selection
+		self.broadcast({
+			'OPID'     : 'SELECT',
+			'color'    : player.color,
+			'selected' : player.selected,
+		});
+		
+	def onRangeSelect(self, player, data):
+		""" Handle player selecting multiple tokens. """
+		# fetch rectangle data
+		left   = data['left']
+		top    = data['top']
+		width  = data['width']
+		height = data['height']
+		
+		# query inside given rectangle
+		with db_session:
+			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			s = db.Scene.select(lambda s: s.id == g.active).first()
+			token_ids = list()
+			for t in db.Token.select(lambda t: t.scene == s and left <= t.posx and t.posx <= left + width and top <= t.posy and t.posy <= top + height): 
+				if t.size != -1:
+					token_ids.append(t.id)
+		
+		# store selection
+		player.selected = token_ids
+		
+		# broadcast selection
+		self.broadcast({
+			'OPID'     : 'SELECT',
+			'color'    : player.color,
+			'selected' : player.selected,
+		});
 
 
 class EngineCache(object):

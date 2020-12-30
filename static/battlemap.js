@@ -80,7 +80,7 @@ var tokens_added   = []; // holds token id => opacity when recently added
 var tokens_removed = []; // holds token id => (token, opacity) when recently removed
 var change_cache   = []; // holds ids of all client-changed tokens
 
-var player_selections = []; // buffer that contains selected tokens and corresponding player colors
+var player_selections = {}; // buffer that contains selected tokens and corresponding player colors
 var allow_multiselect = false; // whether client is allowed to select multiple tokens
 
 var culling = []; // holds tokens for culling
@@ -415,9 +415,9 @@ function updateTokens() {
 			'timeid'      : timeid,
 			'full_update' : full_update,
 			'changes'     : JSON.stringify(changes),
-			'selected'    : JSON.stringify(select_ids),
+			//'selected'    : JSON.stringify(select_ids),
 			'scene_id'    : scene_id
-		},
+		}, 
 		success: function(response) {
 			var switch_scene = false;
 			
@@ -474,10 +474,12 @@ function updateTokens() {
 			//updatePlayers(response['players']);
 			
 			// highlight token selection (switch key and value, see server impl)
+			/*
 			player_selections = [];
 			$.each(response['selected'], function(color, tokenid) {
 				player_selections.push([tokenid, color]);
 			});
+			*/
 			
 			// reset changes
 			change_cache = [];
@@ -513,12 +515,10 @@ function drawScene() {
 	}
 	$.each(culling, function(index, token) {
 		var color = null;
-		$.each(player_selections, function(index, arr) {
-			$.each(JSON.parse(arr[0]), function(ind, id) {
-				if (id == token.id) {
-					color = arr[1];
-				}
-			});
+		$.each(player_selections, function(cl, tokens) {
+			if (tokens.includes(token.id)) {
+				color = cl;
+			};
 		});
 		if (color == null && select_ids.includes(token.id)) {
 			color = getCookie('playercolor');
@@ -581,6 +581,9 @@ function onSocketMessage(event) {
 		case 'DICE':
 			onDice(data);
 			break;
+		case 'SELECT':
+			onSelect(data);
+			break;
 	};
 }
 
@@ -613,8 +616,21 @@ function onQuit(data) {
 }
 
 function onDice(data) {
+	addRoll(data.sides, data.result, data.color, data.roll_id);
+	
 	console.log(data);
-	addRoll(data.sides, data.result, data.color, data.roll_id)
+}
+
+function onSelect(data) {
+	player_selections[data.color] = data.selected;
+	
+	// update player's primary selection
+	if (data.color == getCookie('playercolor') && data.selected.length > 0) {
+		select_ids = data.selected;
+		primary_id = data.selected[0];
+	}
+	
+	console.log(data);
 }
 
 /// Send data JSONified to server via the websocket
@@ -939,14 +955,26 @@ function tokenGrab(event) {
 		var token = selectToken(mouse_x, mouse_y);
 		
 		if (token != null) {
+			var before = select_ids;
+			
 			// reselect only if token wasn't selected before
 			if (!select_ids.includes(token.id)) {
 				select_ids = [token.id];
 				primary_id = token.id;
+				
 			} else {
 				primary_id = token.id;
 			}
 			grabbed = true;
+			
+			if (before != select_ids) {
+				// notify server about selection
+				writeSocket({
+					'OPID'     : 'SELECT',
+					'selected' : select_ids
+				});
+			}
+				
 		} else {
 			// Clear selection
 			select_ids = [];
@@ -956,7 +984,7 @@ function tokenGrab(event) {
 			select_from_x = mouse_x;
 			select_from_y = mouse_y;
 		}
-	
+		
 	} else if (event.buttons == 2) {
 		// Right click: reset token scale & rotation
 		$.each(select_ids, function(index, id) {
@@ -1003,19 +1031,14 @@ function tokenRelease() {
 			select_height *= -1;
 		}
 		
-		// query tokens in range
-		$.ajax({
-			url: '/' + gm_name + '/' + game_url + '/range_query/' + select_from_x + '/' + select_from_y + '/' + select_width + '/' + select_height,
-			type: 'GET',
-			success: function(response) {
-				select_ids = JSON.parse(response);
-				// pick primary token
-				if (select_ids.length > 0) {
-					primary_id = select_ids[0];
-				} else {
-					primary_id = 0;
-				}
-			}
+		primary_id = 0;
+		
+		writeSocket({
+			'OPID'   : 'RANGE_SELECT',
+			'left'   : select_from_x,
+			'top'    : select_from_y,
+			'width'  : select_width,
+			'height' : select_height
 		});
 	}
 	

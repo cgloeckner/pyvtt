@@ -347,22 +347,6 @@ def get_player_battlemap(gmname, url):
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
-"""
-# on window close
-@post('/<gmname>/<url>/disconnect')
-def quit_game(gmname, url):
-	# load player name from cookie
-	playername = request.get_cookie('playername')
-	
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	if game is None:
-		return
-	
-	# remove playername and -color
-	game_cache = engine.cache.get(game)
-	game_cache.remove(playername)
-"""
-
 @post('/<gmname>/<url>/update')
 def post_player_update(gmname, url):
 	# load game
@@ -422,30 +406,6 @@ def post_player_update(gmname, url):
 		if t.timeid >= timeid or full_update:
 			tokens.append(t.to_dict())
 	
-	"""
-	# query rolls since last update (or last 10s)
-	game_cache = engine.cache.get(game)
-	
-	rolls = list()
-	roll_timeid = timeid
-	if roll_timeid == 0:
-		roll_timeid = now - 10
-	
-	for r in db.Roll.select(lambda r: r.game == game and r.timeid >= roll_timeid).order_by(lambda r: r.timeid):
-		# query color by player
-		color = game_cache.get(r.player).color
-		
-		# consider token if it was updated after given timeid
-		rolls.append({
-			'player' : r.player,
-			'color'  : color,
-			'sides'  : r.sides,
-			'result' : r.result,
-			'id'     : r.id,
-			'timeid' : r.timeid
-		})
-	"""
-	
 	# return tokens, rolls and timestamp
 	data = {
 		'active'   : game.active,
@@ -457,41 +417,6 @@ def post_player_update(gmname, url):
 		'scene_id' : scene.id
 	}
 	return json.dumps(data)
-
-@get('/<gmname>/<url>/range_query/<x:int>/<y:int>/<w:int>/<h:int>')
-def range_query_token(gmname, url, x, y, w, h):
-	# load game
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	if game is None:
-		return '[]'
-	
-	# load active scene
-	scene = db.Scene.select(lambda s: s.id == game.active).first()
-	
-	# query all tokens in range
-	token_ids = list()
-	for t in db.Token.select(lambda t: t.scene == scene and x <= t.posx and t.posx <= x + w and y <= t.posy and t.posy <= y + h):
-		if t.size != -1:
-			token_ids.append(t.id)
-	
-	return json.dumps(token_ids)
-
-"""
-@post('/<gmname>/<url>/roll/<sides:int>')
-def post_roll_dice(gmname, url, sides):
-	# load game
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.id == game.active).first()
-	scene.timeid = time.time()
-	
-	# load player name from cookie
-	playername = request.get_cookie('playername')
-	
-	# add player roll
-	result = random.randrange(1, sides+1)
-	db.Roll(game=game, player=playername, sides=sides, result=result, timeid=time.time())
-"""
 
 @post('/<gmname>/<url>/upload/<posx:int>/<posy:int>')
 def post_image_upload(gmname, url, posx, posy):
