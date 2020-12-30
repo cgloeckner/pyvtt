@@ -164,6 +164,12 @@ class GameCache(object):
 		
 	def login(self, player):
 		""" Handle player login. """
+		# notify player about all other players
+		player.write({
+			'OPID'    : 'ACCEPT',
+			'players' : self.getColors()
+		});
+		
 		# broadcast join to all players
 		self.broadcast({
 			'OPID'  : 'JOIN',
@@ -222,8 +228,8 @@ class EngineCache(object):
 		# insert player
 		game_cache   = self.get(game=None, url=url)
 		player_cache = game_cache.get(name)
-		game_cache.login(player_cache)
 		player_cache.listen(socket)
+		game_cache.login(player_cache)
 		
 
 

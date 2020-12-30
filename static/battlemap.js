@@ -309,6 +309,20 @@ function setCookie(key, value) {
 	document.cookie = key + '=' + value;
 }
 
+function showPlayer(name, color) {
+	if (name in players) {
+		hidePlayer(name);
+	}
+	$('#players').append('<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">' + name + '</span>');
+	players[name] = color;
+}
+
+function hidePlayer(name) {
+	if (name in players) {
+		$('#player_' + name).remove();
+		delete players[name];
+	}
+}
 
 // --- dice rolls implementation ---------------------------------------------- 
 
@@ -564,6 +578,9 @@ function onSocketMessage(event) {
 	var opid = data['OPID'];
 	
 	switch (opid) {
+		case 'ACCEPT':
+			onAccept(data);
+			break;
 		case 'JOIN':
 			onJoin(data);
 			break;
@@ -573,11 +590,16 @@ function onSocketMessage(event) {
 	};
 }
 
+function onAccept(data) {
+	$.each(data.players, function(name, color) {
+		showPlayer(name, color);
+	});
+}
+
 function onJoin(data) {
 	var name  = data['name'];
 	var color = data['color'];
-	players[name] = color;
-	$('#players').append('<span id="player_' + name + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">' + name + '</span>');
+	showPlayer(name, color);
 	
 	console.log(name + ' joined');
 }
@@ -585,7 +607,7 @@ function onJoin(data) {
 function onQuit(data) {
 	var name  = data['name'];
 	players[name] = null;
-	$('#player_' + name).remove();
+	hidePlayer(name);
 	  
 	console.log(name + ' quit');
 }
