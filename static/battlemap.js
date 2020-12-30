@@ -1,3 +1,4 @@
+var quiet = true;
 
 // --- image handling implementation ------------------------------------------
 
@@ -369,93 +370,12 @@ var select_ids    = [];    // contains selected tokens' ids
 var primary_id    = 0;     // used to specify "leader" in group (for relative movement)
 var mouse_over_id = 0;     // determines which token would be selected
 var grabbed       = false; // determines whether grabbed or not
-var update_tick   = 0;     // delays updates to not every loop tick
-var full_tick     = 0;     // counts updates until the next full update is requested
 
 var select_from_x = null;
 var select_from_y = null;
 
 var fps = 60;
 var update_cycles = 30;
-
-/// Triggers token updates (pushing and pulling token data via the server)
-function updateTokens() {
-	if (full_tick == 0) {
-		full_update = true;
-		full_tick = 1;
-	} else {
-		full_tick -= 1;
-	}
-	
-	/*
-	// start update with server
-	$.ajax({
-		type: 'POST',
-		url:  '/' + gm_name + '/' + game_url + '/update',
-		dataType: 'json',
-		data: {
-			'timeid'      : timeid,
-			'full_update' : full_update,
-			'scene_id'    : scene_id
-		}, 
-		success: function(response) {
-			var switch_scene = false;
-			
-			// update current timeid
-			timeid = response['timeid'];
-			if (scene_id != response['scene_id']) {
-				scene_id = response['scene_id'];
-				full_update = true;
-				switch_scene = true;
-			}
-			   
-			if (!switch_scene) {        
-				// search added tokens
-				$.each(response['tokens'], function(index, token) {
-					if (!(token.id in tokens)) {
-						tokens_added[token.id] = 0.0;
-					}
-				});
-			}
-			
-			// clear all local tokens if a full update was received
-			if (full_update) {
-				if (!switch_scene) {
-					// search deleted tokens
-					var all_ids = [];
-					$.each(response['tokens'], function(index, token) {
-						all_ids.push(token.id);
-					});
-					$.each(tokens, function(index, token) {
-						if (token != null && !(all_ids.includes(token.id))) {
-							// token got deleted
-							tokens_removed[token.id] = [token, 1.0];
-						}
-					});
-				}
-				
-				tokens = [];
-			}
-			
-			// update tokens
-			background_set = false;
-			$.each(response['tokens'], function(index, token) {
-				updateToken(token);    
-			});
-			
-			if (background_set) {
-				$('#drag_hint').hide();
-			} else {
-				$('#drag_hint').show();
-			}
-			
-			updateTokenbar();
-			
-			full_update = false;
-		}
-	});
-	*/
-}
 
 /// Draw the entire scene (locked tokens in the background, unlocked in foreground)
 function drawScene() {
@@ -516,27 +436,32 @@ function drawScene() {
 		context.fillRect(select_from_x * canvas_scale, select_from_y * canvas_scale, select_width * canvas_scale, select_height * canvas_scale);
 		context.stroke();
 	}
-}
-
-/// Updates the entire game: update tokens from time to time, drawing each time
-function updateGame() {
-	if (update_tick < 0) {
-		updateTokens();
-		update_tick = update_cycles;
-	} else {
-		update_tick -= 1;
-	}
 	
-	drawScene();
-	setTimeout("updateGame()", 1000.0 / fps);
+	// schedule next drawing
+	setTimeout("drawScene()", 1000.0 / fps);
 }
 
 /// Handle function for interaction via socket
 function onSocketMessage(event) {
 	var data = JSON.parse(event.data);
-	var opid = data['OPID'];
+	if (!quiet) {
+		console.log(data);
+	}
+	var opid = data.OPID;
 	
-	switch (opid) {
+	switch (opid) { 
+		case 'ACCEPT':
+			onAccept(data);
+			break;  
+		case 'UPDATE':
+			onUpdate(data);
+			break;
+		case 'CREATE':
+			onCreate(data);
+			break;
+		case 'DELETE':
+			onDelete(data);
+			break;
 		case 'REFRESH':
 			onRefresh(data);
 			break;
@@ -546,18 +471,18 @@ function onSocketMessage(event) {
 		case 'QUIT':
 			onQuit(data);
 			break;
-		case 'DICE':
+		case 'ROLL':
 			onDice(data);
 			break;
 		case 'SELECT':
 			onSelect(data);
 			break;
-		case 'UPDATE':
-			onUpdate(data);
+		default:
+			console.log('Error: Invalid OpID');
 	};
 }
 
-function onRefresh(data) {
+function onAccept(data) {
 	// show all players
 	$.each(data.players, function(name, color) {
 		showPlayer(name, color);
@@ -568,42 +493,45 @@ function onRefresh(data) {
 		addRoll(obj.sides, obj.result, obj.color);
 	});
 	
-	// reset tokens
-	background_set = false;
-	tokens = [];
-	$.each(data.tokens, function(index, token) {
-		updateToken(token);
-	});
+	onRefresh(data);
 }
 
 function onUpdate(data) {
 	$.each(data.tokens, function(index, token) {
 		updateToken(token);
 	});
-	
-	// background?
+}
+
+function onCreate(data) {
+	$.each(data.tokens, function(index, token) {
+		updateToken(token);
+		
+		tokens_added[token.id] = 0.0;
+	});
+}
+
+function onDelete(data) {
+	$.each(data.tokens, function(index, token) {
+		delete tokens[token.id];
+		
+		tokens_removed[token.id] = [token, 1.0];
+	});
 }
 
 function onJoin(data) {
 	var name  = data['name'];
 	var color = data['color'];
 	showPlayer(name, color);
-	
-	console.log(data);
 }
 
 function onQuit(data) {
 	var name  = data['name'];
 	players[name] = null;
 	hidePlayer(name); 
-	   
-	console.log(data);
 }
 
 function onDice(data) {
 	addRoll(data.sides, data.result, data.color, data.roll_id);
-	
-	console.log(data);
 }
 
 function onSelect(data) {
@@ -614,8 +542,15 @@ function onSelect(data) {
 		select_ids = data.selected;
 		primary_id = data.selected[0];
 	}
-	
-	console.log(data);
+}
+
+function onRefresh(data) {
+	// reset tokens               
+	background_set = false;
+	tokens = [];
+	$.each(data.tokens, function(index, token) {
+		updateToken(token);
+	});
 }
 
 /// Send data JSONified to server via the websocket
@@ -715,10 +650,7 @@ function start(gmname, url, playername, color) {
 	gm_name = gmname;
 	game_url = url;
 	
-	// notify game about this player
-	//navigator.sendBeacon('/' + gm_name + '/' + game_url + '/join');
-	
-	updateGame();
+	drawScene();
 }
 
 function mouseDrag(event) {
@@ -1183,8 +1115,6 @@ function pasteCopiedTokens() {
 			'posx' : mouse_x,
 			'posy' : mouse_y
 		});
-		
-		full_update = true; // force full refresh next time
 	}
 }
 
@@ -1193,17 +1123,10 @@ function deleteSelectedTokens() {
 	event.preventDefault();
 	
 	if (select_ids.length > 0) {
-		$.ajax({                                                                      
-			type: 'POST',
-			url: '/' + gm_name + '/' + game_url + '/delete',
-			dataType: 'json',
-			data: {
-				'ids' : JSON.stringify(select_ids),
-			},
-			success: function(response) {
-			}
+		writeSocket({
+			'OPID'   : 'DELETE',
+			'tokens' : select_ids
 		});
-		full_update = true; // force full refresh next time
 	}
 }
 

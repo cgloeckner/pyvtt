@@ -3,7 +3,7 @@
 from gevent import monkey; monkey.patch_all()
 from bottle import *
 
-import os, json, time, sys, psutil
+import os, json, time, sys, psutil, random
 
 from pony import orm
 from orm import db, db_session, Token, Game, engine
@@ -189,7 +189,11 @@ def activate_scene(url, scene_id):
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 	game.active = scene_id
 
-	db.commit() 
+	db.commit()  
+	
+	# broadcase scene switch to all players
+	game_cache = engine.cache.get(game)
+	game_cache.broadcastSceneSwitch(game)
 	
 	return dict(engine=engine, game=game)
 
@@ -217,6 +221,10 @@ def activate_scene(url, scene_id):
 		# adjust active scene
 		game.active = remain.id
 		db.commit()
+		
+	# broadcase scene switch to all players
+	game_cache = engine.cache.get(game)
+	game_cache.broadcastSceneSwitch(game)
 	
 	return dict(engine=engine, game=game)
 	
@@ -243,6 +251,10 @@ def duplicate_scene(url, scene_id):
 	db.commit()
 	
 	game.active = clone.id 
+	
+	# broadcase scene switch to all players
+	game_cache = engine.cache.get(game)
+	game_cache.broadcastSceneSwitch(game)
 	
 	return dict(engine=engine, game=game)
 
@@ -347,127 +359,18 @@ def get_player_battlemap(gmname, url):
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
-"""
-@post('/<gmname>/<url>/update')
-def post_player_update(gmname, url):
-	# load game
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	if game is None:
-		return {}
-	
-	# load active scene
-	scene = db.Scene.select(lambda s: s.id == game.active).first()
-	
-	# consider time and full updates
-	now = time.time()                
-	timeid = request.POST.get('timeid')
-	timeid = float(timeid) if timeid is not None else 0.0
-	full_update = bool(request.POST.get('full_update'))
-	scene_id = request.POST.get('scene_id')
-	if scene_id is None or int(request.POST.get('scene_id')) != scene.id:
-		# scene has changed
-		full_update = True
-	
-	# fetch token updates from client
-	changes = list()#json.loads(request.POST.get('changes'))
-	
-	# mark all selected tokens in that color
-	playername = request.get_cookie('playername')
-	ids = request.POST.get('selected')
-	game_cache   = engine.cache.get(game)
-	player_cache = game_cache.get(playername)
-	player_cache.selected = ids
-	
-	# query token data for that scene
-	tokens = list()
-	for t in scene.tokens.select(lambda t: t.scene == scene):
-		# consider token if it was updated after given timeid
-		if t.timeid >= timeid or full_update:
-			tokens.append(t.to_dict())
-	
-	# return tokens, rolls and timestamp
-	data = {
-		'active'   : game.active,
-		'timeid'   : time.time(),
-		'tokens'   : tokens,
-		#'rolls'    : rolls,
-		#'players'  : game_cache.getColors(),
-		'selected' : game_cache.getSelections(),
-		'scene_id' : scene.id
-	}
-	return json.dumps(data)
-"""
-
 @post('/<gmname>/<url>/upload/<posx:int>/<posy:int>')
 def post_image_upload(gmname, url, posx, posy):
-	# load game
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.id == game.active).first()
-	scene.timeid = time.time()
-	
-	# upload all files to the current game
-	# and create a token each
+	# upload images                       
+	urls  = list()
+	game  = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
 	files = request.files.getall('file[]')
+	for handle in files:
+		urls.append(game.upload(handle))
 	
-	tokens = list(db.Token.select(lambda t: t.scene == scene))
-	if len(tokens) > 0:
-		bottom = min(tokens, key=lambda t: t.zorder).zorder - 1
-		if bottom == 0:
-			bottom = -1
-		top    = max(tokens, key=lambda t: t.zorder).zorder + 1
-	else:
-		bottom = -1
-		top = 1
-	
-	# place tokens in circle around given position
-	n = len(files)
-	if n > 0:
-		for k, handle in enumerate(files):
-			# move with radius-step towards y direction and rotate this position
-			x, y = db.Token.getPosByDegree((posx, posy), k, n)
-			
-			kwargs = {
-				"scene"  : scene,
-				"timeid" : scene.timeid,
-				"url"    : game.upload(handle),
-				"posx"   : x,
-				"posy"   : y
-			}
-			
-			# determine file size to handle different image types
-			size = game.getFileSize(kwargs["url"])
-			if size < 250 * 1024:
-				# files smaller 250kb as assumed to be tokens
-				kwargs["zorder"] = top
-				
-			else:
-				# files larger 250kb are handled as decoration (index cards) etc.)
-				kwargs["size"]   = 300
-				kwargs["zorder"] = bottom
-			
-			# create token
-			t = db.Token(**kwargs)
-			
-			# use as background if none set yet
-			if scene.backing is None:
-				t.size = -1
-				scene.backing = t
-	
-	db.commit()
-
-@post('/<gmname>/<url>/delete')
-def ajax_post_delete(gmname, url):
-	# load game
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.id == game.active).first()
-	# delete requested token
-	token_ids = json.loads(request.POST.get('ids'))
-	for tid in token_ids:
-		token = db.Token.select(lambda t: t.id == tid).first()
-		if token is not None:
-			token.delete()
+	# create tokens and broadcast creation
+	game_cache = engine.cache.get(game)
+	game_cache.onCreate((posx, posy), urls)
 
 @error(404)
 @view('error')

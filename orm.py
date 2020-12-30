@@ -45,7 +45,8 @@ class PlayerCache(object):
 			'SELECT' : self.parent.onSelect,
 			'RANGE'  : self.parent.onRange,
 			'CLONE'  : self.parent.onClone,
-			'UPDATE' : self.parent.onUpdate
+			'UPDATE' : self.parent.onUpdate,
+			'DELETE' : self.parent.onDelete
 		}
 		
 	def __del__(self):
@@ -77,6 +78,7 @@ class PlayerCache(object):
 		if self.socket is not None and not self.socket.closed:
 			raw = json.dumps(data)
 			self.socket.send(raw)
+			print(data)
 		
 	def fetch(self, data, key):
 		""" Try to fetch key from data or raise ProtocolError. """
@@ -165,12 +167,10 @@ class GameCache(object):
 		
 	def login(self, player):
 		""" Handle player login. """
-		# notify player about all players and latest rolls 
+		# notify player about all players and  latest rolls
 		rolls  = list()
-		tokens = list()
 		since = time.time() - 20
 		all_colors = self.getColors()
-		
 		# query latest rolls and all tokens
 		with db_session:
 			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
@@ -181,16 +181,14 @@ class GameCache(object):
 					'sides'  : r.sides,
 					'result' : r.result
 				})
-			
-			for t in db.Token.select(lambda t: t.scene.id == g.active):
-				tokens.append(t.to_dict())
 		
 		player.write({
-			'OPID'    : 'REFRESH',
+			'OPID'    : 'ACCEPT',
 			'players' : self.getColors(),
 			'rolls'   : rolls,
-			'tokens'  : tokens
-		});
+		}); 
+		
+		player.write(self.fetchRefresh(g.active))
 		
 		# broadcast join to all players
 		self.broadcast({
@@ -198,6 +196,22 @@ class GameCache(object):
 			'name'  : player.name,
 			'color' : player.color
 		})
+		
+	def fetchRefresh(self, scene_id):
+		""" Performs a full refresh on all tokens. """  
+		tokens = list()
+		background_id = 0
+		with db_session:
+			scene = db.Scene.select(lambda s: s.id == scene_id).first().backing
+			background_id = scene.id if scene is not None else None
+			for t in db.Token.select(lambda t: t.scene.id == scene_id):
+				tokens.append(t.to_dict())
+		
+		return {
+			'OPID'       : 'REFRESH',
+			'tokens'     : tokens,
+			'background' : background_id
+		}
 		
 	def logout(self, player):
 		""" Handle player logout. """
@@ -228,7 +242,7 @@ class GameCache(object):
 			
 		# broadcast dice result
 		self.broadcast({
-			'OPID'    : 'DICE',
+			'OPID'    : 'ROLL',
 			'color'   : player.color,
 			'sides'   : sides,
 			'result'  : result
@@ -253,8 +267,6 @@ class GameCache(object):
 		top    = data['top']
 		width  = data['width']
 		height = data['height']
-		
-		print(data)
 		
 		# query inside given rectangle
 		with db_session:
@@ -282,6 +294,8 @@ class GameCache(object):
 		posx = data['posx']
 		posy = data['posy']
 		
+		# create tokens
+		tokens = list()
 		now = time.time()
 		with db_session: 
 			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
@@ -294,11 +308,18 @@ class GameCache(object):
 				t = db.Token.select(lambda t: t.id == tid).first()
 				# clone token
 				pos = db.Token.getPosByDegree((posx, posy), k, len(ids))
-				db.Token(scene=scene, url=t.url, posx=pos[0], posy=pos[1],
+				t = db.Token(scene=scene, url=t.url, posx=pos[0], posy=pos[1],
 					zorder=t.zorder, size=t.size, rotate=t.rotate,
 					flipx=t.flipx, timeid=now)
+				
+				db.commit()
+				tokens.append(t.to_dict())
 		
-		self.broadcastTokenUpdate(player, now)
+		# broadcast creation
+		self.broadcast({
+			'OPID'   : 'CREATE',
+			'tokens' : tokens
+		})
 		
 	def onUpdate(self, player, data):
 		""" Handle player changing token data. """
@@ -328,7 +349,55 @@ class GameCache(object):
 				t.update(timeid=now, pos=pos, zorder=zorder, size=size,
 					rotate=rotate, flipx=flipx, locked=locked)
 		
-		self.broadcastTokenUpdate(player, now)
+		self.broadcastTokenUpdate(player, now)  
+		
+	def onCreate(self, pos, urls):
+		""" Handle player creating tokens. """
+		# create tokens
+		now = time.time()
+		n = len(urls)
+		tokens = list()
+		with db_session:
+			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			s = db.Scene.select(lambda s: s.id == g.active).first()
+			
+			for k, url in enumerate(urls):
+				# create tokens in circle
+				x, y = db.Token.getPosByDegree(pos, k, n)
+				t = db.Token(scene=s.id, timeid=now, url=url, posx=x, posy=y)
+				
+				db.commit()
+				
+				# use first token as background if necessary
+				if s.backing is None:
+					t.size    = -1
+					s.backing = t
+				
+				tokens.append(t.to_dict())
+		
+		# broadcast creation
+		self.broadcast({
+			'OPID'   : 'CREATE',
+			'tokens' : tokens
+		})
+		
+	def onDelete(self, player, data):
+		""" Handle player deleting tokens. """
+		# delete tokens
+		tokens = data['tokens']
+		data   = list()
+		with db_session:
+			for tid in tokens:
+				t = db.Token.select(lambda t: t.id == tid).first()
+				data.append(t.to_dict())
+				if t is not None:
+					t.delete()
+		
+		# broadcast delete
+		self.broadcast({
+			'OPID'   : 'DELETE',
+			'tokens' : data
+		})
 		
 	def broadcastTokenUpdate(self, player, since):
 		""" Broadcast updated tokens. """
@@ -342,9 +411,19 @@ class GameCache(object):
 		
 		# broadcast update
 		self.broadcast({
-			'OPID'   : 'UPDATE',
-			'tokens' : all_data
+			'OPID'    : 'UPDATE',
+			'tokens'  : all_data
 		});
+		
+	def broadcastSceneSwitch(self, game):
+		""" Broadcast scene switch. """
+		# collect all tokens for the given scene
+		refresh_data = self.fetchRefresh(game.active)
+		
+		print(refresh_data)
+		
+		# broadcast switch
+		self.broadcast(refresh_data);
 
 
 class EngineCache(object):
