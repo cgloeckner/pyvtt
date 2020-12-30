@@ -740,7 +740,7 @@ class Game(db.Entity):
 						db.commit()
 						scene.backing = t
 				
-				if game.active == 0:
+				if game.active is None:
 					# select first scene as active
 					game.active = scene.id
 			

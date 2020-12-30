@@ -15,7 +15,7 @@
 		<div class="form">
 			<form onsubmit="login(event, '{{game.url}}', '{{game.admin.name}}');">
 				<p>PLAYER NAME</p>
-				<input type="text" name="playername" id="playername" value="{{playername}}" maxlength="18" />
+				<input type="text" name="playername" id="playername" value="{{playername}}" maxlength="30" />
 				
 				<p>PLAYER COLOR</p>
 				<input type="color" name="playercolor" id="playercolor" value="{{playercolor}}">

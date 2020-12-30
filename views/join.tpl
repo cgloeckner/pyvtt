@@ -11,7 +11,7 @@
 <div class="form">
 	<form onsubmit="registerGm(event);">
 		<p>GM NAME</p>
-		<input type="text" id="gmname" />
+		<input type="text" id="gmname" maxlength="20" />
 		
 		<p><input type="submit" value="START CAMPAIGN" /></p>
 	</form>

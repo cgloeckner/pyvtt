@@ -17,7 +17,7 @@
 
 	<div class="form">
 		<p>ENTER GAME NAME (optional)</p>
-		<p><input type="text" id="url" value="" /></p>
+		<p><input type="text" id="url" value="" maxlength="20" /></p>
 		
 		<div class="dropzone" id="dropzone">                                           
 			<p>DRAG AM IMAGE TO START</p>

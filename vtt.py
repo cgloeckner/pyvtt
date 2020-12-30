@@ -56,7 +56,9 @@ def post_gm_login():
 	if not engine.verifyUrlSection(request.forms.gmname):
 		# contains invalid characters
 		return {'gmname': ''}
-	name = request.forms.gmname.lower()
+	
+	# load gmname with limit of characters, in lowercase and strip whitespaces
+	name = request.forms.gmname[:20] .lower().strip()
 	
 	if name in engine.gm_blacklist:
 		# blacklisted name
@@ -98,6 +100,9 @@ def get_game_list():
 def post_import_game(url):  
 	url_ok = False
 	game   = None
+	
+	# trim url length, convert to lowercase and trim whitespaces
+	url = url[:20].lower().strip()
 	
 	# check GM and url
 	gm = db.GM.loadFromSession(request) 
@@ -260,7 +265,6 @@ def static_token(gmname, url, fname):
 	return static_file(fname, root=path)
 
 @post('/<gmname>/<url>/login')
-#@view('redirect')
 def set_player_name(gmname, url):
 	result = {'playername': '', 'playercolor': ''}
 	
@@ -270,8 +274,8 @@ def set_player_name(gmname, url):
 	if playername is None:
 		return result
 	
-	# trim
-	playername = playername.strip()
+	# limit length, trim whitespaces
+	playername = playername[:30].strip()
 	
 	# make player color less bright
 	parts       = [int(playercolor[1:3], 16), int(playercolor[3:5], 16), int(playercolor[5:7], 16)]
