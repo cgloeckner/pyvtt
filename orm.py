@@ -41,9 +41,11 @@ class PlayerCache(object):
 		self.thread   = None
 		
 		self.dispatch_map = {
-			'ROLL'         : self.parent.onRoll,
-			'SELECT'       : self.parent.onSelect,
-			'RANGE_SELECT' : self.parent.onRangeSelect
+			'ROLL'   : self.parent.onRoll,
+			'SELECT' : self.parent.onSelect,
+			'RANGE'  : self.parent.onRange,
+			'CLONE'  : self.parent.onClone,
+			'UPDATE' : self.parent.onUpdate
 		}
 		
 	def __del__(self):
@@ -164,24 +166,30 @@ class GameCache(object):
 	def login(self, player):
 		""" Handle player login. """
 		# notify player about all players and latest rolls 
-		rolls = list()
+		rolls  = list()
+		tokens = list()
 		since = time.time() - 20
 		all_colors = self.getColors()
 		
-		# query latest rolls
+		# query latest rolls and all tokens
 		with db_session:
 			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			
 			for r in db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
 				rolls.append({
 					'color'  : all_colors[r.player],
 					'sides'  : r.sides,
 					'result' : r.result
 				})
+			
+			for t in db.Token.select(lambda t: t.scene.id == g.active):
+				tokens.append(t.to_dict())
 		
 		player.write({
-			'OPID'    : 'ACCEPT',
+			'OPID'    : 'REFRESH',
 			'players' : self.getColors(),
-			'rolls'   : rolls
+			'rolls'   : rolls,
+			'tokens'  : tokens
 		});
 		
 		# broadcast join to all players
@@ -238,13 +246,15 @@ class GameCache(object):
 			'selected' : player.selected,
 		});
 		
-	def onRangeSelect(self, player, data):
+	def onRange(self, player, data):
 		""" Handle player selecting multiple tokens. """
 		# fetch rectangle data
 		left   = data['left']
 		top    = data['top']
 		width  = data['width']
 		height = data['height']
+		
+		print(data)
 		
 		# query inside given rectangle
 		with db_session:
@@ -263,6 +273,77 @@ class GameCache(object):
 			'OPID'     : 'SELECT',
 			'color'    : player.color,
 			'selected' : player.selected,
+		});
+		
+	def onClone(self, player, data):
+		""" Handle player cloning tokens. """
+		# fetch clone data
+		ids  = data['ids']
+		posx = data['posx']
+		posy = data['posy']
+		
+		now = time.time()
+		with db_session: 
+			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			# update active scene's timeid
+			scene = db.Scene.select(lambda s: s.id == g.active).first()
+			scene.timeid = now
+			
+			# iterate provided tokens
+			for k, tid in enumerate(ids):
+				t = db.Token.select(lambda t: t.id == tid).first()
+				# clone token
+				pos = db.Token.getPosByDegree((posx, posy), k, len(ids))
+				db.Token(scene=scene, url=t.url, posx=pos[0], posy=pos[1],
+					zorder=t.zorder, size=t.size, rotate=t.rotate,
+					flipx=t.flipx, timeid=now)
+		
+		self.broadcastTokenUpdate(player, now)
+		
+	def onUpdate(self, player, data):
+		""" Handle player changing token data. """
+		# fetch changes' data
+		changes = data['changes']
+		
+		now = time.time()
+		with db_session:
+			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			# update active scene's timeid
+			scene = db.Scene.select(lambda s: s.id == g.active).first()
+			scene.timeid = now
+			
+			# iterate provided tokens
+			for data in changes:
+				t = db.Token.select(lambda t: t.id == data['id']).first()
+				# fetch changed data (accepting None)
+				posx   = data.get('posx')
+				posy   = data.get('posy')
+				pos    = None if posx is None or posy is None else (posx, posy)
+				zorder = data.get('zorder')
+				size   = data.get('size')
+				rotate = data.get('rotate')
+				flipx  = data.get('flipx')
+				locked = data.get('locked', False)
+				old_time = t.timeid
+				t.update(timeid=now, pos=pos, zorder=zorder, size=size,
+					rotate=rotate, flipx=flipx, locked=locked)
+		
+		self.broadcastTokenUpdate(player, now)
+		
+	def broadcastTokenUpdate(self, player, since):
+		""" Broadcast updated tokens. """
+		# fetch all changed tokens
+		all_data = list()    
+		
+		with db_session:
+			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			for t in db.Token.select(lambda t: t.scene.id == g.active and t.timeid >= since):
+				all_data.append(t.to_dict())
+		
+		# broadcast update
+		self.broadcast({
+			'OPID'   : 'UPDATE',
+			'tokens' : all_data
 		});
 
 

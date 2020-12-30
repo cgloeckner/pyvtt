@@ -347,6 +347,7 @@ def get_player_battlemap(gmname, url):
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
+"""
 @post('/<gmname>/<url>/update')
 def post_player_update(gmname, url):
 	# load game
@@ -368,7 +369,7 @@ def post_player_update(gmname, url):
 		full_update = True
 	
 	# fetch token updates from client
-	changes = json.loads(request.POST.get('changes'))
+	changes = list()#json.loads(request.POST.get('changes'))
 	
 	# mark all selected tokens in that color
 	playername = request.get_cookie('playername')
@@ -377,28 +378,6 @@ def post_player_update(gmname, url):
 	player_cache = game_cache.get(playername)
 	player_cache.selected = ids
 	
-	# update token data
-	for data in changes:
-		token = scene.tokens.select(lambda s: s.id == data['id']).first()
-		if token is not None:
-			# check for set-as-background
-			if data['size'] == -1:
-				# delete previous background
-				if scene.backing is not None:
-					scene.backing.delete()
-				scene.backing = token
-			
-			# update token
-			token.update(
-				timeid=timeid,
-				pos=(int(data['posx']), int(data['posy'])),
-				zorder=data['zorder'],
-				size=data['size'],
-				rotate=data['rotate'],
-				flipx=data['flipx'],
-				locked=data['locked']
-			)
-
 	# query token data for that scene
 	tokens = list()
 	for t in scene.tokens.select(lambda t: t.scene == scene):
@@ -417,6 +396,7 @@ def post_player_update(gmname, url):
 		'scene_id' : scene.id
 	}
 	return json.dumps(data)
+"""
 
 @post('/<gmname>/<url>/upload/<posx:int>/<posy:int>')
 def post_image_upload(gmname, url, posx, posy):
@@ -475,26 +455,6 @@ def post_image_upload(gmname, url, posx, posy):
 				scene.backing = t
 	
 	db.commit()
-
-@post('/<gmname>/<url>/clone/<x:int>/<y:int>')
-def ajax_post_clone(gmname, url, x, y):
-	# load game
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
-	# load active scene
-	scene = db.Scene.select(lambda s: s.id == game.active).first()
-	# update position
-	scene.timeid = time.time()
-	# load token data
-	token_ids = json.loads(request.POST.get('ids'))
-	
-	# clone tokens
-	for k, tid in enumerate(token_ids):
-		token = db.Token.select(lambda t: t.id == tid).first()
-		if token is not None:
-			pos = db.Token.getPosByDegree((x, y), k, len(token_ids))
-			db.Token(scene=token.scene, url=token.url, posx=pos[0],
-				posy=pos[1], zorder=token.zorder, size=token.size,
-				rotate=token.rotate, flipx=token.flipx, timeid=time.time())
 
 @post('/<gmname>/<url>/delete')
 def ajax_post_delete(gmname, url):

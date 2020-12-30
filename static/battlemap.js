@@ -78,7 +78,6 @@ function getPixelData(token, x, y) {
 var tokens         = []; // holds all tokens, updated by the server
 var tokens_added   = []; // holds token id => opacity when recently added
 var tokens_removed = []; // holds token id => (token, opacity) when recently removed
-var change_cache   = []; // holds ids of all client-changed tokens
 
 var player_selections = {}; // buffer that contains selected tokens and corresponding player colors
 var allow_multiselect = false; // whether client is allowed to select multiple tokens
@@ -381,24 +380,6 @@ var update_cycles = 30;
 
 /// Triggers token updates (pushing and pulling token data via the server)
 function updateTokens() {
-	// fetch all changed tokens' data
-	var changes = [];
-	$.each(change_cache, function(index, token_id) {
-		// copy token to update-data
-		var t = tokens[token_id];
-		var data = {
-			'id'    : t.id,
-			'posx'  : t.posx,
-			'posy'  : t.posy,
-			'zorder': t.zorder,
-			'size'  : t.size,
-			'rotate': t.rotate,
-			'flipx' : t.flipx,
-			'locked': t.locked
-		};
-		changes.push(data);
-	});
-	
 	if (full_tick == 0) {
 		full_update = true;
 		full_tick = 1;
@@ -406,6 +387,7 @@ function updateTokens() {
 		full_tick -= 1;
 	}
 	
+	/*
 	// start update with server
 	$.ajax({
 		type: 'POST',
@@ -414,8 +396,6 @@ function updateTokens() {
 		data: {
 			'timeid'      : timeid,
 			'full_update' : full_update,
-			'changes'     : JSON.stringify(changes),
-			//'selected'    : JSON.stringify(select_ids),
 			'scene_id'    : scene_id
 		}, 
 		success: function(response) {
@@ -470,23 +450,11 @@ function updateTokens() {
 			}
 			
 			updateTokenbar();
-			//updateRolls(response['rolls']);
-			//updatePlayers(response['players']);
-			
-			// highlight token selection (switch key and value, see server impl)
-			/*
-			player_selections = [];
-			$.each(response['selected'], function(color, tokenid) {
-				player_selections.push([tokenid, color]);
-			});
-			*/
-			
-			// reset changes
-			change_cache = [];
 			
 			full_update = false;
 		}
 	});
+	*/
 }
 
 /// Draw the entire scene (locked tokens in the background, unlocked in foreground)
@@ -569,8 +537,8 @@ function onSocketMessage(event) {
 	var opid = data['OPID'];
 	
 	switch (opid) {
-		case 'ACCEPT':
-			onAccept(data);
+		case 'REFRESH':
+			onRefresh(data);
 			break;
 		case 'JOIN':
 			onJoin(data);
@@ -584,10 +552,12 @@ function onSocketMessage(event) {
 		case 'SELECT':
 			onSelect(data);
 			break;
+		case 'UPDATE':
+			onUpdate(data);
 	};
 }
 
-function onAccept(data) {
+function onRefresh(data) {
 	// show all players
 	$.each(data.players, function(name, color) {
 		showPlayer(name, color);
@@ -597,6 +567,21 @@ function onAccept(data) {
 	$.each(data.rolls, function(item, obj) {
 		addRoll(obj.sides, obj.result, obj.color);
 	});
+	
+	// reset tokens
+	background_set = false;
+	tokens = [];
+	$.each(data.tokens, function(index, token) {
+		updateToken(token);
+	});
+}
+
+function onUpdate(data) {
+	$.each(data.tokens, function(index, token) {
+		updateToken(token);
+	});
+	
+	// background?
 }
 
 function onJoin(data) {
@@ -754,6 +739,7 @@ function mouseDrag(event) {
 			ratio = scale / radius;
 			
 			// resize all selected tokens
+			var changes = []
 			$.each(select_ids, function(index, id) {
 				var token = tokens[id];
 				if (token.locked) {
@@ -761,6 +747,7 @@ function mouseDrag(event) {
 				}
 				
 				token.size = Math.round(token.size * ratio);
+				
 				if (token.size > min_token_size * 10) {
 					token.size = min_token_size * 10;
 				}
@@ -768,11 +755,16 @@ function mouseDrag(event) {
 					token.size = min_token_size;
 				}
 				
-				// mark token as changed
-				if (!change_cache.includes(id)) {
-					change_cache.push(id);
-				}
+				changes.push({
+					'id'   :  id,
+					'size' : token.size
+				});
 			});
+			
+			writeSocket({
+				'OPID'    : 'UPDATE',
+				'changes' : changes
+			})
 			
 		} else if (drag_action == 'rotate') {
 			// calculate vectors between origin/icon and origni/mouse
@@ -796,6 +788,7 @@ function mouseDrag(event) {
 			}
 			
 			// rotate all selected tokens
+			var changes = []
 			$.each(select_ids, function(index, id) {
 				var token = tokens[id];
 				if (token.locked) {
@@ -803,12 +796,16 @@ function mouseDrag(event) {
 				}
 				
 				token.rotate = angle;
-				
-				// mark token as changed
-				if (!change_cache.includes(id)) {
-					change_cache.push(id);
-				}
+				changes.push({
+					'id'     : id,
+					'rotate' : token.rotate
+				});
 			});
+			
+			writeSocket({
+				'OPID'    : 'UPDATE',
+				'changes' : changes
+			})
 		}
 	}
 	
@@ -987,6 +984,7 @@ function tokenGrab(event) {
 		
 	} else if (event.buttons == 2) {
 		// Right click: reset token scale & rotation
+		var changes = [];
 		$.each(select_ids, function(index, id) {
 			var token = tokens[id];
 			
@@ -998,11 +996,17 @@ function tokenGrab(event) {
 			token.rotate = 0;
 			token.size   = Math.round(min_token_size * 1.5);
 			
-			if (!change_cache.includes(id)) {
-				change_cache.push(id);
-			}
+			changes.push({
+				'id'     : id,
+				'size'   : token.size,
+				'rotate' : token.rotate
+			});
 		});
-	
+		
+		writeSocket({
+			'OPID'    : 'UPDATE',
+			'changes' : changes
+		});
 	}
 }
 
@@ -1034,7 +1038,7 @@ function tokenRelease() {
 		primary_id = 0;
 		
 		writeSocket({
-			'OPID'   : 'RANGE_SELECT',
+			'OPID'   : 'RANGE',
 			'left'   : select_from_x,
 			'top'    : select_from_y,
 			'width'  : select_width,
@@ -1068,6 +1072,7 @@ function tokenMove(event) {
 			var prev_posx = token.posx;
 			var prev_posy = token.posy;
 			
+			var changes = []
 			$.each(select_ids, function(index, id) {
 				var t = tokens[id];
 				if (!t.locked) {
@@ -1078,12 +1083,18 @@ function tokenMove(event) {
 					t.posx = mouse_x + dx;
 					t.posy = mouse_y + dy;
 					
-					// mark tokens as changed
-					if (!change_cache.includes(t.id)) {
-						change_cache.push(t.id);
-					}
+					changes.push({
+						'id'   : id,
+						'posx' : token.posx,
+						'posy' : token.posy
+					});
 				}
 			});
+			
+			writeSocket({
+				'OPID'    : 'UPDATE',
+				'changes' : changes
+			})
 		}
 	} else {
 		var token = selectToken(mouse_x, mouse_y);
@@ -1103,6 +1114,7 @@ function tokenMove(event) {
 
 /// Event handle for rotation via mouse wheel
 function tokenWheel(event) {
+	var changes = [];
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
 		if (token.locked) {
@@ -1115,11 +1127,16 @@ function tokenWheel(event) {
 			token.rotate = 0.0;
 		}
 		
-		// mark token as changed
-		if (!change_cache.includes(id)) {
-			change_cache.push(id);
-		}
+		changes.push({
+			'id'     : id,
+			'rotate' : token.rotate
+		});
 	});
+	
+	writeSocket({
+		'OPID'    : 'UPDATE',
+		'changes' : changes
+	})
 	
 	updateTokenbar();
 }
@@ -1160,16 +1177,13 @@ function pasteCopiedTokens() {
 	event.preventDefault();
 	
 	if (copy_tokens.length > 0) {
-		$.ajax({                                                                      
-			type: 'POST',
-			url: '/' + gm_name + '/' + game_url + '/clone/' + mouse_x + '/' + mouse_y,
-			dataType: 'json',
-			data: {
-				'ids' : JSON.stringify(copy_tokens),
-			},
-			success: function(response) {
-			}
+		writeSocket({
+			'OPID' : 'CLONE',
+			'ids'  : copy_tokens,
+			'posx' : mouse_x,
+			'posy' : mouse_y
 		});
+		
 		full_update = true; // force full refresh next time
 	}
 }
@@ -1214,6 +1228,7 @@ function tokenShortcut(event) {
 
 /// Event handle for fliping a token x-wise
 function tokenFlipX() {
+	var changes = [];
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
 		
@@ -1223,11 +1238,16 @@ function tokenFlipX() {
 		}
 		token.flipx = !token.flipx;
 		
-		// mark token as changed
-		if (!change_cache.includes(id)) {
-			change_cache.push(id);
-		}
+		changes.push({
+			'id'    : id,
+			'flipx' : token.flipx
+		});
 	});
+	
+	writeSocket({
+		'OPID'    : 'UPDATE',
+		'changes' : changes
+	})
 }
 
 /// Event handle for (un)locking a token
@@ -1238,15 +1258,21 @@ function tokenLock() {
 		primary_lock = tokens[primary_id].locked
 	}
 	
+	var changes = [];
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
 		token.locked = !primary_lock;
 		
-		// mark token as changed
-		if (!change_cache.includes(id)) {
-			change_cache.push(id);
-		}
+		changes.push({
+			'id'     : id,
+			'locked' : token.locked
+		});
 	});
+	
+	writeSocket({
+		'OPID'    : 'UPDATE',
+		'changes' : changes
+	})
 }
 
 /// Event handle for resize a token
@@ -1266,6 +1292,7 @@ function tokenQuitAction() {
 
 /// Event handle for moving token to lowest z-order
 function tokenBottom() {
+	var changes = [];
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
 		
@@ -1281,15 +1308,21 @@ function tokenBottom() {
 			--min_z;
 		}
 		
-		// mark token as changed
-		if (!change_cache.includes(id)) {
-			change_cache.push(id);
-		}
+		changes.push({
+			'id'     : id,
+			'zorder' : token.zorder
+		});
 	});
+	
+	writeSocket({
+		'OPID'    : 'UPDATE',
+		'changes' : changes
+	})
 }
 
 /// Event handle for moving token to hightest z-order
-function tokenTop() {
+function tokenTop() { 
+	var changes = [];
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
 		
@@ -1304,12 +1337,17 @@ function tokenTop() {
 			token.zorder = max_z - 1;
 			++max_z;
 		}
-			
-		// mark token as changed
-		if (!change_cache.includes(id)) {
-			change_cache.push(id);
-		}
+		
+		changes.push({
+			'id'     : id,
+			'zorder' : token.zorder
+		});
 	});
+	
+	writeSocket({
+		'OPID'    : 'UPDATE',
+		'changes' : changes
+	})
 }
 
 // --- GM stuff ---------------------------------------------------------------
