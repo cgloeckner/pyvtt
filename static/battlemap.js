@@ -560,7 +560,7 @@ function writeSocket(data) {
 }
 
 /// Handles login and triggers the game
-function login(event, gmname, url) {
+function login(event, gmname, url, server_url) {
 	event.preventDefault();
 	
 	var playername  = $('#playername').val();
@@ -599,10 +599,9 @@ function login(event, gmname, url) {
 					$('#dicebox').animate({ opacity: '+=1.0' }, 2000);
 				});
 				
-				
 				// start socket communication
 				// @TODO: query server name and port   
-				socket = new WebSocket('ws://localhost:8080/websocket')
+				socket = new WebSocket('ws://' + server_url + '/websocket')
 				
 				socket.onmessage = onSocketMessage;
 				
@@ -678,18 +677,18 @@ function mouseDrag(event) {
 					return;
 				}
 				
-				token.size = Math.round(token.size * ratio);
+				var size = Math.round(token.size * ratio);
 				
-				if (token.size > min_token_size * 10) {
-					token.size = min_token_size * 10;
+				if (size > min_token_size * 10) {
+					size = min_token_size * 10;
 				}
-				if (token.size < min_token_size) {
-					token.size = min_token_size;
+				if (size < min_token_size) {
+					size = min_token_size;
 				}
 				
 				changes.push({
-					'id'   :  id,
-					'size' : token.size
+					'id'   : id,
+					'size' : size
 				});
 			});
 			
@@ -727,10 +726,10 @@ function mouseDrag(event) {
 					return;
 				}
 				
-				token.rotate = angle;
+				var rotate = angle;
 				changes.push({
 					'id'     : id,
-					'rotate' : token.rotate
+					'rotate' : rotate
 				});
 			});
 			
@@ -1017,8 +1016,8 @@ function tokenMove(event) {
 					
 					changes.push({
 						'id'   : id,
-						'posx' : token.posx,
-						'posy' : token.posy
+						'posx' : t.posx,
+						'posy' : t.posy
 					});
 				}
 			});
@@ -1068,7 +1067,7 @@ function tokenWheel(event) {
 	writeSocket({
 		'OPID'    : 'UPDATE',
 		'changes' : changes
-	})
+	});
 	
 	updateTokenbar();
 }
@@ -1080,7 +1079,7 @@ function rollDice(sides) {
 	writeSocket({
 		'OPID'  : 'ROLL',
 		'sides' : sides
-	})
+	});
 	
 	setTimeout(function() {	$('#d' + sides).removeClass('shake'); }, 500);
 }
@@ -1170,7 +1169,7 @@ function tokenFlipX() {
 	writeSocket({
 		'OPID'    : 'UPDATE',
 		'changes' : changes
-	})
+	});
 }
 
 /// Event handle for (un)locking a token
@@ -1195,7 +1194,7 @@ function tokenLock() {
 	writeSocket({
 		'OPID'    : 'UPDATE',
 		'changes' : changes
-	})
+	});
 }
 
 /// Event handle for resize a token
@@ -1240,7 +1239,7 @@ function tokenBottom() {
 	writeSocket({
 		'OPID'    : 'UPDATE',
 		'changes' : changes
-	})
+	});
 }
 
 /// Event handle for moving token to hightest z-order
@@ -1270,7 +1269,7 @@ function tokenTop() {
 	writeSocket({
 		'OPID'    : 'UPDATE',
 		'changes' : changes
-	})
+	});
 }
 
 // --- GM stuff ---------------------------------------------------------------
@@ -1289,7 +1288,6 @@ function addScene() {
 		url='/vtt/create-scene/' + game_url,
 		success=function(data) {
 			$('#preview')[0].innerHTML = data; 
-			updateGame();
 		}
 	);
 }
@@ -1299,17 +1297,15 @@ function activateScene(scene_id) {
 		url='/vtt/activate-scene/' + game_url + '/' + scene_id,
 		success=function(data) {       
 			$('#preview')[0].innerHTML = data;
-			updateGame();
 		}
 	);
 }
 
-function cloneScene(scene_id) {
+function cloneScene(scene_id) {                                                                  
 	$.post(
 		url='/vtt/clone-scene/' + game_url + '/' + scene_id,
 		success=function(data) { 
 			$('#preview')[0].innerHTML = data;
-			updateGame();
 		}
 	);
 }
@@ -1319,7 +1315,6 @@ function deleteScene(scene_id) {
 		url='/vtt/delete-scene/' + game_url + '/' + scene_id,
 		success=function(data) {
 			$('#preview')[0].innerHTML = data;
-			updateGame();
 		}
 	);
 }

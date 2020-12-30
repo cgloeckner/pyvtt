@@ -355,9 +355,11 @@ def get_player_battlemap(gmname, url):
 		abort(404)
 	
 	user_agent = request.environ.get('HTTP_USER_AGENT')
+	server_url = '{0}:{1}'.format(engine.getIp(), engine.port)
+	print(server_url)
 	
 	# show battlemap with login screen ontop
-	return dict(engine=engine, user_agent=user_agent, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
+	return dict(engine=engine, user_agent=user_agent, server_url=server_url, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
 @post('/<gmname>/<url>/upload/<posx:int>/<posy:int>')
 def post_image_upload(gmname, url, posx, posy):

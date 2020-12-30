@@ -645,7 +645,7 @@ class Engine(object):
 	def getIp(self):
 		if self.local_gm:
 			return self.publicip
-		elif self.host == '0.0.0.0':
+		elif self.host == '':
 			return 'localhost'
 		else:
 			return self.host 
