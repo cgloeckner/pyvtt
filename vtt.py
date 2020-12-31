@@ -33,7 +33,7 @@ def asGm(callback):
 	def wrapper(*args, **kwargs):
 		session = request.get_cookie('session')
 		if session is None:
-			abort(404)
+			redirect('/vtt/join')
 		return callback(*args, **kwargs)
 	return wrapper
 
@@ -69,9 +69,9 @@ def post_gm_login():
 	gm = db.GM(name=name, ip=ip, sid=sid)
 	gm.postSetup()
 	
-	# set cookie (will never expire)
-	response.set_cookie('session', name, path='/')
-	response.set_cookie('session', sid, path='/')
+	# set cookie
+	expires = time.time() + engine.expire
+	response.set_cookie('session', sid, path='/', expires=expires)
 
 	db.commit()
 	return {'gmname': gm.name}
@@ -81,8 +81,9 @@ def post_gm_login():
 def get_game_list():
 	gm = db.GM.loadFromSession(request)
 	if gm is None:
-		print(gm)
 		redirect('/vtt/join')
+	# refresh session
+	gm.refreshSession(response)
 	
 	server = ''
 	if engine.local_gm:

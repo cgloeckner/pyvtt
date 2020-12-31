@@ -1173,13 +1173,19 @@ class GM(db.Entity):
 		
 	def getBasePath(self):
 		return engine.data_dir / 'gms' / self.name
-	
+		
 	def getGamesPath(self):
 		return self.getBasePath() / 'games'
-
+		
 	def getExportPath(self):
 		return self.getBasePath() / 'export'
-
+		
+	def refreshSession(self, response):
+		""" Refresh session id. """
+		now = time.time()
+		self.timeid = now
+		response.set_cookie('session', self.sid, path='/', expires=now + engine.expire)
+		
 	@staticmethod
 	def loadFromSession(request):
 		""" Fetch GM from session id and ip address. """
