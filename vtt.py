@@ -89,7 +89,7 @@ def get_game_list():
 	
 	server = ''
 	if engine.local_gm:
-		server = 'http://{0}:{1}'.format(engine.getIp(), engine.port)
+		server = 'http://{0}:{1}'.format(engine.getDomain(), engine.port)
 	
 	# show GM's games
 	return dict(engine=engine, gm=gm, server=server, dbScene=db.Scene)
@@ -170,7 +170,7 @@ def delete_game(url):
 	
 	server = ''
 	if engine.local_gm:
-		server = 'http://{0}:{1}'.format(engine.getIp(), engine.port)
+		server = 'http://{0}:{1}'.format(engine.getDomain(), engine.port)
 	
 	return dict(gm=gm, server=server)
 
@@ -362,7 +362,7 @@ def get_player_battlemap(gmname, url):
 		abort(404)
 	
 	user_agent = request.environ.get('HTTP_USER_AGENT')
-	server_url = '{0}:{1}'.format(engine.getIp(), engine.port)
+	server_url = '{0}:{1}'.format(engine.getDomain(), engine.port)
 	
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, server_url=server_url, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)

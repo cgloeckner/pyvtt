@@ -532,6 +532,7 @@ class Engine(object):
 		
 		# webserver stuff
 		self.host   = '0.0.0.0'
+		self.domain = 'localhost'
 		self.port   = 8080 
 		self.socket = ''
 		self.debug  = False
@@ -542,6 +543,7 @@ class Engine(object):
 		self.url_regex    = '^[A-Za-z0-9_\-.]+$'
 		
 		self.local_gm    = False
+		self.localhost   = False
 		self.title       = 'PyVTT'
 		self.imprint_url = ''
 		self.expire      = 3600 * 24 * 30 # default: 30d
@@ -550,9 +552,13 @@ class Engine(object):
 		self.cache = EngineCache()
 
 	def setup(self, argv):
-		self.debug    = '--debug' in argv
-		self.quiet    = '--quiet' in argv
-		self.local_gm = '--local-gm' in argv
+		self.debug     = '--debug' in argv
+		self.quiet     = '--quiet' in argv
+		self.local_gm  = '--local-gm' in argv
+		self.localhost = '--localhost' in argv
+		
+		if self.localhost:
+			assert(not self.local_gm)
 		
 		# setup logging
 		log_format = '[%(asctime)s] %(message)s'
@@ -561,7 +567,7 @@ class Engine(object):
 		else:
 			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', format=log_format, level=logging.INFO)
 		
-		logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2}'.format(self.debug, self.quiet, self.local_gm))
+		logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))
 		
 		# handle settings
 		settings_path = self.data_dir / 'settings.json'
@@ -572,7 +578,7 @@ class Engine(object):
 				'imprint_url' : self.imprint_url,
 				'expire'      : self.expire,
 				'listener'    : 'ip',
-				'host'        : self.host,
+				'domain'      : self.domain,
 				'port'        : self.port,
 				'socket'      : self.socket
 			}
@@ -586,7 +592,7 @@ class Engine(object):
 				self.title       = settings['title']
 				self.imprint_url = settings['imprint_url']
 				self.expire      = settings['expire']
-				self.host        = settings['host']
+				self.domain      = settings['domain']
 				self.port        = settings['port']
 				self.socket      = settings['socket']
 			logging.info('Settings loaded')
@@ -597,25 +603,25 @@ class Engine(object):
 			print('    --debug       Starts in debug mode.')
 			print('    --quiet       Starts in quiet mode.')
 			print('    --local-gm    Starts in local-GM-mode.')
+			print('    --localhost   Starts in localhost mode.')
 			print('')
-			print('Debug Mode:    Enables debug level logging and restricts to localhost (overrides unix socket settings).')
-			print('Quiet Mode:    Disables verbose outputs.')
-			print('Local-GM Mode: Replaces `localhost` in all created links by the public ip.')
+			print('Debug Mode:     Enables debug level logging.')
+			print('Quiet Mode:     Disables verbose outputs.')
+			print('Local-GM Mode:  Replaces `localhost` in all created links by the public ip.')
+			print('Localhost Mode: Restricts server for being used via localhost only. CANNOT BE USED WITH --local-gm')
 			print('')
 			print('See {0} for custom settings.'.format(settings_path))
 			sys.exit(0)
 		
-		if self.local_gm:
-			# query public ip
-			self.publicip = requests.get('https://api.ipify.org').text
-			logging.info('Public IP is {0}'.format(self.publicip))
-		 
-		# setup listening ip
-		if self.debug:
-			self.host = 'localhost'
-			logging.info('Restricted to localhost')
-		else:
-			self.host = '0.0.0.0'
+		if self.localhost:
+			# overwrite domain and host to localhost
+			self.host   = '127.0.0.1'
+			self.domain = 'localhost'
+			logging.info('Overwriting connections to localhost')
+		elif self.local_gm or self.domain == '':
+			# overwrite domain with public ip
+			self.domain = requests.get('https://api.ipify.org').text
+			logging.info('Overwriting Domain by Public IP: {0}'.format(self.domain))
 		
 		# prepare engine cache
 		with db_session:
@@ -665,16 +671,16 @@ class Engine(object):
 				pass
 			"""
 		
+	def getDomain(self):
+		if self.localhost:
+			# because of forced localhost mode
+			return '127.0.0.1'
+		else:
+			# use domain (might be replaced by public ip)
+			return self.domain
+		
 	def verifyUrlSection(self, s):
 		return bool(re.match(self.url_regex, s))
-		
-	def getIp(self):
-		if self.local_gm:
-			return self.publicip
-		elif self.host == '':
-			return 'localhost'
-		else:
-			return self.host 
 		
 	def getClientIp(self, request):
 		if self.socket != '':
