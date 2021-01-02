@@ -297,8 +297,8 @@ function updateTokenbar() {
 			var s = Math.sin((-90.0 + index * degree) * 3.14 / 180);
 			var c = Math.cos((-90.0 + index * degree) * 3.14 / 180);
 			
-			var x = size * c * 0.8 + (token.posx * viewport.zoom) * canvas_scale - 12 + viewport.left;
-			var y = size * s * 0.8 + (token.posy * viewport.zoom) * canvas_scale - 12 + viewport.top;
+			var x = size * c * 0.8 + (token.posx * viewport.zoom) * canvas_scale - 12 - viewport.left;
+			var y = size * s * 0.8 + (token.posy * viewport.zoom) * canvas_scale - 12 - viewport.top;
 			
 			// force position to be on the screen
 			x = Math.max(0, Math.min(canvas.width(), x));
@@ -345,8 +345,8 @@ function pickCanvasPos(event) {
 	
 	// make pos relative to canvas
 	var bx = $('#battlemap')[0].getBoundingClientRect();
-	mouse_x = (mouse_x - bx.left - viewport.left) / canvas_scale;
-	mouse_y = (mouse_y - bx.top  - viewport.top ) / canvas_scale;
+	mouse_x = (mouse_x - bx.left + viewport.left) / canvas_scale;
+	mouse_y = (mouse_y - bx.top  + viewport.top ) / canvas_scale;
 	
 	mouse_x = mouse_x / viewport.zoom;
 	mouse_y = mouse_y / viewport.zoom;
@@ -466,6 +466,23 @@ function onRelease() {
 	updateTokenbar();
 }
 
+/// Limit viewport's position
+function limitViewportPosition() {
+	var dom_canvas = $('#battlemap')[0];
+	var width  = dom_canvas.width;
+	var height = dom_canvas.height;
+	var view_w = width  / viewport.zoom;
+	var view_h = height / viewport.zoom;
+	
+	var min_x = 0;
+	var min_y = 0;
+	var max_x = (width  - view_w) * viewport.zoom;
+	var max_y = (height - view_h) * viewport.zoom;
+	
+	viewport.left = Math.max(min_x, Math.min(max_x, viewport.left));
+	viewport.top  = Math.max(min_y, Math.min(max_y, viewport.top));
+}
+
 /// Event handle for moving a grabbed token (if not locked)
 function onMove(event) {
 	pickCanvasPos(event);
@@ -520,22 +537,10 @@ function onMove(event) {
 		$('#battlemap').css('cursor', 'grab');
 		
 		// move viewport
-		viewport.left += event.movementX;
-		viewport.top  += event.movementY;
+		viewport.left -= event.movementX;
+		viewport.top  -= event.movementY;
 		
-		// limit viewport position
-		/*
-		if (viewport.left < 0) {
-			viewport.left = 0;
-		} else if (viewport.left > dom_canvas.width) {
-			viewport.left = dom_canvas.width;
-		}
-		if (viewport.top < 0) {
-			viewport.top = 0;
-		} else if (viewport.top > dom_canvas.height) {
-			viewport.top = dom_canvas.height;
-		}
-		*/
+		limitViewportPosition();
 		
 	} else {
 		var token = selectToken(mouse_x, mouse_y);
@@ -582,16 +587,30 @@ function onWheel(event) {
 	
 	*/
 	
+	// modify zoom
 	if (event.deltaY > 0) {
 		// zoom out
 		viewport.zoom /= 1.05;
-		if (viewport.zoom < 0.5) {
-			viewport.zoom = 0.5;
+		if (viewport.zoom < 1.0) {
+			viewport.zoom = 1.0;
 		}
 	} else if (event.deltaY < 0) {
 		// zoom in
 		viewport.zoom *= 1.05;
 	}
+	
+	// calculate topleft based on mouse position
+	var dom_canvas = $('#battlemap')[0];
+	var width  = (dom_canvas.width  / canvas_scale) / viewport.zoom;
+	var height = (dom_canvas.height / canvas_scale) / viewport.zoom;
+	var posx   = mouse_x - width  / 2;
+	var posy   = mouse_y - height / 2;
+	
+	viewport.left = posx;
+	viewport.top  = posy;
+	console.log(posx, posy);
+	
+	limitViewportPosition();
 	
 	updateTokenbar();
 }

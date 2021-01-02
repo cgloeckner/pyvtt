@@ -203,7 +203,7 @@ function drawToken(token, color, is_background) {
 	context.save();
 	
 	// handle viewport
-	context.translate(viewport.left, viewport.top);
+	context.translate(-viewport.left, -viewport.top);
 	context.scale(viewport.zoom, viewport.zoom);
 	
 	// handle token position and canvas scale 
@@ -324,7 +324,7 @@ function drawScene() {
 		
 		context.save();         
 		// consider viewport
-		context.translate(viewport.left, viewport.top);
+		context.translate(-viewport.left, -viewport.top);
 		context.scale(viewport.zoom, viewport.zoom);
 		
 		// consider position and canvas scale
