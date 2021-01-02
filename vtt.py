@@ -6,7 +6,9 @@ from bottle import *
 import os, json, time, sys, psutil, random
 
 from pony import orm
-from orm import db, db_session, Token, Game, engine
+from orm import db, db_session, Token, Game
+from engine import engine
+
 
 __author__ = "Christian Glöckner"
 
