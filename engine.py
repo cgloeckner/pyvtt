@@ -4,10 +4,10 @@
 import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, json, re, random
 
 import bottle 
-from bottle.ext.websocket import GeventWebSocketServer
 from geventwebsocket.exceptions import WebSocketError
 
 from orm import db, db_session
+from server import VttServer
 
 
 __author__ = "Christian Glöckner"
@@ -635,41 +635,16 @@ class Engine(object):
 			logging.info('Image checksums and threading locks created within {0}s'.format(t))
 		
 	def run(self):
-		if self.debug or self.socket == '':
-			# run via host and port
-			logging.info('Running server on {0}:{1}'.format(self.host, self.port))
-			bottle.run(
-				host     = self.host,
-				port     = self.port,
-				reloader = self.debug,
-				debug    = self.debug,
-				quiet    = self.quiet,
-				server   = GeventWebSocketServer
-			)
-		else:
-			raise NotImplementedError('unix socket NOT compatible with websocket ATM')
-			"""
-			# run via unix socket
-			from gevent.pywsgi import WSGIServer
-			from gevent import socket
-			
-			if os.path.exists(self.socket):
-				os.remove(self.socket)
-			
-			listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-			listener.bind(self.socket)
-			listener.listen(1)
-			
-			server = WSGIServer(listener, bottle.default_app())
-			# TODO: use `log` and `error_log` to redirect logging (because unix socket is only used in non-debug mode)
-			
-			logging.info('Running server via {0}'.format(self.socket))
-			print('Running server via unix socket')
-			try:
-				server.serve_forever()
-			except KeyboardInterrupt:
-				pass
-			"""
+		bottle.run(
+			host       = self.host,
+			port       = self.port,
+			reloader   = self.debug,
+			debug      = self.debug,
+			quiet      = self.quiet,
+			server     = VttServer,
+			# VttServer-specific:
+			unixsocket = self.socket
+		)
 		
 	def getDomain(self):
 		if self.localhost:
