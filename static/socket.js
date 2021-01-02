@@ -234,16 +234,16 @@ function start(gmname, url, playername, color) {
 	});
 	
 	// drop zone implementation (using canvas) --> also as players :) 
-	battlemap.addEventListener('dragover', mouseDrag);
-	battlemap.addEventListener('drop', uploadDrop);
+	battlemap.addEventListener('dragover',	onDrag);
+	battlemap.addEventListener('drop', 		onDrop);
 	
 	// desktop controls
-	battlemap.addEventListener('mousedown', tokenGrab);
-	battlemap.addEventListener('mousemove', tokenMove);
-	battlemap.addEventListener('mouseup', tokenRelease);
-	battlemap.addEventListener('wheel', tokenWheel);
-	battlemap.addEventListener('mouseout', tokenRelease);
-	document.addEventListener('keydown', tokenShortcut);
+	battlemap.addEventListener('mousedown',	onGrab);
+	battlemap.addEventListener('mousemove',	onMove);
+	battlemap.addEventListener('mouseup',	onRelease);
+	battlemap.addEventListener('wheel',		onWheel);
+	battlemap.addEventListener('mouseout',	onRelease);
+	document.addEventListener('keydown',	onShortcut);
 	
 	// setup game  
 	gm_name = gmname;

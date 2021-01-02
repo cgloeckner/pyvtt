@@ -2,6 +2,12 @@
 
 var fps = 60;
 
+var viewport = {
+	'left' : 0,
+	'top'  : 0,
+	'zoom' : 1.0
+};
+
 // --- image handling implementation ----------------------------------
 
 var images = [];
@@ -75,6 +81,7 @@ function getPixelData(token, x, y) {
 	// note: consider (x,y) is relative to token's center
 	return mem_ctx.getImageData(x + dom_canvas.width / 2, y + dom_canvas.height / 2, 1, 1).data;
 }
+
 
 // --- token implementation -------------------------------------------
 
@@ -179,7 +186,7 @@ function updateToken(data) {
 }
 
 /// Draws a single token (show_ui will show the selection box around it)
-function drawToken(token, color) {
+function drawToken(token, color, is_background) {
 	var canvas = $('#battlemap');
 	var context = canvas[0].getContext("2d");
 	
@@ -193,52 +200,70 @@ function drawToken(token, color) {
 	sizes[0] *= canvas_scale;
 	sizes[1] *= canvas_scale;
 	
-	// handle position and scale
 	context.save();
+	
+	// handle viewport
+	context.translate(viewport.left, viewport.top);
+	context.scale(viewport.zoom, viewport.zoom);
+	
+	// handle token position and canvas scale 
 	context.translate(token.posx * canvas_scale, token.posy * canvas_scale);
 	
-	// handle token spawn
-	if (tokens_added[token.id] != null) {
-		var value = tokens_added[token.id];
-		context.globalAlpha = value;
-		context.scale(5 - 4 * value, 5 - 4 * value);
-		value += 0.075;
-		if (value < 1.0) {
-			tokens_added[token.id] = value;
-		} else {
-			delete tokens_added[token.id];
-		}
-	}
-	
-	// handle token despawn
-	if (tokens_removed[token.id] != null) {
-		var value = tokens_removed[token.id][1];
-		context.globalAlpha = value;
-		context.scale(5 - 4 * value, 5 - 4 * value);
-		value -= 0.075;
-		if (value > 0.0) {
-			tokens_removed[token.id][1] = value;
-		} else {
-			delete tokens_removed[token.id];
-		}
-	}
-	
-	// handle fip, rotation
-	if (token.flipx) {
-		context.scale(-1, 1);
-		context.rotate(token.rotate * -3.14/180.0);
+	if (is_background) {
+		// draw clipped background image
+		context.drawImage(
+			images[token.url],					// url
+			-sizes[0] / 2, -sizes[1] / 2,		// position
+			sizes[0], sizes[1]					// size
+		);
 	} else {
-		context.rotate(token.rotate * 3.14/180.0);
-	}
-	
-	// handle selection
-	if (color != null) {
-		context.shadowColor = color;
-		context.shadowBlur = 25;
-	}
+		// handle token spawn
+		if (tokens_added[token.id] != null) {
+			var value = tokens_added[token.id];
+			context.globalAlpha = value;
+			context.scale(5 - 4 * value, 5 - 4 * value);
+			value += 0.075;
+			if (value < 1.0) {
+				tokens_added[token.id] = value;
+			} else {
+				delete tokens_added[token.id];
+			}
+		}
 		
-	// draw image
-	context.drawImage(images[token.url], -sizes[0] / 2, -sizes[1] / 2, sizes[0], sizes[1]);
+		// handle token despawn
+		if (tokens_removed[token.id] != null) {
+			var value = tokens_removed[token.id][1];
+			context.globalAlpha = value;
+			context.scale(5 - 4 * value, 5 - 4 * value);
+			value -= 0.075;
+			if (value > 0.0) {
+				tokens_removed[token.id][1] = value;
+			} else {
+				delete tokens_removed[token.id];
+			}
+		}
+		
+		// handle fip, rotation
+		if (token.flipx) {
+			context.scale(-1, 1);
+			context.rotate(token.rotate * -3.14/180.0);
+		} else {
+			context.rotate(token.rotate * 3.14/180.0);
+		}
+		
+		// handle selection
+		if (color != null) {
+			context.shadowColor = color;
+			context.shadowBlur = 25;
+		}
+		
+		// draw token image
+		context.drawImage(
+			images[token.url],					// url
+			-sizes[0] / 2, -sizes[1] / 2,		// position
+			sizes[0], sizes[1]					// size
+		);
+	}
 	
 	context.restore();
 }
@@ -265,7 +290,7 @@ function drawScene() {
 	
 	// draw tokens
 	if (background != null) {
-		drawToken(background, false);
+		drawToken(background, null, true);
 	}
 	$.each(culling, function(index, token) {
 		var color = null;
@@ -277,12 +302,13 @@ function drawScene() {
 		if (color == null && select_ids.includes(token.id)) {
 			color = getCookie('playercolor');
 		}
-		drawToken(token, color);
+		drawToken(token, color, false);
 	});
+	
 	// draw recently removed tokens (animated)
 	$.each(tokens_removed, function(index, token) {
 		if (tokens_removed[index] != null) {
-			drawToken(tokens_removed[index][0]);
+			drawToken(tokens_removed[index][0], null, false);
 		}
 	});
 	
@@ -295,12 +321,23 @@ function drawScene() {
 		var context = canvas[0].getContext("2d");
 		var select_width  = mouse_x - select_from_x;
 		var select_height = mouse_y - select_from_y;
+		
+		context.save();         
+		// consider viewport
+		context.translate(viewport.left, viewport.top);
+		context.scale(viewport.zoom, viewport.zoom);
+		
+		// consider position and canvas scale
+		context.translate(select_from_x * canvas_scale, select_from_y * canvas_scale);
+		
 		context.beginPath();
-		context.rect(select_from_x * canvas_scale, select_from_y * canvas_scale, select_width * canvas_scale, select_height * canvas_scale);
+		context.rect(0, 0, select_width * canvas_scale, select_height * canvas_scale);
 		context.strokeStyle = "#070707";
-		context.fillStyle = "rgba(255, 255, 255, 0.25)"; 
-		context.fillRect(select_from_x * canvas_scale, select_from_y * canvas_scale, select_width * canvas_scale, select_height * canvas_scale);
+		context.fillStyle = "rgba(255, 255, 255, 0.25)";
+		context.fillRect(0, 0, select_width * canvas_scale, select_height * canvas_scale);
 		context.stroke();
+		
+		context.restore();
 	}
 	
 	// schedule next drawing
@@ -308,3 +345,4 @@ function drawScene() {
 }
 
 
+ 

@@ -44,6 +44,7 @@ function isOverToken(x, y, token) {
 function selectToken(x, y) {
 	var result = null;
 	var bestz = min_z - 1;
+	
 	// search for any fitting culling with highest z-order (unlocked first)
 	$.each(culling, function(index, item) {
 		if (item != null && !item.locked && item.zorder > bestz && isOverToken(x, y, item)) {
@@ -130,7 +131,7 @@ function addRoll(sides, result, color) {
 
 // --- ui event handles -----------------------------------------------
 
-function mouseDrag(event) {
+function onDrag(event) {
 	event.preventDefault();
 	pickCanvasPos(event);
 	
@@ -221,7 +222,7 @@ function mouseDrag(event) {
 	updateTokenbar();
 }
 
-function uploadDrop(event) {
+function onDrop(event) {
 	event.preventDefault();
 	pickCanvasPos(event);
 	
@@ -277,14 +278,15 @@ function updateTokenbar() {
 			
 		// determine token size
 		var canvas = $('#battlemap');
-		var size = token.size;
+		var size = token.size * viewport.zoom;
 		if (size == -1) {
 			size = canvas[0].height;
+		} else if (size < 50) {
+			size = 50;
 		}
 		
 		// position tokenbar centered to token
 		var bx = canvas[0].getBoundingClientRect();
-		
 		$('#tokenbar').css('left', bx.left + 'px');
 		$('#tokenbar').css('top',  bx.top  + 'px');
 		$('#tokenbar').css('visibility', '');
@@ -295,8 +297,8 @@ function updateTokenbar() {
 			var s = Math.sin((-90.0 + index * degree) * 3.14 / 180);
 			var c = Math.cos((-90.0 + index * degree) * 3.14 / 180);
 			
-			var x = size * c * 0.8 + token.posx * canvas_scale - 12;
-			var y = size * s * 0.8 + token.posy * canvas_scale - 12;
+			var x = size * c * 0.8 + (token.posx * viewport.zoom) * canvas_scale - 12 + viewport.left;
+			var y = size * s * 0.8 + (token.posy * viewport.zoom) * canvas_scale - 12 + viewport.top;
 			
 			// force position to be on the screen
 			x = Math.max(0, Math.min(canvas.width(), x));
@@ -341,17 +343,20 @@ function pickCanvasPos(event) {
 		mouse_y = event.clientY;
 	}
 	
-	// make pos relative
+	// make pos relative to canvas
 	var bx = $('#battlemap')[0].getBoundingClientRect();
-	mouse_x -= bx.left;
-	mouse_y -= bx.top;
+	mouse_x = (mouse_x - bx.left - viewport.left) / canvas_scale;
+	mouse_y = (mouse_y - bx.top  - viewport.top ) / canvas_scale;
 	
-	mouse_x = parseInt(mouse_x / canvas_scale);
-	mouse_y = parseInt(mouse_y / canvas_scale);
+	mouse_x = mouse_x / viewport.zoom;
+	mouse_y = mouse_y / viewport.zoom;
+	
+	mouse_x = parseInt(mouse_x);
+	mouse_y = parseInt(mouse_y);
 }
 
 /// Event handle for start grabbing a token
-function tokenGrab(event) {
+function onGrab(event) {
 	closeDropdown();
 	
 	pickCanvasPos(event);
@@ -420,7 +425,7 @@ function tokenGrab(event) {
 }
 
 /// Event handle for releasing a grabbed token
-function tokenRelease() {
+function onRelease() {
 	if (select_ids.length > 0) {
 		grabbed = false;
 	}
@@ -462,52 +467,79 @@ function tokenRelease() {
 }
 
 /// Event handle for moving a grabbed token (if not locked)
-function tokenMove(event) {
+function onMove(event) {
 	pickCanvasPos(event);
 	
-	if (primary_id != 0 && grabbed) {
-		var token = tokens[primary_id];
-		 
-		// transform cursor
-		if (token == null) {
-			$('#battlemap').css('cursor', 'default');
-		} else if (token.locked) {
-			$('#battlemap').css('cursor', 'not-allowed');
-		} else {                                         
-			$('#battlemap').css('cursor', 'grab');
+	if (event.buttons == 1) {
+		// left button clicked
+		
+		if (primary_id != 0 && grabbed) {
+			var token = tokens[primary_id];
+			 
+			// transform cursor
+			if (token == null) {
+				$('#battlemap').css('cursor', 'default');
+			} else if (token.locked) {
+				$('#battlemap').css('cursor', 'not-allowed');
+			} else {                                         
+				$('#battlemap').css('cursor', 'grab');
+			}
+			
+			if (token != null && !token.locked) {
+				var prev_posx = token.posx;
+				var prev_posy = token.posy;
+				
+				var changes = []
+				$.each(select_ids, function(index, id) {
+					var t = tokens[id];
+					if (!t.locked) {
+						// get position relative to primary token
+						var dx = t.posx - prev_posx;
+						var dy = t.posy - prev_posy;
+						// move relative to primary token
+						t.posx = mouse_x + dx;
+						t.posy = mouse_y + dy;
+						
+						changes.push({
+							'id'   : id,
+							'posx' : t.posx,
+							'posy' : t.posy
+						});
+					}
+				});
+				
+				writeSocket({
+					'OPID'    : 'UPDATE',
+					'changes' : changes
+				})
+			}
 		}
 		
-		if (token != null && !token.locked) {
-			var prev_posx = token.posx;
-			var prev_posy = token.posy;
-			
-			var changes = []
-			$.each(select_ids, function(index, id) {
-				var t = tokens[id];
-				if (!t.locked) {
-					// get position relative to primary token
-					var dx = t.posx - prev_posx;
-					var dy = t.posy - prev_posy;
-					// move relative to primary token
-					t.posx = mouse_x + dx;
-					t.posy = mouse_y + dy;
-					
-					changes.push({
-						'id'   : id,
-						'posx' : t.posx,
-						'posy' : t.posy
-					});
-				}
-			});
-			
-			writeSocket({
-				'OPID'    : 'UPDATE',
-				'changes' : changes
-			})
+	} else if (event.buttons == 4) {
+		// wheel clicked
+		$('#battlemap').css('cursor', 'grab');
+		
+		// move viewport
+		viewport.left += event.movementX;
+		viewport.top  += event.movementY;
+		
+		// limit viewport position
+		/*
+		if (viewport.left < 0) {
+			viewport.left = 0;
+		} else if (viewport.left > dom_canvas.width) {
+			viewport.left = dom_canvas.width;
 		}
+		if (viewport.top < 0) {
+			viewport.top = 0;
+		} else if (viewport.top > dom_canvas.height) {
+			viewport.top = dom_canvas.height;
+		}
+		*/
+		
 	} else {
 		var token = selectToken(mouse_x, mouse_y);
-		 
+			 
 		// transform cursor
 		if (token == null) {
 			$('#battlemap').css('cursor', 'default');
@@ -522,7 +554,8 @@ function tokenMove(event) {
 }
 
 /// Event handle for rotation via mouse wheel
-function tokenWheel(event) {
+function onWheel(event) {
+	/*
 	var changes = [];
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
@@ -546,6 +579,19 @@ function tokenWheel(event) {
 		'OPID'    : 'UPDATE',
 		'changes' : changes
 	});
+	
+	*/
+	
+	if (event.deltaY > 0) {
+		// zoom out
+		viewport.zoom /= 1.05;
+		if (viewport.zoom < 0.5) {
+			viewport.zoom = 0.5;
+		}
+	} else if (event.deltaY < 0) {
+		// zoom in
+		viewport.zoom *= 1.05;
+	}
 	
 	updateTokenbar();
 }
@@ -608,7 +654,7 @@ function deleteSelectedTokens() {
 }
 
 /// Event handle shortcuts on (first) selected token
-function tokenShortcut(event) {
+function onShortcut(event) {
 	if (event.ctrlKey) {
 		if (event.keyCode == 65) { // CTRL+A
 			selectAllTokens();
@@ -627,7 +673,7 @@ function tokenShortcut(event) {
 }
 
 /// Event handle for fliping a token x-wise
-function tokenFlipX() {
+function onFlipX() {
 	var changes = [];
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
@@ -651,7 +697,7 @@ function tokenFlipX() {
 }
 
 /// Event handle for (un)locking a token
-function tokenLock() {
+function onLock() {
 	// determine primary lock state
 	var primary_lock = false;
 	if (primary_id > 0) {
@@ -676,22 +722,22 @@ function tokenLock() {
 }
 
 /// Event handle for resize a token
-function tokenResize() {
+function onResize() {
 	drag_action = 'resize';
 }
 
 /// Event handle for rotating a token
-function tokenRotate() {
+function onRotate() {
 	drag_action = 'rotate'; 
 }
 
 /// Event handle for quitting rotation/resize dragging
-function tokenQuitAction() {
+function onQuitAction() {
 	drag_action = '';    
 }
 
 /// Event handle for moving token to lowest z-order
-function tokenBottom() {
+function onBottom() {
 	var changes = [];
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
@@ -721,7 +767,7 @@ function tokenBottom() {
 }
 
 /// Event handle for moving token to hightest z-order
-function tokenTop() { 
+function onTop() { 
 	var changes = [];
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];

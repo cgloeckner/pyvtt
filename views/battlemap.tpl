@@ -30,12 +30,12 @@
 		<canvas id="battlemap" width="1000" height="560"></canvas>
 			
 		<div id="tokenbar">
-			<img src="/static/flipx.png" id="tokenFlipX" draggable="false" onClick="tokenFlipX();" />
-			<img src="/static/locked.png" id="tokenLock" draggable="false" onClick="tokenLock();" />
-			<img src="/static/top.png" id="tokenTop" draggable="false" onClick="tokenTop();" />
-			<img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="tokenBottom();" />
-			<img src="/static/resize.png" id="tokenResize" onDragStart="tokenResize();" onDragEnd="tokenQuitAction();"/>
-			<img src="/static/rotate.png" id="tokenRotate" onDragStart="tokenRotate();" onDragEnd="tokenQuitAction();" />
+			<img src="/static/flipx.png" id="tokenFlipX" draggable="false" onClick="onFlipX();" />
+			<img src="/static/locked.png" id="tokenLock" draggable="false" onClick="onLock();" />
+			<img src="/static/top.png" id="tokenTop" draggable="false" onClick="onTop();" />
+			<img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="onBottom();" />
+			<img src="/static/resize.png" id="tokenResize" onDragStart="onResize();" onDragEnd="onQuitAction();"/>
+			<img src="/static/rotate.png" id="tokenRotate" onDragStart="onRotate();" onDragEnd="onQuitAction();" />
 		</div>
 	</div>
 
