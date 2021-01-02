@@ -3,10 +3,12 @@
 var fps = 60;
 
 var viewport = {
-	'left' : 0,
+	'left' : 0, // in canvas scale
 	'top'  : 0,
 	'zoom' : 1.0
 };
+
+const base_width = 1000; // see initial width of canvas element
 
 // --- image handling implementation ----------------------------------
 
@@ -34,7 +36,7 @@ function resizeCanvas() {
 	mem_canvas.height = h;
 	
 	// calculate scaling
-	canvas_scale = w / 1000;
+	canvas_scale = w / base_width;
 }
 
 /// Will clear the canvas
@@ -203,8 +205,7 @@ function drawToken(token, color, is_background) {
 	context.save();
 	
 	// handle viewport
-	context.translate(-viewport.left, -viewport.top);
-	context.scale(viewport.zoom, viewport.zoom);
+	//context.translate(-viewport.left, -viewport.top);
 	
 	// handle token position and canvas scale 
 	context.translate(token.posx * canvas_scale, token.posy * canvas_scale);
@@ -288,6 +289,18 @@ function drawScene() {
 	// sort tokens by z-order
 	culling.sort(function(a, b) { return a.zorder - b.zorder });
 	
+	var canvas = $('#battlemap');
+	var context = canvas[0].getContext("2d");
+	var sizes = [canvas[0].width, canvas[0].height];
+	
+	context.save();
+	
+	// handle viewport
+	context.translate(-viewport.left, -viewport.top);
+	context.translate(sizes[0] / 2, sizes[1] / 2);
+	context.scale(viewport.zoom, viewport.zoom);
+	context.translate(-sizes[0] / 2, -sizes[1] / 2);
+	
 	// draw tokens
 	if (background != null) {
 		drawToken(background, null, true);
@@ -323,10 +336,6 @@ function drawScene() {
 		var select_height = mouse_y - select_from_y;
 		
 		context.save();         
-		// consider viewport
-		context.translate(-viewport.left, -viewport.top);
-		context.scale(viewport.zoom, viewport.zoom);
-		
 		// consider position and canvas scale
 		context.translate(select_from_x * canvas_scale, select_from_y * canvas_scale);
 		
@@ -339,6 +348,8 @@ function drawScene() {
 		
 		context.restore();
 	}
+	
+	context.restore();
 	
 	// schedule next drawing
 	setTimeout("drawScene()", 1000.0 / fps);
