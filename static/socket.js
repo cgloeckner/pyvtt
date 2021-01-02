@@ -199,6 +199,9 @@ function login(event, gmname, url, server_url) {
 					rolls             = []; 
 					copy_tokens       = [];
 					select_ids        = [];
+					viewport.left     = 0;
+					viewport.top      = 0;
+					viewport.zoom     = 1.0;
 					
 					$('#d4box')[0].innerHTML   = '';
 					$('#d6box')[0].innerHTML   = '';
