@@ -1,3 +1,7 @@
+/** Powered by PyVTT. Further information: https://github.com/cgloeckner/pyvtt **/
+
+// --- GM game menu handles -------------------------------------------
+
 function registerGm(event) {
 	event.preventDefault();
 	
@@ -105,4 +109,42 @@ function GmUploadDrop(event, url_regex, gm_name) {
 			}
 		}
 	});
+}
+
+// --- GM ingame tokenbar handles -------------------------------------
+
+function addScene() {
+	$.post(
+		url='/vtt/create-scene/' + game_url,
+		success=function(data) {
+			$('#preview')[0].innerHTML = data; 
+		}
+	);
+}
+
+function activateScene(scene_id) {
+	$.post(
+		url='/vtt/activate-scene/' + game_url + '/' + scene_id,
+		success=function(data) {       
+			$('#preview')[0].innerHTML = data;
+		}
+	);
+}
+
+function cloneScene(scene_id) {                                                                  
+	$.post(
+		url='/vtt/clone-scene/' + game_url + '/' + scene_id,
+		success=function(data) { 
+			$('#preview')[0].innerHTML = data;
+		}
+	);
+}
+
+function deleteScene(scene_id) {
+	$.post(
+		url='/vtt/delete-scene/' + game_url + '/' + scene_id,
+		success=function(data) {
+			$('#preview')[0].innerHTML = data;
+		}
+	);
 }
