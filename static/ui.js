@@ -212,10 +212,9 @@ function onDrag(event) {
 					return;
 				}
 				
-				var rotate = angle;
 				changes.push({
 					'id'     : id,
-					'rotate' : rotate
+					'rotate' : angle
 				});
 			});
 			
