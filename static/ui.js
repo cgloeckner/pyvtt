@@ -447,7 +447,7 @@ function onGrab(event) {
 			}
 			
 			token.rotate = 0;
-			token.size   = Math.round(min_token_size * 1.5);
+			token.size   = Math.round(min_token_size);
 			
 			changes.push({
 				'id'     : id,
