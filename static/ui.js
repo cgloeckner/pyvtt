@@ -597,50 +597,48 @@ function onMove(event) {
 	updateTokenbar();
 }
 
-/// Event handle for rotation via mouse wheel
+/// Event handle mouse wheel scrolling
 function onWheel(event) {
-	/*
-	var changes = [];
-	$.each(select_ids, function(index, id) {
-		var token = tokens[id];
-		if (token.locked) {
-			return;
-		}
+	var token = selectToken(mouse_x, mouse_y);
+	
+	if (token != null) {
+		// handle token rotation
+		var changes = [];
+		$.each(select_ids, function(index, id) {
+			var token = tokens[id];
+			if (token.locked) {
+				return;
+			}
 
-		// handle rotation
-		token.rotate = token.rotate - 5 * event.deltaY;
-		if (token.rotate >= 360.0 || token.rotate <= -360.0) {
-			token.rotate = 0.0;
-		}
-		
-		changes.push({
-			'id'     : id,
-			'rotate' : token.rotate
+			// handle rotation
+			token.rotate = token.rotate - 5 * event.deltaY;
+			if (token.rotate >= 360.0 || token.rotate <= -360.0) {
+				token.rotate = 0.0;
+			}
+			
+			changes.push({
+				'id'     : id,
+				'rotate' : token.rotate
+			});
 		});
-	});
-	
-	writeSocket({
-		'OPID'    : 'UPDATE',
-		'changes' : changes
-	});
-	
-	*/
-	
-	if (!zooming) {
-		console.log('zooming: false. Skipping.');
-		return;
-	}
-	
-	// modify zoom
-	if (event.deltaY > 0) {
-		// zoom out
-		viewport.zoom /= 1.05;
-		if (viewport.zoom < 0.5) {
-			viewport.zoom = 0.5;
+		
+		writeSocket({
+			'OPID'    : 'UPDATE',
+			'changes' : changes
+		});
+		
+	} else if (zooming) {
+		// modify zoom
+		if (event.deltaY > 0) {
+			// zoom out
+			viewport.zoom /= 1.05;
+			if (viewport.zoom < 0.5) {
+				viewport.zoom = 0.5;
+			}
+		} else if (event.deltaY < 0) {
+			// zoom in
+			viewport.zoom *= 1.05;
 		}
-	} else if (event.deltaY < 0) {
-		// zoom in
-		viewport.zoom *= 1.05;
 	}
 	
 	updateTokenbar();
