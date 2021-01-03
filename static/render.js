@@ -8,6 +8,12 @@ var viewport = {
 	'zoom' : 1.0
 };
 
+/// Modify given position considering viewport
+function considerViewport(x, y, width, height) {
+	
+	return [x, y];
+}
+
 const base_width = 1000; // see initial width of canvas element
 
 // --- image handling implementation ----------------------------------
@@ -296,10 +302,11 @@ function drawScene() {
 	context.save();
 	
 	// handle viewport
-	context.translate(-viewport.left, -viewport.top);
+	
 	context.translate(sizes[0] / 2, sizes[1] / 2);
 	context.scale(viewport.zoom, viewport.zoom);
 	context.translate(-sizes[0] / 2, -sizes[1] / 2);
+	context.translate(-viewport.left, -viewport.top);
 	
 	// draw tokens
 	if (background != null) {
@@ -342,6 +349,7 @@ function drawScene() {
 		context.beginPath();
 		context.rect(0, 0, select_width * canvas_scale, select_height * canvas_scale);
 		context.strokeStyle = "#070707";
+		context.lineWidth = 1 / viewport.zoom;
 		context.fillStyle = "rgba(255, 255, 255, 0.25)";
 		context.fillRect(0, 0, select_width * canvas_scale, select_height * canvas_scale);
 		context.stroke();

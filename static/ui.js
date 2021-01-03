@@ -12,7 +12,7 @@ var grabbed       = false; // determines whether grabbed or not
 var select_from_x = null;
 var select_from_y = null;
 
-var zooming = false; // DEBUG switch for enabling the experimental feature
+var zooming = true; // DEBUG switch for enabling the experimental feature
 
 // --- token implementation -------------------------------------------
 
@@ -288,27 +288,44 @@ function updateTokenbar() {
 		}
 		
 		// position tokenbar centered to token
-		var bx = canvas[0].getBoundingClientRect();
-		$('#tokenbar').css('left', bx.left + 'px');
-		$('#tokenbar').css('top',  bx.top  + 'px');
+		var box = canvas[0].getBoundingClientRect();
+		
+		$('#tokenbar').css('left', box.left + 'px');
+		$('#tokenbar').css('top',  box.top  + 'px');
 		$('#tokenbar').css('visibility', '');
 		
-		$.each(token_icons, function(index, name) {
+		$.each(token_icons, function(index, name) { 
+			// consider canvas scale (by windows size)  
+			var x = token.posx * canvas_scale;
+			var y = token.posy * canvas_scale;
+			
+			// consider viewport position
+			x -= viewport.left;
+			y -= viewport.top;
+			
+			// consider viewport zooming (centered)
+			x -= canvas[0].width  / 2;
+			y -= canvas[0].height / 2;
+			x *= viewport.zoom;
+			y *= viewport.zoom;    
+			x += canvas[0].width  / 2;
+			y += canvas[0].height / 2;
+			
 			// calculate position based on angle
 			var degree = 360.0 / token_icons.length;
 			var s = Math.sin((-90.0 + index * degree) * 3.14 / 180);
 			var c = Math.cos((-90.0 + index * degree) * 3.14 / 180);
 			
-			var x = size * c * 0.8 + (token.posx * viewport.zoom) * canvas_scale - 12 - viewport.left;
-			var y = size * s * 0.8 + (token.posy * viewport.zoom) * canvas_scale - 12 - viewport.top;
+			x += size * c * 0.8;
+			y += size * s * 0.8;
 			
 			// force position to be on the screen
 			x = Math.max(0, Math.min(canvas.width(), x));
 			y = Math.max(0, Math.min(canvas.height(), y));
 			
 			// place icon
-			$('#token' + name).css('left', x + 'px');
-			$('#token' + name).css('top',  y + 'px');
+			$('#token' + name).css('left', x - 12 + 'px');
+			$('#token' + name).css('top',  y - 12 + 'px');
 		});
 		
 		// handle locked mode
@@ -346,12 +363,26 @@ function pickCanvasPos(event) {
 	}
 	
 	// make pos relative to canvas
-	var bx = $('#battlemap')[0].getBoundingClientRect();
-	mouse_x = (mouse_x - bx.left + viewport.left) / canvas_scale;
-	mouse_y = (mouse_y - bx.top  + viewport.top ) / canvas_scale;
+	var canvas = $('#battlemap')[0];
+	var box = canvas.getBoundingClientRect();
+	mouse_x = mouse_x - box.left;
+	mouse_y = mouse_y - box.top;
+	     
+	// consider viewport zooming (centered)
+	mouse_x -= canvas.width  / 2;
+	mouse_y -= canvas.height / 2;
+	mouse_x /= viewport.zoom;
+	mouse_y /= viewport.zoom;    
+	mouse_x += canvas.width  / 2;
+	mouse_y += canvas.height / 2;
 	
-	mouse_x = mouse_x / viewport.zoom;
-	mouse_y = mouse_y / viewport.zoom;
+	// consider viewport position
+	mouse_x += viewport.left;
+	mouse_y += viewport.top;
+	
+	// consider canvas scale (by windows size)   
+	mouse_x /= canvas_scale;
+	mouse_y /= canvas_scale;
 	
 	mouse_x = parseInt(mouse_x);
 	mouse_y = parseInt(mouse_y);
@@ -544,8 +575,8 @@ function onMove(event) {
 		$('#battlemap').css('cursor', 'grab');
 		
 		// move viewport
-		viewport.left -= event.movementX;
-		viewport.top  -= event.movementY;
+		viewport.left -= event.movementX / viewport.zoom;
+		viewport.top  -= event.movementY / viewport.zoom;
 		
 		limitViewportPosition();
 		
