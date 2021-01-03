@@ -7,7 +7,8 @@ var quiet = true;
 
 var game_url = '';
 var gm_name = '';
-var dropdown = false;
+var gm_dropdown = false;
+var settings_dropdown = false;
 var timeid = 0;
 var full_update = true;
 var scene_id = 0;
@@ -161,7 +162,7 @@ function login(event, gmname, url, server_url) {
 				
 			} else {
 				// hide login screen
-				$('#drophint').fadeIn(1000, 0.0);
+				$('#game').fadeIn(1000, 0.0);
 				
 				$('#login').fadeOut(1000, 0.0, function() {
 					$('#login').hide();
@@ -186,7 +187,7 @@ function login(event, gmname, url, server_url) {
 				};
 				
 				socket.onclose = function(event) {
-					$('#drophint').fadeOut(1000, 0.0);
+					$('#game').fadeOut(1000, 0.0);
 					
 					// forget everything about the old session
 					images            = [];

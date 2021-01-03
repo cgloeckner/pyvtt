@@ -172,13 +172,13 @@ class Game(db.Entity):
 					ratio = h / w
 					downscale = False
 					if h > w:
-						if h > 2000:
-							h = 2000
+						if h > 4000:
+							h = 4000
 							w = int(h / ratio)
 							downscale = True
 					else:
-						if w > 2000:
-							w = 2000
+						if w > 4000:
+							w = 4000
 							h = int(w * ratio)
 							downscale = True
 					if downscale:

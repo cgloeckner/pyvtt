@@ -14,6 +14,11 @@ var select_from_y = null;
 
 var zooming = true; // DEBUG switch for enabling the experimental feature
 
+
+function enableZooming() {
+	zooming = $('#zooming').prop('checked');
+}
+
 // --- token implementation -------------------------------------------
 
 /// Determiens if position is within token's bounding box
@@ -390,7 +395,8 @@ function pickCanvasPos(event) {
 
 /// Event handle for start grabbing a token
 function onGrab(event) {
-	closeDropdown();
+	closeGmDropdown();
+	closeSettingsDropdown();
 	
 	pickCanvasPos(event);
 	
@@ -566,12 +572,7 @@ function onMove(event) {
 			}
 		}
 		
-	} else if (event.buttons == 4) {
-		if (!zooming) {
-			console.log('zooming: false. Skipping.');
-			return;
-		}
-		
+	} else if (event.buttons == 4 && zooming) {
 		// wheel clicked
 		$('#battlemap').css('cursor', 'grab');
 		

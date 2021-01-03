@@ -4,13 +4,22 @@
 
 <div id="game">
 %if is_gm:
-	<div class="dropdown" onClick="openDropdown();">
-		<div id="preview">
+	<div class="horizdropdown" onClick="openGmDropdown();">
+		<div id="gmdrop">
 	%include("scenes")
 		</div>
-		<img id="drophint" src="/static/bottom.png" />
+		<img id="gmhint" src="/static/bottom.png" />
 	</div>
 %end
+
+	<div class="verticdropdown" onClick="openSettingsDropdown()">
+		<div id="settingsdrop">
+			<div>
+				<p><input type="checkbox" id="zooming" onChange="enableZooming();" /> <label for="zooming">Zoom</label></p>
+			</div>
+		</div>
+		<img id="settingshint" src="/static/settings.png" />
+	</div>
 
 	<div id="dicebox">
 		<div class="dice" id="dice">
@@ -26,7 +35,7 @@
 	</div>
 
 	<div class="battlemap" id="gamecontent">
-		<div id="drag_hint">DRAG AN IMAGE TO START</div>
+		<div id="draghint">DRAG AN IMAGE TO START</div>
 		<canvas id="battlemap" width="1000" height="560"></canvas>
 			
 		<div id="tokenbar">

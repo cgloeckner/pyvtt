@@ -1,15 +1,15 @@
 %include("header", title="GM {0}".format(gm.name))
 
 %if len(gm.games) > 0:
-<div class="dropdown" onClick="openDropdown();">
-	<div id="preview">
+<div class="horizdropdown" onClick="openGmDropdown();">
+	<div id="gmdrop">
 	%include("games")
 	</div>
-	<img id="drophint" src="/static/bottom.png" />
+	<img id="gmhint" src="/static/bottom.png" />
 </div>
 %end
 
-<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.name}}');" onClick="closeDropdown();">  
+<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.name}}');" onClick="closeGmDropdown();">  
 
 <hr />
 
