@@ -3,8 +3,8 @@
 var fps = 60;
 
 var viewport = {
-	'left' : 0, // in canvas scale
-	'top'  : 0,
+	'x'    : 0, // in canvas scale
+	'y'    : 0,
 	'zoom' : 1.0
 };
 
@@ -211,7 +211,7 @@ function drawToken(token, color, is_background) {
 	context.save();
 	
 	// handle viewport
-	//context.translate(-viewport.left, -viewport.top);
+	//context.translate(-viewport.x, -viewport.y);
 	
 	// handle token position and canvas scale 
 	context.translate(token.posx * canvas_scale, token.posy * canvas_scale);
@@ -306,7 +306,7 @@ function drawScene() {
 	context.translate(sizes[0] / 2, sizes[1] / 2);
 	context.scale(viewport.zoom, viewport.zoom);
 	context.translate(-sizes[0] / 2, -sizes[1] / 2);
-	context.translate(-viewport.left, -viewport.top);
+	context.translate(-viewport.x, -viewport.y);
 	
 	// draw tokens
 	if (background != null) {

@@ -300,8 +300,8 @@ function updateTokenbar() {
 			var y = token.posy * canvas_scale;
 			
 			// consider viewport position
-			x -= viewport.left;
-			y -= viewport.top;
+			x -= viewport.x;
+			y -= viewport.y;
 			
 			// consider viewport zooming (centered)
 			x -= canvas[0].width  / 2;
@@ -377,8 +377,8 @@ function pickCanvasPos(event) {
 	mouse_y += canvas.height / 2;
 	
 	// consider viewport position
-	mouse_x += viewport.left;
-	mouse_y += viewport.top;
+	mouse_x += viewport.x;
+	mouse_y += viewport.y;
 	
 	// consider canvas scale (by windows size)   
 	mouse_x /= canvas_scale;
@@ -504,16 +504,17 @@ function limitViewportPosition() {
 	var dom_canvas = $('#battlemap')[0];
 	var width  = dom_canvas.width;
 	var height = dom_canvas.height;
-	var view_w = width  / viewport.zoom;
-	var view_h = height / viewport.zoom;
+	var view_w = width;
+	var view_h = height;
 	
-	var min_x = 0;
-	var min_y = 0;
-	var max_x = (width  - view_w) * viewport.zoom;
-	var max_y = (height - view_h) * viewport.zoom;
+	var min_x = -view_w / 2;
+	var max_x =  view_w / 2;
 	
-	//viewport.left = Math.max(min_x, Math.min(max_x, viewport.left));
-	//viewport.top  = Math.max(min_y, Math.min(max_y, viewport.top));
+	var min_y = -view_h / 2;
+	var max_y =  view_h / 2;
+	
+	viewport.x = Math.max(min_x, Math.min(max_x, viewport.x));
+	viewport.y  = Math.max(min_y, Math.min(max_y, viewport.y));
 }
 
 /// Event handle for moving a grabbed token (if not locked)
@@ -575,8 +576,8 @@ function onMove(event) {
 		$('#battlemap').css('cursor', 'grab');
 		
 		// move viewport
-		viewport.left -= event.movementX / viewport.zoom;
-		viewport.top  -= event.movementY / viewport.zoom;
+		viewport.x -= event.movementX / viewport.zoom;
+		viewport.y  -= event.movementY / viewport.zoom;
 		
 		limitViewportPosition();
 		
@@ -630,77 +631,17 @@ function onWheel(event) {
 		return;
 	}
 	
-	/*
-	// old viewport size
-	var dom_canvas = $('#battlemap')[0];
-	var width  = dom_canvas.width;
-	var height = dom_canvas.height;
-	var old_w  = width  * viewport.zoom;
-	var old_h  = height * viewport.zoom;
-	
-	// old center based on viewport and old size
-	var center_x = viewport.left + old_w / 2;
-	var center_y = viewport.top  + old_h / 2;
-		*/
-	
 	// modify zoom
 	if (event.deltaY > 0) {
 		// zoom out
 		viewport.zoom /= 1.05;
-		if (viewport.zoom < 1.0) {
-			viewport.zoom = 1.0;
+		if (viewport.zoom < 0.5) {
+			viewport.zoom = 0.5;
 		}
 	} else if (event.deltaY < 0) {
 		// zoom in
 		viewport.zoom *= 1.05;
 	}
-	
-	/*
-	// calculate topleft based on mouse position
-	var dom_canvas = $('#battlemap')[0];
-	var width  = dom_canvas.width;
-	var height = dom_canvas.height;
-	var view_w = width  / viewport.zoom;
-	var view_h = height / viewport.zoom;
-	
-	var pos_x  = mouse_x * canvas_scale - view_w / 2;
-	var pos_y  = mouse_y * canvas_scale - view_h / 2;
-	
-	console.log('MOUSE', mouse_x * viewport.zoom, mouse_y * viewport.zoom, '\nVIEWSIZE', view_w, view_h);
-	console.log('OLD', viewport.left, viewport.top, '\nNEW', pos_x, pos_y);
-	
-	viewport.left = pos_x * viewport.zoom;
-	viewport.top  = pos_y * viewport.zoom;
-	*/
-	
-	/*
-	// change viewport to zoom on center  
-	var new_w  = width  / viewport.zoom;
-	var new_h  = height / viewport.zoom;
-	var dw = new_w - old_w;
-	var dh = new_h - old_h;
-	
-	viewport.left -= dw;
-	viewport.top  -= dh;
-	
-	console.log(dw, dh, "\t", viewport.left, viewport.top);
-	*/
-	
-	/*
-	// new viewport size
-	var new_w  = width  / viewport.zoom;
-	var new_h  = height / viewport.zoom;
-	
-	console.log(center_x, center_y, old_w, new_w);
-	
-	// new topleft based on previous center and new size
-	viewport.left = center_x - new_w / 2;
-	viewport.top  = center_y - new_h / 2;
-	
-	console.log(viewport.left, viewport.top, new_w, new_h);
-	   
-	//limitViewportPosition();
-	*/
 	
 	updateTokenbar();
 }
