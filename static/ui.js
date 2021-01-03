@@ -600,6 +600,7 @@ function onMove(event) {
 
 /// Event handle mouse wheel scrolling
 function onWheel(event) {
+	/*
 	var token = selectToken(mouse_x, mouse_y);
 	
 	if (token != null) {
@@ -628,7 +629,7 @@ function onWheel(event) {
 			'changes' : changes
 		});
 		
-	} else if (zooming) {
+	} else */ if (zooming) {
 		// modify zoom
 		if (event.deltaY > 0) {
 			// zoom out
