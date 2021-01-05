@@ -661,6 +661,8 @@ class Engine(object):
 			assert(os.path.exists(certfile))
 			assert(os.path.exists(keyfile))
 		
+		ssl_args = {'certfile': certfile, 'keyfile': keyfile} if self.ssl else {}
+		
 		bottle.run(
 			host       = self.host,
 			port       = self.port,
@@ -668,11 +670,10 @@ class Engine(object):
 			debug      = self.debug,
 			quiet      = self.quiet,
 			server     = VttServer,
-			# SSL-specific
-			certfile   = certfile,
-			keyfile    = keyfile,
 			# VttServer-specific:
-			unixsocket = self.socket
+			unixsocket = self.socket,
+			# SSL-specific
+			*ssl_args
 		)
 		
 	def getDomain(self):
