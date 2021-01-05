@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os
+import os, smtplib
 
 from bottle import request, ServerAdapter
 
@@ -45,5 +45,4 @@ class VttServer(ServerAdapter):
 		
 		# run server
 		server.serve_forever()
-		
-
+	

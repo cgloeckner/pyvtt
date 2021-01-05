@@ -670,7 +670,7 @@ class Engine(object):
 	def getDomain(self):
 		if self.localhost:
 			# because of forced localhost mode
-			return '127.0.0.1'
+			return 'localhost'
 		else:
 			# use domain (might be replaced by public ip)
 			return self.domain

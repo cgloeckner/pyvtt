@@ -137,7 +137,7 @@ function writeSocket(data) {
 }
 
 /// Handles login and triggers the game
-function login(event, gmname, url, server_url) {
+function login(event, gmname, url, websocket_url) {
 	event.preventDefault();
 	
 	var playername  = $('#playername').val();
@@ -177,8 +177,7 @@ function login(event, gmname, url, server_url) {
 				});
 				
 				// start socket communication
-				// @TODO: query server name and port   
-				socket = new WebSocket('ws://' + server_url + '/websocket')
+				socket = new WebSocket(websocket_url)
 				
 				socket.onmessage = onSocketMessage;
 				
