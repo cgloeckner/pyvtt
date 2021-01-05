@@ -399,8 +399,8 @@ def get_player_battlemap(gmname, url):
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
-@post('/<gmname>/<url>/upload/<posx:int>/<posy:int>')
-def post_image_upload(gmname, url, posx, posy):
+@post('/<gmname>/<url>/upload/<posx:int>/<posy:int>/<default_size:int>')
+def post_image_upload(gmname, url, posx, posy, default_size):
 	# upload images                       
 	urls  = list()
 	game  = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
@@ -410,7 +410,7 @@ def post_image_upload(gmname, url, posx, posy):
 	
 	# create tokens and broadcast creation
 	game_cache = engine.cache.get(game)
-	game_cache.onCreate((posx, posy), urls)
+	game_cache.onCreate((posx, posy), urls, default_size)
 
 @error(404)
 @view('error')

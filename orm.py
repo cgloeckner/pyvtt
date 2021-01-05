@@ -24,7 +24,7 @@ class Token(db.Entity):
 	posx    = Required(int)
 	posy    = Required(int)
 	zorder  = Required(int, default=0)
-	size    = Required(int, default=80)
+	size    = Required(int)
 	rotate  = Required(float, default=0.0)
 	flipx   = Required(bool, default=False)
 	locked  = Required(bool, default=False)

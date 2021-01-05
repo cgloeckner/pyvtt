@@ -376,7 +376,7 @@ class GameCache(object):
 		
 		self.broadcastTokenUpdate(player, now)  
 		
-	def onCreate(self, pos, urls):
+	def onCreate(self, pos, urls, default_size):
 		""" Handle player creating tokens. """
 		# create tokens
 		now = time.time()
@@ -389,7 +389,8 @@ class GameCache(object):
 			for k, url in enumerate(urls):
 				# create tokens in circle
 				x, y = db.Token.getPosByDegree(pos, k, n)
-				t = db.Token(scene=s.id, timeid=now, url=url, posx=x, posy=y)
+				t = db.Token(scene=s.id, timeid=now, url=url,
+					size=default_size, posx=x, posy=y)
 				
 				db.commit()
 				

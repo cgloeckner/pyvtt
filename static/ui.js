@@ -143,89 +143,100 @@ function onDrag(event) {
 	pickCanvasPos(event);
 	
 	if (primary_id != 0) {
-		var first_token = tokens[primary_id] 
-		
 		if (drag_action == 'resize') {
-			// calculate distance between mouse and token   
-			var dx = first_token.posx - mouse_x;
-			var dy = first_token.posy - mouse_y;
-			var scale = Math.sqrt(dx*dx + dy*dy);
-			var radius = first_token.size * 0.8;
-			
-			// normalize distance using distance mouse/icon
-			ratio = scale / radius;
-			
-			// resize all selected tokens
-			var changes = []
-			$.each(select_ids, function(index, id) {
-				var token = tokens[id];
-				if (token.locked) {
-					return;
-				}
-				
-				var size = Math.round(token.size * ratio);
-				
-				if (size > min_token_size * 10) {
-					size = min_token_size * 10;
-				}
-				if (size < min_token_size) {
-					size = min_token_size;
-				}
-				
-				changes.push({
-					'id'   : id,
-					'size' : size
-				});
-			});
-			
-			writeSocket({
-				'OPID'    : 'UPDATE',
-				'changes' : changes
-			})
-			
+			onResize();
 		} else if (drag_action == 'rotate') {
-			// calculate vectors between origin/icon and origni/mouse
-			// note: assuming the rotation icon is at top
-			var icon_box = $('#tokenRotate')[0].getBoundingClientRect();
-			var canvas_box = $('#battlemap')[0].getBoundingClientRect();
-			icon_dx  = 0
-			icon_dy  = -first_token.size * 0.8;
-			mouse_dx = mouse_x - first_token.posx;
-			mouse_dy = mouse_y - first_token.posy;
-			
-			// calculate rotation angle
-			dotp       = icon_dx * mouse_dx + icon_dy * mouse_dy;
-			norm_icon  = first_token.size * 0.8;
-			norm_mouse = Math.sqrt(mouse_dx * mouse_dx + mouse_dy * mouse_dy);
-			radians    = Math.acos(dotp / (norm_icon * norm_mouse));
-			angle      = radians * 180 / 3.14;
-			
-			if (mouse_dx < 0) {
-				angle *= -1;
-			}
-			
-			// rotate all selected tokens
-			var changes = []
-			$.each(select_ids, function(index, id) {
-				var token = tokens[id];
-				if (token.locked) {
-					return;
-				}
-				
-				changes.push({
-					'id'     : id,
-					'rotate' : angle
-				});
-			});
-			
-			writeSocket({
-				'OPID'    : 'UPDATE',
-				'changes' : changes
-			})
+			onRotate();
 		}
 	}
 	
 	updateTokenbar();
+}
+
+function onResize() {
+	var first_token = tokens[primary_id] 
+	
+	// calculate distance between mouse and token   
+	var dx = first_token.posx - mouse_x;
+	var dy = first_token.posy - mouse_y;
+	var scale = Math.sqrt(dx*dx + dy*dy);
+	var radius = first_token.size * 0.8;
+	
+	// normalize distance using distance mouse/icon
+	ratio = scale / radius;
+	
+	// resize all selected tokens
+	var changes = []
+	$.each(select_ids, function(index, id) {
+		var token = tokens[id];
+		if (token.locked) {
+			return;
+		}
+		
+		var size = Math.round(token.size * ratio * 2);
+		
+		if (size > max_token_size) {
+			size = max_token_size;
+		}
+		if (size < min_token_size) {
+			size = min_token_size;
+		}
+		
+		console.log(size);
+		
+		changes.push({
+			'id'   : id,
+			'size' : size
+		});
+	});
+	
+	writeSocket({
+		'OPID'    : 'UPDATE',
+		'changes' : changes
+	});
+}
+
+function onRotate(event) { 
+	var first_token = tokens[primary_id] 
+	
+	// calculate vectors between origin/icon and origni/mouse
+	// note: assuming the rotation icon is at top
+	var icon_box = $('#tokenRotate')[0].getBoundingClientRect();
+	var canvas_box = $('#battlemap')[0].getBoundingClientRect();
+	icon_dx  = 0
+	icon_dy  = -first_token.size * 0.8;
+	mouse_dx = mouse_x - first_token.posx;
+	mouse_dy = mouse_y - first_token.posy;
+	
+	// calculate rotation angle
+	dotp       = icon_dx * mouse_dx + icon_dy * mouse_dy;
+	norm_icon  = first_token.size * 0.8;
+	norm_mouse = Math.sqrt(mouse_dx * mouse_dx + mouse_dy * mouse_dy);
+	radians    = Math.acos(dotp / (norm_icon * norm_mouse));
+	angle      = radians * 180 / 3.14;
+	
+	if (mouse_dx < 0) {
+		angle *= -1;
+	}
+	
+	// rotate all selected tokens
+	var changes = []
+	$.each(select_ids, function(index, id) {
+		var token = tokens[id];
+		if (token.locked) {
+			return;
+		}
+		
+		changes.push({
+			'id'     : id,
+			'rotate' : angle
+		});
+	});
+	
+	writeSocket({
+		'OPID'    : 'UPDATE',
+		'changes' : changes
+	});
 }
 
 function onDrop(event) {
@@ -238,7 +249,7 @@ function onDrop(event) {
 	var f = new FormData($('#uploadform')[0]);
 	
 	$.ajax({
-		url: '/' + gm_name + '/' + game_url + '/upload/' + mouse_x + '/' + mouse_y,
+		url: '/' + gm_name + '/' + game_url + '/upload/' + mouse_x + '/' + mouse_y + '/' + default_token_size,
 		type: 'POST',
 		data: f,
 		contentType: false,
@@ -446,7 +457,7 @@ function onGrab(event) {
 			}
 			
 			token.rotate = 0;
-			token.size   = Math.round(min_token_size);
+			token.size   = default_token_size;
 			
 			changes.push({
 				'id'     : id,
@@ -771,12 +782,12 @@ function onLock() {
 }
 
 /// Event handle for resize a token
-function onResize() {
+function onStartResize() {
 	drag_action = 'resize';
 }
 
 /// Event handle for rotating a token
-function onRotate() {
+function onStartRotate() {
 	drag_action = 'rotate'; 
 }
 
