@@ -5,7 +5,9 @@
 	<div id="gmdrop">
 	%include("games")
 	</div>
-	<img id="gmhint" src="/static/bottom.png" />
+	<div class="gmhint">
+		<img id="gmhint" src="/static/bottom.png" />
+	</div>
 </div>
 %end
 
