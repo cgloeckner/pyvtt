@@ -116,7 +116,7 @@ function Token(id, url) {
 	this.posx = 0;
 	this.posy = 0;
 	this.zorder = 0;
-	this.size = 250;
+	this.size = min_token_size;
 	this.url = url;
 	this.rotate = 0.0;
 	this.flipx = false;
@@ -194,6 +194,9 @@ function updateToken(data) {
 		tokens[data.id].posy = canvas[0].height / 2 / canvas_scale;
 		
 		background_set = true;
+		
+		// hide drophint
+		$('#draghint').hide();
 	}
 }
 

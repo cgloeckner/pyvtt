@@ -124,6 +124,9 @@ function onSelect(data) {
 function onRefresh(data) {
 	resetViewport();
 	
+	// show drop hint again
+	$('#draghint').show();
+	
 	// reset tokens               
 	background_set = false;
 	tokens = [];
