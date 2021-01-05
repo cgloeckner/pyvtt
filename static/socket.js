@@ -117,7 +117,10 @@ function onSelect(data) {
 	// update player's primary selection
 	if (data.color == getCookie('playercolor') && data.selected.length > 0) {
 		select_ids = data.selected;
-		primary_id = data.selected[0];
+		if (!select_ids.includes(primary_id)) {
+			// reselect primary item (previous one does not belong to new selection)
+			primary_id = data.selected[0];
+		}
 	}
 }
 

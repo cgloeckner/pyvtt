@@ -455,6 +455,32 @@ function onGrab(event) {
 				});
 			}
 			
+		} else if (primary_id > 0 && event.shiftKey) {
+			console.log('shift it!');
+			
+			// trigger range query from primary token to mouse pos
+			var pt = tokens[primary_id];
+			var x1 = pt.posx;
+			var x2 = mouse_x;
+			var y1 = pt.posy;
+			var y2 = mouse_x;
+			
+			console.log({
+				'OPID'   : 'RANGE',
+				'left'   : Math.min(pt.posx, mouse_x),
+				'top'    : Math.min(pt.posy, mouse_y),
+				'width'  : Math.abs(pt.posx - mouse_x),
+				'height' : Math.abs(pt.posy - mouse_y)
+			});
+			
+			writeSocket({
+				'OPID'   : 'RANGE',
+				'left'   : Math.min(pt.posx, mouse_x),
+				'top'    : Math.min(pt.posy, mouse_y),
+				'width'  : Math.abs(pt.posx - mouse_x),
+				'height' : Math.abs(pt.posy - mouse_y)
+			});
+			
 		} else {
 			// Clear selection
 			select_ids = [];
