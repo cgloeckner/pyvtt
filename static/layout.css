@@ -364,9 +364,7 @@ div.rollbox {
 div.rollbox > div {
 	display: flex;
 	flex-direction: row; 
-}
 
-div.rollbox > div {
 	display: block;
 	position: relative;
 	left: 50px;
@@ -375,6 +373,8 @@ div.rollbox > div {
 	white-space: nowrap;
 	
 	opacity: 0.75;
+	
+	width: calc(4px + 10 * 56px);
 }
 
 div.rollbox > div > span,
