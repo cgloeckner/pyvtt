@@ -122,6 +122,8 @@ function onSelect(data) {
 }
 
 function onRefresh(data) {
+	resetViewport();
+	
 	// reset tokens               
 	background_set = false;
 	tokens = [];
@@ -176,6 +178,8 @@ function login(event, gmname, url, websocket_url) {
 					$('#dicebox').animate({ opacity: '+=1.0' }, 2000);
 				});
 				
+				resetViewport();
+				
 				// start socket communication
 				socket = new WebSocket(websocket_url)
 				
@@ -199,9 +203,6 @@ function login(event, gmname, url, websocket_url) {
 					rolls             = []; 
 					copy_tokens       = [];
 					select_ids        = [];
-					viewport.x        = 0;
-					viewport.y        = 0;
-					viewport.zoom     = 1.0;
 					
 					$('#d4box')[0].innerHTML   = '';
 					$('#d6box')[0].innerHTML   = '';

@@ -2,10 +2,14 @@
 
 var fps = 60;
 
-var viewport = {
-	'x'    : 0, // in canvas scale
-	'y'    : 0,
-	'zoom' : 1.0
+var viewport = null;
+
+function resetViewport() {
+	viewport = {
+		'x'    : 0, // in canvas scale
+		'y'    : 0,
+		'zoom' : 1.0
+	};
 };
 
 /// Modify given position considering viewport
