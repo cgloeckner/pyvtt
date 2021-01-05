@@ -7,8 +7,8 @@ var quiet = true;
 
 var game_url = '';
 var gm_name = '';
-var gm_dropdown = false;
-var settings_dropdown = false;
+var gm_dropdown = false; // GM's scenes view
+var history_dropdown = false; // roll history
 var timeid = 0;
 var full_update = true;
 var scene_id = 0;
@@ -44,7 +44,7 @@ function onSocketMessage(event) {
 			onQuit(data);
 			break;
 		case 'ROLL':
-			onDice(data);
+			onRoll(data);
 			break;
 		case 'SELECT':
 			onSelect(data);
@@ -62,7 +62,7 @@ function onAccept(data) {
 	
 	// show all rolls
 	$.each(data.rolls, function(item, obj) {
-		addRoll(obj.sides, obj.result, obj.color);
+		addRoll(obj.sides, obj.result, obj.color, obj.recent);
 	});
 	
 	onRefresh(data);
@@ -107,8 +107,8 @@ function onQuit(data) {
 	hidePlayer(name, uuid); 
 }
 
-function onDice(data) {
-	addRoll(data.sides, data.result, data.color, data.roll_id);
+function onRoll(data) {
+	addRoll(data.sides, data.result, data.color, data.recent);
 }
 
 function onSelect(data) {
@@ -166,6 +166,8 @@ function login(event, gmname, url, websocket_url) {
 				setTimeout(function() {	$('#playername').removeClass('shake'); }, 1000);
 				
 			} else {
+				$('#historydrop').hide();
+				
 				// hide login screen
 				$('#game').fadeIn(1000, 0.0);
 				

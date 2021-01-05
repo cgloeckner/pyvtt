@@ -12,7 +12,7 @@ function openGmDropdown(force=false) {
 	gm_dropdown = true;
 	hint.fadeOut(500, 0.0);
 	
-	closeSettingsDropdown(force);
+	closehistoryDropdown(force);
 }
 
 function closeGmDropdown(force=false) { 
@@ -34,40 +34,21 @@ function closeGmDropdown(force=false) {
 
 // --------------------------------------------------------------------
 
-function openSettingsDropdown(force=false) {
-	var scenes = $('#settingsdrop');
-	var hint   = $('#settingshint');
-	if (force || !settings_dropdown) {
-		// load zooming flag
-		$('#zooming').prop('checked', zooming);
-		
+function toggleHistoryDropdown() {
+	var scenes = $('#historydrop');
+	var hint   = $('#historyhint');
+	if (history_dropdown) {
+		// close history
 		scenes.animate({
-			right: "+=110"
+			right: "-=105"
+		}, 500); 
+		history_dropdown = false;
+	} else {
+		// show history
+		scenes.animate({
+			right: "+=105"
 		}, 500);
-		hint.animate({
-			right: "+=100"
-		}, 500);
-	}
-	settings_dropdown = true;
-	hint.fadeOut(500, 0.0);   
-	
-	closeGmDropdown(force);
-}
-
-function closeSettingsDropdown(force=false) {
-	var scenes = $('#settingsdrop');
-	var hint   = $('#settingshint');
-	if (scenes != null) {
-		if (force || settings_dropdown) {
-			scenes.animate({
-				right: "-=110"
-			}, 500); 
-			hint.animate({
-				right: "-=100"
-			}, 500);
-		}
-		settings_dropdown = false;
-		hint.fadeIn(500, 0.0);
+		history_dropdown = true;
 	}
 }
 

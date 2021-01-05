@@ -93,7 +93,6 @@ function GmUploadDrop(event, url_regex, gm_name) {
 		cache: false,
 		processData: false,
 		success: function(response) {
-			console.log(response);
 			url_ok  = response['url'];
 			file_ok = response['file'];
 			

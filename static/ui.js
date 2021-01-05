@@ -112,7 +112,7 @@ function hidePlayer(name, uuid) {
 // --- dice rolls implementation --------------------------------------
 
 var rolls        = []; // current rolls
-var roll_timeout = 20000.0; // ms until roll will disappear
+var roll_timeout = 30000.0; // ms until roll will disappear
 
 /// Roll constructor
 function Roll(sides, playername, result) {
@@ -121,19 +121,29 @@ function Roll(sides, playername, result) {
 	this.result     = result;
 }
 
-function addRoll(sides, result, color) {
+function addRoll(sides, result, color, recent) {
 	// create dice result
 	var container = $('#d' + sides + 'box');
 	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
 	var span = '<span style="' + css + '">' + result + '</span>';
-	container.prepend(span);
 	
-	// prepare automatic cleanup
-	var dom_span = container.children(':first-child')
-	if (result == 1 || result == sides) {
-		dom_span.addClass('natroll');
+	if (recent) { 
+		container.prepend(span);
+		
+		// prepare automatic cleanup
+		var dom_span = container.children(':first-child')
+		if (result == 1 || result == sides) {
+			dom_span.addClass('natroll');
+		}
+		dom_span.delay(roll_timeout).fadeOut(5000, function() { this.remove(); });
 	}
-	dom_span.delay(roll_timeout).fadeOut(5000, function() { this.remove(); });
+	
+	// also add to dice history
+	var img = '<img src="/static/d' + sides + '.png" draggable="false" />';
+	$('#historydrop').prepend('<div>' + img + span + '</div>');
+	
+	// and show history
+	$('#historydrop').show();
 }
 
 // --- ui event handles -----------------------------------------------
@@ -181,8 +191,6 @@ function onResize() {
 		if (size < min_token_size) {
 			size = min_token_size;
 		}
-		
-		console.log(size);
 		
 		changes.push({
 			'id'   : id,
@@ -406,7 +414,6 @@ function pickCanvasPos(event) {
 /// Event handle for start grabbing a token
 function onGrab(event) {
 	closeGmDropdown();
-	closeSettingsDropdown();
 	
 	pickCanvasPos(event);
 	

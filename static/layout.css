@@ -157,7 +157,6 @@ div#game {
 
 div.verticdropdown {
 	height: calc(100% - 10px);
-	width: 20px;
 	
 	position: absolute;
 	right: 5px;
@@ -165,45 +164,35 @@ div.verticdropdown {
 	z-index: 1;
 }
 
-div.verticdropdown > div#settingsdrop {
+div.verticdropdown > div#historydrop {
 	display: inline-block;
 	position: absolute;
 	z-index: 5;
 	
-	right: -110px;
+	right: -105px;
 	
 	height: calc(100% - 30px);
-	overflow-x: auto;
+	top: 15px;
 	
-	width: 80px;
+	width: 120px;
 	border: 1px solid black;
 	
 	background-color: rgba(100, 100, 100, 0.25);
 	border-radius: 10px;
 	
-	padding: 10px;
+	padding: 5px;
 	
 	margin: 2px; 
 	margin-top: auto;
 	margin-bottom: auto;
+	
+	overflow-y: auto;
+	scrollbar-color: white black;
+	
+	z-index: 20;
 }
 
-div.verticdropdown > div#settingsdrop > div {
-	position: relative;
-	top: 50%;
-	transform: translate(0, -50%);
-}
-
-div.verticdropdown > img#settingshint {
-	position: absolute;
-	display: block;
-	top: 50%;
-	right: 2px;
-	
-	width: 32px;  
-	
-	filter: none;
-	z-index: 10;
+div.verticdropdown > div#historydrop > div {
 }
 
 /* --- GM Area ------------------------------------------------------ */
@@ -388,7 +377,8 @@ div.rollbox > div {
 	opacity: 0.75;
 }
 
-div.rollbox > div > span {
+div.rollbox > div > span,
+div#historydrop > div > span {
 	display: inline-block;
 	width: 36px;
 	height: 30px;
@@ -409,8 +399,20 @@ div.rollbox > div > span {
 	border: 1px solid white; 
 }
 
-div.rollbox > div > span.natroll {
+div.rollbox > div > span.natroll,
+div#historydrop > div > span.natroll {
 	font-weight: bold;
+}
+
+div#historydrop > div > img {
+	display: inline-block;
+	user-select: none;
+	
+	width: 48px;
+	height: 48px;
+	padding: 1px;
+	
+	vertical-align: bottom;
 }
 
 /* --- Map Footer ----------------------------------------------------------- */

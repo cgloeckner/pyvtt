@@ -14,13 +14,9 @@
 	</div>
 %end
 
-	<div class="verticdropdown" onClick="openSettingsDropdown()">
-		<div id="settingsdrop">
-			<div>
-				<p><input type="checkbox" id="zooming" onChange="enableZooming();" /> <label for="zooming">Zoom</label></p>
-			</div>
-		</div>
-		<img id="settingshint" src="/static/settings.png" />
+	<div class="verticdropdown" onClick="toggleHistoryDropdown()">
+		<div id="historydrop"></div>
+		<!--<img id="historyhint" src="/static/history.png" />//-->
 	</div>
 
 	<div id="dicebox">

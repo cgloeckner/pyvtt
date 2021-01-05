@@ -192,7 +192,8 @@ class GameCache(object):
 		""" Handle player login. """
 		# notify player about all players and  latest rolls
 		rolls  = list()
-		since = time.time() - 20
+		recent = time.time() - 30 # last 30s
+		since  = time.time() - 60 * 10 # last 10min
 		# query latest rolls and all tokens
 		with db_session:
 			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
@@ -201,7 +202,8 @@ class GameCache(object):
 				rolls.append({
 					'color'  : r.color,
 					'sides'  : r.sides,
-					'result' : r.result
+					'result' : r.result,
+					'recent' : r.timeid >= recent
 				})
 		
 		player.write({
@@ -270,7 +272,8 @@ class GameCache(object):
 			'OPID'    : 'ROLL',
 			'color'   : player.color,
 			'sides'   : sides,
-			'result'  : result
+			'result'  : result,
+			'recent'  : True
 		})
 		
 	def onSelect(self, player, data):
