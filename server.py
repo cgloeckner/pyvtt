@@ -45,4 +45,44 @@ class VttServer(ServerAdapter):
 		
 		# run server
 		server.serve_forever()
+		
+
+
+# Email API for sending password reset emails
+class EmailApi(object):
 	
+	def __init__(self, title, host, port, sender, user, password):
+		self.title    = title
+		self.host     = host
+		self.port     = port
+		self.sender   = sender
+		self.user     = user
+		self.password = password
+		self.mail_tpl = """From: {0}
+To: {1}
+Subject: {2}
+
+{3}"""
+		self.login()
+		
+	def login(self):
+		self.smtp = smtplib.SMTP('{0}:{1}'.format(self.host, self.port))
+		self.smtp.starttls()
+		self.smtp.login(self.user, self.password)
+		
+	def __call__(self, receiver, from_, to, subject, msg):
+		plain = 'From: {0}\nTo: {1}\nSubject: {2}\n\n{3}'.format(from_, to, subject, msg)
+		try:
+			self.smtp.sendmail(self.sender, receiver, plain)
+		except smtplib.SMTPSenderRefused:
+			# re-login and re-try
+			self.login()
+			self.smtp.sendmail(self.sender, receiver, plain)
+		
+	def sendJoinMail(self, receiver, gmname, url):
+		from_   = '{0} <{1}>'.format(self.title, self.sender)
+		to      = '{0}'.format(receiver)
+		subject = 'Welcome'
+		msg     = 'Welcome {0},\n\nYour account was linked to your web-browser. In case you delete your cookies, click the link below to reconnect:\n\n{1}.\n\nDo NOT share this link with anybody else.'.format(gmname, url)
+		self.__call__(receiver, from_, to, subject, msg)
+

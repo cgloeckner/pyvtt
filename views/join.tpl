@@ -12,6 +12,10 @@
 	<form onsubmit="registerGm(event);">
 		<p>GM NAME</p>
 		<input type="text" id="gmname" maxlength="20" autocomplete="off" />
+%if engine.email_api is not None:
+		<p>EMAIL</p>
+		<input type="text" id="email" />
+%end
 		
 		<p><input type="submit" value="START CAMPAIGN" /></p>
 	</form>

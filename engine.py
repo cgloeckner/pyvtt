@@ -7,7 +7,7 @@ import bottle
 from geventwebsocket.exceptions import WebSocketError
 
 from orm import db, db_session
-from server import VttServer
+from server import VttServer, EmailApi
 
 
 __author__ = "Christian Glöckner"
@@ -544,6 +544,8 @@ class Engine(object):
 		self.title       = 'PyVTT'
 		self.imprint_url = ''
 		self.expire      = 3600 * 24 * 30 # default: 30d
+		self.email       = None # settings
+		self.email_api   = None # api instance
 		
 		# game cache
 		self.cache = EngineCache()
@@ -587,7 +589,8 @@ class Engine(object):
 				'domain'      : self.domain,
 				'port'        : self.port,
 				'socket'      : self.socket,
-				'ssl'         : self.ssl
+				'ssl'         : self.ssl,
+				'email'       : self.email
 			}
 			with open(settings_path, 'w') as h:
 				json.dump(settings, h, indent=4)
@@ -603,6 +606,7 @@ class Engine(object):
 				self.port        = settings['port']
 				self.socket      = settings['socket']
 				self.ssl         = settings['ssl']
+				self.email       = settings['email']
 			logging.info('Settings loaded')
 		
 		# show argv help
@@ -641,6 +645,10 @@ class Engine(object):
 				self.cache.insert(g)
 			t = time.time() - s
 			logging.info('Image checksums and threading locks created within {0}s'.format(t))
+		
+		# load email API
+		if self.email is not None:
+			self.email_api = EmailApi(self.title, **self.email)
 		
 	def run(self):
 		certfile = ''

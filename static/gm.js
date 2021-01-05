@@ -6,22 +6,30 @@ function registerGm(event) {
 	event.preventDefault();
 	
 	var gmname = $('#gmname').val();
+	var email  = ''; // email may not be used by server
+	if ($('#email') != null) {
+		email  = $('#email').val();
+	}
 	
 	$.ajax({
 		type: 'POST',
 		url:  '/vtt/join',
 		dataType: 'json',
 		data: {
-			'gmname' : gmname
+			'gmname' : gmname,
+			'email'  : email
 		},
 		success: function(response) {
 			// wait for sanizized input
-			gmname = response['gmname']
-			
-			if (gmname == '') {
+			if (response['gmname'] == '') {
 				// shake input
 				$('#gmname').addClass('shake');
 				setTimeout(function() {	$('#gmname').removeClass('shake'); }, 1000);
+				
+			} else if (response['email'] == '') {
+				// shake input
+				$('#email').addClass('shake');
+				setTimeout(function() {	$('#email').removeClass('shake'); }, 1000);
 				
 			} else {
 				// redirect

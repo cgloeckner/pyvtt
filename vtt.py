@@ -46,38 +46,63 @@ def asGm(callback):
 def gm_login():
 	return dict(engine=engine)
 
-
 @post('/vtt/join')
 def post_gm_login():
-	# escape gmname and test whether something was replaced
+	status = {
+		'gmname': '',
+		'email' : ''
+	}
+	
+	# test gmname
 	if not engine.verifyUrlSection(request.forms.gmname):
 		# contains invalid characters
-		return {'gmname': ''}
-	
-	# load gmname with limit of characters, in lowercase and strip whitespaces
-	name = request.forms.gmname[:20] .lower().strip()
-	
+		return status
+		
+	name = request.forms.gmname[:20].lower().strip()
 	if name in engine.gm_blacklist:
 		# blacklisted name
-		return {'gmname': ''}
-	
-	ip  = engine.getClientIp(request)
-	sid = db.GM.genSession()
-	
+		return status
+		
 	if len(db.GM.select(lambda g: g.name == name)) > 0:
 		# collision
-		return {'gmname': ''}
+		return status
+		
+	status['gmname'] = name
+	
+	email = request.forms.email.lower().strip()
+	if engine.email_api is not None:
+		# test email
+		if '@' not in email or len(db.GM.select(lambda g: g.email == email)) > 0:
+			# invalid or collision
+			return status
+			
+		status['email'] = email
 	
 	# create new GM
-	gm = db.GM(name=name, ip=ip, sid=sid)
+	ip  = engine.getClientIp(request)
+	sid = db.GM.genSession()
+	gm = db.GM(name=name, ip=ip, sid=sid, email=email)
 	gm.postSetup()
 	
-	# set cookie
 	expires = time.time() + engine.expire
 	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
-
+	
+	# welcome via email
+	if engine.email_api is not None:
+		assert(engine.ssl) # only makes sense with SSL enabled
+		reconnect_url = 'https://{0}:{1}/vtt/reconnect/{2}'.format(engine.getDomain(), engine.port, sid)
+		engine.email_api.sendJoinMail(email, name, reconnect_url)
+	
 	db.commit()
-	return {'gmname': gm.name}
+	return status
+
+@get('/vtt/reconnect/<sid>')
+def reconnect_session(sid):
+	print(sid)
+	expires = time.time() + engine.expire
+	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
+	
+	redirect('/')
 
 @get('/', apply=[asGm])
 @view('gm')

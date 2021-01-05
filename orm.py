@@ -405,12 +405,13 @@ class Game(db.Entity):
 # -----------------------------------------------------------------------------
 
 class GM(db.Entity):
-	id     = PrimaryKey(int, auto=True)
-	name   = Required(str, unique=True)
-	ip     = Required(str, default='127.0.0.1') # note: could be used twice (same internet connection, multiple users)
-	sid    = Required(str)
-	timeid = Optional(float) # dirtyflag
-	games  = Set("Game", cascade_delete=True, reverse="admin") # forward deletion to games
+	id        = PrimaryKey(int, auto=True)
+	name      = Required(str, unique=True)
+	email     = Required(str, unique=True)
+	ip        = Required(str, default='127.0.0.1') # note: could be used twice (same internet connection, multiple users)
+	sid       = Required(str, unique=True)
+	timeid    = Optional(float) # dirtyflag
+	games     = Set("Game", cascade_delete=True, reverse="admin") # forward deletion to games
 	
 	def makeLock(self):
 		engine.locks[self.name] = threading.Lock();
@@ -484,7 +485,6 @@ class GM(db.Entity):
 	def genSession():
 		return uuid.uuid4().hex
 	
-
 
 # --- UNIT TESTS --------------------------------------------------------------
 

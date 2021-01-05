@@ -12,6 +12,10 @@ body {
 	overflow: hidden;
 }
 
+p {
+	margin-bottom: 5px;
+}
+
 table.status > tbody > tr > th,
 table.status > tbody > tr > td {
 	width: 150px;
@@ -44,9 +48,10 @@ input {
 	color: black;
 }
 
-input[type=text] {
+input[type=text],
+input[type=password] {
 	border: 1px solid white;
-	padding: 10px;
+	padding: 5px;
 	background: white;
 	outline: 1px solid white;
 	outline-offset: 3px;
@@ -114,7 +119,7 @@ div.menu {
 }
 
 div.menu > img.logo {
-	height: 300px;
+	height: 200px;
 	width: auto;
 }
 
