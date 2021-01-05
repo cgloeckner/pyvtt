@@ -518,6 +518,9 @@ class Engine(object):
 		
 		if not os.path.isdir(p / 'gms'):
 			os.mkdir(p / 'gms')
+			
+		if not os.path.isdir(p / 'ssl'):
+			os.mkdir(p / 'ssl')
 		
 		# setup per-game stuff
 		self.checksums = dict()

@@ -28,6 +28,11 @@ Finally just run PyVTT
 ./vtt.py
 ```
 
+Optional settings parameters are `expire` (seconds until a GM or game can be picked up by the `cleanup.py` script) and `ssl`. Put your `cacert.pem` and `privkey.pem` inside `~/.local/share/pyvtt/ssl`.
+
+Create SSL certificate and private key for testing:
+```openssl req -new -x509 -days 1095 -nodes -newkey rsa:2048 -out cacert.pem -keyout privkey.pem```
+
 # GM Information
 Access your the via your Browser. There is no real login but every GM is identified with your GM-name (entered) and a session ID (generated and stored in a cookie). Once you clear your cookies, you lose access to your games. But wait, there is more.
 You can export set-up games as ZIP files, which can be downloaded on your computer. They contain all scenes and images (including positions, rotations etc.). So you can easily reimport a previous game if you want.
@@ -37,9 +42,6 @@ Ask for a link and start playing. Make sure to enable JavaScript and allow Cooki
 
 # Debugging
 `update_cycles` (`default: 30`) can be adjusted in the browser client (e.g. via developer tools CTRL+SHIFT+I).
-
-Create SSL certificate and private key for testing:
-```openssl req -new -x509 -days 1095 -nodes -newkey rsa:2048 -out cacert.pem -keyout privkey.pem```
 
 # Cleanup
 To cleanup the database from expired records, stop the VTT, run `cleanup.py` and restart the VTT then.
