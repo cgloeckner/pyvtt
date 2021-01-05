@@ -508,16 +508,9 @@ def convertBytes(size):
 class Engine(object):         
 
 	def __init__(self):  
-		# Setups path object where persistent application data can be stored.
-		p = pathlib.Path.home()
-		if sys.platform.startswith('linux'):
-			p = p / ".local" / "share"
-		else:
-			raise NotImplementedError('only linux supported yet')
+		p = self.getPrefDir()
 		
 		# ensure pyVTT folder exists
-		p = p / 'pyvtt'
-		
 		if not os.path.isdir(p):
 			os.mkdir(p)
 		
@@ -537,6 +530,7 @@ class Engine(object):
 		self.socket = ''
 		self.debug  = False
 		self.quiet  = False
+		self.ssl    = False
 		
 		# blacklist for GM names and game URLs
 		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'status', 'websocket']
@@ -547,10 +541,19 @@ class Engine(object):
 		self.title       = 'PyVTT'
 		self.imprint_url = ''
 		self.expire      = 3600 * 24 * 30 # default: 30d
-
+		
 		# game cache
 		self.cache = EngineCache()
-
+		
+	def getPrefDir(self):
+		p = pathlib.Path.home()
+		if sys.platform.startswith('linux'):
+			p = p / ".local" / "share"
+		else:
+			raise NotImplementedError('only linux supported yet')
+		
+		return p / 'pyvtt'
+		
 	def setup(self, argv):
 		self.debug     = '--debug' in argv
 		self.quiet     = '--quiet' in argv
@@ -580,7 +583,8 @@ class Engine(object):
 				'listener'    : 'ip',
 				'domain'      : self.domain,
 				'port'        : self.port,
-				'socket'      : self.socket
+				'socket'      : self.socket,
+				'ssl'         : self.ssl
 			}
 			with open(settings_path, 'w') as h:
 				json.dump(settings, h, indent=4)
@@ -595,6 +599,7 @@ class Engine(object):
 				self.domain      = settings['domain']
 				self.port        = settings['port']
 				self.socket      = settings['socket']
+				self.ssl         = settings['ssl']
 			logging.info('Settings loaded')
 		
 		# show argv help
@@ -635,6 +640,16 @@ class Engine(object):
 			logging.info('Image checksums and threading locks created within {0}s'.format(t))
 		
 	def run(self):
+		certfile = ''
+		keyfile  = ''
+		if self.ssl:
+			# enable SSL
+			p = self.getPrefDir()
+			certfile = p / 'ssl' / 'cacert.pem'
+			keyfile  = p / 'ssl' / 'privkey.pem'
+			assert(os.path.exists(certfile))
+			assert(os.path.exists(keyfile))
+		
 		bottle.run(
 			host       = self.host,
 			port       = self.port,
@@ -642,6 +657,9 @@ class Engine(object):
 			debug      = self.debug,
 			quiet      = self.quiet,
 			server     = VttServer,
+			# SSL-specific
+			certfile   = certfile,
+			keyfile    = keyfile,
 			# VttServer-specific:
 			unixsocket = self.socket
 		)

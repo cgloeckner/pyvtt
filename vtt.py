@@ -24,6 +24,7 @@ app = default_app()
 app.catchall = not engine.debug
 app.install(db_session)
 
+
 # setup engine with cli args and db session
 engine.setup(sys.argv) 
 
@@ -73,7 +74,7 @@ def post_gm_login():
 	
 	# set cookie
 	expires = time.time() + engine.expire
-	response.set_cookie('session', sid, path='/', expires=expires)
+	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
 
 	db.commit()
 	return {'gmname': gm.name}
@@ -331,8 +332,8 @@ def set_player_name(gmname, url):
 	
 	# save playername in client cookie
 	expire = int(time.time() + engine.expire)
-	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire)
-	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire)
+	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire, secure=engine.ssl)
+	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire, secure=engine.ssl)
 	
 	return {'playername': playername, 'playercolor': playercolor}
 
