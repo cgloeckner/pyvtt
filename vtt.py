@@ -89,8 +89,8 @@ def post_gm_login():
 	
 	# welcome via email
 	if engine.email_api is not None:
-		assert(engine.ssl) # only makes sense with SSL enabled
-		reconnect_url = 'https://{0}:{1}/vtt/reconnect/{2}'.format(engine.getDomain(), engine.port, sid)
+		protocol = 'https' if self.ssl else 'http'
+		reconnect_url = '{0}://{1}:{2}/vtt/reconnect/{3}'.format(protocol, engine.getDomain(), engine.port, sid)
 		engine.email_api.sendJoinMail(email, name, reconnect_url)
 	
 	db.commit()

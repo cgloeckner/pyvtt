@@ -393,20 +393,20 @@ div.rollbox > div > span {
 	width: 36px;
 	height: 30px;
 	margin: 2px;
-	padding-top: 3px;
+	padding: 3px;
+	padding-top: 5px;
 	margin-top: 7px;
 	margin-left: 10px;
 	
 	text-align: center;
 	font-size: x-large;
-	font-family: Serif;
 	  
 	pointer-events: auto;
 	
 	background-color: rgba(255, 255, 255, 0.75);
+	
+	border-radius: 10px;
 	border: 1px solid white; 
-	outline: 1px solid white;
-	outline-offset: 3px;
 }
 
 div.rollbox > div > span.natroll {
