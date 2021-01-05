@@ -17,7 +17,10 @@ Consider updating PyVTT's configuration at `~/.local/share/pyvtt/settings.json`,
 ```
 {
 	"title": "My Custom VTT",
-	"imprint_url": "mydomain.com/imprint.html",
+	"imprint": {
+		"label": "Terms & Contact",
+		"url": "/static/terms.html"
+	},
 	"host": "play.mydomain.com",
 	"port": 80,
 	"socket": "/tmp/vtt.sock"

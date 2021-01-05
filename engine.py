@@ -542,7 +542,7 @@ class Engine(object):
 		self.local_gm    = False
 		self.localhost   = False
 		self.title       = 'PyVTT'
-		self.imprint_url = ''
+		self.imprint     = None
 		self.expire      = 3600 * 24 * 30 # default: 30d
 		self.email       = None # settings
 		self.email_api   = None # api instance
@@ -583,7 +583,7 @@ class Engine(object):
 			# create default settings
 			settings = {
 				'title'       : self.title,
-				'imprint_url' : self.imprint_url,
+				'imprint'     : self.imprint,
 				'expire'      : self.expire,
 				'listener'    : 'ip',
 				'domain'      : self.domain,
@@ -600,7 +600,7 @@ class Engine(object):
 			with open(settings_path, 'r') as h:
 				settings = json.load(h)
 				self.title       = settings['title']
-				self.imprint_url = settings['imprint_url']
+				self.imprint     = settings['imprint']
 				self.expire      = settings['expire']
 				self.domain      = settings['domain']
 				self.port        = settings['port']

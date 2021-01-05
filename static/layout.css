@@ -1,15 +1,24 @@
 body {
+	font-family: Sans-Serif;
+	font-size: 11pt;
+	
+	overflow: hidden;
+}
+
+div.container {
+	position: absolute;
+	
 	background-image: url('/static/background.jpg');
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: cover;
 	background-color: black;
 	height: 100%;
+	width: 100%;
+}
 
-	font-family: Sans-Serif;
-	
-	height: 100%;
-	overflow: hidden;
+hr {
+	border: 1px solid white;
 }
 
 p {
@@ -108,14 +117,15 @@ div.menu {
 	
 	width: calc(100% - 250px);
 	
-	margin-left: auto;
-	margin-right: auto;
-	
-	margin-top: 10px;
 	padding: 5px;
 	color: white;
 	border-radius: 10px;
 	text-align: center;
+	
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%,-50%);
 }
 
 div.menu > img.logo {
@@ -445,19 +455,9 @@ form#uploadform {
 /* --- Battlemap Layout --------------------------------------------- */
 
 div#login {
-	position: absolute;
+	position: relative;
 	
-	background-image: url('/static/background.jpg');
-	background-position: center;
-	background-repeat: no-repeat;
-	background-size: cover;
-	background-color: black;
-	
-	width: 100%;
-	height: 100%;
-													
-	margin: 0px;
-	padding: 0px;
+	top: 50%;
 	
 	z-index: 10;
 }

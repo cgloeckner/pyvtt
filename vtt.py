@@ -7,7 +7,7 @@ import os, json, time, sys, psutil, random
 
 from pony import orm
 from orm import db, db_session, Token, Game
-from engine import engine
+from engine import engine, logging
 
 
 __author__ = "Christian Glöckner"
@@ -98,7 +98,12 @@ def post_gm_login():
 
 @get('/vtt/reconnect/<sid>')
 def reconnect_session(sid):
-	print(sid)
+	gm = db.GM.loadFromSession(request)
+	if gm is None:
+		redirect('/')
+	
+	# re-connect session
+	logging.warning('Session {0} for {1} ({2}) reconnected by {3}'.format(sid, gm.name, gm.email, engine.getClientIp(request)))
 	expires = time.time() + engine.expire
 	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
 	
@@ -390,8 +395,6 @@ def get_player_battlemap(gmname, url):
 	user_agent = request.environ.get('HTTP_USER_AGENT')
 	protocol = 'wss' if engine.ssl else 'ws'
 	websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.port)
-	
-	print(websocket_url)
 	
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
