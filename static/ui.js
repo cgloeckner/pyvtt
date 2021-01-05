@@ -424,15 +424,28 @@ function onGrab(event) {
 		if (token != null) {
 			var before = select_ids;
 			
-			// reselect only if token wasn't selected before
-			if (!select_ids.includes(token.id)) {
-				select_ids = [token.id];
-				primary_id = token.id;
+			if (event.ctrlKey) {
+				// toggle token in/out selection group
+				var index = select_ids.indexOf(token.id);
+				if (index != -1) {
+					// remove from selection
+					select_ids.splice(index, 1);
+				} else {
+					// add to selection
+					select_ids.push(token.id);
+				}
 				
 			} else {
-				primary_id = token.id;
+				// reselect only if token wasn't selected before
+				if (!select_ids.includes(token.id)) {
+					select_ids = [token.id];
+					primary_id = token.id;
+					
+				} else {
+					primary_id = token.id;
+				}
+				grabbed = true;
 			}
-			grabbed = true;
 			
 			if (before != select_ids) {
 				// notify server about selection
