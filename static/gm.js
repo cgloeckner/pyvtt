@@ -1,7 +1,5 @@
 /** Powered by PyVTT. Further information: https://github.com/cgloeckner/pyvtt **/
 
-// --- GM game menu handles -------------------------------------------
-
 function registerGm(event) {
 	event.preventDefault();
 	
@@ -18,6 +16,8 @@ function registerGm(event) {
 			console.log('WTF', response);
 			// wait for sanizized gm url (as confirm)
 			if (response['url'] == null) {
+				showError(response['error']);
+				
 				// shake input
 				$('#gmname').addClass('shake');
 				setTimeout(function() {	$('#gmname').removeClass('shake'); }, 1000);
@@ -38,7 +38,7 @@ function deleteGame(url) {
 	$.post(
 		url='/vtt/delete-game/' + url,
 		success=function(data) {
-			$('#preview')[0].innerHTML = data;
+			$('#gmdrop')[0].innerHTML = data;
 		}
 	);
 }
@@ -47,7 +47,7 @@ function GmUploadDrag(event) {
 	event.preventDefault();
 }
 
-function GmUploadDrop(event, url_regex, gm_name) {
+function GmUploadDrop(event, url_regex, gm_url) {
 	event.preventDefault();
 	
 	// fetch upload data
@@ -69,6 +69,8 @@ function GmUploadDrop(event, url_regex, gm_name) {
 	// check url via regex
 	r = new RegExp(url_regex, 'g');
 	if (!r.test(url)) { 
+		showError('NO SPECIAL CHARS OR SPACES');
+		
 		// shake URL input
 		$('#url').addClass('shake');
 		setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
@@ -84,15 +86,20 @@ function GmUploadDrop(event, url_regex, gm_name) {
 		cache: false,
 		processData: false,
 		success: function(response) {
-			url_ok  = response['url'];
-			file_ok = response['file'];
+			url_ok  = response['url_ok'];
+			file_ok = response['file_ok'];
 			
 			if (!url_ok) {
+				showError(response['error']);
+				
 				// shake URL input
 				$('#url').addClass('shake');
 				setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
+				
 			} else {
-				if (!file_ok) {
+				if (!file_ok) { 
+					showError(response['error']);
+					
 					// reset uploadqueue
 					$('#uploadqueue').val("");
 					
@@ -102,7 +109,7 @@ function GmUploadDrop(event, url_regex, gm_name) {
 				
 				} else {
 					// load game
-					window.location = '/' + gm_name + '/' + url;
+					window.location = '/' + response['url'];
 				}
 			}
 		}

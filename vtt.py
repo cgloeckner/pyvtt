@@ -49,24 +49,31 @@ def gm_login():
 # non-patreon login
 @post('/vtt/join')
 def post_gm_login():
-	status = {'url': None}
+	status = {
+		'url'   : None,
+		'error' : ''
+	}
 	
 	if engine.patreon_api is not None:
 		# not allowed if patreon-login is enabled
+		status['error'] = 'FORBIDDEN'
 		return status
 	
 	# test gm name (also as url)
 	if not engine.verifyUrlSection(request.forms.gmname):
-		# contains invalid characters
+		# contains invalid characters   
+		status['error'] = 'NO SPECIAL CHARS OR SPACES'
 		return status
 		
 	name = request.forms.gmname[:20].lower().strip()
 	if name in engine.gm_blacklist:
 		# blacklisted name
+		status['error'] = 'RESERVED NAME'
 		return status
 		
 	if len(db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
 		# collision
+		status['error'] = 'ALREADY IN USE'
 		return status
 	
 	# create new GM (use GM name as display name and URL)
@@ -134,32 +141,50 @@ def get_game_list():
 
 @post('/vtt/import-game/<url>', apply=[asGm])
 def post_import_game(url):  
-	url_ok = False
-	game   = None
+	status = {
+		'url_ok'  : False,
+		'file_ok' : False,
+		'error'   : '',
+		'url'     : ''
+	}
 	
 	# trim url length, convert to lowercase and trim whitespaces
 	url = url[:20].lower().strip()
 	
 	# check GM and url
 	gm = db.GM.loadFromSession(request) 
-	if gm is not None and engine.verifyUrlSection(url) and db.Game.isUniqueUrl(gm, url):
-		url_ok = True
+	if gm is None:
+		status['error'] = 'RELOAD PAGE'
+		return status
+	
+	if not engine.verifyUrlSection(url):
+		status['error'] = 'NO SPECIAL CHARS OR SPACES'
+		return status
+	
+	if db.Game.select(lambda g: g.admin == gm and g.url == url).first() is not None:
+		status['error'] = 'ALREADY IN USE'
+		return status
 	
 	# upload file
 	files = request.files.getall('file')
-	if url_ok and len(files) == 1:
-		fname = files[0].filename
-		if fname.endswith('zip'):
-			game = db.Game.fromZip(gm, url, files[0])
-		
-		else:
-			game = db.Game.fromImage(gm, url, files[0])
+	if len(files) != 1:
+		status['error'] = 'ONE FILE AT ONCE'
+		return status
 	
-	# returning status
-	return {
-		'url' : url_ok,
-		'file': game is not None
-	}
+	status['url_ok'] = True
+	
+	fname = files[0].filename
+	if fname.endswith('zip'):
+		game = db.Game.fromZip(gm, url, files[0])
+	else:
+		game = db.Game.fromImage(gm, url, files[0])
+	
+	status['file_ok'] = game is not None
+	if not status['file_ok']:
+		status['error'] = 'USE AN IMAGE FILE'
+	
+	status['url'] = game.getUrl();
+	return status
 
 @get('/vtt/export-game/<url>', apply=[asGm])
 def export_game(url):
@@ -335,12 +360,17 @@ def accept_websocket():
 
 @post('/<gmurl>/<url>/login')
 def set_player_name(gmurl, url):
-	result = {'playername': '', 'playercolor': ''}
+	result = {
+		'playername'  : '',
+		'playercolor' : '',
+		'error'       : ''
+	}
 	
 	playername  = template('{{value}}', value=format(request.forms.playername))
 	playercolor = request.forms.get('playercolor')
 	
-	if playername is None:
+	if playername == '':
+		result['error'] = 'PLEASE ENTER A NAME'
 		return result
 	
 	# limit length, trim whitespaces
@@ -364,7 +394,7 @@ def set_player_name(gmurl, url):
 		game_cache = engine.cache.get(game)
 		game_cache.insert(playername, playercolor)
 	except KeyError:
-		# name collision
+		result['error'] = 'ALREADY IN USE'
 		return result
 	
 	# save playername in client cookie
@@ -372,7 +402,9 @@ def set_player_name(gmurl, url):
 	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire, secure=engine.ssl)
 	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire, secure=engine.ssl)
 	
-	return {'playername': playername, 'playercolor': playercolor}
+	result['playername']  = playername
+	result['playercolor'] = playercolor
+	return result
 
 
 @get('/<gmurl>/<url>')

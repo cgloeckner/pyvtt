@@ -19,6 +19,8 @@
 		<p><a href="{{engine.patreon_api.getAuthUrl()}}"><input type="button" value="LOG IN WITH PATREON" /></a></p>
 %end  
 	</form>  
+	
+	<div id="error"></div>
 </div>
 
 

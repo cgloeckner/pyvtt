@@ -21,7 +21,9 @@
 				<input type="color" name="playercolor" id="playercolor" value="{{playercolor}}">
 				
 				<p><input type="submit" value="JOIN" /></p>
-			</form>
+			</form> 
+			
+		<div id="error"></div>
 		</div> 
 		<hr />
 	</div>  

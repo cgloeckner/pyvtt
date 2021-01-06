@@ -161,10 +161,13 @@ function login(event, gmname, url, websocket_url) {
 		},
 		success: function(response) {
 			// wait for sanizized input
+			error       = response['error']
 			playername  = response['playername']
 			playercolor = response['playercolor']
 			
-			if (playername == '') {
+			if (error != '') {
+				showError(error);
+				
 				$('#playername').addClass('shake');
 				setTimeout(function() {	$('#playername').removeClass('shake'); }, 1000);
 				

@@ -11,7 +11,7 @@
 </div>
 %end
 
-<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.name}}');" onClick="closeGmDropdown();">  
+<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.url}}');" onClick="closeGmDropdown();">  
 
 <hr />
 
@@ -20,6 +20,7 @@
 	<div class="form">
 		<p>ENTER GAME NAME (optional)</p>
 		<p><input type="text" id="url" value="" maxlength="20" autocomplete="off" /></p>
+		<p></p>
 		
 		<div class="dropzone" id="dropzone">                                           
 			<p>DRAG AM IMAGE TO START</p>
@@ -30,6 +31,8 @@
 		
 		<br />  
 	</div>
+	
+	<div id="error"></div>
 <hr />
 
 </div>
