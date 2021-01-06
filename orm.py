@@ -112,7 +112,7 @@ class Game(db.Entity):
 	admin  = Required("GM", reverse="games")
 	
 	def getUrl(self):
-		return '{0}/{1}'.format(self.admin.name, self.url)
+		return '{0}/{1}'.format(self.admin.url, self.url)
 	
 	def makeMd5s(self):
 		data = dict()
@@ -125,7 +125,7 @@ class Game(db.Entity):
 	def postSetup(self):
 		img_path = self.getImagePath()
 		
-		with engine.locks[self.admin.name]: # make IO access safe
+		with engine.locks[self.admin.url]: # make IO access safe
 			if not os.path.isdir(img_path):
 				os.mkdir(img_path)
 		
@@ -148,7 +148,7 @@ class Game(db.Entity):
 		return max_id + 1
 
 	def getImageUrl(self, image_id):
-		return '/token/{0}/{1}/{2}'.format(self.admin.name, self.url, image_id)
+		return '/token/{0}/{1}/{2}'.format(self.admin.url, self.url, image_id)
 
 	def getFileSize(self, url):
 		game_root  = self.getImagePath()
@@ -190,7 +190,7 @@ class Game(db.Entity):
 			new_md5 = engine.getMd5(tmpfile.file)
 			
 			game_root = self.getImagePath()
-			with engine.locks[self.admin.name]: # make IO access safe
+			with engine.locks[self.admin.url]: # make IO access safe
 				if new_md5 not in engine.checksums[self.getUrl()]:
 					# copy image to target
 					next_id    = self.getNextId()
@@ -208,7 +208,7 @@ class Game(db.Entity):
 		# check all existing images
 		game_root = self.getImagePath()
 		all_images = list()
-		with engine.locks[self.admin.name]: # make IO access safe
+		with engine.locks[self.admin.url]: # make IO access safe
 			all_images = self.getAllImages()
 		
 		abandoned = list()
@@ -227,7 +227,7 @@ class Game(db.Entity):
 		logging.info('\tCleaning {0}'.format(self.url))
 		
 		relevant = self.getAbandonedImages()
-		with engine.locks[self.admin.name]: # make IO access safe
+		with engine.locks[self.admin.url]: # make IO access safe
 			for fname in relevant:
 				os.remove(fname)
 		
@@ -236,7 +236,7 @@ class Game(db.Entity):
 		logging.info('\tRemoving {0}'.format(self.url))
 		
 		img_path = self.getImagePath()
-		with engine.locks[self.admin.name]: # make IO access safe
+		with engine.locks[self.admin.url]: # make IO access safe
 			if os.path.isdir(img_path):
 				# remove all images
 				for img in self.getAllImages():
@@ -407,14 +407,13 @@ class Game(db.Entity):
 class GM(db.Entity):
 	id        = PrimaryKey(int, auto=True)
 	name      = Required(str, unique=True)
-	email     = Required(str, unique=True)
-	ip        = Required(str, default='127.0.0.1') # note: could be used twice (same internet connection, multiple users)
+	url       = Required(str, unique=True)
 	sid       = Required(str, unique=True)
 	timeid    = Optional(float) # dirtyflag
 	games     = Set("Game", cascade_delete=True, reverse="admin") # forward deletion to games
 	
 	def makeLock(self):
-		engine.locks[self.name] = threading.Lock();
+		engine.locks[self.url] = threading.Lock();
 	
 	def postSetup(self):
 		self.timeid = int(time.time())
@@ -425,7 +424,7 @@ class GM(db.Entity):
 		games_path = self.getGamesPath()
 		export_path = self.getExportPath()
 		
-		with engine.locks[self.name]: # make IO access safe	
+		with engine.locks[self.url]: # make IO access safe	
 			if not os.path.isdir(root_path):
 				os.mkdir(root_path)
 			
@@ -457,11 +456,11 @@ class GM(db.Entity):
 		# remove GM's directory
 		root_path = self.getBasePath()
 		
-		with engine.locks[self.name]: # make IO access safe
+		with engine.locks[self.url]: # make IO access safe
 			shutil.rmtree(root_path)
 		
 	def getBasePath(self):
-		return engine.data_dir / 'gms' / self.name
+		return engine.data_dir / 'gms' / self.url
 		
 	def getGamesPath(self):
 		return self.getBasePath() / 'games'

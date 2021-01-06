@@ -7,18 +7,18 @@
 <h1>JOIN as GM</h1>
 
 <img class="logo" src="/static/logo.png" />
-
+ 
 <div class="form">
-	<form onsubmit="registerGm(event);">
+	   <form onsubmit="registerGm(event);">
+%if engine.patreon_api is None:
 		<p>GM NAME</p>
 		<input type="text" id="gmname" maxlength="20" autocomplete="off" />
-%if engine.email_api is not None:
-		<p>EMAIL</p>
-		<input type="text" id="email" />
-%end
 		
-		<p><input type="submit" value="START CAMPAIGN" /></p>
-	</form>
+		<p><input type="submit" value="CREATE GM ACCOUNT" /></p>
+%else:
+		<p><a href="{{engine.patreon_api.getAuthUrl()}}"><input type="button" value="LOG IN WITH PATREON" /></a></p>
+%end  
+	</form>  
 </div>
 
 

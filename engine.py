@@ -7,7 +7,7 @@ import bottle
 from geventwebsocket.exceptions import WebSocketError
 
 from orm import db, db_session
-from server import VttServer, EmailApi
+from server import VttServer, PatreonApi # , EmailApi
 
 
 __author__ = "Christian Glöckner"
@@ -127,7 +127,7 @@ class GameCache(object):
 	
 	def __init__(self, game):
 		self.lock    = threading.Lock()
-		self.gmname  = game.admin.name
+		self.gmurl   = game.admin.url
 		self.url     = game.url
 		self.players = dict() # name => player
 		
@@ -196,7 +196,7 @@ class GameCache(object):
 		since  = time.time() - 60 * 10 # last 10min
 		# query latest rolls and all tokens
 		with db_session:
-			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
 			
 			for r in db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
 				rolls.append({
@@ -260,7 +260,7 @@ class GameCache(object):
 		roll_id = None
 		
 		with db_session: 
-			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
 			# update active scene's timeid
 			scene = db.Scene.select(lambda s: s.id == g.active).first()
 			scene.timeid = now
@@ -298,7 +298,7 @@ class GameCache(object):
 		
 		# query inside given rectangle
 		with db_session:
-			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
 			s = db.Scene.select(lambda s: s.id == g.active).first()
 			token_ids = list()
 			for t in db.Token.select(lambda t: t.scene == s and left <= t.posx and t.posx <= left + width and top <= t.posy and t.posy <= top + height): 
@@ -326,7 +326,7 @@ class GameCache(object):
 		tokens = list()
 		now = time.time()
 		with db_session: 
-			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
 			# update active scene's timeid
 			scene = db.Scene.select(lambda s: s.id == g.active).first()
 			scene.timeid = now
@@ -356,7 +356,7 @@ class GameCache(object):
 		
 		now = time.time()
 		with db_session:
-			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
 			# update active scene's timeid
 			scene = db.Scene.select(lambda s: s.id == g.active).first()
 			scene.timeid = now
@@ -386,7 +386,7 @@ class GameCache(object):
 		n = len(urls)
 		tokens = list()
 		with db_session:
-			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
 			s = db.Scene.select(lambda s: s.id == g.active).first()
 			
 			for k, url in enumerate(urls):
@@ -434,7 +434,7 @@ class GameCache(object):
 		all_data = list()    
 		
 		with db_session:
-			g = db.Game.select(lambda g: g.admin.name == self.gmname and g.url == self.url).first()
+			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
 			for t in db.Token.select(lambda t: t.scene.id == g.active and t.timeid >= since):
 				all_data.append(t.to_dict())
 		
@@ -548,8 +548,8 @@ class Engine(object):
 		self.title       = 'PyVTT'
 		self.imprint     = None
 		self.expire      = 3600 * 24 * 30 # default: 30d
-		self.email       = None # settings
-		self.email_api   = None # api instance
+		self.patreon     = None # patreon settings
+		self.patreon_api = None # api instance
 		
 		# game cache
 		self.cache = EngineCache()
@@ -594,7 +594,7 @@ class Engine(object):
 				'port'        : self.port,
 				'socket'      : self.socket,
 				'ssl'         : self.ssl,
-				'email'       : self.email
+				'patroen'     : self.patreon
 			}
 			with open(settings_path, 'w') as h:
 				json.dump(settings, h, indent=4)
@@ -610,7 +610,7 @@ class Engine(object):
 				self.port        = settings['port']
 				self.socket      = settings['socket']
 				self.ssl         = settings['ssl']
-				self.email       = settings['email']
+				self.patreon     = settings['patreon']
 			logging.info('Settings loaded')
 		
 		# show argv help
@@ -650,9 +650,12 @@ class Engine(object):
 			t = time.time() - s
 			logging.info('Image checksums and threading locks created within {0}s'.format(t))
 		
-		# load email API
-		if self.email is not None:
-			self.email_api = EmailApi(self.title, **self.email)
+		# load patreon API
+		if self.patreon is not None:
+			protocol = 'https' if self.ssl else 'http'
+			host_callback = '{0}://{1}:{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), engine.port)
+			# create patreon query API
+			self.patreon_api = PatreonApi(host_callback=host_callback, **self.patreon)
 		
 	def run(self):
 		certfile = ''
@@ -674,10 +677,10 @@ class Engine(object):
 			debug      = self.debug,
 			quiet      = self.quiet,
 			server     = VttServer,
-			# VttServer-specific:
+			# VttServer-specific
 			unixsocket = self.socket,
 			# SSL-specific
-			*ssl_args
+			**ssl_args
 		)
 		
 	def getDomain(self):
@@ -729,7 +732,7 @@ class Engine(object):
 			# finally delete all expired GMs
 			# note: idk why but pony's cascade_delete isn't working
 			for gm in db.GM.select(lambda g: g.timeid > 0 and g.timeid + engine.expire < now):
-				for game in db.Game.select(lambda g: g.admin.name == gm.name):
+				for game in db.Game.select(lambda g: g.admin.url == gm.urli):
 					for scene in game.scenes:
 						for token in scene.tokens:
 							token.delete() 

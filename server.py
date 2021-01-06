@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, smtplib
+import os# , smtplib
+import patreon, urllib
 
 from bottle import request, ServerAdapter
 
@@ -85,4 +86,100 @@ Subject: {2}
 		subject = 'Welcome'
 		msg     = 'Welcome {0},\n\nYour account was linked to your web-browser. In case you delete your cookies, click the link below to reconnect:\n\n{1}.\n\nDo NOT share this link with anybody else.'.format(gmname, url)
 		self.__call__(receiver, from_, to, subject, msg)
+
+
+
+class PatreonApi(object):
+	
+	def __init__(self, host_callback, client_id, client_secret, min_pledge, whitelist):
+		self.callback      = host_callback # https://example.com/my/callback/path
+		self.client_id     = client_id     # ID of Patreon API key
+		self.client_secret = client_secret # Secret of Patreon API key
+		self.min_pledge    = min_pledge    # minimum pledge level for access (amount)
+		self.whitelist     = whitelist     # whitelist to ignore pledge level
+		
+	@staticmethod
+	def getUserInfo(json_data):
+		return {
+			'id'       : int(json_data['data']['id']),
+			'username' : json_data['data']['attributes']['full_name']
+		}
+		
+	@staticmethod
+	def getPledgeTitles(json_data):
+		titles = dict()
+		
+		if 'included' not in json_data:
+			return titles
+		
+		for item in json_data['included']:
+			attribs = item['attributes']
+			if 'title' in attribs and 'amount_cents' in attribs:
+				title  = attribs['title']
+				amount = attribs['amount_cents']
+				titles[amount] = title
+		
+		return titles
+		
+	@staticmethod
+	def getUserPledges(json_data):
+		pledges = []  
+		titles = PatreonApi.getPledgeTitles(json_data)
+		
+		for r in json_data['data']['relationships']['pledges']['data']:
+			if r['type'] == 'pledge':
+				# search included stuff for pledge_id
+				for item in json_data['included']:
+					if item['id'] == r['id']:
+						amount = item['attributes']['amount_cents']
+						pledges.append({
+							'amount' : amount,
+							'title'  : titles[amount]
+						})
+		
+		return pledges
+		
+	def getAuthUrl(self):
+		""" Generate patreon-URL to access in order to fetch data. """
+		return 'https://www.patreon.com/oauth2/authorize?response_type=code&client_id={0}&redirect_uri={1}'.format(self.client_id, self.callback)
+		
+	def getApiClient(self, request):
+		""" Called after callback was triggered to fetch acccess_token and
+		API instance.
+		Returns (token, api)
+		"""
+		oauth_client = patreon.OAuth(self.client_id, self.client_secret)
+		tokens = oauth_client.get_tokens(request.query.code, self.callback)
+		access_token = tokens['access_token']
+		
+		return access_token, patreon.API(access_token)
+		
+	def getSession(self, request):
+		""" Query patreon to return required user data and infos.
+		This tests the pledge level. """
+		token, client = self.getApiClient(request)
+		
+		user_response = client.fetch_user()
+		json_data     = user_response.json_data
+		user          = PatreonApi.getUserInfo(json_data)
+		result = {
+			'sid'   : token,
+			'user'  : user,
+			'level' : None # None equals whitelist guest
+		}
+		
+		# test whitelist
+		if user['id'] in self.whitelist:
+			return result
+		
+		# test pledge
+		pledges = PatreonApi.getUserPledges(json_data)
+		for item in pledges:
+			if item['amount'] >= self.min_pledge:
+				result['level'] = item['title']
+				return result
+		
+		# user neither pledged nor whitelisted
+		result['sid'] = None
+		return result
 

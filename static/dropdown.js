@@ -11,8 +11,6 @@ function openGmDropdown(force=false) {
 	}
 	gm_dropdown = true;
 	hint.fadeOut(500, 0.0);
-	
-	closehistoryDropdown(force);
 }
 
 function closeGmDropdown(force=false) { 

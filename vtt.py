@@ -40,20 +40,22 @@ def asGm(callback):
 		return callback(*args, **kwargs)
 	return wrapper
 
-
+# shared login page
 @get('/vtt/join')
 @view('join')
 def gm_login():
 	return dict(engine=engine)
 
+# non-patreon login
 @post('/vtt/join')
 def post_gm_login():
-	status = {
-		'gmname': '',
-		'email' : ''
-	}
+	status = {'url': None}
 	
-	# test gmname
+	if engine.patreon_api is not None:
+		# not allowed if patreon-login is enabled
+		return status
+	
+	# test gm name (also as url)
 	if not engine.verifyUrlSection(request.forms.gmname):
 		# contains invalid characters
 		return status
@@ -63,50 +65,55 @@ def post_gm_login():
 		# blacklisted name
 		return status
 		
-	if len(db.GM.select(lambda g: g.name == name)) > 0:
+	if len(db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
 		# collision
 		return status
-		
-	status['gmname'] = name
 	
-	email = request.forms.email.lower().strip()
-	if engine.email_api is not None:
-		# test email
-		if '@' not in email or len(db.GM.select(lambda g: g.email == email)) > 0:
-			# invalid or collision
-			return status
-			
-		status['email'] = email
-	
-	# create new GM
-	ip  = engine.getClientIp(request)
+	# create new GM (use GM name as display name and URL)
 	sid = db.GM.genSession()
-	gm = db.GM(name=name, ip=ip, sid=sid, email=email)
+	gm = db.GM(name=name, url=name, sid=sid)
 	gm.postSetup()
 	
 	expires = time.time() + engine.expire
 	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
 	
-	# welcome via email
-	if engine.email_api is not None:
-		protocol = 'https' if self.ssl else 'http'
-		reconnect_url = '{0}://{1}:{2}/vtt/reconnect/{3}'.format(protocol, engine.getDomain(), engine.port, sid)
-		engine.email_api.sendJoinMail(email, name, reconnect_url)
-	
 	db.commit()
+	status['url'] = gm.url
 	return status
 
-@get('/vtt/reconnect/<sid>')
-def reconnect_session(sid):
-	gm = db.GM.loadFromSession(request)
+# patreon-login callback
+@get('/vtt/patreon/callback')
+def gm_patreon():
+	if engine.patreon_api is None:
+		# patreon is disabled, let him login normally
+		redirect('/vtt/join')
+	
+	# query session from patreon auth
+	session = engine.patreon_api.getSession(request)
+	
+	if session is None or session['sid'] is None:
+		# not allowed, just redirect that poor soul
+		redirect('/vtt/join')
+	
+	# test whether GM is already there
+	gm = db.GM.select(lambda g: g.url == session['user']['id']).first()
 	if gm is None:
-		redirect('/')
+		# create GM (username as display name, patreon-id as url)
+		gm = db.GM(
+			name=session['user']['username'],
+			url=str(session['user']['id']),
+			sid=session['sid']
+		)
+		gm.postSetup()
+		
+	else:
+		# create new session for already existing GM
+		gm.sid = session['sid']
 	
-	# re-connect session
-	logging.warning('Session {0} for {1} ({2}) reconnected by {3}'.format(sid, gm.name, gm.email, engine.getClientIp(request)))
 	expires = time.time() + engine.expire
-	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
+	response.set_cookie('session', gm.sid, path='/', expires=expires, secure=engine.ssl)
 	
+	db.commit()
 	redirect('/')
 
 @get('/', apply=[asGm])
@@ -308,10 +315,10 @@ def static_files(fname):
 	
 	return static_file(fname, root=root)
 
-@get('/token/<gmname>/<url>/<fname>')
-def static_token(gmname, url, fname):
+@get('/token/<gmurl>/<url>/<fname>')
+def static_token(gmurl, url, fname):
 	# load game
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.url == gmurl and g.url == url).first()
 	path = game.getImagePath()
 	
 	return static_file(fname, root=path)
@@ -326,8 +333,8 @@ def accept_websocket():
 	while not socket.closed:
 		time.sleep(10)
 
-@post('/<gmname>/<url>/login')
-def set_player_name(gmname, url):
+@post('/<gmurl>/<url>/login')
+def set_player_name(gmurl, url):
 	result = {'playername': '', 'playercolor': ''}
 	
 	playername  = template('{{value}}', value=format(request.forms.playername))
@@ -350,7 +357,7 @@ def set_player_name(gmname, url):
 		playercolor += hex(c)[2:]
 	 
 	# load game
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.url == gmurl and g.url == url).first()
 	
 	# check for player name collision
 	try:
@@ -368,9 +375,9 @@ def set_player_name(gmname, url):
 	return {'playername': playername, 'playercolor': playercolor}
 
 
-@get('/<gmname>/<url>')
+@get('/<gmurl>/<url>')
 @view('battlemap')
-def get_player_battlemap(gmname, url):
+def get_player_battlemap(gmurl, url):
 	# try to load playername from cookie (or from GM name)
 	playername = request.get_cookie('playername')
 	gm         = db.GM.loadFromSession(request)
@@ -387,7 +394,7 @@ def get_player_battlemap(gmname, url):
 		playercolor = colors[random.randrange(len(colors))]
 	
 	# load game
-	game = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	game = db.Game.select(lambda g: g.admin.url == gmurl and g.url == url).first()
 	
 	if game is None:
 		abort(404)
@@ -399,11 +406,11 @@ def get_player_battlemap(gmname, url):
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
 
-@post('/<gmname>/<url>/upload/<posx:int>/<posy:int>/<default_size:int>')
-def post_image_upload(gmname, url, posx, posy, default_size):
+@post('/<gmurl>/<url>/upload/<posx:int>/<posy:int>/<default_size:int>')
+def post_image_upload(gmurl, url, posx, posy, default_size):
 	# upload images                       
 	urls  = list()
-	game  = db.Game.select(lambda g: g.admin.name == gmname and g.url == url).first()
+	game  = db.Game.select(lambda g: g.admin.url == gmurl and g.url == url).first()
 	files = request.files.getall('file[]')
 	for handle in files:
 		urls.append(game.upload(handle))
