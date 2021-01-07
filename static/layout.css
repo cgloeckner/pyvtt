@@ -48,7 +48,7 @@ p {
 
 table.status > tbody > tr > th,
 table.status > tbody > tr > td {
-	width: 70px;
+	width: 150px;
 }
 
 table.status > tbody > tr > td > a {

@@ -9,10 +9,8 @@
 <table class="status"> 
 	<tr>
 		<th></th>
-		<th>URL</th>
-		<th>CPU</th>
-		<th>MEM</th>
-		<th>PLAYERS</th>
+		<th>SERVER</th>
+		<th>STATUS</th>
 	</tr>
 %i = 0
 %for host in engine.shards:
@@ -23,9 +21,7 @@
 	%else:
 		<td><a href="{{host}}/">{{host}}</a></td>
 	%end
-		<td id="cpu{{i}}">---</td>
-		<td id="memory{{i}}">---</td>
-		<td id="players{{i}}">---</td>
+		<td id="status{{i}}">UNKNOWN</td>
 	</tr>
 	%i += 1
 %end 
@@ -43,24 +39,36 @@ function queryShard(index, host) {
 			}
 			
 			// fallback output
-			var cpu         = 'ERROR';
-			var memory      = 'ERROR';
-			var num_players = 'ERROR';
+			var color  = 'red'
+			var status = 'OFFLINE';
+			var hint   = 'Please report this';
 			
 			// try to parse status
 			try {
 				data = JSON.parse(response.status);
-				cpu         = data.cpu + '%';
-				memory      = data.memory + '%';
-				num_players = data.num_players;
+				if (data.cpu > 90.0 || data.memory > 90.0) {
+					color  = 'orange';
+					status = 'VERY BAD';
+				} else if (data.cpu > 80.0 || data.memory > 80.0) {
+					color  = 'orange';
+					status = 'BAD';
+				} else if (data.cpu > 40.0 || data.memory > 40.0) {
+					color  = 'yellow';
+					status = 'OK';
+				} else if (data.cpu > 10.0 || data.memory > 10.0) {
+					color  = 'green';
+					status = 'GOOD';
+				} else {
+					color  = 'green';
+					status = 'VERY GOOD';
+				}
+				hint = 'CPU: ' + data.cpu + '%, Memory: ' + data.memory + '%, ' + data.num_players + ' Players active';
 			} catch (e) {
 				console.warn('Server Status unknown: ', host);
 			}
 			
 			// show result
-			$('#cpu' + index)[0].innerHTML     = cpu;
-			$('#memory' + index)[0].innerHTML  = memory;
-			$('#players' + index)[0].innerHTML = num_players;
+			$('#status' + index)[0].innerHTML = '<span style="color: ' + color + '" title="' + hint + '">' + status + '</span>';
 		}
 	});
 }

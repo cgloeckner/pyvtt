@@ -558,7 +558,7 @@ def status_query(index):
 	# query server status
 	try:
 		data['status'] = requests.get(host + '/vtt/status').text;
-	except requests.exceptions.ConnectionError:
+	except requests.exceptions.ConnectionError as e:
 		engine.logging.error('Server {0} seems to be offline'.format(host))
 	
 	return data
