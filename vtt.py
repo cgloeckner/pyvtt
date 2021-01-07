@@ -404,11 +404,8 @@ def accept_websocket():
 	socket = request.environ.get('wsgi.websocket')
 	
 	if socket is not None:
-		engine.cache.accept(socket)
-	
-	# sleep until socket is closed
-	while not socket.closed:
-		time.sleep(10)
+		# note: this keeps the websocket open during the session
+		engine.cache.listen(socket)
 
 @post('/<gmurl>/<url>/login')
 def set_player_name(gmurl, url):

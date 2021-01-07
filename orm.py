@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, pathlib, threading, time, uuid, tempfile, shutil, zipfile, json, math
+import os, pathlib, time, uuid, tempfile, shutil, zipfile, json, math
+
+from gevent import lock
 
 from pony.orm import *
 
@@ -412,7 +414,7 @@ class GM(db.Entity):
 	games     = Set("Game", cascade_delete=True, reverse="admin") # forward deletion to games
 	
 	def makeLock(self):
-		engine.locks[self.url] = threading.Lock();
+		engine.locks[self.url] = lock.RLock();
 	
 	def postSetup(self):
 		self.timeid = int(time.time())

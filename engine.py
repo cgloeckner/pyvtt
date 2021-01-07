@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, threading, time, requests, uuid, json, re, random
+import os, sys, pathlib, hashlib, time, requests, uuid, json, re, random
 
-import bottle 
+import bottle, gevent
+from gevent import lock
 from geventwebsocket.exceptions import WebSocketError
 
 from orm import db, db_session
@@ -35,6 +36,8 @@ class PlayerCache(object):
 		self.uuid     = uuid.uuid1().hex # used for HTML DOM id
 		self.selected = list()
 		
+		self.greenlet = None
+		
 		# fetch country from ip
 		self.ip       = engine.getClientIp(bottle.request)
 		d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(self.ip)).text)
@@ -44,7 +47,6 @@ class PlayerCache(object):
 			self.country = '?'
 		
 		self.socket   = None
-		self.thread   = None
 		
 		self.dispatch_map = {
 			'ROLL'   : self.parent.onRoll,
@@ -59,12 +61,6 @@ class PlayerCache(object):
 		PlayerCache.instance_count -= 1
 		
 	# --- websocket implementation ------------------------------------
-		
-	def listen(self, socket):
-		""" Start socket handling thread. """
-		self.socket = socket
-		self.thread = threading.Thread(target=self.handle, args=[self])
-		self.thread.start()
 		
 	def read(self):
 		""" Return JSON object read from socket. """
@@ -95,7 +91,13 @@ class PlayerCache(object):
 			self.socket.close()
 			raise ProtocolError('Key "{0}" not provided by client'.format(key))
 		
-	def handle(self, player):
+	def handle_async(self):
+		""" Runs a greenlet to handle asyncronously. """
+		self.greenlet = gevent.Greenlet(run=self.handle)
+		self.greenlet.start()
+		self.greenlet.join()
+		
+	def handle(self):
 		""" Thread-handle for dispatching player actions. """
 		try:
 			while True:
@@ -118,7 +120,7 @@ class PlayerCache(object):
 			print('\t{0}\\\tPROTOCOL\t{1}'.format(name, e))
 		
 		# logout player
-		player.parent.logout(player)
+		self.parent.logout(player)
 		
 
 
@@ -126,7 +128,7 @@ class GameCache(object):
 	""" Thread-safe player dict using name as key. """
 	
 	def __init__(self, game):
-		self.lock    = threading.Lock()
+		self.lock    = lock.RLock()
 		self.gmurl   = game.admin.url
 		self.url     = game.url
 		self.players = dict() # name => player
@@ -270,13 +272,14 @@ class GameCache(object):
 		roll_id = None
 		
 		now = time.time()
+		
 		with db_session: 
 			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
 			g.timeid = now
 			
 			# roll dice
 			db.Roll(game=g, color=player.color, sides=sides, result=result, timeid=now)
-			
+		
 		# broadcast dice result
 		self.broadcast({
 			'OPID'    : 'ROLL',
@@ -472,7 +475,7 @@ class EngineCache(object):
 	""" Thread-safe game dict using gm/url as key. """
 	
 	def __init__(self):
-		self.lock  = threading.Lock()
+		self.lock  = lock.RLock()
 		self.games = dict()
 		
 	# --- cache implementation ----------------------------------------
@@ -496,7 +499,7 @@ class EngineCache(object):
 		
 	# --- websocket implementation ------------------------------------
 		
-	def accept(self, socket):
+	def listen(self, socket):
 		""" Handle new connection. """
 		# read name and color
 		raw = socket.receive()
@@ -507,9 +510,12 @@ class EngineCache(object):
 		# insert player
 		game_cache   = self.get(game=None, url=url)
 		player_cache = game_cache.get(name)
-		player_cache.listen(socket)
+		player_cache.socket = socket
 		game_cache.login(player_cache)
 		
+		# handle incomming data
+		# NOTE: needs to be done async, else db_session will block
+		player_cache.handle_async()
 
 
 def convertBytes(size):
