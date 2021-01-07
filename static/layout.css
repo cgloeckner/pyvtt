@@ -55,17 +55,19 @@ table.status > tbody > tr > td {
 	text-align: left;
 }
 
-span.imprint {   
+span.legalnotice {   
 	position: absolute;
 	right: 0;
 	bottom: 0;
 	z-index: 100;
+	padding: 5px;
 	
 	color: white;
 }
 
-span.imprint a {
+span.legalnotice a {
 	color: white;
+	padding: 5px;
 }
 
 div.form {
@@ -192,7 +194,7 @@ div.verticdropdown > div#historydrop {
 	
 	right: -105px;
 	
-	height: calc(100% - 30px);
+	height: calc(100% - 40px);
 	top: 15px;
 	
 	width: 120px;

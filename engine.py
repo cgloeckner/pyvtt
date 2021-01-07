@@ -546,7 +546,7 @@ class Engine(object):
 		self.local_gm    = False
 		self.localhost   = False
 		self.title       = 'PyVTT'
-		self.imprint     = None
+		self.links       = None
 		self.expire      = 3600 * 24 * 30 # default: 30d
 		self.patreon     = None # patreon settings
 		self.patreon_api = None # api instance
@@ -586,15 +586,14 @@ class Engine(object):
 		if not os.path.exists(settings_path):
 			# create default settings
 			settings = {
-				'title'       : self.title,
-				'imprint'     : self.imprint,
-				'expire'      : self.expire,
-				'listener'    : 'ip',
-				'domain'      : self.domain,
-				'port'        : self.port,
-				'socket'      : self.socket,
-				'ssl'         : self.ssl,
-				'patroen'     : self.patreon
+				'title'    : self.title,
+				'links'    : self.links,
+				'expire'   : self.expire,
+				'domain'   : self.domain,
+				'port'     : self.port,
+				'socket'   : self.socket,
+				'ssl'      : self.ssl,
+				'patroen'  : self.patreon
 			}
 			with open(settings_path, 'w') as h:
 				json.dump(settings, h, indent=4)
@@ -603,14 +602,14 @@ class Engine(object):
 			# load settings
 			with open(settings_path, 'r') as h:
 				settings = json.load(h)
-				self.title       = settings['title']
-				self.imprint     = settings['imprint']
-				self.expire      = settings['expire']
-				self.domain      = settings['domain']
-				self.port        = settings['port']
-				self.socket      = settings['socket']
-				self.ssl         = settings['ssl']
-				self.patreon     = settings['patreon']
+				self.title   = settings['title']
+				self.links   = settings['links']
+				self.expire  = settings['expire']
+				self.domain  = settings['domain']
+				self.port    = settings['port']
+				self.socket  = settings['socket']
+				self.ssl     = settings['ssl']
+				self.patreon = settings['patreon']
 			logging.info('Settings loaded')
 		
 		# show argv help

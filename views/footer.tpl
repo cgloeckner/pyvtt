@@ -1,9 +1,9 @@
 %import requests, json
 %import bottle
 
-<span class="imprint">
-%if engine.imprint is not None:
-	<a href="{{!engine.imprint['url']}}" target="_blank">{{engine.imprint['label']}}</a>
+<span class="legalnotice">
+%for data in engine.links:
+	<a href="{{!data['url']}}" target="_blank">{{data['label']}}</a>
 %end
 </span>
 
