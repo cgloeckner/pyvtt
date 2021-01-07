@@ -98,7 +98,16 @@ function showPlayer(name, uuid, color, country) {
 		flag = '<img src="https://www.countryflags.io/' + country + '/flat/16.png" />';
 	}
 	
-	$('#players').append('<span id="player_' + uuid + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');">' + flag + name + '</span>');
+	var kick = '';
+	var css = '';
+	if (is_gm && uuid != my_uuid) {
+		// add click event for kicking
+		kick = ' onClick="kickPlayer(\'' + game_url + '\', \'' + uuid + '\');"';
+		// add class to show kick-cursor
+		css  = 'kick';
+	}
+	
+	$('#players').append('<span id="player_' + uuid + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"' + kick + '>' + flag + ' ' + '<span class="' + css + '">' + name + '</span></span>');
 	players[name] = color;
 }
 

@@ -473,6 +473,10 @@ div.mapfooter > div#players > span.player {
 	color: black;
 }
 
+div.mapfooter > div#players > span.player > span.kick {
+	cursor: crosshair;
+}
+
 div.mapfooter > div#players > span.player > a {
 	pointer: hand;
 	text-decoration: none;

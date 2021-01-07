@@ -12,6 +12,9 @@ var history_dropdown = false; // roll history
 var timeid = 0;
 var full_update = true;
 var scene_id = 0;
+var is_gm = false;
+
+var my_uuid = '';
 
 /// Handle function for interaction via socket
 function onSocketMessage(event) {
@@ -55,6 +58,8 @@ function onSocketMessage(event) {
 }
 
 function onAccept(data) {
+	my_uuid = data['uuid'];
+	
 	// show all players
 	$.each(data.players, function(name, details) {
 		showPlayer(name, details.uuid, details.color, details.country); // uuid, color
@@ -155,7 +160,7 @@ function writeSocket(data) {
 }
 
 /// Handles login and triggers the game
-function login(event, gmname, url, websocket_url) {
+function login(event, gmname, url, websocket_url, as_gm) {
 	event.preventDefault();
 	
 	var playername  = $('#playername').val();
@@ -206,7 +211,9 @@ function login(event, gmname, url, websocket_url) {
 				
 				socket.onmessage = onSocketMessage;
 				
-				socket.onopen = function() {
+				socket.onopen = function() { 
+					is_gm = as_gm;
+					
 					start(gmname, url, playername, playercolor);
 				};
 				
@@ -224,6 +231,7 @@ function login(event, gmname, url, websocket_url) {
 					rolls             = []; 
 					copy_tokens       = [];
 					select_ids        = [];
+					is_gm             = false;
 					
 					$('#d4box')[0].innerHTML   = '';
 					$('#d6box')[0].innerHTML   = '';

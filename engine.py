@@ -171,6 +171,15 @@ class GameCache(object):
 		
 	# --- websocket implementation ------------------------------------
 		
+	def closeSocket(self, uuid):
+		""" Close single socket. """
+		with self.lock:
+			for name in self.players:
+				p = self.players[name]
+				if p.uuid == uuid:
+					p.socket.close()
+					return name
+		
 	def closeAllSockets(self):
 		""" Closes all sockets. """
 		with self.lock:
@@ -208,6 +217,7 @@ class GameCache(object):
 		
 		player.write({
 			'OPID'    : 'ACCEPT',
+			'uuid'    : player.uuid,
 			'players' : self.getData(),
 			'rolls'   : rolls,
 		}); 

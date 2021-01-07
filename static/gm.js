@@ -32,7 +32,17 @@ function registerGm(event) {
 }
 
 function kickPlayers(url) {
-	$.post(url='/vtt/kick-players/' + url);
+	var kick = confirm("KICK ALL PLAYERS?");
+	if (kick) {
+		$.post(url='/vtt/kick-players/' + url);
+	}
+}
+
+function kickPlayer(url, uuid) {
+	var kick = confirm("KICK THIS PLAYER?");
+	if (kick) {
+		$.post(url='/vtt/kick-player/' + url + '/' + uuid);
+	}
 }
 
 function deleteGame(url) {

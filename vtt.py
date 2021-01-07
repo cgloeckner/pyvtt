@@ -122,9 +122,9 @@ def gm_patreon():
 @get('/', apply=[asGm])
 @view('gm')
 def get_game_list():
-	gm = db.GM.loadFromSession(request)
-	if gm is None:
-		redirect('/vtt/join')
+	gm = db.GM.loadFromSession(request) 
+	# note: asGm guards this
+	
 	# refresh session
 	gm.refreshSession(response, request)
 	
@@ -151,10 +151,7 @@ def post_import_game(url):
 	
 	# check GM and url
 	gm = db.GM.loadFromSession(request) 
-	if gm is None:
-		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but has no session'.format(gm.name, gm.url, engine.getClientIp(request)))
-		status['error'] = 'RELOAD PAGE'
-		return status
+	# note: asGm guards this
 	
 	if not engine.verifyUrlSection(url):
 		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" is invalid'.format(gm.name, gm.url, engine.getClientIp(request), url))
@@ -199,8 +196,7 @@ def post_import_game(url):
 @get('/vtt/export-game/<url>', apply=[asGm])
 def export_game(url):
 	gm = db.GM.loadFromSession(request)
-	if gm is None:
-		redirect('/')
+	# note: asGm guards this
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
@@ -216,6 +212,7 @@ def export_game(url):
 @post('/vtt/kick-players/<url>', apply=[asGm])
 def kick_players(url):
 	gm = db.GM.loadFromSession(request)
+	# note: asGm guards this
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
@@ -226,10 +223,26 @@ def kick_players(url):
 	
 	engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 
+@post('/vtt/kick-player/<url>/<uuid>', apply=[asGm])
+def kick_player(url, uuid):
+	gm = db.GM.loadFromSession(request)
+	# note: asGm guards this
+	
+	# load game
+	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	
+	# fetch game cache and close sockets
+	game_cache = engine.cache.get(game)
+	name = game_cache.closeSocket(uuid)
+	
+	engine.logging.access('Player {0} ({1}) kicked from {2} by {3}'.format(name, uuid, game.getUrl(), engine.getClientIp(request)))
+
+
 @post('/vtt/delete-game/<url>', apply=[asGm])
 @view('games')
 def delete_game(url):
-	gm = db.GM.loadFromSession(request)
+	gm = db.GM.loadFromSession(request) 
+	# note: asGm guards this
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
@@ -256,7 +269,8 @@ def delete_game(url):
 @post('/vtt/create-scene/<url>', apply=[asGm])
 @view('scenes')
 def post_create_scene(url):
-	gm = db.GM.loadFromSession(request)
+	gm = db.GM.loadFromSession(request)  
+	# note: asGm guards this
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
@@ -274,7 +288,9 @@ def post_create_scene(url):
 @post('/vtt/activate-scene/<url>/<scene_id>', apply=[asGm])
 @view('scenes')
 def activate_scene(url, scene_id):
-	gm = db.GM.loadFromSession(request)
+	gm = db.GM.loadFromSession(request) 
+	# note: asGm guards this
+	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 	game.active = scene_id
@@ -292,7 +308,9 @@ def activate_scene(url, scene_id):
 @post('/vtt/delete-scene/<url>/<scene_id>', apply=[asGm]) 
 @view('scenes')
 def activate_scene(url, scene_id):
-	gm = db.GM.loadFromSession(request)
+	gm = db.GM.loadFromSession(request) 
+	# note: asGm guards this
+	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 
@@ -325,7 +343,9 @@ def activate_scene(url, scene_id):
 @post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm]) 
 @view('scenes')
 def duplicate_scene(url, scene_id):
-	gm = db.GM.loadFromSession(request)
+	gm = db.GM.loadFromSession(request)   
+	# note: asGm guards this
+	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
 	
