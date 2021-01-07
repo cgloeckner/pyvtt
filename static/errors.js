@@ -1,6 +1,8 @@
 /** Powered by PyVTT. Further information: https://github.com/cgloeckner/pyvtt **/
   
 function showError(msg) {
+	console.warn(msg);
+	
 	var error = $('#error');
 	error[0].innerHTML = msg;
 	if (error.css('display') == 'none') {

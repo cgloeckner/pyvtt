@@ -17,7 +17,7 @@ var scene_id = 0;
 function onSocketMessage(event) {
 	var data = JSON.parse(event.data);
 	if (!quiet) {
-		console.log(data);
+		console.info(data);
 	}
 	var opid = data.OPID;
 	
@@ -50,7 +50,7 @@ function onSocketMessage(event) {
 			onSelect(data);
 			break;
 		default:
-			console.log('Error: Invalid OpID');
+			console.error('Invalid OpID "' + opid + '"');
 	};
 }
 
@@ -229,6 +229,8 @@ function login(event, gmname, url, websocket_url) {
 					});
 				};
 			}
+		}, error: function(response, msg) {
+			console.error(msg);
 		}
 	});
 }

@@ -12,8 +12,7 @@ function registerGm(event) {
 		data: {
 			'gmname' : gmname
 		},
-		success: function(response) {                
-			console.log('WTF', response);
+		success: function(response) {     
 			// wait for sanizized gm url (as confirm)
 			if (response['url'] == null) {
 				showError(response['error']);
@@ -26,6 +25,8 @@ function registerGm(event) {
 				// redirect
 				window.location = '/';
 			}
+		}, error: function(response, msg) {
+			console.error(msg);
 		}
 	});
 }
@@ -112,6 +113,8 @@ function GmUploadDrop(event, url_regex, gm_url) {
 					window.location = '/' + response['url'];
 				}
 			}
+		}, error: function(response, msg) {
+			console.error(msg);
 		}
 	});
 }

@@ -266,6 +266,8 @@ function onDrop(event) {
 		success: function(response) {
 			// reset uploadqueue
 			$('#uploadqueue').val("");
+		}, error: function(response, msg) {
+			console.error(msg);
 		}
 	});
 }
@@ -656,36 +658,7 @@ function onMove(event) {
 
 /// Event handle mouse wheel scrolling
 function onWheel(event) {
-	/*
-	var token = selectToken(mouse_x, mouse_y);
-	
-	if (token != null) {
-		// handle token rotation
-		var changes = [];
-		$.each(select_ids, function(index, id) {
-			var token = tokens[id];
-			if (token.locked) {
-				return;
-			}
-
-			// handle rotation
-			token.rotate = token.rotate - 5 * event.deltaY;
-			if (token.rotate >= 360.0 || token.rotate <= -360.0) {
-				token.rotate = 0.0;
-			}
-			
-			changes.push({
-				'id'     : id,
-				'rotate' : token.rotate
-			});
-		});
-		
-		writeSocket({
-			'OPID'    : 'UPDATE',
-			'changes' : changes
-		});
-		
-	} else */ if (zooming) {
+	if (zooming) {
 		// modify zoom
 		if (event.deltaY > 0) {
 			// zoom out
