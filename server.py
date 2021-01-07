@@ -3,6 +3,7 @@
 
 import os# , smtplib
 import patreon, urllib
+import sys, logging
 
 from bottle import request, ServerAdapter
 
@@ -183,3 +184,47 @@ class PatreonApi(object):
 		result['sid'] = None
 		return result
 
+
+class LoggingApi(object):
+	
+	def __init__(self, info_file, error_file, access_file):
+		self.log_format = logging.Formatter('[%(asctime)s at %(module)s/%(filename)s:%(lineno)d] %(message)s')
+		
+		# setup info logger
+		self.info_filehandler = logging.FileHandler(info_file, mode='a')
+		self.info_filehandler.setFormatter(self.log_format)
+		
+		self.info_stdouthandler = logging.StreamHandler(sys.stdout)
+		self.info_stdouthandler.setFormatter(self.log_format)
+		
+		self.info_logger = logging.getLogger('info_log')
+		self.info_logger.setLevel(logging.INFO)
+		self.info_logger.addHandler(self.info_filehandler)
+		self.info_logger.addHandler(self.info_stdouthandler)
+		
+		# setup error logger
+		self.error_filehandler = logging.FileHandler(error_file, mode='a')
+		self.error_filehandler.setFormatter(self.log_format)
+		
+		self.error_logger = logging.getLogger('error_log')   
+		self.error_logger.setLevel(logging.ERROR)
+		self.error_logger.addHandler(self.error_filehandler)
+		
+		# setup access logger
+		self.access_filehandler = logging.FileHandler(access_file, mode='a')
+		self.access_filehandler.setFormatter(self.log_format)
+		
+		self.access_logger = logging.getLogger('access_log')
+		self.access_logger.setLevel(logging.INFO)
+		self.access_logger.addHandler(self.access_filehandler)
+		
+		# link logging handles
+		self.info   = self.info_logger.info
+		self.error  = self.error_logger.error
+		self.access = self.access_logger.info
+		
+		boot = '{0} {1} {0}'.format('=' * 15, 'STARTED')
+		self.info(boot)
+		self.error(boot)
+		self.access(boot)
+	

@@ -7,7 +7,7 @@ import os, json, time, sys, psutil, random
 
 from pony import orm
 from orm import db, db_session, Token, Game
-from engine import engine, Engine, logging
+from engine import engine, Engine
 
 
 
@@ -43,23 +43,28 @@ def post_gm_login():
 	if engine.patreon_api is not None:
 		# not allowed if patreon-login is enabled
 		status['error'] = 'FORBIDDEN'
+		engine.logging.access('Failed GM login by {0}: needs to use patreon.'.format(engine.getClientIp(request)))
 		return status
 	
 	# test gm name (also as url)
-	if not engine.verifyUrlSection(request.forms.gmname):
+	gmame = request.forms.gmname
+	if not engine.verifyUrlSection(gmname):
 		# contains invalid characters   
 		status['error'] = 'NO SPECIAL CHARS OR SPACES'
+		engine.logging.access('Failed GM login by {0}: invalid name "{1}".'.format(engine.getClientIp(request)), gmname)
 		return status
 		
-	name = request.forms.gmname[:20].lower().strip()
+	name = gmname[:20].lower().strip()
 	if name in engine.gm_blacklist:
 		# blacklisted name
-		status['error'] = 'RESERVED NAME'
+		status['error'] = 'RESERVED NAME'  
+		engine.logging.access('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request)), gmname)
 		return status
 		
 	if len(db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
 		# collision
-		status['error'] = 'ALREADY IN USE'
+		status['error'] = 'ALREADY IN USE'   
+		engine.logging.access('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request)), gmname)
 		return status
 	
 	# create new GM (use GM name as display name and URL)
@@ -69,6 +74,8 @@ def post_gm_login():
 	
 	expires = time.time() + engine.expire
 	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
+	
+	engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
 	
 	db.commit()
 	status['url'] = gm.url
@@ -99,12 +106,15 @@ def gm_patreon():
 		)
 		gm.postSetup()
 		
+		engine.logging.access('GM created using patreon with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
+		
 	else:
 		# create new session for already existing GM
 		gm.sid = session['sid']
+		
+	gm.refreshSession(response, request)
 	
-	expires = time.time() + engine.expire
-	response.set_cookie('session', gm.sid, path='/', expires=expires, secure=engine.ssl)
+	engine.logging.access('GM name="{0}" url={1} session refreshed using patreon by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
 	
 	db.commit()
 	redirect('/')
@@ -116,7 +126,9 @@ def get_game_list():
 	if gm is None:
 		redirect('/vtt/join')
 	# refresh session
-	gm.refreshSession(response)
+	gm.refreshSession(response, request)
+	
+	engine.logging.access('GM name="{0}" url={1} session refreshed by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
 	
 	server = ''
 	if engine.local_gm:
@@ -140,34 +152,46 @@ def post_import_game(url):
 	# check GM and url
 	gm = db.GM.loadFromSession(request) 
 	if gm is None:
+		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but has no session'.format(gm.name, gm.url, engine.getClientIp(request)))
 		status['error'] = 'RELOAD PAGE'
 		return status
 	
 	if not engine.verifyUrlSection(url):
+		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" is invalid'.format(gm.name, gm.url, engine.getClientIp(request)), url)
 		status['error'] = 'NO SPECIAL CHARS OR SPACES'
 		return status
 	
 	if db.Game.select(lambda g: g.admin == gm and g.url == url).first() is not None:
+		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" already in use'.format(gm.name, gm.url, engine.getClientIp(request)), url)
 		status['error'] = 'ALREADY IN USE'
 		return status
 	
 	# upload file
 	files = request.files.getall('file')
 	if len(files) != 1:
+		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but uploaded {3} files'.format(gm.name, gm.url, engine.getClientIp(request)), len(files))
 		status['error'] = 'ONE FILE AT ONCE'
 		return status
 	
 	status['url_ok'] = True
 	
 	fname = files[0].filename
-	if fname.endswith('zip'):
+	is_zip = fname.endswith('zip')
+	if is_zip:
 		game = db.Game.fromZip(gm, url, files[0])
 	else:
 		game = db.Game.fromImage(gm, url, files[0])
 	
 	status['file_ok'] = game is not None
 	if not status['file_ok']:
+		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but uploaded neither an image nor a zip file'.format(gm.name, gm.url, engine.getClientIp(request)), url)
 		status['error'] = 'USE AN IMAGE FILE'
+		return status
+	
+	if is_zip:
+		engine.logging.access('Game {0} imported from "{1}" by {2}'.format(game.getUrl(), fname, engine.getClientIp(request)))
+	else:
+		engine.logging.access('Game {0} created from "{1}" by {2}'.format(game.getUrl(), fname, engine.getClientIp(request)))
 	
 	status['url'] = game.getUrl();
 	return status
@@ -183,6 +207,8 @@ def export_game(url):
 	
 	# export game to zip-file
 	zip_file, zip_path = game.toZip()
+	 
+	engine.logging.access('Game {0} exported by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 	
 	# offer file for downloading
 	return static_file(zip_file, root=zip_path, download=zip_file, mimetype='application/zip')
@@ -197,6 +223,8 @@ def kick_players(url):
 	# fetch game cache and close sockets
 	game_cache = engine.cache.get(game)
 	game_cache.closeAllSockets()
+	
+	engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 
 @post('/vtt/delete-game/<url>', apply=[asGm])
 @view('games')
@@ -216,6 +244,8 @@ def delete_game(url):
 	game.active = None
 	game.clear()
 	game.delete()
+	
+	engine.logging.access('Game {0} deleted by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 	
 	server = ''
 	if engine.local_gm:
@@ -237,6 +267,8 @@ def post_create_scene(url):
 	
 	game.active = scene.id
 	
+	engine.logging.access('Game {0} got a new scene by {1}'.format(game.getUrl(), engine.getClientIp(request)))
+	
 	return dict(engine=engine, game=game)
 
 @post('/vtt/activate-scene/<url>/<scene_id>', apply=[asGm])
@@ -252,6 +284,8 @@ def activate_scene(url, scene_id):
 	# broadcase scene switch to all players
 	game_cache = engine.cache.get(game)
 	game_cache.broadcastSceneSwitch(game)
+	
+	engine.logging.access('Game {0} switched scene to #{1} by {2}'.format(game.getUrl(), scene_id, engine.getClientIp(request)))
 	
 	return dict(engine=engine, game=game)
 
@@ -284,6 +318,8 @@ def activate_scene(url, scene_id):
 	game_cache = engine.cache.get(game)
 	game_cache.broadcastSceneSwitch(game)
 	
+	engine.logging.access('Game {0} got scene #{1} deleted by {1}'.format(game.getUrl(), scene_id, engine.getClientIp(request)))
+	
 	return dict(engine=engine, game=game)
 	
 @post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm]) 
@@ -314,6 +350,8 @@ def duplicate_scene(url, scene_id):
 	game_cache = engine.cache.get(game)
 	game_cache.broadcastSceneSwitch(game)
 	
+	engine.logging.access('Game {0} got clone of scene #{1} as #{2} by {1}'.format(game.getUrl(), scene_id, clone.id, engine.getClientIp(request)))
+	
 	return dict(engine=engine, game=game)
 
 # --- playing routes ----------------------------------------------------------
@@ -337,6 +375,7 @@ def static_token(gmurl, url, fname):
 @get('/websocket')
 def accept_websocket():
 	socket = request.environ.get('wsgi.websocket')
+	
 	if socket is not None:
 		engine.cache.accept(socket)
 	
@@ -356,6 +395,7 @@ def set_player_name(gmurl, url):
 	playercolor = request.forms.get('playercolor')
 	
 	if playername == '':
+		engine.logging.access('Player tried to login {0} by {1}, but did not provide a username.'.format(game.getUrl(), engine.getClientIp(request)))
 		result['error'] = 'PLEASE ENTER A NAME'
 		return result
 	
@@ -380,6 +420,7 @@ def set_player_name(gmurl, url):
 		game_cache = engine.cache.get(game)
 		game_cache.insert(playername, playercolor)
 	except KeyError:
+		engine.logging.access('Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.getUrl(), engine.getClientIp(request)), playername)
 		result['error'] = 'ALREADY IN USE'
 		return result
 	
@@ -387,6 +428,8 @@ def set_player_name(gmurl, url):
 	expire = int(time.time() + engine.expire)
 	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire, secure=engine.ssl)
 	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire, secure=engine.ssl)
+	
+	engine.logging.access('Player logged in to {0} by {1}.'.format(game.getUrl(), engine.getClientIp(request)))
 	
 	result['playername']  = playername
 	result['playercolor'] = playercolor
@@ -431,7 +474,9 @@ def post_image_upload(gmurl, url, posx, posy, default_size):
 	game  = db.Game.select(lambda g: g.admin.url == gmurl and g.url == url).first()
 	files = request.files.getall('file[]')
 	for handle in files:
-		urls.append(game.upload(handle))
+		url = game.upload(handle)
+		urls.append(url)
+		engine.logging.access('Image upload {0} by {1}'.format(url, engine.getClientIp(request)))
 	
 	# create tokens and broadcast creation
 	game_cache = engine.cache.get(game)

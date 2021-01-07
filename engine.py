@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, threading, logging, time, requests, uuid, json, re, random
+import os, sys, pathlib, hashlib, threading, time, requests, uuid, json, re, random
 
 import bottle 
 from geventwebsocket.exceptions import WebSocketError
 
 from orm import db, db_session
-from server import VttServer, PatreonApi # , EmailApi
+from server import VttServer, PatreonApi, LoggingApi # , EmailApi
 
 
 __author__ = "Christian Glöckner"
@@ -572,14 +572,13 @@ class Engine(object):
 		if self.localhost:
 			assert(not self.local_gm)
 		
-		# setup logging
-		log_format = '[%(asctime)s] %(message)s'
-		if self.debug:
-			logging.basicConfig(stream=sys.stdout, format=log_format, level=logging.DEBUG)
-		else:
-			logging.basicConfig(filename=self.data_dir / 'pyvtt.log', format=log_format, level=logging.INFO)
+		self.logging = LoggingApi(
+			info_file   = self.data_dir / 'info.log',
+			error_file  = self.data_dir / 'error.log',
+			access_file = self.data_dir / 'access.log'
+		)
 		
-		logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))
+		self.logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))
 		
 		# handle settings
 		settings_path = self.data_dir / 'settings.json'
@@ -597,7 +596,7 @@ class Engine(object):
 			}
 			with open(settings_path, 'w') as h:
 				json.dump(settings, h, indent=4)
-				logging.warn('Created default settings file')
+				self.logging.info('Created default settings file')
 		else:
 			# load settings
 			with open(settings_path, 'r') as h:
@@ -610,7 +609,7 @@ class Engine(object):
 				self.socket  = settings['socket']
 				self.ssl     = settings['ssl']
 				self.patreon = settings['patreon']
-			logging.info('Settings loaded')
+			self.logging.info('Settings loaded')
 		
 		# show argv help
 		if '--help' in argv:
@@ -632,11 +631,11 @@ class Engine(object):
 			# overwrite domain and host to localhost
 			self.host   = '127.0.0.1'
 			self.domain = 'localhost'
-			logging.info('Overwriting connections to localhost')
+			self.logging.info('Overwriting connections to localhost')
 		elif self.local_gm or self.domain == '':
 			# overwrite domain with public ip
 			self.domain = requests.get('https://api.ipify.org').text
-			logging.info('Overwriting Domain by Public IP: {0}'.format(self.domain))
+			self.logging.info('Overwriting Domain by Public IP: {0}'.format(self.domain))
 		
 		# load patreon API
 		if self.patreon is not None:
@@ -663,7 +662,7 @@ class Engine(object):
 				g.makeMd5s()         
 				self.cache.insert(g)
 			t = time.time() - s
-			logging.info('Image checksums and threading locks created within {0}s'.format(t))
+			self.logging.info('Image checksums and threading locks created within {0}s'.format(t))
 		
 	def run(self):
 		certfile = ''

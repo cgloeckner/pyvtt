@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, pathlib, threading, logging, time, uuid, tempfile, shutil, zipfile, json, math
+import os, pathlib, threading, time, uuid, tempfile, shutil, zipfile, json, math
 
 from pony.orm import *
 
@@ -223,7 +223,7 @@ class Game(db.Entity):
 		
 	def cleanup(self):
 		""" Cleanup game's unused image data. """   
-		logging.info('\tCleaning {0}'.format(self.url))
+		engine.logging.info('\tCleaning {0}'.format(self.url))
 		
 		relevant = self.getAbandonedImages()
 		with engine.locks[self.admin.url]: # make IO access safe
@@ -232,7 +232,7 @@ class Game(db.Entity):
 		
 	def clear(self):
 		""" Remove this game from disk. """
-		logging.info('\tRemoving {0}'.format(self.url))
+		engine.logging.info('\tRemoving {0}'.format(self.url))
 		
 		img_path = self.getImagePath()
 		with engine.locks[self.admin.url]: # make IO access safe
@@ -331,7 +331,7 @@ class Game(db.Entity):
 		game.active = scene.id
 		
 		# set image as background
-		token_url = game.upload(handle)
+		token_url = game.upload(handle, request)
 		if token_url is None:
 			# rollback
 			game.delete()
@@ -405,7 +405,7 @@ class Game(db.Entity):
 
 class GM(db.Entity):
 	id        = PrimaryKey(int, auto=True)
-	name      = Required(str, unique=True)
+	name      = Required(str)
 	url       = Required(str, unique=True)
 	sid       = Required(str, unique=True)
 	timeid    = Optional(float) # dirtyflag
@@ -435,7 +435,7 @@ class GM(db.Entity):
 		
 	def cleanup(self, now):
 		""" Cleanup GM's expired games. """
-		logging.info('Cleaning GM {0}'.format(self.name))
+		engine.logging.info('Cleaning GM {0}'.format(self.name))
 		
 		for g in self.games:
 			# query timeid of active scene
@@ -450,7 +450,7 @@ class GM(db.Entity):
 		
 	def clear(self):
 		""" Remove this GM from disk. """  
-		logging.info('Removing GM {0}'.format(self.name))
+		engine.logging.info('Removing GM {0}'.format(self.name))
 		
 		# remove GM's directory
 		root_path = self.getBasePath()
@@ -467,7 +467,7 @@ class GM(db.Entity):
 	def getExportPath(self):
 		return self.getBasePath() / 'export'
 		
-	def refreshSession(self, response):
+	def refreshSession(self, response, request):
 		""" Refresh session id. """
 		now = time.time()
 		self.timeid = now
