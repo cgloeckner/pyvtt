@@ -51,20 +51,20 @@ def post_gm_login():
 	if not engine.verifyUrlSection(gmname):
 		# contains invalid characters   
 		status['error'] = 'NO SPECIAL CHARS OR SPACES'
-		engine.logging.access('Failed GM login by {0}: invalid name "{1}".'.format(engine.getClientIp(request)), gmname)
+		engine.logging.access('Failed GM login by {0}: invalid name "{1}".'.format(engine.getClientIp(request), gmname))
 		return status
 		
 	name = gmname[:20].lower().strip()
 	if name in engine.gm_blacklist:
 		# blacklisted name
 		status['error'] = 'RESERVED NAME'  
-		engine.logging.access('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request)), gmname)
+		engine.logging.access('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request), gmname))
 		return status
 		
 	if len(db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
 		# collision
 		status['error'] = 'ALREADY IN USE'   
-		engine.logging.access('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request)), gmname)
+		engine.logging.access('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request), gmname))
 		return status
 	
 	# create new GM (use GM name as display name and URL)
@@ -157,19 +157,19 @@ def post_import_game(url):
 		return status
 	
 	if not engine.verifyUrlSection(url):
-		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" is invalid'.format(gm.name, gm.url, engine.getClientIp(request)), url)
+		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" is invalid'.format(gm.name, gm.url, engine.getClientIp(request), url))
 		status['error'] = 'NO SPECIAL CHARS OR SPACES'
 		return status
 	
 	if db.Game.select(lambda g: g.admin == gm and g.url == url).first() is not None:
-		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" already in use'.format(gm.name, gm.url, engine.getClientIp(request)), url)
+		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" already in use'.format(gm.name, gm.url, engine.getClientIp(request), url))
 		status['error'] = 'ALREADY IN USE'
 		return status
 	
 	# upload file
 	files = request.files.getall('file')
 	if len(files) != 1:
-		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but uploaded {3} files'.format(gm.name, gm.url, engine.getClientIp(request)), len(files))
+		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but uploaded {3} files'.format(gm.name, gm.url, engine.getClientIp(request), len(files)))
 		status['error'] = 'ONE FILE AT ONCE'
 		return status
 	
@@ -184,7 +184,7 @@ def post_import_game(url):
 	
 	status['file_ok'] = game is not None
 	if not status['file_ok']:
-		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but uploaded neither an image nor a zip file'.format(gm.name, gm.url, engine.getClientIp(request)), url)
+		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but uploaded neither an image nor a zip file'.format(gm.name, gm.url, engine.getClientIp(request), url))
 		status['error'] = 'USE AN IMAGE FILE'
 		return status
 	
@@ -318,7 +318,7 @@ def activate_scene(url, scene_id):
 	game_cache = engine.cache.get(game)
 	game_cache.broadcastSceneSwitch(game)
 	
-	engine.logging.access('Game {0} got scene #{1} deleted by {1}'.format(game.getUrl(), scene_id, engine.getClientIp(request)))
+	engine.logging.access('Game {0} got scene #{1} deleted by {2}'.format(game.getUrl(), scene_id, engine.getClientIp(request)))
 	
 	return dict(engine=engine, game=game)
 	
@@ -420,7 +420,7 @@ def set_player_name(gmurl, url):
 		game_cache = engine.cache.get(game)
 		game_cache.insert(playername, playercolor)
 	except KeyError:
-		engine.logging.access('Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.getUrl(), engine.getClientIp(request)), playername)
+		engine.logging.access('Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.getUrl(), engine.getClientIp(request), playername))
 		result['error'] = 'ALREADY IN USE'
 		return result
 	
