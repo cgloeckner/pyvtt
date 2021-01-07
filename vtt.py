@@ -7,26 +7,12 @@ import os, json, time, sys, psutil, random
 
 from pony import orm
 from orm import db, db_session, Token, Game
-from engine import engine, logging
+from engine import engine, Engine, logging
+
 
 
 __author__ = "Christian Glöckner"
 
-
-
-# setup database connection
-db.bind('sqlite', str(engine.data_dir / 'data.db'), create_db=True)
-db.generate_mapping(create_tables=True)
-
-
-# setup db_session to all routes
-app = default_app()
-app.catchall = not engine.debug
-app.install(db_session)
-
-
-# setup engine with cli args and db session
-engine.setup(sys.argv) 
 
 
 # --- GM routes ---------------------------------------------------------------
@@ -484,6 +470,9 @@ def status_report():
 # --- setup stuff -------------------------------------------------------------
 
 if __name__ == '__main__':
+	# setup engine with cli args and db session
+	engine.setup(sys.argv) 
+	
 	try:
 		engine.run()
 	except KeyboardInterrupt:

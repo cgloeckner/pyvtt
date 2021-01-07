@@ -638,6 +638,22 @@ class Engine(object):
 			self.domain = requests.get('https://api.ipify.org').text
 			logging.info('Overwriting Domain by Public IP: {0}'.format(self.domain))
 		
+		# load patreon API
+		if self.patreon is not None:
+			protocol = 'https' if self.ssl else 'http'
+			host_callback = '{0}://{1}:{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), engine.port)
+			# create patreon query API
+			self.patreon_api = PatreonApi(host_callback=host_callback, **self.patreon)
+		
+		# setup database connection
+		db.bind('sqlite', str(self.data_dir / 'data.db'), create_db=True)
+		db.generate_mapping(create_tables=True)
+		
+		# setup db_session to all routes
+		app = bottle.default_app()
+		app.catchall = not self.debug
+		app.install(db_session)
+		
 		# prepare engine cache
 		with db_session:
 			s = time.time()
@@ -648,13 +664,6 @@ class Engine(object):
 				self.cache.insert(g)
 			t = time.time() - s
 			logging.info('Image checksums and threading locks created within {0}s'.format(t))
-		
-		# load patreon API
-		if self.patreon is not None:
-			protocol = 'https' if self.ssl else 'http'
-			host_callback = '{0}://{1}:{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), engine.port)
-			# create patreon query API
-			self.patreon_api = PatreonApi(host_callback=host_callback, **self.patreon)
 		
 	def run(self):
 		certfile = ''
@@ -738,6 +747,8 @@ class Engine(object):
 						scene.delete()
 					game.delete()
 				gm.delete()
-		
+
+
 engine = Engine()
+
 
