@@ -285,8 +285,6 @@ def post_create_scene(url):
 	scene = db.Scene(game=game)
 	db.commit()
 	
-	game.active = scene.id
-	
 	engine.logging.access('Game {0} got a new scene by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 	
 	return dict(engine=engine, game=game)

@@ -243,7 +243,7 @@ function login(event, gmname, url, websocket_url, as_gm) {
 					
 					// return to login screen
 					$('#login').fadeIn(1000, 0.0, function() {
-						alert('CONNECTION LOST');
+						showError('CONNECTION LOST');
 					});
 				};
 			}

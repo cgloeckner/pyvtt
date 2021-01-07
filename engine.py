@@ -341,13 +341,14 @@ class GameCache(object):
 		with db_session: 
 			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first() 
 			g.timeid = now
+			s = db.Scene.select(lambda s: s.id == g.active).first()
 			
 			# iterate provided tokens
 			for k, tid in enumerate(ids):
 				t = db.Token.select(lambda t: t.id == tid).first()
 				# clone token
 				pos = db.Token.getPosByDegree((posx, posy), k, len(ids))
-				t = db.Token(scene=scene, url=t.url, posx=pos[0], posy=pos[1],
+				t = db.Token(scene=s, url=t.url, posx=pos[0], posy=pos[1],
 					zorder=t.zorder, size=t.size, rotate=t.rotate,
 					flipx=t.flipx, timeid=now)
 				

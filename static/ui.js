@@ -135,14 +135,16 @@ function Roll(sides, playername, result) {
 function addRoll(sides, result, color, recent) {
 	// create dice result
 	var container = $('#d' + sides + 'box');
-	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + '); display: none';
-	var span = '<span style="' + css + '">' + result + '</span>';
+	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
+	var his_span = '<span style="' + css + '">' + result + '</span>';
+	css += ' display: none;';
+	var box_span = '<span style="' + css + '">' + result + '</span>';
 	
 	if (recent) { 
-		container.prepend(span);
+		container.prepend(box_span);
 		
 		// prepare automatic cleanup
-		var dom_span = container.children(':first-child')
+		var dom_span = container.children(':first-child');
 		if (result == 1 || result == sides) {
 			dom_span.addClass('natroll');
 		}
@@ -153,7 +155,9 @@ function addRoll(sides, result, color, recent) {
 	
 	// also add to dice history
 	var img = '<img src="/static/d' + sides + '.png" draggable="false" />';
-	$('#historydrop').prepend('<div>' + img + span + '</div>');
+	$('#historydrop').prepend('<div style="display: none">' + img + his_span + '</div>');
+	var other_dom_span = $('#historydrop').children(':first-child');
+	other_dom_span.delay(dice_shake).fadeIn(1000, function() {});
 	
 	// and show history
 	$('#historydrop').show();

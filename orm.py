@@ -331,7 +331,7 @@ class Game(db.Entity):
 		game.active = scene.id
 		
 		# set image as background
-		token_url = game.upload(handle, request)
+		token_url = game.upload(handle)
 		if token_url is None:
 			# rollback
 			game.delete()
