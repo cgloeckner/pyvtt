@@ -3,11 +3,11 @@
 from gevent import monkey; monkey.patch_all()
 from bottle import *
 
-import os, json, time, sys, psutil, random
+import os, json, time, sys, psutil, random, subprocess, requests
 
 from pony import orm
 from orm import db, db_session, Token, Game
-from engine import engine, Engine
+from engine import engine, Engine, PlayerCache
 
 
 
@@ -521,30 +521,42 @@ def error401(error):
 def error404(error):
 	return dict(engine=engine)
 
-@get('/status')
-@view('status')
+@get('/vtt/status')
 def status_report():
-	data = dict()  
-	t = time.time()
-	data['cpu_load']    = '{0}%'.format(psutil.cpu_percent())
-	data['memory_load'] = '{0}%'.format(psutil.virtual_memory().percent)
+	pid = os.getpid()
+	data = dict()
 	
-	size, prefix = engine.getDatabaseSize()
-	data['db_size']     = '{0} {1}B'.format(size, prefix)
+	# query cpu load
+	ret = subprocess.run(["ps", "-p", str(pid), "-o", "%cpu"], capture_output=True)
+	val = ret.stdout.decode('utf-8').split('\n')[1].strip()
+	data['cpu'] = float(val)
 	
-	size, prefix = engine.getImageSizes()
-	data['img_size']    = '{0} {1}B'.format(size, prefix)
+	# query memory load
+	ret = subprocess.run(["ps", "-p", str(pid), "-o", "%mem"], capture_output=True)
+	val = ret.stdout.decode('utf-8').split('\n')[1].strip()
+	data['memory'] = float(val)
 	
-	data['num_gms']     = orm.count(db.GM.select())
-	data['num_games']   = orm.count(db.Game.select())
-	data['num_scenes']  = orm.count(db.Scene.select())
-	data['num_tokens']  = orm.count(db.Token.select())
-	data['num_rolls']   = orm.count(db.Roll.select())
+	# query number of players
 	data['num_players'] = PlayerCache.instance_count
-	data['gen_time']    = time.time() - t
 	
-	return dict(engine=engine, data=data)
+	return data
 
+@get('/vtt/query/<index:int>')
+def status_query(index):
+	# ask server
+	host = engine.shards[index]
+	try:
+		return requests.get(host + '/vtt/status').text;
+	except requests.exceptions.ConnectionError:
+		engine.logging.error('Server {0} seems to be offline'.format(host))
+		return None
+
+@get('/vtt/shard')
+@view('shard')
+def shard_list():
+	protocol = 'https' if engine.ssl else 'http'
+	own = '{0}://{1}:{2}'.format(protocol, engine.getDomain(), engine.port)
+	return dict(engine=engine, own=own)
 
 # --- setup stuff -------------------------------------------------------------
 

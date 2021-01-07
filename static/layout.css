@@ -48,11 +48,11 @@ p {
 
 table.status > tbody > tr > th,
 table.status > tbody > tr > td {
-	width: 150px;
+	width: 70px;
 }
 
-table.status > tbody > tr > td {
-	text-align: left;
+table.status > tbody > tr > td > a {
+	color: white;
 }
 
 span.legalnotice {   

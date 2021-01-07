@@ -563,9 +563,10 @@ class Engine(object):
 		self.debug  = False
 		self.quiet  = False
 		self.ssl    = False
+		self.shards = []
 		
 		# blacklist for GM names and game URLs
-		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'status', 'websocket']
+		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'websocket']
 		self.url_regex    = '^[A-Za-z0-9_\-.]+$'
 		
 		self.local_gm    = False
@@ -612,6 +613,7 @@ class Engine(object):
 			settings = {
 				'title'    : self.title,
 				'links'    : self.links,
+				'shards'   : self.shards,
 				'expire'   : self.expire,
 				'domain'   : self.domain,
 				'port'     : self.port,
@@ -628,6 +630,7 @@ class Engine(object):
 				settings = json.load(h)
 				self.title   = settings['title']
 				self.links   = settings['links']
+				self.shards  = settings['shards']
 				self.expire  = settings['expire']
 				self.domain  = settings['domain']
 				self.port    = settings['port']
