@@ -12,6 +12,8 @@ var grabbed       = false; // determines whether grabbed or not
 var select_from_x = null;
 var select_from_y = null;
 
+var dice_shake = 750; // ms for shaking animation
+
 var zooming = true; // DEBUG switch for enabling the experimental feature
 
 
@@ -133,7 +135,7 @@ function Roll(sides, playername, result) {
 function addRoll(sides, result, color, recent) {
 	// create dice result
 	var container = $('#d' + sides + 'box');
-	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
+	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + '); display: none';
 	var span = '<span style="' + css + '">' + result + '</span>';
 	
 	if (recent) { 
@@ -144,7 +146,9 @@ function addRoll(sides, result, color, recent) {
 		if (result == 1 || result == sides) {
 			dom_span.addClass('natroll');
 		}
-		dom_span.delay(roll_timeout).fadeOut(5000, function() { this.remove(); });
+		dom_span.delay(dice_shake).fadeIn(100, function() {
+			dom_span.delay(roll_timeout).fadeOut(5000, function() { this.remove(); });
+		});
 	}
 	
 	// also add to dice history
@@ -693,7 +697,7 @@ function rollDice(sides) {
 		'sides' : sides
 	});
 	
-	setTimeout(function() {	$('#d' + sides).removeClass('shake'); }, 500);
+	setTimeout(function() {	$('#d' + sides).removeClass('shake'); }, dice_shake);
 }
 
 /// Event handle to select all tokens
