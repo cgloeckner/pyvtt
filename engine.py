@@ -269,11 +269,11 @@ class GameCache(object):
 		result = random.randrange(1, sides+1)
 		roll_id = None
 		
+		now = time.time()
 		with db_session: 
 			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
-			# update active scene's timeid
-			scene = db.Scene.select(lambda s: s.id == g.active).first()
-			scene.timeid = now
+			g.timeid = now
+			
 			# roll dice
 			db.Roll(game=g, color=player.color, sides=sides, result=result, timeid=now)
 			
@@ -306,9 +306,12 @@ class GameCache(object):
 		width  = data['width']
 		height = data['height']
 		
+		now = time.time()
 		# query inside given rectangle
 		with db_session:
 			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
+			g.timeid = now
+			
 			s = db.Scene.select(lambda s: s.id == g.active).first()
 			token_ids = list()
 			for t in db.Token.select(lambda t: t.scene == s and left <= t.posx and t.posx <= left + width and top <= t.posy and t.posy <= top + height): 
@@ -336,10 +339,8 @@ class GameCache(object):
 		tokens = list()
 		now = time.time()
 		with db_session: 
-			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
-			# update active scene's timeid
-			scene = db.Scene.select(lambda s: s.id == g.active).first()
-			scene.timeid = now
+			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first() 
+			g.timeid = now
 			
 			# iterate provided tokens
 			for k, tid in enumerate(ids):
@@ -367,9 +368,7 @@ class GameCache(object):
 		now = time.time()
 		with db_session:
 			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
-			# update active scene's timeid
-			scene = db.Scene.select(lambda s: s.id == g.active).first()
-			scene.timeid = now
+			g.timeid = now
 			
 			# iterate provided tokens
 			for data in changes:
@@ -397,6 +396,8 @@ class GameCache(object):
 		tokens = list()
 		with db_session:
 			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
+			g.timeid = now
+			
 			s = db.Scene.select(lambda s: s.id == g.active).first()
 			
 			for k, url in enumerate(urls):
@@ -443,8 +444,11 @@ class GameCache(object):
 		# fetch all changed tokens
 		all_data = list()    
 		
+		now = time.time()
 		with db_session:
 			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
+			g.timeid = now
+			
 			for t in db.Token.select(lambda t: t.scene.id == g.active and t.timeid >= since):
 				all_data.append(t.to_dict())
 		

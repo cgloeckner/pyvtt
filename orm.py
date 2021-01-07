@@ -84,7 +84,6 @@ class Token(db.Entity):
 class Scene(db.Entity):
 	id      = PrimaryKey(int, auto=True)
 	game    = Required("Game")
-	timeid  = Required(float, default=0.0) # keeps time for dirtyflag on tokens
 	tokens  = Set("Token", cascade_delete=True, reverse="scene") # forward deletion to tokens
 	backing = Optional("Token", reverse="back") # background token
 
@@ -97,7 +96,7 @@ class Roll(db.Entity):
 	color  = Required(str)
 	sides  = Required(int)
 	result = Required(int)
-	timeid = Required(float, unique=0.0)
+	timeid = Required(float, default=0.0)
 
 
 # -----------------------------------------------------------------------------
@@ -106,6 +105,7 @@ class Game(db.Entity):
 	id     = PrimaryKey(int, auto=True)
 	url    = Required(str)
 	scenes = Set("Scene", cascade_delete=True) # forward deletion to scenes
+	timeid = Required(float, default=0.0) # used for cleanup
 	active = Optional(int)
 	rolls  = Set(Roll)
 	admin  = Required("GM", reverse="games")
@@ -408,7 +408,7 @@ class GM(db.Entity):
 	name      = Required(str)
 	url       = Required(str, unique=True)
 	sid       = Required(str, unique=True)
-	timeid    = Optional(float) # dirtyflag
+	timeid    = Optional(float) # used for cleanup
 	games     = Set("Game", cascade_delete=True, reverse="admin") # forward deletion to games
 	
 	def makeLock(self):
