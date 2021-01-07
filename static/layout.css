@@ -236,6 +236,7 @@ div.horizdropdown > div#gmdrop {
 	
 	width: calc(100% - 30px);
 	overflow-x: auto;
+	scrollbar-color: white black;
 	
 	height: 95px;
 	border: 1px solid black;
