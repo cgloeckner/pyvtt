@@ -545,11 +545,23 @@ def status_report():
 def status_query(index):
 	# ask server
 	host = engine.shards[index]
+	data = dict()   
+	data['countryCode'] = None
+	data['status']      = None
+	
+	# query server location
+	ip = host.split('://')[1].split(':')[0]
+	d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(ip)).text)
+	if 'countryCode' in d:
+		data['countryCode'] = d['countryCode'].lower()
+	
+	# query server status
 	try:
-		return requests.get(host + '/vtt/status').text;
+		data['status'] = requests.get(host + '/vtt/status').text;
 	except requests.exceptions.ConnectionError:
 		engine.logging.error('Server {0} seems to be offline'.format(host))
-		return None
+	
+	return data
 
 @get('/vtt/shard')
 @view('shard')
