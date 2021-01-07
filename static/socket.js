@@ -71,9 +71,19 @@ function onAccept(data) {
 }
 
 function onUpdate(data) {
+	var is_primary = false;
+	
 	$.each(data.tokens, function(index, token) {
 		updateToken(token);
+		
+		if (token.id == primary_id) {
+			is_primary = true;
+		}
 	});
+	
+	if (is_primary) {
+		updateTokenbar();
+	}
 }
 
 function onCreate(data) {
