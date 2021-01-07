@@ -521,20 +521,31 @@ def convertBytes(size):
 
 class Engine(object):         
 
-	def __init__(self):  
-		p = self.getPrefDir()
+	def __init__(self):
+		# get preference dir
+		p = pathlib.Path.home()
+		if sys.platform.startswith('linux'):
+			self.data_dir = p / ".local" / "share"
+		else:
+			raise NotImplementedError('only linux supported yet')
 		
-		# ensure pyVTT folder exists
-		if not os.path.isdir(p):
-			os.mkdir(p)
+		self.data_dir /= 'pyvtt'
+		  
+		# ensure pyVTT folders exists
+		if not os.path.isdir(self.data_dir ):
+			os.mkdir(self.data_dir )
 		
-		self.data_dir = p
+		ssl_path = self.getSslPath()
+		if not os.path.isdir(ssl_path):
+			os.mkdir(ssl_path)
 		
-		if not os.path.isdir(p / 'gms'):
-			os.mkdir(p / 'gms')
-			
-		if not os.path.isdir(p / 'ssl'):
-			os.mkdir(p / 'ssl')
+		gms_path = self.getGmsPath()
+		if not os.path.isdir(gms_path):
+			os.mkdir(gms_path)
+		
+		export_path = self.getExportPath()
+		if not os.path.isdir(export_path):
+			os.mkdir(export_path)
 		
 		# setup per-game stuff
 		self.checksums = dict()
@@ -564,14 +575,14 @@ class Engine(object):
 		# game cache
 		self.cache = EngineCache()
 		
-	def getPrefDir(self):
-		p = pathlib.Path.home()
-		if sys.platform.startswith('linux'):
-			p = p / ".local" / "share"
-		else:
-			raise NotImplementedError('only linux supported yet')
+	def getSslPath(self):
+		return self.data_dir / 'ssl'
 		
-		return p / 'pyvtt'
+	def getGmsPath(self):
+		return self.data_dir / 'gms'
+		
+	def getExportPath(self):
+		return self.data_dir / 'export'
 		
 	def setup(self, argv):
 		self.debug     = '--debug' in argv
@@ -679,9 +690,9 @@ class Engine(object):
 		keyfile  = ''
 		if self.ssl:
 			# enable SSL
-			p = self.getPrefDir()
-			certfile = p / 'ssl' / 'cacert.pem'
-			keyfile  = p / 'ssl' / 'privkey.pem'
+			ssl_dir = self.getSslDir()
+			certfile = ssl_dir / 'cacert.pem'
+			keyfile  = ssl_dir / 'privkey.pem'
 			assert(os.path.exists(certfile))
 			assert(os.path.exists(keyfile))
 		

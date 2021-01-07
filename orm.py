@@ -131,7 +131,7 @@ class Game(db.Entity):
 		self.makeMd5s()
 	
 	def getImagePath(self):
-		return self.admin.getGamesPath() / self.url
+		return self.admin.getRootPath() / self.url
 
 	def getAllImages(self):
 		"""Note: needs to be called from a threadsafe context."""
@@ -296,8 +296,8 @@ class Game(db.Entity):
 		}
 		
 		# build zip file
-		zip_path = self.admin.getExportPath()
-		zip_file = '{0}.zip'.format(self.url)
+		zip_path = engine.getExportPath()
+		zip_file = '{0}_{1}.zip'.format(self.admin.url, self.url)
 		
 		with zipfile.ZipFile(zip_path / zip_file, "w") as h:
 			# create temporary file and add it to the zip
@@ -419,19 +419,11 @@ class GM(db.Entity):
 		
 		self.makeLock()
 		
-		root_path = self.getBasePath()
-		games_path = self.getGamesPath()
-		export_path = self.getExportPath()
+		root_path = self.getRootPath()
 		
 		with engine.locks[self.url]: # make IO access safe	
 			if not os.path.isdir(root_path):
 				os.mkdir(root_path)
-			
-			if not os.path.isdir(games_path):
-				os.mkdir(games_path)
-		
-			if not os.path.isdir(export_path):
-				os.mkdir(export_path)
 		
 	def cleanup(self, now):
 		""" Cleanup GM's expired games. """
@@ -453,19 +445,13 @@ class GM(db.Entity):
 		engine.logging.info('Removing GM {0}'.format(self.name))
 		
 		# remove GM's directory
-		root_path = self.getBasePath()
+		root_path = self.getRootPath()
 		
 		with engine.locks[self.url]: # make IO access safe
 			shutil.rmtree(root_path)
 		
-	def getBasePath(self):
-		return engine.data_dir / 'gms' / self.url
-		
-	def getGamesPath(self):
-		return self.getBasePath() / 'games'
-		
-	def getExportPath(self):
-		return self.getBasePath() / 'export'
+	def getRootPath(self):
+		return engine.getGmsPath() / self.url
 		
 	def refreshSession(self, response, request):
 		""" Refresh session id. """

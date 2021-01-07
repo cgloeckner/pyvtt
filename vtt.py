@@ -122,8 +122,11 @@ def gm_patreon():
 @get('/', apply=[asGm])
 @view('gm')
 def get_game_list():
-	gm = db.GM.loadFromSession(request) 
-	# note: asGm guards this
+	gm = db.GM.loadFromSession(request)
+	if gm is None:
+		# remove cookie
+		response.set_cookie('session', '', path='/', expires=1, secure=engine.ssl)
+		redirect('/')
 	
 	# refresh session
 	gm.refreshSession(response, request)
@@ -151,7 +154,8 @@ def post_import_game(url):
 	
 	# check GM and url
 	gm = db.GM.loadFromSession(request) 
-	# note: asGm guards this
+	if gm is None:
+		abort(401)
 	
 	if not engine.verifyUrlSection(url):
 		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" is invalid'.format(gm.name, gm.url, engine.getClientIp(request), url))
@@ -242,7 +246,8 @@ def kick_player(url, uuid):
 @view('games')
 def delete_game(url):
 	gm = db.GM.loadFromSession(request) 
-	# note: asGm guards this
+	if gm is None:
+		abort(401)
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
@@ -270,7 +275,8 @@ def delete_game(url):
 @view('scenes')
 def post_create_scene(url):
 	gm = db.GM.loadFromSession(request)  
-	# note: asGm guards this
+	if gm is None:
+		abort(401)
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
@@ -289,7 +295,8 @@ def post_create_scene(url):
 @view('scenes')
 def activate_scene(url, scene_id):
 	gm = db.GM.loadFromSession(request) 
-	# note: asGm guards this
+	if gm is None:
+		abort(401)
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
@@ -308,8 +315,9 @@ def activate_scene(url, scene_id):
 @post('/vtt/delete-scene/<url>/<scene_id>', apply=[asGm]) 
 @view('scenes')
 def activate_scene(url, scene_id):
-	gm = db.GM.loadFromSession(request) 
-	# note: asGm guards this
+	gm = db.GM.loadFromSession(request)
+	if gm is None:
+		abort(401)
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
@@ -343,8 +351,9 @@ def activate_scene(url, scene_id):
 @post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm]) 
 @view('scenes')
 def duplicate_scene(url, scene_id):
-	gm = db.GM.loadFromSession(request)   
-	# note: asGm guards this
+	gm = db.GM.loadFromSession(request)
+	if gm is None:
+		abort(401)
 	
 	# load game
 	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
@@ -502,8 +511,13 @@ def post_image_upload(gmurl, url, posx, posy, default_size):
 	game_cache = engine.cache.get(game)
 	game_cache.onCreate((posx, posy), urls, default_size)
 
+@error(401)
+@view('error401')
+def error401(error):
+	return dict(engine=engine)
+
 @error(404)
-@view('error')
+@view('error404')
 def error404(error):
 	return dict(engine=engine)
 
