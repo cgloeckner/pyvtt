@@ -91,7 +91,11 @@ def createGmDatabase(engine, filename):
 		game    = Required("Game")
 		tokens  = Set("Token", cascade_delete=True, reverse="scene") # forward deletion to tokens
 		backing = Optional("Token", reverse="back") # background token
-
+		
+		def preDelete(self):
+			# delete all tokens
+			for t in self.tokens:
+				t.delete()
 
 	# -----------------------------------------------------------------------------
 
@@ -226,29 +230,33 @@ def createGmDatabase(engine, filename):
 			
 		def cleanup(self):
 			""" Cleanup game's unused image data. """   
-			engine.logging.info('\tCleaning {0}'.format(self.url))
+			engine.logging.info('|--> Cleaning {0}'.format(self.url))
 			
+			# query and remove all images that are not used as tokens
 			relevant = self.getAbandonedImages()
 			with engine.locks[self.gm_url]: # make IO access safe
 				for fname in relevant:
+					engine.logging.info('     |--x Removing {0}'.format(fname))
 					os.remove(fname)
 			
-		def clear(self):
-			""" Remove this game from disk. """
-			engine.logging.info('\tRemoving {0}'.format(self.url))
+		def preDelete(self):
+			""" Remove this game from disk before removing it from
+			the GM's database. """
+			engine.logging.info('|--x Removing {0}'.format(self.url))
 			
-			img_path = engine.paths.getGamePath(self.gm_url, self.url)
+			# remove game directory (including all images)
+			game_path = engine.paths.getGamePath(self.gm_url, self.url)
 			with engine.locks[self.gm_url]: # make IO access safe
-				if os.path.isdir(img_path):
-					# remove all images
-					for img in self.getAllImages():
-						path = os.path.join(img_path, img)
-						os.remove(path)
-					# remove image dir (= game dir)
-					os.rmdir(img_path)
+				shutil.rmtree(game_path)
 			
-			# remove from cache
-			engine.cache.remove(self)
+			# remove game from GM's cache
+			gm_cache = engine.cache.getFromUrl(self.gm_url)
+			gm_cache.remove(self)
+			
+			# remove all scenes
+			for s in self.scenes:
+				s.preDelete()
+				s.delete()
 			
 		def toZip(self):
 			# remove abandoned images
@@ -441,30 +449,40 @@ def createMainDatabase(engine):
 				if not os.path.isdir(root_path):
 					os.mkdir(root_path)
 			
-		def cleanup(self, now):
-			""" Cleanup GM's expired games. """
-			engine.logging.info('Cleaning GM {0}'.format(self.name))
+		def cleanup(self, gm_db, now):
+			""" Cleanup GM's games' outdated rolls, unused images or
+			event remove expired games (see engine.expire). """
+			engine.logging.info('Cleaning GM {0} <{1}>'.format(self.name, self.url))
 			
-			for g in db.Game.select():
-				# query timeid of active scene
-				timeid = g.scenes.select(lambda s: s.id == g.active).first().timeid
-				
-				if timeid > 0 and timeid + engine.expire < now:
+			# delete all outdated rolls
+			rolls = gm_db.Roll.select(lambda r: r.timeid < now - engine.latest_rolls)
+			engine.logging.info('|--> {0} outdated rolls'.format(len(rolls)))
+			rolls.delete()
+			
+			for g in gm_db.Game.select():
+				if g.timeid > 0 and g.timeid + engine.expire < now:
 					# remove this game
-					g.clear()
+					g.preDelete()
+					g.delete()
+					
 				else:
 					# cleanup this game
 					g.cleanup()
 			
-		def clear(self):
-			""" Remove this GM from disk. """  
-			engine.logging.info('Removing GM {0}'.format(self.name))
+		def preDelete(self):
+			""" Remove this GM from disk to allow removing him from
+			the main database.
+			"""  
+			engine.logging.info('Removing GM {0} <{1}>'.format(self.name, self.url))
 			
-			# remove GM's directory
+			# remove GM's directory (including his database, all games and images)
 			root_path = engine.paths.getGmsPath(self.url)
 			
 			with engine.locks[self.url]: # make IO access safe
 				shutil.rmtree(root_path)
+			
+			# remove GM from engine's cache
+			engine.cache.remove(self)
 			
 		def refreshSession(self, response, request):
 			""" Refresh session id. """

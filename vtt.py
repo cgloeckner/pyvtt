@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 
 from gevent import monkey; monkey.patch_all()
+import gevent
 from bottle import *
 
 import os, json, time, sys, psutil, random, subprocess, requests
 
 from pony import orm
+
 from engine import Engine
 from cache import PlayerCache
 
@@ -41,12 +43,8 @@ if engine.login['type'] == 'patreon':
 	# patreon-login callback
 	@get('/vtt/patreon/callback')
 	def gm_patreon():
-		if engine.patreon_api is None:
-			# patreon is disabled, let him login normally
-			redirect('/vtt/join')
-		
 		# query session from patreon auth
-		session = engine.patreon_api.getSession(request)
+		session = engine.login_api.getSession(request)
 		
 		if session is None or session['sid'] is None:
 			# not allowed, just redirect that poor soul
@@ -66,7 +64,15 @@ if engine.login['type'] == 'patreon':
 			
 			# add to cache and initialize database
 			engine.cache.insert(gm)
-			#gm_cache = engine.cache.get(gm)
+			gm_cache = engine.cache.get(gm)
+			
+			# @NOTE: database creation NEEDS to be run from another
+			# thread, because every bottle route has an db_session
+			# active, but creating a database from within a db_session
+			# isn't possible
+			tmp = gevent.Greenlet(run=gm_cache.connect_db)
+			tmp.start()
+			tmp.join()
 			
 			engine.logging.access('GM created using patreon with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
 			
@@ -281,23 +287,19 @@ def delete_game(url):
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	
 	# delete everything for that game
-	# @note: doing by hand to avoid some weird cycle stuff (workaround)
-	for s in game.scenes:
-		for t in s.tokens:
-			t.delete()
-		s.backing = None
-		s.delete()
-	game.active = None
-	game.clear()
+	game.preDelete()
 	game.delete()
 	
 	engine.logging.access('Game {0} deleted by {1}'.format(game.getUrl(), engine.getClientIp(request)))
+	
+	# load game from GM's database
+	all_games = gm_cache.db.Game.select()
 	
 	server = ''
 	if engine.local_gm:
 		server = 'http://{0}:{1}'.format(engine.getDomain(), engine.port)
 	
-	return dict(gm=gm, server=server)
+	return dict(gm=gm, server=server, all_games=all_games)
 
 @post('/vtt/create-scene/<url>', apply=[asGm])
 @view('scenes')

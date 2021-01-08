@@ -69,11 +69,11 @@ class PathApi(object):
 			self.root = root
 		
 		# make sure paths exists
-		self.ensurePath(self.root)
-		self.ensurePath(self.getExportPath())
-		self.ensurePath(self.getGmsPath())
+		self.ensure(self.root)
+		self.ensure(self.getExportPath())
+		self.ensure(self.getGmsPath())
 		
-	def ensurePath(self, path):
+	def ensure(self, path):
 		if not os.path.isdir(path):
 			os.mkdir(path)
 		

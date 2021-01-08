@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, hashlib, time, requests, json, re
+import os, sys, hashlib, time, requests, json, re, shutil
 
 import bottle
 
@@ -15,7 +15,7 @@ __author__ = "Christian Glöckner"
 
 class Engine(object):         
 
-	def __init__(self, argv):
+	def __init__(self, argv=list()):
 		self.paths = PathApi(appname='pyvtt')
 		
 		# setup per-game stuff
@@ -148,6 +148,10 @@ class Engine(object):
 		app.catchall = not self.debug
 		app.install(db_session)
 		
+		# dice roll specific timers
+		self.recent_rolls = 30 # rolls within past 30s are recent
+		self.latest_rolls = 60 * 10 # rolls within the past 10min are up-to-date
+		
 		# game cache
 		self.cache = EngineCache(self)
 		
@@ -204,28 +208,31 @@ class Engine(object):
 		return hash_md5.hexdigest()
 		
 	def cleanup(self):
-		# TODO: rewrite, query all games' dbs
+		""" Deletes all export games' zip files, unused images and
+		outdated dice roll results from all games.
+		Inactive games or even GMs are deleted (see engine.expired).
 		"""
-		now = time.time()      
+		now = time.time()
+		
 		with db_session:
-			for gm in db.GM.select():
-				if gm.timeid > 0 and gm.timeid + engine.expire < now:
-					# clear expired GM
-					gm.clear()
+			for gm in self.main_db.GM.select():
+				gm_cache = self.cache.get(gm)
+				
+				# check if GM expired
+				if gm.timeid > 0 and gm.timeid + self.expire < now:
+					# remove expired GM
+					gm.preDelete()
+					gm.delete() 
+					
 				else:
-					# try to cleanup
-					gm.cleanup(now)
-			
-			# finally delete all expired GMs
-			# note: idk why but pony's cascade_delete isn't working
-			for gm in db.GM.select(lambda g: g.timeid > 0 and g.timeid + self..expire < now):
-				for game in db.Game.select(lambda g: g.gm_url == gm.urli):
-					for scene in game.scenes:
-						for token in scene.tokens:
-							token.delete() 
-						scene.delete()
-					game.delete()
-				gm.delete()
-		"""
-		raise NotImplemented('NEEDS REWRITE')
+					# cleanup GM's games
+					gm.cleanup(gm_cache.db, now)
+		
+		# remove all exported games' zip files 
+		export_path = self.paths.getExportPath()
+		num_files = len(os.listdir(export_path))
+		if num_files > 0:
+			shutil.rmtree(export_path)
+			self.paths.ensure(export_path)
+			self.logging.info('Removed {0} game ZIPs'.format(num_files))
 

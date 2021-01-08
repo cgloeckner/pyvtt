@@ -10,13 +10,13 @@
  
 <div class="form">
 	   <form onsubmit="registerGm(event);">
-%if engine.patreon_api is None:
+%if engine.login['type'] == 'patreon':
+		<p><a href="{{engine.login_api.getAuthUrl()}}"><input type="button" value="LOG IN WITH PATREON" /></a></p>
+%else:
 		<p>GM NAME</p>
 		<input type="text" id="gmname" maxlength="20" autocomplete="off" />
 		
 		<p><input type="submit" value="CREATE GM ACCOUNT" /></p>
-%else:
-		<p><a href="{{engine.patreon_api.getAuthUrl()}}"><input type="button" value="LOG IN WITH PATREON" /></a></p>
 %end  
 	</form>  
 	

@@ -216,8 +216,8 @@ class GameCache(object):
 		""" Handle player login. """
 		# notify player about all players and  latest rolls
 		rolls  = list()
-		recent = time.time() - 30 # last 30s
-		since  = time.time() - 60 * 10 # last 10min
+		recent = time.time() - self.engine.recent_rolls
+		since  = time.time() - self.engine.latest_rolls # last 10min
 		# query latest rolls and all tokens
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
@@ -501,20 +501,18 @@ class GmCache(object):
 		self.url    = gm.url
 		self.games  = dict()
 		
-		self.greenlet = gevent.Greenlet(run=self.connect_db)
-		self.greenlet.start()
-		self.greenlet.join()
+		self.engine.logging.info('GmCache {0} with {0} created'.format(self.url, self.db_path))
+		
+	def connect_db(self):
+		# connect to GM's database 
+		self.db = createGmDatabase(self.engine, str(self.db_path))
 		
 		# add all existing games to the cache
 		with db_session:
 			for game in self.db.Game.select():
 				self.insert(game)
 		
-		self.engine.logging.info('GmCache {0} with {0} created'.format(self.url, self.db_path))
-		
-	def connect_db(self):
-		# connect to GM's database 
-		self.db = createGmDatabase(self.engine, str(self.db_path))
+		self.engine.logging.info('GmCache {0} with {0} loaded'.format(self.url, self.db_path))
 		
 	# --- cache implementation ----------------------------------------
 		
@@ -550,6 +548,10 @@ class EngineCache(object):
 		with db_session:
 			for gm in self.engine.main_db.GM.select():
 				self.insert(gm)
+		
+		# initialize GMs databases
+		for gm in self.gms:
+			self.gms[gm].connect_db()
 		
 		self.engine.logging.info('EngineCache created')
 		
@@ -591,6 +593,8 @@ class EngineCache(object):
 		game_cache.login(player_cache)
 		
 		# handle incomming data
-		# NOTE: needs to be done async, else db_session will block
+		# NOTE: needs to be done async, else db_session will block,
+		# because the route, which calls this listen() has its own
+		# db_session due to the bottle configuration
 		player_cache.handle_async()
 
