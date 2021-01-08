@@ -425,7 +425,7 @@ def duplicate_scene(url, scene_id):
 
 @get('/static/<fname>')
 def static_files(fname):
-	root = engine.data_dir / 'static'
+	root = engine.paths.getStaticPath()
 	if not os.path.isdir(root) or not os.path.exists(root / fname):
 		root = './static'
 	
@@ -438,7 +438,7 @@ def static_token(gmurl, url, fname):
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-	path = game.getImagePath()
+	path = engine.paths.getGamePath(gmurl, url)
 	
 	return static_file(fname, root=path)
 

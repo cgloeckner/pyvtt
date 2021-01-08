@@ -494,7 +494,7 @@ class GmCache(object):
 	def __init__(self, engine, gm):
 		# ensure engine can lock for this GM if required
 		gm.makeLock()
-		self.db_path = gm.getDatabasePath()
+		self.db_path = engine.paths.getDatabasePath(gm.url)
 		
 		self.engine = engine
 		self.lock   = lock.RLock()

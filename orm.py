@@ -120,14 +120,15 @@ def createGmDatabase(engine, filename):
 		
 		def makeMd5s(self):
 			data = dict()
+			root = engine.paths.getGamePath(self.gm_url, self.url)
 			for fname in self.getAllImages():
-				with open(self.getImagePath() / fname, "rb") as handle:
+				with open(root / fname, "rb") as handle:
 					md5 = engine.getMd5(handle)
 					data[md5] = fname
 			engine.checksums[self.getUrl()] = data
 		
 		def postSetup(self):
-			img_path = self.getImagePath()
+			img_path = engine.paths.getGamePath(self.gm_url, self.url)
 			
 			with engine.locks[self.gm_url]: # make IO access safe
 				if not os.path.isdir(img_path):
@@ -135,17 +136,14 @@ def createGmDatabase(engine, filename):
 			
 			self.makeMd5s()
 		
-		def getImagePath(self):
-			return engine.getGmsPath() / self.gm_url / self.url
-		
 		def getAllImages(self):
 			"""Note: needs to be called from a threadsafe context."""
-			return os.listdir(self.getImagePath())
+			return os.listdir(engine.paths.getGamePath(self.gm_url, self.url))
 		
 		def getNextId(self):
 			"""Note: needs to be called from a threadsafe context."""
 			max_id = -1
-			for fname in os.listdir(self.getImagePath()):
+			for fname in self.getAllImages():
 				number = int(fname.split('.png')[0])
 				if number > max_id:
 					max_id = number
@@ -155,7 +153,7 @@ def createGmDatabase(engine, filename):
 			return '/token/{0}/{1}/{2}'.format(self.gm_url, self.url, image_id)
 
 		def getFileSize(self, url):
-			game_root  = self.getImagePath()
+			game_root  = engine.paths.getGamePath(self.gm_url, self.url)
 			image_id   = url.split('/')[-1]
 			local_path = os.path.join(game_root, image_id)
 			return os.path.getsize(local_path)
@@ -193,7 +191,7 @@ def createGmDatabase(engine, filename):
 				# create md5 checksum for duplication test
 				new_md5 = engine.getMd5(tmpfile.file)
 				
-				game_root = self.getImagePath()
+				game_root = engine.paths.getGamePath(self.gm_url, self.url)
 				with engine.locks[self.gm_url]: # make IO access safe
 					if new_md5 not in engine.checksums[self.getUrl()]:
 						# copy image to target
@@ -210,7 +208,7 @@ def createGmDatabase(engine, filename):
 
 		def getAbandonedImages(self):
 			# check all existing images
-			game_root = self.getImagePath()
+			game_root = engine.paths.getGamePath(self.gm_url, self.url)
 			all_images = list()
 			with engine.locks[self.gm_url]: # make IO access safe
 				all_images = self.getAllImages()
@@ -239,7 +237,7 @@ def createGmDatabase(engine, filename):
 			""" Remove this game from disk. """
 			engine.logging.info('\tRemoving {0}'.format(self.url))
 			
-			img_path = self.getImagePath()
+			img_path = engine.paths.getGamePath(self.gm_url, self.url)
 			with engine.locks[self.gm_url]: # make IO access safe
 				if os.path.isdir(img_path):
 					# remove all images
@@ -301,7 +299,7 @@ def createGmDatabase(engine, filename):
 			}
 			
 			# build zip file
-			zip_path = engine.getExportPath()
+			zip_path = engine.paths.getExportPath()
 			zip_file = '{0}_{1}.zip'.format(self.gm_url, self.url)
 			
 			with zipfile.ZipFile(zip_path / zip_file, "w") as h:
@@ -313,7 +311,7 @@ def createGmDatabase(engine, filename):
 					h.write(tmp.name, 'game.json')
 				
 				# add images to the zip, too
-				p = self.getImagePath()
+				p = engine.paths.getGamePath(self.gm_url, self.url)
 				for img in self.getAllImages():
 					h.write(p / img, img)
 			
@@ -367,7 +365,7 @@ def createGmDatabase(engine, filename):
 				db.commit()
 				
 				# copy images to game directory
-				img_path = game.getImagePath()
+				img_path = engine.paths.getGamePath(gm.url, url)
 				for fname in os.listdir(tmp_dir):
 					if fname.endswith('.png'):
 						src_path = os.path.join(tmp_dir, fname)
@@ -403,7 +401,7 @@ def createGmDatabase(engine, filename):
 						game.active = scene.id
 				
 				db.commit()
-				gm_cache = engine.cache.get(gm.url)
+				gm_cache = engine.cache.get(gm)
 				gm_cache.insert(game)
 				
 				return game
@@ -437,17 +435,11 @@ def createMainDatabase(engine):
 			
 			self.makeLock()
 			
-			root_path = self.getRootPath()
+			root_path = engine.paths.getGmsPath(self.url)
 			
-			with engine.locks[self.url]: # make IO access safe	
+			with engine.locks[self.url]: # make IO access safe
 				if not os.path.isdir(root_path):
 					os.mkdir(root_path)
-			
-		def getRootPath(self):
-			return engine.getGmsPath() / self.url
-			
-		def getDatabasePath(self):
-			return self.getRootPath() / 'gm.db'
 			
 		def cleanup(self, now):
 			""" Cleanup GM's expired games. """
@@ -469,7 +461,7 @@ def createMainDatabase(engine):
 			engine.logging.info('Removing GM {0}'.format(self.name))
 			
 			# remove GM's directory
-			root_path = self.getRootPath()
+			root_path = engine.paths.getGmsPath(self.url)
 			
 			with engine.locks[self.url]: # make IO access safe
 				shutil.rmtree(root_path)
@@ -492,7 +484,7 @@ def createMainDatabase(engine):
 		
 	# -----------------------------------------------------------------
 	
-	db.bind('sqlite', str(engine.data_dir / 'main.db'), create_db=True)
+	db.bind('sqlite', str(engine.paths.getMainDatabasePath()), create_db=True)
 	db.generate_mapping(create_tables=True)
 	
 	return db

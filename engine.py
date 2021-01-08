@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, time, requests, json, re
+import os, sys, hashlib, time, requests, json, re
 
 import bottle
 
 from orm import db_session, createMainDatabase
-from server import VttServer, PatreonApi, EmailApi, LoggingApi
+from server import VttServer, PatreonApi, EmailApi, PathApi, LoggingApi
 from cache import EngineCache
 
 
@@ -16,30 +16,7 @@ __author__ = "Christian Glöckner"
 class Engine(object):         
 
 	def __init__(self, argv):
-		# get preference dir
-		p = pathlib.Path.home()
-		if sys.platform.startswith('linux'):
-			self.data_dir = p / ".local" / "share"
-		else:
-			raise NotImplementedError('only linux supported yet')
-		
-		self.data_dir /= 'pyvtt'
-		  
-		# ensure pyVTT folders exists
-		if not os.path.isdir(self.data_dir ):
-			os.mkdir(self.data_dir )
-		
-		ssl_path = self.getSslPath()
-		if not os.path.isdir(ssl_path):
-			os.mkdir(ssl_path)
-		
-		gms_path = self.getGmsPath()
-		if not os.path.isdir(gms_path):
-			os.mkdir(gms_path)
-		
-		export_path = self.getExportPath()
-		if not os.path.isdir(export_path):
-			os.mkdir(export_path)
+		self.paths = PathApi(appname='pyvtt')
 		
 		# setup per-game stuff
 		self.checksums = dict()
@@ -82,15 +59,15 @@ class Engine(object):
 			assert(not self.local_gm)
 		
 		self.logging = LoggingApi(
-			info_file   = self.data_dir / 'info.log',
-			error_file  = self.data_dir / 'error.log',
-			access_file = self.data_dir / 'access.log'
+			info_file   = self.paths.getLogPath('info'),
+			error_file  = self.paths.getLogPath('error'),
+			access_file = self.paths.getLogPath('access')
 		)
 		
 		self.logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))
 		
 		# handle settings
-		settings_path = self.data_dir / 'settings.json'
+		settings_path = self.paths.getSettingsPath()
 		if not os.path.exists(settings_path):
 			# create default settings
 			settings = {
@@ -174,21 +151,12 @@ class Engine(object):
 		# game cache
 		self.cache = EngineCache(self)
 		
-	def getSslPath(self):
-		return self.data_dir / 'ssl'
-		
-	def getGmsPath(self):
-		return self.data_dir / 'gms'
-		
-	def getExportPath(self):
-		return self.data_dir / 'export'
-		
 	def run(self):
 		certfile = ''
 		keyfile  = ''
 		if self.ssl:
 			# enable SSL
-			ssl_dir = self.getSslDir()
+			ssl_dir = self.paths.getSslDir()
 			certfile = ssl_dir / 'cacert.pem'
 			keyfile  = ssl_dir / 'privkey.pem'
 			assert(os.path.exists(certfile))

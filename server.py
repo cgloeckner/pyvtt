@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import sys, logging, os, smtplib, urllib
+import sys, os, logging, smtplib, urllib, pathlib
 import patreon
 
 from bottle import request, ServerAdapter
@@ -46,6 +46,72 @@ class VttServer(ServerAdapter):
 		
 		# run server
 		server.serve_forever()
+
+
+
+# ---------------------------------------------------------------------
+
+# API for providing local harddrive paths
+class PathApi(object):
+	
+	def __init__(self, appname, root=None):
+		""" Uses given root or pick standard preference directory. """
+		if root is None:
+			# get preference dir
+			p = pathlib.Path.home()
+			if sys.platform.startswith('linux'):
+				p = p / ".local" / "share"
+			else:
+				raise NotImplementedError('only linux supported yet')
+			
+			self.root = p / appname
+		else:
+			self.root = root
+		
+		# make sure paths exists
+		self.ensurePath(self.root)
+		self.ensurePath(self.getExportPath())
+		self.ensurePath(self.getGmsPath())
+		
+	def ensurePath(self, path):
+		if not os.path.isdir(path):
+			os.mkdir(path)
+		
+	# Engine paths
+		
+	def getStaticPath(self):
+		return self.root / 'static'
+		
+	def getLogPath(self, fname):
+		return self.root / '{0}.log'.format(fname)
+		
+	def getSettingsPath(self):
+		return self.root / 'settings.json'
+		
+	def getMainDatabasePath(self):
+		return self.root / 'main.db'
+		 
+	def getSslPath(self):
+		return self.root / 'ssl'
+		   
+	def getExportPath(self):
+		return self.root / 'export'
+		
+	def getGmsPath(self, gm=None):
+		p = self.root / 'gms'
+		if gm is not None:
+			p /= gm
+		return p
+		
+	# GM- and Game-relevant paths
+		
+	def getDatabasePath(self, gm):
+		return self.getGmsPath(gm) / 'gm.db'
+		
+	def getGamePath(self, gm, game):
+		return self.getGmsPath(gm) / game
+		
+		
 
 
 # ---------------------------------------------------------------------
