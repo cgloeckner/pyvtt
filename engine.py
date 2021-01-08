@@ -98,10 +98,12 @@ class Engine(object):
 				'links'  : self.links,
 				'shards' : self.shards,
 				'expire' : self.expire,
-				'domain' : self.domain,
-				'port'   : self.port,
-				'socket' : self.socket,
-				'ssl'    : self.ssl,
+				'hosting': {
+					'domain' : self.domain,
+					'port'   : self.port,
+					'socket' : self.socket,
+					'ssl'    : self.ssl
+				},
 				'login'  : self.login,
 				'notify' : self.notify
 			}
@@ -116,10 +118,10 @@ class Engine(object):
 				self.links   = settings['links']
 				self.shards  = settings['shards']
 				self.expire  = settings['expire']
-				self.domain  = settings['domain']
-				self.port    = settings['port']
-				self.socket  = settings['socket']
-				self.ssl     = settings['ssl']
+				self.domain  = settings['hosting']['domain']
+				self.port    = settings['hosting']['port']
+				self.socket  = settings['hosting']['socket']
+				self.ssl     = settings['hosting']['ssl']
 				self.login   = settings['login']
 				self.notify  = settings['notify']
 			self.logging.info('Settings loaded')
