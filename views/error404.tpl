@@ -1,4 +1,4 @@
-%include("header", title="Game not found")
+%include("header", title="Nothing is here")
 
 <div class="menu"> 
 
@@ -9,8 +9,15 @@
 	<img class="logo" src="/static/logo.png" />
 
 	<p>THERE IS NOTHING HERE.</p>
+	
+<script type="text/javascript">
+<!--
+setTimeout('window.location = "/";', 5000);
+//–>
+</script>
 
 <hr />
+	<a href="/">&lt; HOME</a>
 
 </div>
 

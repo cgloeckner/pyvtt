@@ -51,11 +51,16 @@ table.status > tbody > tr > td {
 	width: 150px;
 }
 
-table.status > tbody > tr > td > a {
+a {
+	color: grey;
+	text-decoration: none;
+}
+
+a:hover {
 	color: white;
 }
 
-span.legalnotice {   
+span.links {   
 	position: absolute;
 	right: 0;
 	bottom: 0;
@@ -65,8 +70,7 @@ span.legalnotice {
 	color: white;
 }
 
-span.legalnotice a {
-	color: white;
+span.links a {
 	padding: 5px;
 }
 
@@ -149,6 +153,17 @@ div.menu {
 	left: 50%;
 	top: 50%;
 	transform: translate(-50%,-50%);
+}
+
+div.walloftext {
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 800px;
+	max-height: 540px;
+	
+	text-align: left;
+	overflow-y: auto;
+	scrollbar-color: white black;
 }
 
 div.menu > img.logo {

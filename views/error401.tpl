@@ -1,4 +1,4 @@
-%include("header", title="Game not found")
+%include("header", title="Please log in")
 
 <div class="menu"> 
 
@@ -16,7 +16,8 @@ setTimeout('window.location = "/";', 2000);
 //–>
 </script>
 
-<hr />
+<hr />   
+	<a href="/">&lt; HOME</a>
 
 </div>
 
