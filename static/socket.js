@@ -274,9 +274,9 @@ function start(gmname, url, playername, color) {
 	battlemap.addEventListener('drop', 		onDrop);
 	
 	// desktop controls
-	battlemap.addEventListener('mousedown',	onGrab);
-	battlemap.addEventListener('mousemove',	onMove);
-	battlemap.addEventListener('mouseup',	onRelease);
+	document.addEventListener('mousedown',	onGrab);
+	document.addEventListener('mousemove',	onMove);
+	document.addEventListener('mouseup',	onRelease);
 	battlemap.addEventListener('wheel',		onWheel);
 	battlemap.addEventListener('mouseout',	onRelease);
 	document.addEventListener('keydown',	onShortcut);

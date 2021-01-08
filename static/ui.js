@@ -123,7 +123,7 @@ function hidePlayer(name, uuid) {
 // --- dice rolls implementation --------------------------------------
 
 var rolls        = []; // current rolls
-var roll_timeout = 30000.0; // ms until roll will disappear
+var roll_timeout = 10000.0; // ms until roll will START to disappear
 
 /// Roll constructor
 function Roll(sides, playername, result) {
@@ -149,7 +149,7 @@ function addRoll(sides, result, color, recent) {
 			dom_span.addClass('natroll');
 		}
 		dom_span.delay(dice_shake).fadeIn(100, function() {
-			dom_span.delay(roll_timeout).fadeOut(5000, function() { this.remove(); });
+			dom_span.delay(roll_timeout).fadeOut(2 * roll_timeout, function() { this.remove(); });
 		});
 	}
 	

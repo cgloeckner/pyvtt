@@ -378,14 +378,19 @@ div.dice > img:active {
 	100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
-div.rollbox {
+div.rollbox {   
+	user-select: none;
 	pointer-events: none;
 	overflow: hidden;
 	
 	width: 100%;
+	
+	z-index: 0;
 }
 
-div.rollbox > div {
+div.rollbox > div {  
+	user-select: none;
+	pointer-events: none;
 	display: flex;
 	flex-direction: row; 
 
@@ -398,7 +403,9 @@ div.rollbox > div {
 	
 	opacity: 0.75;
 	
-	width: calc(4px + 10 * 56px);
+	width: calc(4px + 10 * 56px); 
+	
+	z-index: 0;
 }
 
 div.rollbox > div > span,
@@ -551,7 +558,7 @@ div.battlemap > div#draghint {
 div.battlemap > canvas#battlemap {
 	background-color: rgba(100, 100, 100, 0.25);
 	border: 1px solid black;
-	z-index: 0;
+	z-index: 1;
 	
 	display: block;
 	margin-left: auto;
