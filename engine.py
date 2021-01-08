@@ -1,533 +1,16 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os, sys, pathlib, hashlib, time, requests, uuid, json, re, random
+import os, sys, pathlib, hashlib, time, requests, json, re
 
-import bottle, gevent
-from gevent import lock
-from geventwebsocket.exceptions import WebSocketError
+import bottle
 
-from orm import db, db_session
-from server import VttServer, PatreonApi, LoggingApi # , EmailApi
+from orm import db_session, createMainDatabase
+from server import VttServer, PatreonApi, LoggingApi
+from cache import EngineCache
 
 
 __author__ = "Christian Glöckner"
-
-
-
-class ProtocolError(Exception):
-	""" Used if the communication between server and client behaves
-	unexpected.
-	"""
-	
-	def __init__(self, msg):
-		super().__init__(msg)
-
-
-class PlayerCache(object):
-	instance_count = 0
-	
-	def __init__(self, parent, name, color):
-		PlayerCache.instance_count += 1
-		
-		self.parent   = parent # parent cache object
-		self.name     = name
-		self.color    = color
-		self.uuid     = uuid.uuid1().hex # used for HTML DOM id
-		self.selected = list()
-		
-		self.greenlet = None
-		
-		# fetch country from ip
-		self.ip       = engine.getClientIp(bottle.request)
-		d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(self.ip)).text)
-		if 'countryCode' in d:
-			self.country = d['countryCode'].lower()
-		else:
-			self.country = '?'
-		
-		self.socket   = None
-		
-		self.dispatch_map = {
-			'ROLL'   : self.parent.onRoll,
-			'SELECT' : self.parent.onSelect,
-			'RANGE'  : self.parent.onRange,
-			'CLONE'  : self.parent.onClone,
-			'UPDATE' : self.parent.onUpdate,
-			'DELETE' : self.parent.onDelete
-		}
-		
-	def __del__(self):
-		PlayerCache.instance_count -= 1
-		
-	# --- websocket implementation ------------------------------------
-		
-	def read(self):
-		""" Return JSON object read from socket. """
-		try:
-			raw = self.socket.receive()
-			if raw is None:
-				return None
-			return json.loads(raw)
-		except Exception as e:
-			# send error msg back to client
-			self.socket.send(str(e)) 
-			self.socket.close()
-			raise ProtocolError('Broken JSON message')
-		
-	def write(self, data):
-		""" Write JSON object to socket. """
-		if self.socket is not None and not self.socket.closed:
-			raw = json.dumps(data)
-			self.socket.send(raw)
-		
-	def fetch(self, data, key):
-		""" Try to fetch key from data or raise ProtocolError. """
-		try:
-			return data[key]
-		except KeyError as e:
-			# send error msg back to client
-			self.socket.send(str(e))
-			self.socket.close()
-			raise ProtocolError('Key "{0}" not provided by client'.format(key))
-		
-	def handle_async(self):
-		""" Runs a greenlet to handle asyncronously. """
-		self.greenlet = gevent.Greenlet(run=self.handle)
-		self.greenlet.start()
-		self.greenlet.join()
-		
-	def handle(self):
-		""" Thread-handle for dispatching player actions. """
-		try:
-			while True:
-				# query data and operation id
-				data = self.read()
-				if data is not None:
-					# dispatch operation
-					opid = self.fetch(data, 'OPID')
-					func = self.dispatch_map[opid]
-					func(self, data)
-				else:
-					break
-			
-		except WebSocketError as e:
-			# player quit   
-			print('\t{0}\tERROR\t{1}'.format(name, e))
-			
-		except ProtocolError as e:
-			# error occured
-			print('\t{0}\\\tPROTOCOL\t{1}'.format(name, e))
-		
-		# logout player
-		self.parent.logout(player)
-		
-
-
-class GameCache(object):
-	""" Thread-safe player dict using name as key. """
-	
-	def __init__(self, game):
-		self.lock    = lock.RLock()
-		self.gmurl   = game.admin.url
-		self.url     = game.url
-		self.players = dict() # name => player
-		
-	# --- cache implementation ----------------------------------------
-		
-	def insert(self, name, color):
-		with self.lock:
-			if name in self.players:
-				raise KeyError
-			self.players[name] = PlayerCache(self, name, color)
-			return self.players[name]
-		
-	def get(self, name):
-		with self.lock:
-			return self.players[name]
-		
-	def getData(self):
-		result = dict()
-		with self.lock:
-			for name in self.players:
-				p = self.players[name]
-				result[name] = {
-					'name'    : name,
-					'uuid'    : p.uuid,
-					'color'   : p.color,
-					'ip'      : p.ip,
-					'country' : p.country
-				}
-		return result
-		
-	def getSelections(self):
-		result = dict()
-		with self.lock:
-			for name in self.players:
-				result[name] = self.players[name].selected
-		return result
-		
-	def remove(self, name):
-		with self.lock:
-			del self.players[name]
-		
-	# --- websocket implementation ------------------------------------
-		
-	def closeSocket(self, uuid):
-		""" Close single socket. """
-		with self.lock:
-			for name in self.players:
-				p = self.players[name]
-				if p.uuid == uuid:
-					p.socket.close()
-					return name
-		
-	def closeAllSockets(self):
-		""" Closes all sockets. """
-		with self.lock:
-			for name in self.players:
-				socket = self.players[name].socket
-				if socket is not None and not socket.closed:
-					socket.close()
-				else:
-					del self.players[name]
-			self.players = dict()
-		
-	def broadcast(self, data):
-		""" Broadcast given data to all clients. """
-		with self.lock:
-			for name in self.players:
-				self.players[name].write(data)
-		
-	def login(self, player):
-		""" Handle player login. """
-		# notify player about all players and  latest rolls
-		rolls  = list()
-		recent = time.time() - 30 # last 30s
-		since  = time.time() - 60 * 10 # last 10min
-		# query latest rolls and all tokens
-		with db_session:
-			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
-			
-			for r in db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
-				rolls.append({
-					'color'  : r.color,
-					'sides'  : r.sides,
-					'result' : r.result,
-					'recent' : r.timeid >= recent
-				})
-		
-		player.write({
-			'OPID'    : 'ACCEPT',
-			'uuid'    : player.uuid,
-			'players' : self.getData(),
-			'rolls'   : rolls,
-		}); 
-		
-		player.write(self.fetchRefresh(g.active))
-		
-		# broadcast join to all players
-		self.broadcast({
-			'OPID'    : 'JOIN',
-			'name'    : player.name,
-			'uuid'    : player.uuid,
-			'color'   : player.color,
-			'country' : player.country
-		})
-		
-	def fetchRefresh(self, scene_id):
-		""" Performs a full refresh on all tokens. """  
-		tokens = list()
-		background_id = 0
-		with db_session:
-			scene = db.Scene.select(lambda s: s.id == scene_id).first().backing
-			background_id = scene.id if scene is not None else None
-			for t in db.Token.select(lambda t: t.scene.id == scene_id):
-				tokens.append(t.to_dict())
-		
-		return {
-			'OPID'       : 'REFRESH',
-			'tokens'     : tokens,
-			'background' : background_id
-		}
-		
-	def logout(self, player):
-		""" Handle player logout. """
-		# broadcast logout to all players
-		self.broadcast({
-			'OPID' : 'QUIT',
-			'name' : player.name,
-			'uuid'  : player.uuid
-		})
-		
-		# remve player
-		self.remove(player.name)
-		
-	def onRoll(self, player, data):
-		""" Handle player rolling a dice. """
-		# roll dice
-		now = time.time()
-		sides  = data['sides']
-		result = random.randrange(1, sides+1)
-		roll_id = None
-		
-		now = time.time()
-		
-		with db_session: 
-			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
-			g.timeid = now
-			
-			# roll dice
-			db.Roll(game=g, color=player.color, sides=sides, result=result, timeid=now)
-		
-		# broadcast dice result
-		self.broadcast({
-			'OPID'    : 'ROLL',
-			'color'   : player.color,
-			'sides'   : sides,
-			'result'  : result,
-			'recent'  : True
-		})
-		
-	def onSelect(self, player, data):
-		""" Handle player selecting a token. """
-		# store selection
-		player.selected = data['selected']
-		
-		# broadcast selection
-		self.broadcast({
-			'OPID'     : 'SELECT',
-			'color'    : player.color,
-			'selected' : player.selected,
-		});
-		
-	def onRange(self, player, data):
-		""" Handle player selecting multiple tokens. """
-		# fetch rectangle data
-		left   = data['left']
-		top    = data['top']
-		width  = data['width']
-		height = data['height']
-		
-		now = time.time()
-		# query inside given rectangle
-		with db_session:
-			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
-			g.timeid = now
-			
-			s = db.Scene.select(lambda s: s.id == g.active).first()
-			token_ids = list()
-			for t in db.Token.select(lambda t: t.scene == s and left <= t.posx and t.posx <= left + width and top <= t.posy and t.posy <= top + height): 
-				if t.size != -1:
-					token_ids.append(t.id)
-		
-		# store selection
-		player.selected = token_ids
-		
-		# broadcast selection
-		self.broadcast({
-			'OPID'     : 'SELECT',
-			'color'    : player.color,
-			'selected' : player.selected,
-		});
-		
-	def onClone(self, player, data):
-		""" Handle player cloning tokens. """
-		# fetch clone data
-		ids  = data['ids']
-		posx = data['posx']
-		posy = data['posy']
-		
-		# create tokens
-		tokens = list()
-		now = time.time()
-		with db_session: 
-			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first() 
-			g.timeid = now
-			s = db.Scene.select(lambda s: s.id == g.active).first()
-			
-			# iterate provided tokens
-			for k, tid in enumerate(ids):
-				t = db.Token.select(lambda t: t.id == tid).first()
-				# clone token
-				pos = db.Token.getPosByDegree((posx, posy), k, len(ids))
-				t = db.Token(scene=s, url=t.url, posx=pos[0], posy=pos[1],
-					zorder=t.zorder, size=t.size, rotate=t.rotate,
-					flipx=t.flipx, timeid=now)
-				
-				db.commit()
-				tokens.append(t.to_dict())
-		
-		# broadcast creation
-		self.broadcast({
-			'OPID'   : 'CREATE',
-			'tokens' : tokens
-		})
-		
-	def onUpdate(self, player, data):
-		""" Handle player changing token data. """
-		# fetch changes' data
-		changes = data['changes']
-		
-		now = time.time()
-		with db_session:
-			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
-			g.timeid = now
-			
-			# iterate provided tokens
-			for data in changes:
-				t = db.Token.select(lambda t: t.id == data['id']).first()
-				# fetch changed data (accepting None)
-				posx   = data.get('posx')
-				posy   = data.get('posy')
-				pos    = None if posx is None or posy is None else (posx, posy)
-				zorder = data.get('zorder')
-				size   = data.get('size')
-				rotate = data.get('rotate')
-				flipx  = data.get('flipx')
-				locked = data.get('locked', False)
-				old_time = t.timeid
-				t.update(timeid=now, pos=pos, zorder=zorder, size=size,
-					rotate=rotate, flipx=flipx, locked=locked)
-		
-		self.broadcastTokenUpdate(player, now)  
-		
-	def onCreate(self, pos, urls, default_size):
-		""" Handle player creating tokens. """
-		# create tokens
-		now = time.time()
-		n = len(urls)
-		tokens = list()
-		with db_session:
-			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
-			g.timeid = now
-			
-			s = db.Scene.select(lambda s: s.id == g.active).first()
-			
-			for k, url in enumerate(urls):
-				# create tokens in circle
-				x, y = db.Token.getPosByDegree(pos, k, n)
-				t = db.Token(scene=s.id, timeid=now, url=url,
-					size=default_size, posx=x, posy=y)
-				
-				db.commit()
-				
-				# use first token as background if necessary
-				if s.backing is None:
-					t.size    = -1
-					s.backing = t
-				
-				tokens.append(t.to_dict())
-		
-		# broadcast creation
-		self.broadcast({
-			'OPID'   : 'CREATE',
-			'tokens' : tokens
-		})
-		
-	def onDelete(self, player, data):
-		""" Handle player deleting tokens. """
-		# delete tokens
-		tokens = data['tokens']
-		data   = list()
-		with db_session:
-			for tid in tokens:
-				t = db.Token.select(lambda t: t.id == tid).first()
-				data.append(t.to_dict())
-				if t is not None:
-					t.delete()
-		
-		# broadcast delete
-		self.broadcast({
-			'OPID'   : 'DELETE',
-			'tokens' : data
-		})
-		
-	def broadcastTokenUpdate(self, player, since):
-		""" Broadcast updated tokens. """
-		# fetch all changed tokens
-		all_data = list()    
-		
-		now = time.time()
-		with db_session:
-			g = db.Game.select(lambda g: g.admin.url == self.gmurl and g.url == self.url).first()
-			g.timeid = now
-			
-			for t in db.Token.select(lambda t: t.scene.id == g.active and t.timeid >= since):
-				all_data.append(t.to_dict())
-		
-		# broadcast update
-		self.broadcast({
-			'OPID'    : 'UPDATE',
-			'tokens'  : all_data
-		});
-		
-	def broadcastSceneSwitch(self, game):
-		""" Broadcast scene switch. """
-		# collect all tokens for the given scene
-		refresh_data = self.fetchRefresh(game.active)
-		
-		# broadcast switch
-		self.broadcast(refresh_data);
-
-
-class EngineCache(object):
-	""" Thread-safe game dict using gm/url as key. """
-	
-	def __init__(self):
-		self.lock  = lock.RLock()
-		self.games = dict()
-		
-	# --- cache implementation ----------------------------------------
-		
-	def insert(self, game):
-		url = game.getUrl()
-		with self.lock:
-			self.games[url] = GameCache(game)
-			return self.games[url]
-		
-	def get(self, game, url=None):
-		if game is not None:
-			url = game.getUrl()
-		with self.lock:
-			return self.games[url]
-		
-	def remove(self, game):
-		url = game.getUrl()
-		with self.lock:
-			del self.games[url]
-		
-	# --- websocket implementation ------------------------------------
-		
-	def listen(self, socket):
-		""" Handle new connection. """
-		# read name and color
-		raw = socket.receive()
-		data = json.loads(raw)
-		name  = data['name']
-		url   = data['url']
-		
-		# insert player
-		game_cache   = self.get(game=None, url=url)
-		player_cache = game_cache.get(name)
-		player_cache.socket = socket
-		game_cache.login(player_cache)
-		
-		# handle incomming data
-		# NOTE: needs to be done async, else db_session will block
-		player_cache.handle_async()
-
-
-def convertBytes(size):
-	prefix = ''
-	if size > 1024 * 10:
-		size //= 1024
-		prefix = 'Ki'
-		if size > 1024 * 10:
-			size //= 1024
-			prefix = 'Mi'
-			
-	return (size, prefix)
 
 
 class Engine(object):         
@@ -572,6 +55,8 @@ class Engine(object):
 		self.ssl    = False
 		self.shards = []
 		
+		self.main_db = None
+		
 		# blacklist for GM names and game URLs
 		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'websocket']
 		self.url_regex    = '^[A-Za-z0-9_\-.]+$'
@@ -584,8 +69,7 @@ class Engine(object):
 		self.patreon     = None # patreon settings
 		self.patreon_api = None # api instance
 		
-		# game cache
-		self.cache = EngineCache()
+		self.cache       = None # later engine cache
 		
 	def getSslPath(self):
 		return self.data_dir / 'ssl'
@@ -679,25 +163,16 @@ class Engine(object):
 			# create patreon query API
 			self.patreon_api = PatreonApi(host_callback=host_callback, **self.patreon)
 		
-		# setup database connection
-		db.bind('sqlite', str(self.data_dir / 'data.db'), create_db=True)
-		db.generate_mapping(create_tables=True)
+		# create main database
+		self.main_db = createMainDatabase(self)
 		
 		# setup db_session to all routes
 		app = bottle.default_app()
 		app.catchall = not self.debug
 		app.install(db_session)
 		
-		# prepare engine cache
-		with db_session:
-			s = time.time()
-			for gm in db.GM.select():
-				gm.makeLock()
-			for g in db.Game.select():
-				g.makeMd5s()         
-				self.cache.insert(g)
-			t = time.time() - s
-			self.logging.info('Image checksums and threading locks created within {0}s'.format(t))
+		# game cache
+		self.cache = EngineCache(self)
 		
 	def run(self):
 		certfile = ''
@@ -715,7 +190,6 @@ class Engine(object):
 		bottle.run(
 			host       = self.host,
 			port       = self.port,
-			reloader   = self.debug,
 			debug      = self.debug,
 			quiet      = self.quiet,
 			server     = VttServer,
@@ -761,6 +235,8 @@ class Engine(object):
 		return convertBytes(size)
 		
 	def cleanup(self):
+		# TODO: rewrite, query all games' dbs
+		"""
 		now = time.time()      
 		with db_session:
 			for gm in db.GM.select():
@@ -774,13 +250,15 @@ class Engine(object):
 			# finally delete all expired GMs
 			# note: idk why but pony's cascade_delete isn't working
 			for gm in db.GM.select(lambda g: g.timeid > 0 and g.timeid + engine.expire < now):
-				for game in db.Game.select(lambda g: g.admin.url == gm.urli):
+				for game in db.Game.select(lambda g: g.gm_url == gm.urli):
 					for scene in game.scenes:
 						for token in scene.tokens:
 							token.delete() 
 						scene.delete()
 					game.delete()
 				gm.delete()
+		"""
+		raise NotImplemented('NEEDS REWRITE')
 
 
 engine = Engine()

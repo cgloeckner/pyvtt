@@ -6,8 +6,8 @@ from bottle import *
 import os, json, time, sys, psutil, random, subprocess, requests
 
 from pony import orm
-from orm import db, db_session, Token, Game
-from engine import engine, Engine, PlayerCache
+from engine import engine
+from cache import PlayerCache
 
 
 
@@ -61,15 +61,15 @@ def post_gm_login():
 		engine.logging.access('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request), gmname))
 		return status
 		
-	if len(db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
+	if len(engine.main_db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
 		# collision
 		status['error'] = 'ALREADY IN USE'   
 		engine.logging.access('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request), gmname))
 		return status
 	
 	# create new GM (use GM name as display name and URL)
-	sid = db.GM.genSession()
-	gm = db.GM(name=name, url=name, sid=sid)
+	sid = engine.main_db.GM.genSession()
+	gm = engine.main_db.GM(name=name, url=name, sid=sid)
 	gm.postSetup()
 	
 	expires = time.time() + engine.expire
@@ -77,7 +77,7 @@ def post_gm_login():
 	
 	engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
 	
-	db.commit()
+	engine.main_db.commit()
 	status['url'] = gm.url
 	return status
 
@@ -96,15 +96,20 @@ def gm_patreon():
 		redirect('/vtt/join')
 	
 	# test whether GM is already there
-	gm = db.GM.select(lambda g: g.url == session['user']['id']).first()
+	gm = engine.main_db.GM.select(lambda g: g.url == session['user']['id']).first()
 	if gm is None:
 		# create GM (username as display name, patreon-id as url)
-		gm = db.GM(
+		gm = engine.main_db.GM(
 			name=session['user']['username'],
 			url=str(session['user']['id']),
 			sid=session['sid']
 		)
 		gm.postSetup()
+		engine.main_db.commit()
+		
+		# add to cache and initialize database
+		engine.cache.insert(gm)
+		#gm_cache = engine.cache.get(gm)
 		
 		engine.logging.access('GM created using patreon with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
 		
@@ -116,13 +121,13 @@ def gm_patreon():
 	
 	engine.logging.access('GM name="{0}" url={1} session refreshed using patreon by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
 	
-	db.commit()
+	engine.main_db.commit()
 	redirect('/')
 
 @get('/', apply=[asGm])
 @view('gm')
 def get_game_list():
-	gm = db.GM.loadFromSession(request)
+	gm = engine.main_db.GM.loadFromSession(request)
 	if gm is None:
 		# remove cookie
 		response.set_cookie('session', '', path='/', expires=1, secure=engine.ssl)
@@ -137,8 +142,14 @@ def get_game_list():
 	if engine.local_gm:
 		server = 'http://{0}:{1}'.format(engine.getDomain(), engine.port)
 	
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
+	
+	# load game from GM's database
+	all_games = gm_cache.db.Game.select()
+	
 	# show GM's games
-	return dict(engine=engine, gm=gm, server=server, dbScene=db.Scene)
+	return dict(engine=engine, gm=gm, all_games=all_games, server=server)
 
 @post('/vtt/import-game/<url>', apply=[asGm])
 def post_import_game(url):  
@@ -153,7 +164,7 @@ def post_import_game(url):
 	url = url[:20].lower().strip()
 	
 	# check GM and url
-	gm = db.GM.loadFromSession(request) 
+	gm = engine.main_db.GM.loadFromSession(request) 
 	if gm is None:
 		abort(401)
 	
@@ -162,7 +173,10 @@ def post_import_game(url):
 		status['error'] = 'NO SPECIAL CHARS OR SPACES'
 		return status
 	
-	if db.Game.select(lambda g: g.admin == gm and g.url == url).first() is not None:
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
+	
+	if gm_cache.db.Game.select(lambda g: g.url == url).first() is not None:
 		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" already in use'.format(gm.name, gm.url, engine.getClientIp(request), url))
 		status['error'] = 'ALREADY IN USE'
 		return status
@@ -179,9 +193,9 @@ def post_import_game(url):
 	fname = files[0].filename
 	is_zip = fname.endswith('zip')
 	if is_zip:
-		game = db.Game.fromZip(gm, url, files[0])
+		game = gm_cache.db.Game.fromZip(gm, url, files[0])
 	else:
-		game = db.Game.fromImage(gm, url, files[0])
+		game = gm_cache.db.Game.fromImage(gm, url, files[0])
 	
 	status['file_ok'] = game is not None
 	if not status['file_ok']:
@@ -199,11 +213,14 @@ def post_import_game(url):
 
 @get('/vtt/export-game/<url>', apply=[asGm])
 def export_game(url):
-	gm = db.GM.loadFromSession(request)
+	gm = engine.main_db.GM.loadFromSession(request)
 	# note: asGm guards this
 	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
+	
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	
 	# export game to zip-file
 	zip_file, zip_path = game.toZip()
@@ -215,28 +232,34 @@ def export_game(url):
 
 @post('/vtt/kick-players/<url>', apply=[asGm])
 def kick_players(url):
-	gm = db.GM.loadFromSession(request)
+	gm = engine.main_db.GM.loadFromSession(request)
 	# note: asGm guards this
 	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
 	
-	# fetch game cache and close sockets
-	game_cache = engine.cache.get(game)
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	
+	# load game from cache and close sockets
+	game_cache = gm_cache.get(game)
 	game_cache.closeAllSockets()
 	
 	engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 
 @post('/vtt/kick-player/<url>/<uuid>', apply=[asGm])
 def kick_player(url, uuid):
-	gm = db.GM.loadFromSession(request)
+	gm = engine.main_db.GM.loadFromSession(request)
 	# note: asGm guards this
 	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
+	
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	
 	# fetch game cache and close sockets
-	game_cache = engine.cache.get(game)
+	game_cache = gm_cache.get(game)
 	name = game_cache.closeSocket(uuid)
 	
 	engine.logging.access('Player {0} ({1}) kicked from {2} by {3}'.format(name, uuid, game.getUrl(), engine.getClientIp(request)))
@@ -245,12 +268,15 @@ def kick_player(url, uuid):
 @post('/vtt/delete-game/<url>', apply=[asGm])
 @view('games')
 def delete_game(url):
-	gm = db.GM.loadFromSession(request) 
+	gm = engine.main_db.GM.loadFromSession(request)
 	if gm is None:
 		abort(401)
 	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
+	
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	
 	# delete everything for that game
 	# @note: doing by hand to avoid some weird cycle stuff (workaround)
@@ -274,16 +300,19 @@ def delete_game(url):
 @post('/vtt/create-scene/<url>', apply=[asGm])
 @view('scenes')
 def post_create_scene(url):
-	gm = db.GM.loadFromSession(request)  
+	gm = engine.main_db.GM.loadFromSession(request)  
 	if gm is None:
 		abort(401)
 	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
+	
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	
 	# create scene
-	scene = db.Scene(game=game)
-	db.commit()
+	scene = gm_cache.db.Scene(game=game)
+	gm_cache.db.commit()
 	
 	engine.logging.access('Game {0} got a new scene by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 	
@@ -292,18 +321,21 @@ def post_create_scene(url):
 @post('/vtt/activate-scene/<url>/<scene_id>', apply=[asGm])
 @view('scenes')
 def activate_scene(url, scene_id):
-	gm = db.GM.loadFromSession(request) 
+	gm = engine.main_db.GM.loadFromSession(request) 
 	if gm is None:
 		abort(401)
 	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
+	
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	game.active = scene_id
 
-	db.commit()  
+	gm_cache.db.commit()  
 	
 	# broadcase scene switch to all players
-	game_cache = engine.cache.get(game)
+	game_cache = gm_cache.get(game)
 	game_cache.broadcastSceneSwitch(game)
 	
 	engine.logging.access('Game {0} switched scene to #{1} by {2}'.format(game.getUrl(), scene_id, engine.getClientIp(request)))
@@ -313,33 +345,36 @@ def activate_scene(url, scene_id):
 @post('/vtt/delete-scene/<url>/<scene_id>', apply=[asGm]) 
 @view('scenes')
 def activate_scene(url, scene_id):
-	gm = db.GM.loadFromSession(request)
+	gm = engine.main_db.GM.loadFromSession(request)
 	if gm is None:
 		abort(401)
+	 
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
 	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 
 	# delete given scene
-	scene = db.Scene.select(lambda s: s.id == scene_id).first()
+	scene = gm_cache.db.Scene.select(lambda s: s.id == scene_id).first()
 	scene.backing = None
 	scene.delete()
 	
 	# check if active scene is still valid
-	active = db.Scene.select(lambda s: s.id == game.active).first()
+	active = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
 	if active is None:
 		# check for remaining scenes
-		remain = db.Scene.select(lambda s: s.game == game).first()
+		remain = gm_cache.db.Scene.select(lambda s: s.game == game).first()
 		if remain is None:
 			# create new scene
-			remain = db.Scene(game=game)
-			db.commit()
+			remain = gm_cache.db.Scene(game=game)
+			gm_cache.db.commit()
 		# adjust active scene
 		game.active = remain.id
-		db.commit()
+		gm_cache.db.commit()
 		
 	# broadcase scene switch to all players
-	game_cache = engine.cache.get(game)
+	game_cache = gm_cache.get(game)
 	game_cache.broadcastSceneSwitch(game)
 	
 	engine.logging.access('Game {0} got scene #{1} deleted by {2}'.format(game.getUrl(), scene_id, engine.getClientIp(request)))
@@ -349,32 +384,35 @@ def activate_scene(url, scene_id):
 @post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm]) 
 @view('scenes')
 def duplicate_scene(url, scene_id):
-	gm = db.GM.loadFromSession(request)
+	gm = engine.main_db.GM.loadFromSession(request)
 	if gm is None:
 		abort(401)
+			  
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
 	
-	# load game
-	game = db.Game.select(lambda g: g.admin == gm and g.url == url).first()
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	
 	# load required scene
-	scene = db.Scene.select(lambda s: s.id == scene_id).first()
+	scene = gm_cache.db.Scene.select(lambda s: s.id == scene_id).first()
 	
 	# create copy of that scene
-	clone = db.Scene(game=game)
+	clone = gm_cache.db.Scene(game=game)
 	# copy tokens (but ignore background)
 	for t in scene.tokens:
 		if t.size != -1:
-			n = db.Token(
+			n = gm_cache.db.Token(
 				scene=clone, url=t.url, posx=t.posx, posy=t.posy, zorder=t.zorder,
 				size=t.size, rotate=t.rotate, flipx=t.flipx, locked=t.locked
 			)
 	
-	db.commit()
+	gm_cache.db.commit()
 	
 	game.active = clone.id 
 	
 	# broadcase scene switch to all players
-	game_cache = engine.cache.get(game)
+	game_cache = gm_cache.get(game)
 	game_cache.broadcastSceneSwitch(game)
 	
 	engine.logging.access('Game {0} got clone of scene #{1} as #{2} by {1}'.format(game.getUrl(), scene_id, clone.id, engine.getClientIp(request)))
@@ -393,8 +431,11 @@ def static_files(fname):
 
 @get('/token/<gmurl>/<url>/<fname>')
 def static_token(gmurl, url, fname):
-	# load game
-	game = db.Game.select(lambda g: g.admin.url == gmurl and g.url == url).first()
+	# load GM from cache
+	gm_cache = engine.cache.getFromUrl(gmurl)
+	
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	path = game.getImagePath()
 	
 	return static_file(fname, root=path)
@@ -435,13 +476,16 @@ def set_player_name(gmurl, url):
 		if c < 16:
 			playercolor += '0'
 		playercolor += hex(c)[2:]
-	 
-	# load game
-	game = db.Game.select(lambda g: g.admin.url == gmurl and g.url == url).first()
+			  
+	# load GM from cache
+	gm_cache = engine.cache.getFromUrl(gmurl)
+	
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	
 	# check for player name collision
 	try:
-		game_cache = engine.cache.get(game)
+		game_cache = gm_cache.get(game)
 		game_cache.insert(playername, playercolor)
 	except KeyError:
 		engine.logging.access('Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.getUrl(), engine.getClientIp(request), playername))
@@ -465,21 +509,30 @@ def set_player_name(gmurl, url):
 def get_player_battlemap(gmurl, url):
 	# try to load playername from cookie (or from GM name)
 	playername = request.get_cookie('playername')
-	gm         = db.GM.loadFromSession(request)
+	gm         = engine.main_db.GM.loadFromSession(request)
 	if playername is None:
 		if gm is not None:
 			playername = gm.name
 		else:
 			playername = ''
 	
+	# query the hosting GM
+	host_gm = engine.main_db.GM.select(lambda g: g.url == gmurl).first()
+	if host_gm is None:
+		# no such GM
+		abort(404)
+	
 	# try to load playercolor from cookieplayercolor = request.get_cookie('playercolor')
 	playercolor = request.get_cookie('playercolor')
 	if playercolor is None:   
 		colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
 		playercolor = colors[random.randrange(len(colors))]
+		  
+	# load GM from cache
+	gm_cache = engine.cache.getFromUrl(gmurl)
 	
-	# load game
-	game = db.Game.select(lambda g: g.admin.url == gmurl and g.url == url).first()
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	
 	if game is None:
 		abort(404)
@@ -489,13 +542,16 @@ def get_player_battlemap(gmurl, url):
 	websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.port)
 	
 	# show battlemap with login screen ontop
-	return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, is_gm=gm is not None)
+	return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=host_gm, is_gm=gm is not None)
 
 @post('/<gmurl>/<url>/upload/<posx:int>/<posy:int>/<default_size:int>')
 def post_image_upload(gmurl, url, posx, posy, default_size):
-	# upload images                       
+	# load GM from cache
+	gm_cache = engine.cache.getFromUrl(gmurl)
+	
+	# load game from GM's database to upload files
 	urls  = list()
-	game  = db.Game.select(lambda g: g.admin.url == gmurl and g.url == url).first()
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	files = request.files.getall('file[]')
 	for handle in files:
 		url = game.upload(handle)
@@ -503,7 +559,7 @@ def post_image_upload(gmurl, url, posx, posy, default_size):
 		engine.logging.access('Image upload {0} by {1}'.format(url, engine.getClientIp(request)))
 	
 	# create tokens and broadcast creation
-	game_cache = engine.cache.get(game)
+	game_cache = gm_cache.get(game)
 	game_cache.onCreate((posx, posy), urls, default_size)
 
 @error(401)

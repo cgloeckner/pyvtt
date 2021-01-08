@@ -1,6 +1,6 @@
 %include("header", title="GM {0}".format(gm.name))
 
-%if len(gm.games) > 0:
+%if len(all_games) > 0:
 <div class="horizdropdown" onClick="openGmDropdown();">
 	<div id="gmdrop">
 	%include("games")

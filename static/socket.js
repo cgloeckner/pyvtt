@@ -256,8 +256,9 @@ function login(event, gmname, url, websocket_url, as_gm) {
 /// Sets up the game and triggers the update loop
 function start(gmname, url, playername, color) {
 	writeSocket({
-		'name'  : playername,
-		'url'   : gmname + '/' + url
+		'name'     : playername,
+		'gm_url'   : gmname,
+		'game_url' : url
 	});
 	
 	// setup in-memory canvas (for transparency checking)
