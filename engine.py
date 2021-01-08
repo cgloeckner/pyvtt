@@ -6,7 +6,7 @@ import os, sys, pathlib, hashlib, time, requests, json, re
 import bottle
 
 from orm import db_session, createMainDatabase
-from server import VttServer, PatreonApi, LoggingApi
+from server import VttServer, PatreonApi, EmailApi, LoggingApi
 from cache import EngineCache
 
 
@@ -15,7 +15,7 @@ __author__ = "Christian Glöckner"
 
 class Engine(object):         
 
-	def __init__(self):
+	def __init__(self, argv):
 		# get preference dir
 		p = pathlib.Path.home()
 		if sys.platform.startswith('linux'):
@@ -61,26 +61,18 @@ class Engine(object):
 		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'websocket']
 		self.url_regex    = '^[A-Za-z0-9_\-.]+$'
 		
-		self.local_gm    = False
-		self.localhost   = False
-		self.title       = 'PyVTT'
-		self.links       = None
-		self.expire      = 3600 * 24 * 30 # default: 30d
-		self.patreon     = None # patreon settings
-		self.patreon_api = None # api instance
+		self.local_gm   = False
+		self.localhost  = False
+		self.title      = 'PyVTT'
+		self.links      = None
+		self.expire     = 3600 * 24 * 30 # default: 30d
+		self.login      = dict() # login settings
+		self.login_api  = None   # login api instance
+		self.notify     = dict() # crash notify settings
+		self.notify_api = None   # notify api instance
 		
-		self.cache       = None # later engine cache
+		self.cache      = None   # later engine cache
 		
-	def getSslPath(self):
-		return self.data_dir / 'ssl'
-		
-	def getGmsPath(self):
-		return self.data_dir / 'gms'
-		
-	def getExportPath(self):
-		return self.data_dir / 'export'
-		
-	def setup(self, argv):
 		self.debug     = '--debug' in argv
 		self.quiet     = '--quiet' in argv
 		self.local_gm  = '--local-gm' in argv
@@ -102,15 +94,16 @@ class Engine(object):
 		if not os.path.exists(settings_path):
 			# create default settings
 			settings = {
-				'title'    : self.title,
-				'links'    : self.links,
-				'shards'   : self.shards,
-				'expire'   : self.expire,
-				'domain'   : self.domain,
-				'port'     : self.port,
-				'socket'   : self.socket,
-				'ssl'      : self.ssl,
-				'patroen'  : self.patreon
+				'title'  : self.title,
+				'links'  : self.links,
+				'shards' : self.shards,
+				'expire' : self.expire,
+				'domain' : self.domain,
+				'port'   : self.port,
+				'socket' : self.socket,
+				'ssl'    : self.ssl,
+				'login'  : self.login,
+				'notify' : self.notify
 			}
 			with open(settings_path, 'w') as h:
 				json.dump(settings, h, indent=4)
@@ -127,7 +120,8 @@ class Engine(object):
 				self.port    = settings['port']
 				self.socket  = settings['socket']
 				self.ssl     = settings['ssl']
-				self.patreon = settings['patreon']
+				self.login   = settings['login']
+				self.notify  = settings['notify']
 			self.logging.info('Settings loaded')
 		
 		# show argv help
@@ -157,11 +151,15 @@ class Engine(object):
 			self.logging.info('Overwriting Domain by Public IP: {0}'.format(self.domain))
 		
 		# load patreon API
-		if self.patreon is not None:
+		if self.login['type'] == 'patreon':
 			protocol = 'https' if self.ssl else 'http'
-			host_callback = '{0}://{1}:{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), engine.port)
+			host_callback = '{0}://{1}:{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), self.port)
 			# create patreon query API
-			self.patreon_api = PatreonApi(host_callback=host_callback, **self.patreon)
+			self.login_api = PatreonApi(host_callback=host_callback, **self.login)
+		
+		if self.notify['type'] == 'email':
+			# create email notify API
+			self.notify_api = EmailApi(**self.notify)
 		
 		# create main database
 		self.main_db = createMainDatabase(self)
@@ -173,6 +171,15 @@ class Engine(object):
 		
 		# game cache
 		self.cache = EngineCache(self)
+		
+	def getSslPath(self):
+		return self.data_dir / 'ssl'
+		
+	def getGmsPath(self):
+		return self.data_dir / 'gms'
+		
+	def getExportPath(self):
+		return self.data_dir / 'export'
 		
 	def run(self):
 		certfile = ''
@@ -226,14 +233,6 @@ class Engine(object):
 		handle.seek(offset)
 		return hash_md5.hexdigest()
 		
-	def getDatabaseSize(self):
-		size = os.stat(engine.data_dir / 'data.db').st_size
-		return convertBytes(size)
-		
-	def getImageSizes(self):
-		size = os.stat(engine.data_dir / 'gms').st_size
-		return convertBytes(size)
-		
 	def cleanup(self):
 		# TODO: rewrite, query all games' dbs
 		"""
@@ -249,7 +248,7 @@ class Engine(object):
 			
 			# finally delete all expired GMs
 			# note: idk why but pony's cascade_delete isn't working
-			for gm in db.GM.select(lambda g: g.timeid > 0 and g.timeid + engine.expire < now):
+			for gm in db.GM.select(lambda g: g.timeid > 0 and g.timeid + self..expire < now):
 				for game in db.Game.select(lambda g: g.gm_url == gm.urli):
 					for scene in game.scenes:
 						for token in scene.tokens:
@@ -259,8 +258,4 @@ class Engine(object):
 				gm.delete()
 		"""
 		raise NotImplemented('NEEDS REWRITE')
-
-
-engine = Engine()
-
 

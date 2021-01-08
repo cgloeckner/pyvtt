@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import os# , smtplib
-import patreon, urllib
-import sys, logging
+import sys, logging, os, smtplib, urllib
+import patreon
 
 from bottle import request, ServerAdapter
 
@@ -47,19 +46,19 @@ class VttServer(ServerAdapter):
 		
 		# run server
 		server.serve_forever()
-		
 
+
+# ---------------------------------------------------------------------
 
 # Email API for sending password reset emails
 class EmailApi(object):
 	
-	def __init__(self, title, host, port, sender, user, password):
-		self.title    = title
-		self.host     = host
-		self.port     = port
-		self.sender   = sender
-		self.user     = user
-		self.password = password
+	def __init__(self, **data):
+		self.host     = data['host']
+		self.port     = data['port']
+		self.sender   = data['sender']
+		self.user     = data['user']
+		self.password = data['password']
 		self.mail_tpl = """From: {0}
 To: {1}
 Subject: {2}
@@ -81,23 +80,24 @@ Subject: {2}
 			self.login()
 			self.smtp.sendmail(self.sender, receiver, plain)
 		
-	def sendJoinMail(self, receiver, gmname, url):
-		from_   = '{0} <{1}>'.format(self.title, self.sender)
+	def sendCrashReport(self, receiver, data):
+		from_   = '{0}'.format(self.sender)
 		to      = '{0}'.format(receiver)
-		subject = 'Welcome'
-		msg     = 'Welcome {0},\n\nYour account was linked to your web-browser. In case you delete your cookies, click the link below to reconnect:\n\n{1}.\n\nDo NOT share this link with anybody else.'.format(gmname, url)
+		subject = 'Crash Report'
+		msg     = 'Shit is hitting the fan... omg this needs to be rewrite...\nAnyway... here is the data: {0}'.format(data)
 		self.__call__(receiver, from_, to, subject, msg)
 
 
+# ---------------------------------------------------------------------
 
 class PatreonApi(object):
 	
-	def __init__(self, host_callback, client_id, client_secret, min_pledge, whitelist):
-		self.callback      = host_callback # https://example.com/my/callback/path
-		self.client_id     = client_id     # ID of Patreon API key
-		self.client_secret = client_secret # Secret of Patreon API key
-		self.min_pledge    = min_pledge    # minimum pledge level for access (amount)
-		self.whitelist     = whitelist     # whitelist to ignore pledge level
+	def __init__(self, host_callback, **data):
+		self.callback      = host_callback         # https://example.com/my/callback/path
+		self.client_id     = data['client_id']     # ID of Patreon API key
+		self.client_secret = data['client_secret'] # Secret of Patreon API key
+		self.min_pledge    = data['min_pledge']    # minimum pledge level for access (amount)
+		self.whitelist     = data['whitelist']     # whitelist to ignore pledge level
 		
 	@staticmethod
 	def getUserInfo(json_data):
