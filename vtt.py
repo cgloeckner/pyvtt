@@ -172,8 +172,13 @@ def get_game_list():
 
 # --- GM MANAGING GAMES -----------------------------------------------
 
+@get('/vtt/fancy-url')
+def call_fancy_url():
+	return engine.url_generator()
+
+@post('/vtt/import-game/', apply=[asGm])
 @post('/vtt/import-game/<url>', apply=[asGm])
-def post_import_game(url):  
+def post_import_game(url=None):
 	status = {
 		'url_ok'  : False,
 		'file_ok' : False,
@@ -181,27 +186,36 @@ def post_import_game(url):
 		'url'     : ''
 	}
 	
-	# trim url length, convert to lowercase and trim whitespaces
-	url = url[:20].lower().strip()
-	
-	# check GM and url
+	# check GM
 	gm = engine.main_db.GM.loadFromSession(request) 
 	if gm is None:
 		abort(401)
-	
-	if not engine.verifyUrlSection(url):
-		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" is invalid'.format(gm.name, gm.url, engine.getClientIp(request), url))
-		status['error'] = 'NO SPECIAL CHARS OR SPACES'
-		return status
-	
+	   
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
 	
-	if gm_cache.db.Game.select(lambda g: g.url == url).first() is not None:
-		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" already in use'.format(gm.name, gm.url, engine.getClientIp(request), url))
-		status['error'] = 'ALREADY IN USE'
-		return status
-	
+	if url is None:
+		# pick random nonsense
+		# @NOTE: the set of possible URLs is huge. we just play with
+		# not having a collision, else the game creation would fail
+		# and an error would be reported anyway
+		url = engine.url_generator()
+		
+	else:
+		# trim url length, convert to lowercase and trim whitespaces
+		url = url[:30].lower().strip()
+		
+		# url
+		if not engine.verifyUrlSection(url):
+			engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" is invalid'.format(gm.name, gm.url, engine.getClientIp(request), url))
+			status['error'] = 'NO SPECIAL CHARS OR SPACES'
+			return status
+		
+		if gm_cache.db.Game.select(lambda g: g.url == url).first() is not None:
+			engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" already in use'.format(gm.name, gm.url, engine.getClientIp(request), url))
+			status['error'] = 'ALREADY IN USE'
+			return status
+		
 	# upload file
 	files = request.files.getall('file')
 	if len(files) != 1:

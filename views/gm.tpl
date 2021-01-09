@@ -19,7 +19,7 @@
 
 	<div class="form">
 		<p>ENTER GAME NAME (optional)</p>
-		<p><input type="text" id="url" value="" maxlength="20" autocomplete="off" /></p>
+		<p><input type="text" id="url" value="" maxlength="30" autocomplete="off" /> <img src="/static/rotate.png" class="icon" onClick="fancyUrl();" title="PICK NONSENSE" /></p>
 		<p></p>
 		
 		<div class="dropzone" id="dropzone">                                           

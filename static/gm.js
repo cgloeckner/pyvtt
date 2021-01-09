@@ -59,6 +59,16 @@ function deleteGame(url) {
 	);
 }
 
+function fancyUrl() {
+	// ask server to create nonsense game name
+	$.get(
+		url='/vtt/fancy-url',
+		success=function(data) {
+			$('#url').val(data);
+		}
+	);
+}
+
 function GmUploadDrag(event) {
 	event.preventDefault();
 }
@@ -72,25 +82,19 @@ function GmUploadDrop(event, url_regex, gm_url) {
 	var f = new FormData($('#uploadform')[0]);
 	
 	var url = $('#url').val();
-	if (url == '') {
-		// generate url from filename
-		// note: single-file-upload
-		var fname = event.dataTransfer.files[0].name;
-		var parts = fname.split('.');
-		var ext   = parts[parts.length - 1];
-		url   = fname.replace('.' + ext, '')
-		$('#url').val(url);
-	}
-	
-	// check url via regex
-	r = new RegExp(url_regex, 'g');
-	if (!r.test(url)) { 
-		showError('NO SPECIAL CHARS OR SPACES');
-		
-		// shake URL input
-		$('#url').addClass('shake');
-		setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
-		return;
+	if (url != '') {
+		// check url via regex
+		r = new RegExp(url_regex, 'g');
+		if (!r.test(url)) { 
+			showError('NO SPECIAL CHARS OR SPACES');
+			
+			// shake URL input
+			$('#url').addClass('shake');
+			setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
+			return;
+		}
+	} else {
+		console.log('no url provided');
 	}
 	
 	// import game

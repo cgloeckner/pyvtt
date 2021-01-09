@@ -12,8 +12,9 @@ import os, sys, hashlib, time, requests, json, re, shutil
 import bottle
 
 from orm import db_session, createMainDatabase
-from server import VttServer, PatreonApi, EmailApi, PathApi, LoggingApi, ErrorReporter
+from server import VttServer
 from cache import EngineCache
+import utils 
 
 
 __author__ = 'Christian Glöckner'
@@ -24,7 +25,7 @@ __licence__ = 'MIT'
 class Engine(object):         
 
 	def __init__(self, argv=list()):
-		self.paths = PathApi(appname='pyvtt')
+		self.paths = utils.PathApi(appname='pyvtt')
 		
 		# setup per-game stuff
 		self.checksums = dict()
@@ -58,6 +59,7 @@ class Engine(object):
 		
 		self.cache      = None   # later engine cache
 		
+		# handle commandline arguments
 		self.debug     = '--debug' in argv
 		self.quiet     = '--quiet' in argv
 		self.local_gm  = '--local-gm' in argv
@@ -66,13 +68,16 @@ class Engine(object):
 		if self.localhost:
 			assert(not self.local_gm)
 		
-		self.logging = LoggingApi(
+		self.logging = utils.LoggingApi(
 			info_file   = self.paths.getLogPath('info'),
 			error_file  = self.paths.getLogPath('error'),
 			access_file = self.paths.getLogPath('access')
 		)
 		
 		self.logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))
+		
+		# load fancy url generator api ... lol
+		self.url_generator = utils.FancyUrlApi(self)
 		
 		# handle settings
 		settings_path = self.paths.getSettingsPath()
@@ -142,11 +147,11 @@ class Engine(object):
 			protocol = 'https' if self.ssl else 'http'
 			host_callback = '{0}://{1}:{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), self.port)
 			# create patreon query API
-			self.login_api = PatreonApi(host_callback=host_callback, **self.login)
+			self.login_api = utils.PatreonApi(host_callback=host_callback, **self.login)
 		
 		if self.notify['type'] == 'email':
 			# create email notify API
-			self.notify_api = EmailApi(self, **self.notify)
+			self.notify_api = utils.EmailApi(self, **self.notify)
 		
 		# create main database
 		self.main_db = createMainDatabase(self)
