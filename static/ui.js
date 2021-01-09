@@ -284,7 +284,7 @@ function onDrop(event) {
 			// reset uploadqueue
 			$('#uploadqueue').val("");
 		}, error: function(response, msg) {
-			console.error(msg);
+			handleError(response);
 		}
 	});
 }

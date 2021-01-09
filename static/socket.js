@@ -248,7 +248,7 @@ function login(event, gmname, url, websocket_url, as_gm) {
 				};
 			}
 		}, error: function(response, msg) {
-			console.error(msg);
+			handleError(response);
 		}
 	});
 }

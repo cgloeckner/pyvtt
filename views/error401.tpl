@@ -10,14 +10,8 @@
 
 	<p>PLEASE LOG IN.</p>
 	
-<script type="text/javascript">
-<!--
-setTimeout('window.location = "/";', 2000);
-//–>
-</script>
-
 <hr />   
-	<a href="/">&lt; HOME</a>
+	<a href="javascript: history.back()">&lt; BACK</a>
 
 </div>
 

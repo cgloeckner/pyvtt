@@ -26,7 +26,7 @@ function registerGm(event) {
 				window.location = '/';
 			}
 		}, error: function(response, msg) {
-			console.error(msg);
+			handleError(response);
 		}
 	});
 }
@@ -124,7 +124,7 @@ function GmUploadDrop(event, url_regex, gm_url) {
 				}
 			}
 		}, error: function(response, msg) {
-			console.error(msg);
+			handleError(response);
 		}
 	});
 }

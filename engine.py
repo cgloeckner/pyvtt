@@ -6,7 +6,7 @@ import os, sys, hashlib, time, requests, json, re, shutil
 import bottle
 
 from orm import db_session, createMainDatabase
-from server import VttServer, PatreonApi, EmailApi, PathApi, LoggingApi
+from server import VttServer, PatreonApi, EmailApi, PathApi, LoggingApi, ErrorReporter
 from cache import EngineCache
 
 
@@ -138,15 +138,24 @@ class Engine(object):
 		
 		if self.notify['type'] == 'email':
 			# create email notify API
-			self.notify_api = EmailApi(**self.notify)
+			self.notify_api = EmailApi(self, **self.notify)
 		
 		# create main database
 		self.main_db = createMainDatabase(self)
 		
 		# setup db_session to all routes
 		app = bottle.default_app()
-		app.catchall = not self.debug
 		app.install(db_session)
+		
+		# setup error catching
+		if self.debug:
+			# let bottle catch exceptions
+			app.catchall = True
+		
+		else:
+			# use custom middleware
+			self.error_reporter = ErrorReporter(self)
+			app.install(self.error_reporter.plugin)
 		
 		# dice roll specific timers
 		self.recent_rolls = 30 # rolls within past 30s are recent

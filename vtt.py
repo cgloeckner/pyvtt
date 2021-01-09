@@ -22,8 +22,6 @@ if __name__ == '__main__':
 
 
 
-# --- GM routes ---------------------------------------------------------------
-
 # decorator for GM-routes
 def asGm(callback):
 	def wrapper(*args, **kwargs):
@@ -32,6 +30,10 @@ def asGm(callback):
 			redirect('/vtt/join')
 		return callback(*args, **kwargs)
 	return wrapper
+
+
+
+# --- GM LOGIN --------------------------------------------------------
 
 # shared login page
 @get('/vtt/join')
@@ -132,6 +134,8 @@ else:
 		return status
 
 
+# --- GM GAMES MENU ---------------------------------------------------
+
 @get('/', apply=[asGm])
 @view('gm')
 def get_game_list():
@@ -158,6 +162,9 @@ def get_game_list():
 	
 	# show GM's games
 	return dict(engine=engine, gm=gm, all_games=all_games, server=server)
+
+
+# --- GM MANAGING GAMES -----------------------------------------------
 
 @post('/vtt/import-game/<url>', apply=[asGm])
 def post_import_game(url):  
@@ -272,7 +279,6 @@ def kick_player(url, uuid):
 	
 	engine.logging.access('Player {0} ({1}) kicked from {2} by {3}'.format(name, uuid, game.getUrl(), engine.getClientIp(request)))
 
-
 @post('/vtt/delete-game/<url>', apply=[asGm])
 @view('games')
 def delete_game(url):
@@ -300,6 +306,9 @@ def delete_game(url):
 		server = 'http://{0}:{1}'.format(engine.getDomain(), engine.port)
 	
 	return dict(gm=gm, server=server, all_games=all_games)
+
+
+# --- GM MANAGING SCENES ----------------------------------------------
 
 @post('/vtt/create-scene/<url>', apply=[asGm])
 @view('scenes')
@@ -423,7 +432,7 @@ def duplicate_scene(url, scene_id):
 	
 	return dict(engine=engine, game=game)
 
-# --- playing routes ----------------------------------------------------------
+# --- STATIC FILES ----------------------------------------------------
 
 @get('/static/<fname>')
 def static_files(fname):
@@ -444,13 +453,8 @@ def static_token(gmurl, url, fname):
 	
 	return static_file(fname, root=path)
 
-@get('/websocket')
-def accept_websocket():
-	socket = request.environ.get('wsgi.websocket')
-	
-	if socket is not None:
-		# note: this keeps the websocket open during the session
-		engine.cache.listen(socket)
+
+# --- PLAYER LOGIN ----------------------------------------------------
 
 @post('/<gmurl>/<url>/login')
 def set_player_name(gmurl, url):
@@ -508,6 +512,8 @@ def set_player_name(gmurl, url):
 	return result
 
 
+# --- PLAYERS GAMEPLAY ------------------------------------------------
+
 @get('/<gmurl>/<url>')
 @view('battlemap')
 def get_player_battlemap(gmurl, url):
@@ -548,6 +554,14 @@ def get_player_battlemap(gmurl, url):
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=host_gm, is_gm=gm is not None)
 
+@get('/websocket')
+def accept_websocket():
+	socket = request.environ.get('wsgi.websocket')
+	
+	if socket is not None:
+		# note: this keeps the websocket open during the session
+		engine.cache.listen(socket)
+
 @post('/<gmurl>/<url>/upload/<posx:int>/<posy:int>/<default_size:int>')
 def post_image_upload(gmurl, url, posx, posy, default_size):
 	# load GM from cache
@@ -566,15 +580,8 @@ def post_image_upload(gmurl, url, posx, posy, default_size):
 	game_cache = gm_cache.get(game)
 	game_cache.onCreate((posx, posy), urls, default_size)
 
-@error(401)
-@view('error401')
-def error401(error):
-	return dict(engine=engine)
 
-@error(404)
-@view('error404')
-def error404(error):
-	return dict(engine=engine)
+# --- SHARDS ----------------------------------------------------------
 
 if len(engine.shards) > 0:
 	@get('/vtt/status')
@@ -628,6 +635,21 @@ if len(engine.shards) > 0:
 
 
 
+
+@error(401)
+@view('error401')
+def error401(error):
+	return dict(engine=engine)
+
+@error(404)
+@view('error404')
+def error404(error):
+	return dict(engine=engine)
+
+@get('/vtt/error/<error_id>')
+@view('error500')
+def caught_error(error_id):
+	return dict(engine=engine, error_id=error_id)
 
 
 if __name__ == '__main__':

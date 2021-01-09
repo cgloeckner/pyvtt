@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import sys, os, logging, smtplib, urllib, pathlib
+import sys, os, logging, smtplib, urllib, pathlib, tempfile, traceback, uuid
 import patreon
 
-from bottle import request, ServerAdapter
+import bottle
 
 from gevent.pywsgi import WSGIServer
 from gevent import socket
@@ -15,7 +15,7 @@ __author__ = "Christian Glöckner"
 
 
 # Server adapter providing support for WebSockets and UnixSocket
-class VttServer(ServerAdapter):
+class VttServer(bottle.ServerAdapter):
 	
 	def __init__(self, host, port, **options):
 		# handle given unixsocket
@@ -116,20 +116,15 @@ class PathApi(object):
 
 # ---------------------------------------------------------------------
 
-# Email API for sending password reset emails
+# Email API for error notification
 class EmailApi(object):
 	
-	def __init__(self, **data):
+	def __init__(self, engine, **data):
 		self.host     = data['host']
 		self.port     = data['port']
 		self.sender   = data['sender']
 		self.user     = data['user']
 		self.password = data['password']
-		self.mail_tpl = """From: {0}
-To: {1}
-Subject: {2}
-
-{3}"""
 		self.login()
 		
 	def login(self):
@@ -137,21 +132,20 @@ Subject: {2}
 		self.smtp.starttls()
 		self.smtp.login(self.user, self.password)
 		
-	def __call__(self, receiver, from_, to, subject, msg):
-		plain = 'From: {0}\nTo: {1}\nSubject: {2}\n\n{3}'.format(from_, to, subject, msg)
+	def __call__(self, error_id, message):
+		# create mail content
+		frm = 'From: PyVTT Server <{0}>'.format(self.sender)
+		to  = 'To: Developers <{0}>'.format(self.sender)
+		sub = 'Subject: Exception Traceback #{0}'.format(error_id)
+		plain = '{0}\n{1}\n{2}\n{3}'.format(frm, to, sub, message)
+		
+		# send email
 		try:
-			self.smtp.sendmail(self.sender, receiver, plain)
+			self.smtp.sendmail(self.sender, self.sender, plain)
 		except smtplib.SMTPSenderRefused:
 			# re-login and re-try
 			self.login()
-			self.smtp.sendmail(self.sender, receiver, plain)
-		
-	def sendCrashReport(self, receiver, data):
-		from_   = '{0}'.format(self.sender)
-		to      = '{0}'.format(receiver)
-		subject = 'Crash Report'
-		msg     = 'Shit is hitting the fan... omg this needs to be rewrite...\nAnyway... here is the data: {0}'.format(data)
-		self.__call__(receiver, from_, to, subject, msg)
+			self.smtp.sendmail(self.sender, self.sender, plain)
 
 
 # ---------------------------------------------------------------------
@@ -251,6 +245,8 @@ class PatreonApi(object):
 		return result
 
 
+# ---------------------------------------------------------------------
+
 class LoggingApi(object):
 	
 	def __init__(self, info_file, error_file, access_file):
@@ -293,4 +289,58 @@ class LoggingApi(object):
 		self.info(boot)
 		self.error(boot)
 		self.access(boot)
-	
+
+
+# ---------------------------------------------------------------------
+
+class ErrorReporter(object):
+
+	def __init__(self, engine):
+		self.engine     = engine
+		
+	def getStacktrace(self):
+		# fetch exception traceback
+		with tempfile.TemporaryFile(mode='w+') as h:
+			traceback.print_exc(file=h)
+			h.seek(0) # rewind after writing
+			return h.read()
+		
+	def plugin(self, func):
+		def wrapper(*args, **kwargs):
+			try:
+				return func(*args, **kwargs)
+			except bottle.HTTPResponse as e:
+				raise
+			except (KeyboardInterrupt, SystemExit):
+				raise
+			except Exception as error:
+				# fetch stacktrace and other debugging data
+				stacktrace = self.getStacktrace()
+				error_id   = uuid.uuid1().hex
+				full_url   = bottle.request.fullpath
+				client_ip  = self.engine.getClientIp(bottle.request)
+				cookies    = ''
+				for key in bottle.request.cookies.keys():
+					cookies += '\t{0} : {1}\n'.format(key, bottle.request.cookies[key])
+				if cookies == '':
+					cookies = '{}'
+				else:
+					cookies = '{\n' + cookies + '}'
+				
+				message = 'Error ID  = #{0}\nRoute URL = {1}\nClient-IP = {2}\nCookies   = {3}\n\n{4}'.format(
+					error_id, full_url, client_ip, cookies, stacktrace)
+				
+				# log error and notify developer
+				self.engine.logging.error(message)
+				if self.engine.notify_api is not None:
+					self.engine.notify_api(error_id, message)
+				
+				# notify user about error
+				if bottle.request.is_ajax:
+					# cause handling in javascript
+					bottle.abort(500, error_id)
+				else:
+					# custom errorpage
+					bottle.redirect('/vtt/error/{0}'.format(error_id))
+		return wrapper
+
