@@ -219,7 +219,7 @@ div.verticdropdown > div#historydrop {
 	height: calc(100% - 40px);
 	top: 15px;
 	
-	width: 120px;
+	width: 125px;
 	border: 1px solid black;
 	
 	background-color: rgba(100, 100, 100, 0.25);
@@ -481,6 +481,8 @@ div#mapfooter {
 }
 
 div.mapfooter > div#players {
+	user-select: none;
+	
 	display: block;
 	width: 700px;
 	text-align: center;
@@ -489,7 +491,9 @@ div.mapfooter > div#players {
 	/* white-space: nowrap; */
 }
 
-div.mapfooter > div#players > span.player {
+div.mapfooter > div#players > span.player {  
+	user-select: none;
+	
 	display: inline-block;
 	height: 20px;
 	padding: 10px;

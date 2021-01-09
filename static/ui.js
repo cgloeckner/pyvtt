@@ -198,31 +198,17 @@ function onResize() {
 	ratio = scale / radius;
 	
 	// resize all selected tokens
-	var changes = []
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
 		if (token.locked) {
 			return;
 		}
-		
 		var size = Math.round(token.size * ratio * 2);
-		
-		if (size > max_token_size) {
-			size = max_token_size;
-		}
-		if (size < min_token_size) {
-			size = min_token_size;
-		}
-		
-		changes.push({
-			'id'   : id,
-			'size' : size
-		});
-	});
-	
-	writeSocket({
-		'OPID'    : 'UPDATE',
-		'changes' : changes
+		size = Math.max(min_token_size, Math.min(max_token_size, size));
+		// save size
+		// @NOTE: resizing is updated after completion, meanwhile
+		// clide-side prediction kicks in
+		token.size = size;
 	});
 }
 
@@ -250,22 +236,15 @@ function onRotate(event) {
 	}
 	
 	// rotate all selected tokens
-	var changes = []
 	$.each(select_ids, function(index, id) {
 		var token = tokens[id];
 		if (token.locked) {
 			return;
 		}
-		
-		changes.push({
-			'id'     : id,
-			'rotate' : angle
-		});
-	});
-	
-	writeSocket({
-		'OPID'    : 'UPDATE',
-		'changes' : changes
+		// save rotation
+		// @NOTE: rotation is updated after completion, meanwhile
+		// clide-side prediction kicks in
+		token.rotate = angle;
 	});
 }
 
@@ -445,7 +424,35 @@ function onGrab(event) {
 		// Left Click: select token
 		var token = selectToken(mouse_x, mouse_y);
 		
-		if (token != null) {
+		if (primary_id > 0 && event.shiftKey) {
+			// trigger range query from primary token to mouse pos or next token
+			var pt = tokens[primary_id];
+			var x1 = pt.posx;
+			var y1 = pt.posy;
+			
+			var x2 = mouse_x;
+			var y2 = mouse_x;
+			
+			if (token != null) {
+				x2 = token.posx;
+				y2 = token.posy;
+			}
+			
+			var adding = false; // default: not adding to the selection
+			if (event.ctrlKey) {
+				adding = true;
+			}
+			
+			writeSocket({
+				'OPID'   : 'RANGE',
+				'adding' : adding,
+				'left'   : Math.min(x1, x2),
+				'top'    : Math.min(y1, y2),
+				'width'  : Math.abs(x1 - x2),
+				'height' : Math.abs(y1 - y2)
+			});
+			
+		} else if (token != null) {
 			var before = select_ids;
 			
 			if (event.ctrlKey) {
@@ -478,32 +485,6 @@ function onGrab(event) {
 					'selected' : select_ids
 				});
 			}
-			
-		} else if (primary_id > 0 && event.shiftKey) {
-			console.log('shift it!');
-			
-			// trigger range query from primary token to mouse pos
-			var pt = tokens[primary_id];
-			var x1 = pt.posx;
-			var x2 = mouse_x;
-			var y1 = pt.posy;
-			var y2 = mouse_x;
-			
-			console.log({
-				'OPID'   : 'RANGE',
-				'left'   : Math.min(pt.posx, mouse_x),
-				'top'    : Math.min(pt.posy, mouse_y),
-				'width'  : Math.abs(pt.posx - mouse_x),
-				'height' : Math.abs(pt.posy - mouse_y)
-			});
-			
-			writeSocket({
-				'OPID'   : 'RANGE',
-				'left'   : Math.min(pt.posx, mouse_x),
-				'top'    : Math.min(pt.posy, mouse_y),
-				'width'  : Math.abs(pt.posx - mouse_x),
-				'height' : Math.abs(pt.posy - mouse_y)
-			});
 			
 		} else {
 			// Clear selection
@@ -570,8 +551,14 @@ function onRelease() {
 		
 		primary_id = 0;
 		
+		var adding = false; // default: not adding to the selection
+		if (event.ctrlKey) {
+			adding = true;
+		}
+		
 		writeSocket({
 			'OPID'   : 'RANGE',
+			'adding' : adding,
 			'left'   : select_from_x,
 			'top'    : select_from_y,
 			'width'  : select_width,
@@ -634,13 +621,13 @@ function onMove(event) {
 						var dx = t.posx - prev_posx;
 						var dy = t.posy - prev_posy;
 						// move relative to primary token
-						t.posx = mouse_x + dx;
-						t.posy = mouse_y + dy;
+						var tx = mouse_x + dx;
+						var ty = mouse_y + dy;
 						
 						changes.push({
 							'id'   : id,
-							'posx' : t.posx,
-							'posy' : t.posy
+							'posx' : tx,
+							'posy' : ty
 						});
 					}
 				});
@@ -656,9 +643,16 @@ function onMove(event) {
 		// wheel clicked
 		$('#battlemap').css('cursor', 'grab');
 		
+		dx = event.movementX;
+		dy = event.movementY;
+		
+		// NOTE: some browsers go crazy
+		if (dx > 100) { dx /= 100; }
+		if (dy > 100) { dy /= 100; }
+		
 		// move viewport
-		viewport.x -= event.movementX / viewport.zoom;
-		viewport.y  -= event.movementY / viewport.zoom;
+		viewport.x -= dx / viewport.zoom;
+		viewport.y -= dy / viewport.zoom;
 		
 		limitViewportPosition();
 		
@@ -832,8 +826,46 @@ function onStartRotate() {
 	drag_action = 'rotate'; 
 }
 
+/// Event handle for ending token resize
+function onQuitResize() {
+	var changes = [];
+	$.each(select_ids, function(index, id) {
+		changes.push({
+			'id'   : id,
+			'size' : tokens[id].size
+		});
+	});
+	
+	writeSocket({
+		'OPID'    : 'UPDATE',
+		'changes' : changes
+	});
+}
+
+/// Event handle for ending token rotate
+function onQuitRotate() {
+	var changes = [];
+	$.each(select_ids, function(index, id) {
+		changes.push({
+			'id'     : id,
+			'rotate' : tokens[id].rotate
+		});
+	});
+	
+	writeSocket({
+		'OPID'    : 'UPDATE',
+		'changes' : changes
+	});
+}
+
 /// Event handle for quitting rotation/resize dragging
 function onQuitAction() {
+	if (drag_action == 'rotate') {
+		onQuitRotate();
+	} else if (drag_action == 'resize') {
+		onQuitResize();
+	}
+	
 	drag_action = '';    
 }
 

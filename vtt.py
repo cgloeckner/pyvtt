@@ -105,7 +105,7 @@ else:
 		}
 		
 		# test gm name (also as url)
-		gmame = request.forms.gmname
+		gmname = request.forms.gmname
 		if not engine.verifyUrlSection(gmname):
 			# contains invalid characters   
 			status['error'] = 'NO SPECIAL CHARS OR SPACES'
@@ -129,6 +129,19 @@ else:
 		sid = engine.main_db.GM.genSession()
 		gm = engine.main_db.GM(name=name, url=name, sid=sid)
 		gm.postSetup()
+		engine.main_db.commit()
+		
+		# add to cache and initialize database
+		engine.cache.insert(gm)
+		gm_cache = engine.cache.get(gm)
+		
+		# @NOTE: database creation NEEDS to be run from another
+		# thread, because every bottle route has an db_session
+		# active, but creating a database from within a db_session
+		# isn't possible
+		tmp = gevent.Greenlet(run=gm_cache.connect_db)
+		tmp.start()
+		tmp.join()
 		
 		expires = time.time() + engine.expire
 		response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
@@ -540,6 +553,11 @@ def get_player_battlemap(gmurl, url):
 	# try to load playername from cookie (or from GM name)
 	playername = request.get_cookie('playername')
 	gm         = engine.main_db.GM.loadFromSession(request)
+	
+	if gm is not None:
+		if gm.url != gmurl:
+			gm = None
+	
 	if playername is None:
 		if gm is not None:
 			playername = gm.name

@@ -324,6 +324,7 @@ class GameCache(object):
 	def onRange(self, player, data):
 		""" Handle player selecting multiple tokens. """
 		# fetch rectangle data
+		adding = data['adding']
 		left   = data['left']
 		top    = data['top']
 		width  = data['width']
@@ -336,7 +337,7 @@ class GameCache(object):
 			g.timeid = now
 			
 			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
-			token_ids = list()
+			token_ids = player.selected if adding else list()
 			for t in self.parent.db.Token.select(lambda t: t.scene == s and left <= t.posx and t.posx <= left + width and top <= t.posy and t.posy <= top + height): 
 				if t.size != -1:
 					token_ids.append(t.id)
@@ -369,6 +370,9 @@ class GameCache(object):
 			# iterate provided tokens
 			for k, tid in enumerate(ids):
 				t = self.parent.db.Token.select(lambda t: t.id == tid).first()
+				if t is None:
+					# ignore, t was deleted in the meantime
+					continue
 				# clone token
 				pos = self.parent.db.Token.getPosByDegree((posx, posy), k, len(ids))
 				t = self.parent.db.Token(scene=s, url=t.url, posx=pos[0], posy=pos[1],
@@ -406,7 +410,6 @@ class GameCache(object):
 				rotate = data.get('rotate')
 				flipx  = data.get('flipx')
 				locked = data.get('locked', False)
-				old_time = t.timeid
 				t.update(timeid=now, pos=pos, zorder=zorder, size=size,
 					rotate=rotate, flipx=flipx, locked=locked)
 		
@@ -453,8 +456,8 @@ class GameCache(object):
 		with db_session:
 			for tid in tokens:
 				t = self.parent.db.Token.select(lambda t: t.id == tid).first()
-				data.append(t.to_dict())
 				if t is not None:
+					data.append(t.to_dict())
 					t.delete()
 		
 		# broadcast delete

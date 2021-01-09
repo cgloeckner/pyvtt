@@ -51,8 +51,9 @@ def createGmDatabase(engine, filename):
 				self.locked = locked
 			
 			if pos != None:
-				self.posx = pos[0]
-				self.posy = pos[1]
+				# force position onto scene (canvas)
+				self.posx = min(1000, max(0, pos[0]))
+				self.posy = min(560, max(0, pos[1]))
 				self.timeid = timeid
 			
 			if zorder != None:
@@ -87,6 +88,10 @@ def createGmDatabase(engine, filename):
 			# calculate actual position
 			x = int(origin[0] - radius * s)
 			y = int(origin[1] + radius * c)
+			
+			# force position onto scene (canvas)
+			x = min(1000, max(0, x))
+			y = min(560, max(0, y))
 			
 			return (x, y)
 
@@ -360,7 +365,7 @@ def createGmDatabase(engine, filename):
 			
 			scene.backing = t
 			db.commit() 
-			gm_cache = engine.cache.get(gm.url)
+			gm_cache = engine.cache.get(gm)
 			gm_cache.insert(game)
 			
 			return game
