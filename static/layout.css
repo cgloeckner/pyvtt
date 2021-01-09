@@ -86,7 +86,7 @@ div.form {
 	margin-right: auto;
 	width: 50%;
 }
-
+														  p 
 input {
 	color: black;
 }
@@ -324,14 +324,13 @@ div#gmdrop > div > img.active {
 }
 
 div#gmdrop > div > img.active { 
-	outline: 2px solid white;
-	outline-style: groove;
-	outline-offset: 3px;
+	border: 3px groove gold;
 }
 
 img.icon:hover,
 div#gmdrop > img.largeicon:hover,
-div#gmdrop > div > img.thumbnail:hover {
+div#gmdrop > div > img.thumbnail:hover,
+div#gmdrop > div > a > img.thumbnail:hover {
 	cursor: pointer;
 	
 	filter: drop-shadow(0px 0px 10px gold) 

@@ -93,8 +93,6 @@ function GmUploadDrop(event, url_regex, gm_url) {
 			setTimeout(function() {	$('#url').removeClass('shake'); }, 1000);
 			return;
 		}
-	} else {
-		console.log('no url provided');
 	}
 	
 	// import game
