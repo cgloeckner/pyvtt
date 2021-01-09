@@ -1,3 +1,10 @@
+/**
+https://github.com/cgloeckner/pyvtt/
+
+Copyright (c) 2020-2021 Christian Glöckner
+License: MIT (see LICENSE for details)
+*/
+
 function openGmDropdown(force=false) {
 	var scenes = $('#gmdrop');
 	var hint   = $('#gmhint');

@@ -1,5 +1,11 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*- 
+"""
+https://github.com/cgloeckner/pyvtt/
+
+Copyright (c) 2020-2021 Christian Glöckner
+License: MIT (see LICENSE for details)
+"""
 
 import os, sys, hashlib, time, requests, json, re, shutil
 
@@ -10,7 +16,9 @@ from server import VttServer, PatreonApi, EmailApi, PathApi, LoggingApi, ErrorRe
 from cache import EngineCache
 
 
-__author__ = "Christian Glöckner"
+__author__ = 'Christian Glöckner'
+__licence__ = 'MIT'
+
 
 
 class Engine(object):         
@@ -40,7 +48,7 @@ class Engine(object):
 		
 		self.local_gm   = False
 		self.localhost  = False
-		self.title      = 'PyVTT'
+		self.title      = 'pyvtt'
 		self.links      = None
 		self.expire     = 3600 * 24 * 30 # default: 30d
 		self.login      = dict() # login settings

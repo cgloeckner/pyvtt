@@ -1,25 +1,31 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 
+# -*- coding: utf-8 -*- 
+"""
+https://github.com/cgloeckner/pyvtt/
+
+Copyright (c) 2020-2021 Christian Glöckner
+License: MIT (see LICENSE for details)
+"""
 
 from gevent import monkey; monkey.patch_all()
 import gevent
-from bottle import *
 
 import os, json, time, sys, psutil, random, subprocess, requests
 
 from pony import orm
+from bottle import *
 
 from engine import Engine
 from cache import PlayerCache
 
 
-
-__author__ = "Christian Glöckner"
+__author__ = 'Christian Glöckner'
+__licence__ = 'MIT'
 
 
 
 if __name__ == '__main__':
 	engine = Engine(sys.argv)
-
 
 
 # decorator for GM-routes

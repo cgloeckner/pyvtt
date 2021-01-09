@@ -1,5 +1,11 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python3 
+# -*- coding: utf-8 -*- 
+"""
+https://github.com/cgloeckner/pyvtt/
+
+Copyright (c) 2020-2021 Christian Glöckner
+License: MIT (see LICENSE for details)
+"""
 
 import os, pathlib, time, uuid, tempfile, shutil, zipfile, json, math
 
@@ -10,7 +16,8 @@ from pony.orm import *
 from PIL import Image, UnidentifiedImageError
 
 
-__author__ = "Christian Glöckner"
+__author__ = 'Christian Glöckner'
+__licence__ = 'MIT'
 
 
 

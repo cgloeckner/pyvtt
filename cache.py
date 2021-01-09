@@ -1,5 +1,11 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python3 
+# -*- coding: utf-8 -*- 
+"""
+https://github.com/cgloeckner/pyvtt/
+
+Copyright (c) 2020-2021 Christian Glöckner
+License: MIT (see LICENSE for details)
+"""
 
 import time, requests, uuid, json, random
 
@@ -12,7 +18,8 @@ from geventwebsocket.exceptions import WebSocketError
 from orm import db_session, createGmDatabase
 
 
-__author__ = "Christian Glöckner"
+__author__ = 'Christian Glöckner'
+__licence__ = 'MIT'
 
 
 

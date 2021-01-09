@@ -1,17 +1,25 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python3 
+# -*- coding: utf-8 -*- 
+"""
+https://github.com/cgloeckner/pyvtt/
+
+Copyright (c) 2020-2021 Christian Glöckner
+License: MIT (see LICENSE for details)
+"""
 
 import sys, os, logging, smtplib, urllib, pathlib, tempfile, traceback, uuid
-import patreon
 
 import bottle
+import patreon
 
 from gevent.pywsgi import WSGIServer
 from gevent import socket
 from geventwebsocket.handler import WebSocketHandler
 
 
-__author__ = "Christian Glöckner"
+__author__ = 'Christian Glöckner'
+__licence__ = 'MIT'
+
 
 
 # Server adapter providing support for WebSockets and UnixSocket
@@ -134,7 +142,7 @@ class EmailApi(object):
 		
 	def __call__(self, error_id, message):
 		# create mail content
-		frm = 'From: PyVTT Server <{0}>'.format(self.sender)
+		frm = 'From: pyvtt Server <{0}>'.format(self.sender)
 		to  = 'To: Developers <{0}>'.format(self.sender)
 		sub = 'Subject: Exception Traceback #{0}'.format(error_id)
 		plain = '{0}\n{1}\n{2}\n{3}'.format(frm, to, sub, message)
