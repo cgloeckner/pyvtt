@@ -167,7 +167,7 @@ class Engine(object):
 		
 		else:
 			# use custom middleware
-			self.error_reporter = ErrorReporter(self)
+			self.error_reporter = utils.ErrorReporter(self)
 			app.install(self.error_reporter.plugin)
 		
 		# dice roll specific timers
