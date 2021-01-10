@@ -127,30 +127,32 @@ function hidePlayer(name, uuid) {
 
 // --- dice rolls implementation --------------------------------------
 
-var rolls        = []; // current rolls
 var roll_timeout = 10000.0; // ms until roll will START to disappear
 
-/// Roll constructor
-function Roll(sides, playername, result) {
-	this.sides      = sides;
-	this.playername = player;
-	this.result     = result;
-}
-
-function addRoll(sides, result, color, recent) {
+function addRoll(sides, result, name, color, recent) {
+	// special case: d2
+	var result_label = result
+	if (sides == 2) {
+		if (result == 2) {
+			result_label = '<img style="width: 30px;" src="/static/d2_hit.png" />'
+		} else {
+			result_label = '<img style="width: 30px;" src="/static/d2_miss.png" />'
+		}
+	}
+	
 	// create dice result
 	var container = $('#d' + sides + 'box');
 	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
-	var his_span = '<span style="' + css + '">' + result + '</span>';
+	var his_span = '<span style="' + css + '">' + result_label + '</span>';
 	css += ' display: none;';
-	var box_span = '<span style="' + css + '">' + result + '</span>';
+	var box_span = '<span style="' + css + '">' + result_label + '</span>';
 	
 	if (recent) { 
 		container.prepend(box_span);
 		
 		// prepare automatic cleanup
 		var dom_span = container.children(':first-child');
-		if (result == 1 || result == sides) {
+		if (result == 1 || result == sides || sides == 2) {
 			dom_span.addClass('natroll');
 		}
 		dom_span.delay(dice_shake).fadeIn(100, function() {
@@ -159,8 +161,14 @@ function addRoll(sides, result, color, recent) {
 	}
 	
 	// also add to dice history
-	var img = '<img src="/static/d' + sides + '.png" draggable="false" />';
-	$('#historydrop').prepend('<div style="display: none">' + img + his_span + '</div>');
+	var label = '<div style="display: none"><span style="color: ' + color + '">' + name + '</span> d' + sides + ' &rArr; ';
+	if (result == 1 || result == sides) {
+		label += '<span class="natroll">' + result + '</span>';
+	} else {
+		label += result;
+	}
+	label += '</div>';
+	$('#historydrop').prepend(label);
 	var other_dom_span = $('#historydrop').children(':first-child');
 	other_dom_span.delay(dice_shake).fadeIn(1000, function() {});
 	

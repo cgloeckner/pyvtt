@@ -45,13 +45,13 @@ function toggleHistoryDropdown() {
 	if (history_dropdown) {
 		// close history
 		scenes.animate({
-			right: "-=105"
+			right: "-=125"
 		}, 500); 
 		history_dropdown = false;
 	} else {
 		// show history
 		scenes.animate({
-			right: "+=105"
+			right: "+=125"
 		}, 500);
 		history_dropdown = true;
 	}

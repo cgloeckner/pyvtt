@@ -72,7 +72,7 @@ function onAccept(data) {
 	
 	// show all rolls
 	$.each(data.rolls, function(item, obj) {
-		addRoll(obj.sides, obj.result, obj.color, obj.recent);
+		addRoll(obj.sides, obj.result, obj.name, obj.color, obj.recent);
 	});
 	
 	onRefresh(data);
@@ -128,7 +128,7 @@ function onQuit(data) {
 }
 
 function onRoll(data) {
-	addRoll(data.sides, data.result, data.color, data.recent);
+	addRoll(data.sides, data.result, data.name, data.color, data.recent);
 }
 
 function onSelect(data) {

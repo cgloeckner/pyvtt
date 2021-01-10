@@ -230,11 +230,13 @@ class GameCache(object):
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			
 			for r in self.parent.db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
+				# search playername
 				rolls.append({
 					'color'  : r.color,
 					'sides'  : r.sides,
 					'result' : r.result,
-					'recent' : r.timeid >= recent
+					'recent' : r.timeid >= recent,
+					'name'   : r.name
 				})
 		
 		player.write({
@@ -291,6 +293,10 @@ class GameCache(object):
 		result = random.randrange(1, sides+1)
 		roll_id = None
 		
+		if sides not in [2, 4, 6, 8, 10, 12, 20]:
+			# ignore unsupported dice
+			return
+		
 		now = time.time()
 		
 		with db_session: 
@@ -298,15 +304,16 @@ class GameCache(object):
 			g.timeid = now
 			
 			# roll dice
-			self.parent.db.Roll(game=g, color=player.color, sides=sides, result=result, timeid=now)
+			self.parent.db.Roll(game=g, name=player.name, color=player.color, sides=sides, result=result, timeid=now)
 		
 		# broadcast dice result
 		self.broadcast({
-			'OPID'    : 'ROLL',
-			'color'   : player.color,
-			'sides'   : sides,
-			'result'  : result,
-			'recent'  : True
+			'OPID'   : 'ROLL',
+			'color'  : player.color,
+			'sides'  : sides,
+			'result' : result,
+			'recent' : True,
+			'name'   : player.name
 		})
 		
 	def onSelect(self, player, data):

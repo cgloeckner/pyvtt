@@ -114,6 +114,7 @@ def createGmDatabase(engine, filename):
 	class Roll(db.Entity):
 		id     = PrimaryKey(int, auto=True)
 		game   = Required("Game")
+		name   = Required(str)
 		color  = Required(str)
 		sides  = Required(int)
 		result = Required(int)
