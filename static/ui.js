@@ -998,10 +998,33 @@ function onDragStuff(event) {
 	if (event.buttons == 1) {
 		if (drag_dice != null) {      
 			// drag dice box
-			var target = $('#d' + drag_dice + 'box');
+			var target = $('#d' + drag_dice + 'box'); 
+			// limit position to the screen
+			var w = target.width();
 			var h = target.height();
+			var x = Math.max(0, Math.min(window.innerWidth - w, event.clientX - w / 2));
 			var y = Math.max(0, Math.min(window.innerHeight - h / 2, event.clientY - h / 2));
-			target.css('top', y);
+			// calc distances to borders
+			var dx = window.innerWidth - x;  // distance to right
+			var dy = window.innerHeight - y; // distance to bottom
+			
+			if (x < Math.min(y, dx, dy)) {
+				// snap to left
+				target.css('left', w / 4);
+				target.css('top', y);
+			} else if (y < Math.min(x, dx, dy)) {
+				// snap to top
+				target.css('left', x);
+				target.css('top', h / 4);
+			} else if (dx < Math.min(x, y, dy)) {
+				// snap to right
+				target.css('left', window.innerWidth - w - w / 4);
+				target.css('top', y);
+			} else {
+				// snap to bottom
+				target.css('left', x);
+				target.css('top', window.innerHeight - h - h / 4);
+			}
 		}
 		if (drag_player) {
 			// drag player box
@@ -1035,7 +1058,6 @@ function onMouseOverPlayer(uuid) {
 	// show player menu
 	var menu = $('#playermenu_' + uuid).fadeIn(1500, 0);
 }
-
 
 /// Event handle for leaving a player container with the mouse
 function onMouseLeavePlayer(uuid) {

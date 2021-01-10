@@ -356,7 +356,7 @@ div.dice {
 	position: absolute;
 	z-index: 3;
 	/*bottom: calc(50% - 150px);*/
-	left: 15px;
+	left: 12px;
 }
 
 div.dice > img {
@@ -459,21 +459,17 @@ div#historydrop > div > img {
 
 /* --- Players list ------------------------------------------------- */
 
-div#players {
+div#players {  
 	position: absolute; 
 	bottom: 10px;
 	height: 54px;
-	
-	user-select: none;
-	
+	 
 	display: block;
 	
 	white-space: nowrap;
 }
 
-div#players > span.player {   
-	display: block;
-
+div#players > span.player {	
 	display: inline-block;
 	height: 20px;
 	padding: 10px;
@@ -482,16 +478,6 @@ div#players > span.player {
 	background-color: rgba(200, 200, 200, 0.5);
 	border-radius: 10px;
 	text-align: center;
-	color: black;
-}
-
-div#players > span.player > span.kick {
-	cursor: crosshair;
-}
-
-div#players > span.player > a {
-	pointer: hand;
-	text-decoration: none;
 	color: black;
 }
 
