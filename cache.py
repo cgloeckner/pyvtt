@@ -48,6 +48,7 @@ class PlayerCache(object):
 		self.color    = color
 		self.uuid     = uuid.uuid1().hex # used for HTML DOM id
 		self.selected = list()
+		self.index    = parent.getNextId() # used for ordering players in the UI
 		
 		self.greenlet = None
 		
@@ -67,7 +68,8 @@ class PlayerCache(object):
 			'RANGE'  : self.parent.onRange,
 			'CLONE'  : self.parent.onClone,
 			'UPDATE' : self.parent.onUpdate,
-			'DELETE' : self.parent.onDelete
+			'DELETE' : self.parent.onDelete,
+			'ORDER'  : self.parent.onOrder
 		}
 		
 	def __del__(self):
@@ -150,8 +152,28 @@ class GameCache(object):
 		self.lock    = lock.RLock()
 		self.url     = game.url
 		self.players = dict() # name => player
+		self.next_id = 0 # used for player indexing in UI
 		
 		self.engine.logging.info('GameCache {0} for GM {1} created'.format(self.url, self.parent.url))
+		
+	def getNextId(self):
+		with self.lock:
+			ret = self.next_id
+			self.next_id += 1
+			return ret
+		
+	def consolidateIndices(self):
+		""" This one fixes the player indices by removing gaps.
+		This is run when a player is inserted or removed (including
+		kicked).
+		"""
+		with self.lock:
+			# sort players by old indices
+			tmp = dict(sorted(self.players.items(), key=lambda i: i[1].index))
+			
+			# generate new_indicex
+			for new_index, n in enumerate(tmp):
+				self.players[n].index = new_index
 		
 	# --- cache implementation ----------------------------------------
 		
@@ -160,6 +182,7 @@ class GameCache(object):
 			if name in self.players:
 				raise KeyError
 			self.players[name] = PlayerCache(self.engine, self, name, color)
+			self.consolidateIndices()
 			return self.players[name]
 		
 	def get(self, name):
@@ -167,17 +190,20 @@ class GameCache(object):
 			return self.players[name]
 		
 	def getData(self):
-		result = dict()
+		result = list()
 		with self.lock:
 			for name in self.players:
 				p = self.players[name]
-				result[name] = {
+				result.append({
 					'name'    : name,
 					'uuid'    : p.uuid,
 					'color'   : p.color,
 					'ip'      : p.ip,
-					'country' : p.country
-				}
+					'country' : p.country,
+					'index'   : p.index
+				})
+		# sort to ensure index-order
+		result.sort(key=lambda i: i['index'])
 		return result
 		
 	def getSelections(self):
@@ -190,6 +216,7 @@ class GameCache(object):
 	def remove(self, name):
 		with self.lock:
 			del self.players[name]
+			self.consolidateIndices()
 		
 	# --- websocket implementation ------------------------------------
 		
@@ -201,6 +228,7 @@ class GameCache(object):
 				if p.uuid == uuid:
 					p.socket.close()
 					return name
+			self.consolidateIndices()
 		
 	def closeAllSockets(self):
 		""" Closes all sockets. """
@@ -254,8 +282,19 @@ class GameCache(object):
 			'name'    : player.name,
 			'uuid'    : player.uuid,
 			'color'   : player.color,
-			'country' : player.country
+			'country' : player.country,
+			'index'   : player.index
 		})
+		
+		# broadcast all indices
+		update = dict()
+		for n in self.players:
+			p = self.players[n]
+			update[p.uuid] = p.index
+		self.broadcast({
+			'OPID'    : 'ORDER',
+			'indices' : update
+		});
 		
 	def fetchRefresh(self, scene_id):
 		""" Performs a full refresh on all tokens. """  
@@ -472,6 +511,41 @@ class GameCache(object):
 			'OPID'   : 'DELETE',
 			'tokens' : data
 		})
+		
+	def onOrder(self, player, data):
+		""" Handle reordering a player box. """
+		# fetch name and direction
+		name      = data['name']
+		direction = data['direction']
+		
+		if direction not in [1, -1]:
+			# ignore invalid directions
+			return
+		
+		# move in order, fix gaps
+		indices = dict()
+		update  = dict()
+		with self.lock:
+			# determine source and destination player
+			src = self.players[name].index
+			dst = src + direction
+			for n in self.players:
+				if self.players[n].index == dst:
+					# swap indices
+					self.players[name].index = dst
+					self.players[n].index    = src
+					break
+			
+			# fetch update data for client: uuid => index
+			for n in self.players:
+				p = self.players[n]
+				update[p.uuid] = p.index
+		
+		# broadcast ALL indices
+		self.broadcast({
+			'OPID'    : 'ORDER',
+			'indices' : update
+		});
 		
 	def broadcastTokenUpdate(self, player, since):
 		""" Broadcast updated tokens. """

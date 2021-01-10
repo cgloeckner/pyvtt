@@ -57,6 +57,9 @@ function onSocketMessage(event) {
 		case 'SELECT':
 			onSelect(data);
 			break;
+		case 'ORDER':
+			onOrder(data);
+			break;
 		default:
 			console.error('Invalid OpID "' + opid + '"');
 	};
@@ -66,8 +69,10 @@ function onAccept(data) {
 	my_uuid = data['uuid'];
 	
 	// show all players
-	$.each(data.players, function(name, details) {
-		showPlayer(name, details.uuid, details.color, details.country); // uuid, color
+	$.each(data.players, function(i, details) {
+		var p = new Player(details.name, details.uuid, details.color, details.ip, details.country, details.index);
+		p.is_last = p.index == data.players.length - 1;
+		showPlayer(p);
 	});
 	
 	// show all rolls
@@ -113,18 +118,12 @@ function onDelete(data) {
 }
 
 function onJoin(data) {
-	var name    = data.name;
-	var uuid    = data.uuid;
-	var color   = data.color
-	var country = data.country;
-	showPlayer(name, uuid, color, country); 
+	var p = new Player(data.name, data.uuid, data.color, data.ip, data.country, data.index);
+	showPlayer(p);
 }
 
 function onQuit(data) {
-	var name  = data.name;
-	var uuid  = data.uuid;
-	players[name] = null;
-	hidePlayer(name, uuid); 
+	hidePlayer(data.uuid); 
 }
 
 function onRoll(data) {
@@ -142,6 +141,15 @@ function onSelect(data) {
 			primary_id = data.selected[0];
 		}
 	}
+}
+
+function onOrder(data) {
+	$.each(data.indices, function(uuid, index) {
+		players[uuid].index = index;
+		players[uuid].is_last = index == Object.keys(data.indices).length - 1;
+	});
+	
+	rebuildPlayers();
 }
 
 function onRefresh(data) {

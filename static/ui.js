@@ -21,6 +21,10 @@ var dice_shake = 750; // ms for shaking animation
 
 var zooming = true; // DEBUG switch for enabling the experimental feature
 
+var drag_dice    = null;    // indicates which dice is dragged around (by number of sides)
+var drag_players = null;    // indicates if players are dragged around
+var over_player  = null;    // indicates over which player the mouse is located (by name)
+
 
 function enableZooming() {
 	zooming = $('#zooming').prop('checked');
@@ -82,6 +86,18 @@ function selectToken(x, y) {
 
 var players = {};
 
+/// Player constructor
+function Player(name, uuid, color, ip, country, index) {
+	this.name    = name;
+	this.uuid    = uuid;
+	this.color   = color;
+	this.ip      = ip;
+	this.country = country;
+	this.index   = index;
+	this.is_last = false;
+}
+
+
 function getCookie(key) {
 	var arr = document.cookie.split(key + '=')[1];
 	if (arr == null) {
@@ -96,32 +112,60 @@ function setCookie(key, value) {
 	document.cookie = key + '=' + value;
 }
 
-function showPlayer(name, uuid, color, country) {
-	if (name in players) {
-		hidePlayer(name, uuid);
-	}
-	var flag = '';
-	if (country != '?') {
-		flag = '<img src="https://www.countryflags.io/' + country + '/flat/16.png" />';
-	}
+function rebuildPlayers() {
+	// build players array sorted by index
+	var indices = {};
+	$.each(players, function(uuid, p) {
+		indices[p.index] = p;
+	}),
 	
-	var kick = '';
-	var css = '';
-	if (is_gm && uuid != my_uuid) {
-		// add click event for kicking
-		kick = ' onClick="kickPlayer(\'' + game_url + '\', \'' + uuid + '\');"';
-		// add class to show kick-cursor
-		css  = 'kick';
-	}
-	
-	$('#players').append('<span id="player_' + uuid + '" class="player" style="filter: drop-shadow(1px 1px 9px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');"' + kick + '>' + flag + ' ' + '<span class="' + css + '">' + name + '</span></span>');
-	players[name] = color;
+	// rebuild players container
+	$('#players')[0].innerHTML = '';
+	$.each(indices, function(index, p) {
+		showPlayer(p, true);
+	});
 }
 
-function hidePlayer(name, uuid) {
-	if (name in players) {
+function showPlayer(p, force=false) { 
+	if (!force && p.uuid in players) {
+		// ignore existing player
+		return;
+	}
+	
+	var flag = '';
+	if (p.country != '?') {
+		flag = '<img src="https://www.countryflags.io/' + p.country + '/flat/16.png" />';
+	}
+	
+	// create player container (uuid as id, custom colored, optional kick click, draggable)
+	var coloring = ' style="filter: drop-shadow(1px 1px 9px ' + p.color + ') drop-shadow(-1px -1px 0 ' + p.color + ');"';
+	var ordering = ' onMouseEnter="onMouseOverPlayer(\'' + p.uuid + '\');"';
+	   ordering += ' onMouseLeave="onMouseLeavePlayer(\'' + p.uuid + '\');"';
+	
+	// create player menu for this player
+	var menu = '<div class="playermenu" id="playermenu_' + p.uuid + '">'
+	if (p.index > 0) {
+		menu += '<img src="/static/left.png" class="left" onClick="onPlayerOrder(-1);" />'
+	}
+	if (is_gm && p.uuid != my_uuid) {
+		menu += '<img src="/static/kick.gif" class="center" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
+	}
+	if (!p.is_last) {
+		menu += '<img src="/static/right.png" class="right" onClick="onPlayerOrder(1);" />';
+	}
+	menu += '</div>';
+	
+	// build player's container
+	var player_container = '<span id="player_' + p.uuid + '"' + ordering + ' draggable="true" class="player"' + coloring + '>'  + menu + flag + '&nbsp;' + p.name + '</span>';
+	
+	$('#players').append(player_container);
+	players[p.uuid] = p;
+}
+
+function hidePlayer(uuid) {
+	if (uuid in players) {
 		$('#player_' + uuid).remove();
-		delete players[name];
+		delete players[uuid];
 	}
 }
 
@@ -141,7 +185,7 @@ function addRoll(sides, result, name, color, recent) {
 	}
 	
 	// create dice result
-	var container = $('#d' + sides + 'box');
+	var container = $('#d' + sides + 'rolls');
 	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
 	var his_span = '<span style="' + css + '">' + result_label + '</span>';
 	css += ' display: none;';
@@ -937,3 +981,90 @@ function onTop() {
 	});
 }
 
+/// Event handle for start dragging a single dice container
+function onStartDragDice(sides) {
+	drag_dice   = sides;
+	drag_player = false;
+}
+
+/// Event handle for start dragging a players container
+function onStartDragPlayers() {
+	drag_dice   = null;
+	drag_player = true;
+}
+
+/// Event handle for dragging a single dice container
+function onDragStuff(event) {
+	if (event.buttons == 1) {
+		if (drag_dice != null) {      
+			// drag dice box
+			var target = $('#d' + drag_dice + 'box');
+			var h = target.height();
+			var y = Math.max(0, Math.min(window.innerHeight - h / 2, event.clientY - h / 2));
+			target.css('top', y);
+		}
+		if (drag_player) {
+			// drag player box
+			var target = $('#players');
+			var w = target.width();
+			var h = target.height();
+			var x = Math.max(0, Math.min(window.innerWidth - w, event.clientX - w / 2));
+			var y = Math.max(0, Math.min(window.innerHeight - h, event.clientY - h / 2));
+			target.css('left', x);
+			target.css('top', y);
+			target.css('bottom', '0');
+		}
+		if (over_player != null) {
+			// determine direction
+			var direction = 1; // @TODO: wip
+			
+			// trigger reordering
+			writeSocket({
+			'OPID'      : 'ORDER',
+			'name'      : players[over_player].name,
+			'direction' : direction
+			});
+		}
+	}
+}
+
+/// Event handle for entering a player container with the mouse
+function onMouseOverPlayer(uuid) {
+	over_player = uuid;
+	
+	// show player menu
+	var menu = $('#playermenu_' + uuid).fadeIn(1500, 0);
+}
+
+
+/// Event handle for leaving a player container with the mouse
+function onMouseLeavePlayer(uuid) {
+	over_player = null;
+	
+	// hide player menu
+	var menu = $('#playermenu_' + uuid).fadeOut(250, 0);
+}
+
+/// Event handle for using the mouse wheel over a player container
+function onWheelPlayers() {
+	var direction = - Math.sign(event.deltaY);
+	
+	if (direction != 0) {
+		writeSocket({
+			'OPID'      : 'ORDER',
+			'name'      : players[over_player].name,
+			'direction' : direction
+		});
+	}
+}
+
+/// Event handle for moving a player
+function onPlayerOrder(direction) {
+	if (over_player != null) {
+		writeSocket({
+			'OPID'      : 'ORDER',
+			'name'      : players[over_player].name,
+			'direction' : direction
+		});
+	}
+}

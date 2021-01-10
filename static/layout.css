@@ -196,6 +196,7 @@ div.menu table > input {
 
 div#game {
 	display: none;
+	height: 100%;
 }
 
 /* --- Settings Area ------------------------------------------------ */
@@ -346,21 +347,19 @@ div#gmdrop > div > div.controls {
 
 /* --- Dicebox Layout ----------------------------------------------- */
 
-div.dice,
-div.rollbox {
-	position: absolute;
-	z-index: 3;
-	bottom: calc(50% - 150px);
-	left: 15px;   
-}
-
 div#dicebox {
 	opacity: 0.0;
 	display: none;
 }
 
+div.dice {
+	position: absolute;
+	z-index: 3;
+	/*bottom: calc(50% - 150px);*/
+	left: 15px;
+}
+
 div.dice > img {
-	display: block;
 	user-select: none;
 	
 	width: 48px;
@@ -400,39 +399,27 @@ div.dice > img:active {
 	100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
-div.rollbox {   
+div.dice > div.rollbox {   
 	user-select: none;
 	pointer-events: none;
 	
-	overflow: hidden;
-	
-	width: 100%;
+	position: absolute;
 	
 	z-index: 0;
-}
-
-div.rollbox > div {  
-	user-select: none;
-	pointer-events: none;
-	
-	display: flex;
+	 
+	display: inline-flex;
 	flex-direction: row; 
-
-	display: block;
-	position: relative;
-	left: 50px;
-	height: 50px;  
-	overflow: hidden;
-	white-space: nowrap;
 	
 	opacity: 0.75;
 	
+	overflow: hidden;
+	/*
+	white-space: nowrap;
 	width: calc(4px + 10 * 56px);
-	
-	z-index: 0;
+	*/
 }
 
-div.rollbox > div > span { 
+div.dice > div.rollbox > span { 
 	user-select: none;
 	pointer-events: none;
 	
@@ -454,7 +441,7 @@ div.rollbox > div > span {
 	border: 1px solid white; 
 }
 
-div.rollbox > div > span.natroll,
+div.dice > div.rollbox > div > span.natroll,
 div#historydrop > div > span.natroll {
 	font-weight: bold;
 }
@@ -470,33 +457,23 @@ div#historydrop > div > img {
 	vertical-align: bottom;
 }
 
-/* --- Map Footer ----------------------------------------------------------- */
+/* --- Players list ------------------------------------------------- */
 
-div.mapfooter {
-	position: absolute;
-	bottom: 5px;
-	width: 100%;
-}
-
-div#mapfooter {
-	opacity: 0.0;
-	display: none;
-}
-
-div.mapfooter > div#players {
+div#players {
+	position: absolute; 
+	bottom: 10px;
+	height: 54px;
+	
 	user-select: none;
 	
 	display: block;
-	width: 700px;
-	text-align: center;
-	margin-left: auto;
-	margin-right: auto;
-	/* white-space: nowrap; */
+	
+	white-space: nowrap;
 }
 
-div.mapfooter > div#players > span.player {  
-	user-select: none;
-	
+div#players > span.player {   
+	display: block;
+
 	display: inline-block;
 	height: 20px;
 	padding: 10px;
@@ -508,14 +485,53 @@ div.mapfooter > div#players > span.player {
 	color: black;
 }
 
-div.mapfooter > div#players > span.player > span.kick {
+div#players > span.player > span.kick {
 	cursor: crosshair;
 }
 
-div.mapfooter > div#players > span.player > a {
+div#players > span.player > a {
 	pointer: hand;
 	text-decoration: none;
 	color: black;
+}
+
+div#players > span > div.playermenu {
+	position: absolute;
+	display: none;
+	
+	width: calc(100% - 20px);
+}
+
+div#players > span > div.playermenu > img {
+	width: 25px;
+}
+
+div#players > span > div.playermenu > img.left {
+	float: left;
+}
+
+div#players > span > div.playermenu > img.right {
+	float: right;
+}
+
+div#players > span > div.playermenu > img:hover {
+	cursor: pointer;
+	filter: invert(1.0)
+		drop-shadow(1px 1px 10px gold) 
+		drop-shadow(-1px -1px 10px gold);
+}
+
+/* --- Map Footer --------------------------------------------------- */
+
+div.mapfooter {
+	position: absolute;
+	bottom: 5px;
+	width: 100%;
+}
+
+div#mapfooter {
+	opacity: 0.0;
+	display: none;
 }
 
 form#uploadform {

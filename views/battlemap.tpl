@@ -2,7 +2,7 @@
   
 %include("login")
 
-<div id="game">
+<div id="game" onDragOver="onDragStuff(event);">
 %if is_gm:
 	<div class="horizdropdown" onClick="openGmDropdown();">
 		<div id="gmdrop">
@@ -20,16 +20,15 @@
 	</div>
 
 	<div id="dicebox">
-		<div class="dice" id="dice">
+%i = 0
 %for d in [20, 12, 10, 8, 6, 4, 2]:
-			<img src="/static/d{{d}}.png" id="d{{d}}" title="Roll 1D{{d}}" draggable="false" onClick="rollDice({{d}});" />
-%end
+		<div class="dice" id="d{{d}}box" style="top: {{100 + 50 * i}}px;" onMouseDown="onStartDragDice({{d}});">
+			<img src="/static/d{{d}}.png" id="d{{d}}" title="Roll 1D{{d}}" onClick="rollDice({{d}});" />
+
+			<div class="rollbox" id="d{{d}}rolls"></div>
 		</div>
-		<div class="rollbox" id="rollbox">
-%for d in [20, 12, 10, 8, 6, 4, 2]:
-			<div id="d{{d}}box"></div>
+	%i += 1
 %end
-		</div>
 	</div>
 
 	<div class="battlemap" id="gamecontent">
@@ -46,9 +45,9 @@
 		</div>
 	</div>
 
+	<div id="players" onMouseDown="onStartDragPlayers();" onWheel="onWheelPlayers();"></div>
+	
 	<div class="mapfooter" id="mapfooter">
-		<div id="players"></div>
-
 		<form id="uploadform" method="post" enctype="multipart/form-data">
 			<input id="uploadqueue" name="file[]" type="file" multiple />
 		</form>
