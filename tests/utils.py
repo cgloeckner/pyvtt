@@ -13,7 +13,6 @@ import vtt
 from utils import PathApi
 from engine import Engine
 
-
 class EngineTest(unittest.TestCase):
 		
 	def setUp(self):
@@ -23,7 +22,6 @@ class EngineTest(unittest.TestCase):
 		
 		# pregenerate paths api for dummyfiles            
 		paths = PathApi(appname='pyvtt', root=root)
-		print('T')
 		for w in ['verbs', 'adjectives', 'nouns']:
 			with open(paths.getFancyUrlPath() / '{0}.txt'.format(w), 'w') as h:
 				h.write('demo')

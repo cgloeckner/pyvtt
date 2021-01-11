@@ -9,7 +9,6 @@ License: MIT (see LICENSE for details)
 
 from tests.utils import EngineTest
 
-
 class ExampleTest(EngineTest):
 	
 	def test_landingpage(self):
