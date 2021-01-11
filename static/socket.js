@@ -216,7 +216,7 @@ function login(event, gmname, url, websocket_url, as_gm) {
 					$('#dicebox').css('display', 'block');
 					$('#dicebox').animate({ opacity: '+=1.0' }, 2000);
 					
-					onResize();
+					onWindowResize();
 				});
 				
 				resetViewport();
@@ -300,7 +300,7 @@ function start(gmname, url, playername, color) {
 	battlemap.addEventListener('mouseout',	onRelease);
 	document.addEventListener('keydown',	onShortcut);
 	
-	$(window).resize(onResize);
+	$(window).resize(onWindowResize);
 	
 	// setup game  
 	gm_name = gmname;

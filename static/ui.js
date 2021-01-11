@@ -25,7 +25,7 @@ var drag_dice    = null;    // indicates which dice is dragged around (by number
 var drag_players = null;    // indicates if players are dragged around
 var over_player  = null;    // indicates over which player the mouse is located (by name)
 
-var dice_snap = true;       // force dice to snap to borders
+var dice_snap = true;       // force dice to snap to borders (DEBUGGING use only!)
 
 var default_dice_pos = {};  // default dice positions
 
@@ -231,7 +231,7 @@ function onDrag(event) {
 	
 	if (primary_id != 0) {
 		if (drag_action == 'resize') {
-			onResize();
+			onTokenResize();
 		} else if (drag_action == 'rotate') {
 			onRotate();
 		}
@@ -240,7 +240,7 @@ function onDrag(event) {
 	updateTokenbar();
 }
 
-function onResize() {
+function onTokenResize() {
 	var first_token = tokens[primary_id] 
 	
 	// calculate distance between mouse and token   
@@ -1042,7 +1042,7 @@ function snapDice(x, y, container, default_snap) {
 		return [max_x, y, 'right'];
 	} else {
 		// snap to bottom           
-		return[x, max_y, 'bottom'];
+		return [x, max_y, 'bottom'];
 	}
 }
 
@@ -1057,20 +1057,41 @@ function resetDicePos(sides) {
 	setCookie('d' + sides, '');
 }
 
+function moveDiceTo(data, sides) {
+	// change position
+	var target = $('#d' + sides + 'box');
+	target.css('left', data[0]);
+	target.css('top',  data[1]);
+	
+	// change rollbox orientation
+	var target = $('#d' + sides + 'rolls');
+	switch (data[2]) {
+		case 'left':
+			target.css('display', 'inline-flex');
+			target.css('flex-direction', 'row');
+			break;
+		case 'top':
+			target.css('display', 'flex');
+			target.css('flex-direction', 'column');
+			break;
+		default:
+			console.log(data[2], 'not supported yet');
+	}
+}
+
 /// Drag dice container to position specified by the event
 function onDragDice(event) {
 	// drag dice box
 	var target = $('#d' + drag_dice + 'box');
 	 
 	// limit position to the screen
-	var pos = limitPosition(target, event.clientX, event.clientY)
+	var data = limitPosition(target, event.clientX, event.clientY)
 	
 	if (dice_snap) {
-		data = snapDice(pos[0], pos[1], target, '');
+		data = snapDice(data[0], data[1], target, '');
 	}
 	
-	target.css('left', data[0]);
-	target.css('top',  data[1]);
+	moveDiceTo(data, drag_dice);
 	
 	saveDicePos(drag_dice, data);
 }
@@ -1140,7 +1161,7 @@ function onPlayerOrder(direction) {
 }
 
 /// Event handle for window resize
-function onResize(event) {
+function onWindowResize(event) {
 	// refresh default dice positions
 	var total_dice_height = 50 * 7; // 7 dice
 	var starty = window.innerHeight / 2 - total_dice_height / 2;
@@ -1154,10 +1175,8 @@ function onResize(event) {
 	
 	// apply dice positions
 	$.each(default_dice_pos, function(sides, data) {
-		var target = $('#d' + sides + 'box');  
 		var data = loadDicePos(sides);
-		target.css('left', data[0]);
-		target.css('top',  data[1]);
+		moveDiceTo(data, sides);
 	});
 }
 
