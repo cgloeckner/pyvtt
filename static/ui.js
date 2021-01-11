@@ -1027,7 +1027,6 @@ function snapDice(x, y, container, default_snap) {
 	// limit pos to screen
 	x = Math.max(min_x, Math.min(x, max_x));
 	y = Math.max(min_y, Math.min(y, max_y));
-	console.log(min_x, x, max_x, "\t", min_y, y, max_y);
 	
 	var dx = window.innerWidth  - x; // distance to right
 	var dy = window.innerHeight - y; // distance to bottom
@@ -1153,13 +1152,10 @@ function onResize(event) {
 	default_dice_pos[ 4] = [15, starty+250, 'left'];
 	default_dice_pos[ 2] = [15, starty+300, 'left'];
 	
-	console.log('resize', window.innerWidth, window.innerHeight);
-	
 	// apply dice positions
 	$.each(default_dice_pos, function(sides, data) {
 		var target = $('#d' + sides + 'box');  
 		var data = loadDicePos(sides);
-		console.log('d' + sides + ': ', data);
 		target.css('left', data[0]);
 		target.css('top',  data[1]);
 	});

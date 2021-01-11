@@ -263,7 +263,11 @@ function login(event, gmname, url, websocket_url, as_gm) {
 				};
 			}
 		}, error: function(response, msg) {
-			handleError(response);
+			if ('responseText' in response) {
+				handleError(response);
+			} else {
+				showError('SERVER NOT FOUND');
+			}
 		}
 	});
 }
