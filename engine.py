@@ -71,6 +71,7 @@ class Engine(object):
 			assert(not self.local_gm)
 		
 		self.logging = utils.LoggingApi(
+			quiet        = self.quiet,
 			info_file    = self.paths.getLogPath('info'),
 			error_file   = self.paths.getLogPath('error'),
 			access_file  = self.paths.getLogPath('access'),
@@ -160,18 +161,18 @@ class Engine(object):
 		self.main_db = createMainDatabase(self)
 		
 		# setup db_session to all routes
-		app = bottle.default_app()
-		app.install(db_session)
+		self.app = bottle.default_app()
+		self.app.install(db_session)
 		
 		# setup error catching
 		if self.debug:
 			# let bottle catch exceptions
-			app.catchall = True
+			self.app.catchall = True
 		
 		else:
 			# use custom middleware
 			self.error_reporter = utils.ErrorReporter(self)
-			app.install(self.error_reporter.plugin)
+			self.app.install(self.error_reporter.plugin)
 		
 		# dice roll specific timers
 		self.recent_rolls = 30 # rolls within past 30s are recent

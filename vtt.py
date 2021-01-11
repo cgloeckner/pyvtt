@@ -47,87 +47,28 @@ def asGm(callback):
 def gm_login():
 	return dict(engine=engine)
 
-if engine.login['type'] == 'patreon':
-	# patreon-login callback
-	@get('/vtt/patreon/callback')
-	def gm_patreon():
-		# query session from patreon auth
-		session = engine.login_api.getSession(request)
-		
-		if session is None or session['sid'] is None:
-			# not allowed, just redirect that poor soul
-			redirect('/vtt/join')
-		
-		# test whether GM is already there
-		gm = engine.main_db.GM.select(lambda g: g.url == session['user']['id']).first()
-		if gm is None:
-			# create GM (username as display name, patreon-id as url)
-			gm = engine.main_db.GM(
-				name=session['user']['username'],
-				url=str(session['user']['id']),
-				sid=session['sid']
-			)
-			gm.postSetup()
-			engine.main_db.commit()
-			
-			# add to cache and initialize database
-			engine.cache.insert(gm)
-			gm_cache = engine.cache.get(gm)
-			
-			# @NOTE: database creation NEEDS to be run from another
-			# thread, because every bottle route has an db_session
-			# active, but creating a database from within a db_session
-			# isn't possible
-			tmp = gevent.Greenlet(run=gm_cache.connect_db)
-			tmp.start()
-			tmp.join()
-			
-			engine.logging.access('GM created using patreon with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
-			
-		else:
-			# create new session for already existing GM
-			gm.sid = session['sid']
-			
-		gm.refreshSession(response, request)
-		
-		engine.logging.access('GM name="{0}" url={1} session refreshed using patreon by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
-		
-		engine.main_db.commit()
-		redirect('/')
-
-else:
-	# non-patreon login
-	@post('/vtt/join')
-	def post_gm_login():
-		status = {
-			'url'   : None,
-			'error' : ''
-		}
-		
-		# test gm name (also as url)
-		gmname = request.forms.gmname
-		if not engine.verifyUrlSection(gmname):
-			# contains invalid characters   
-			status['error'] = 'NO SPECIAL CHARS OR SPACES'
-			engine.logging.warning('Failed GM login by {0}: invalid name "{1}".'.format(engine.getClientIp(request), gmname))
-			return status
-			
-		name = gmname[:20].lower().strip()
-		if name in engine.gm_blacklist:
-			# blacklisted name
-			status['error'] = 'RESERVED NAME'  
-			engine.logging.warning('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request), gmname))
-			return status
-			
-		if len(engine.main_db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
-			# collision
-			status['error'] = 'ALREADY IN USE'   
-			engine.logging.warning('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request), gmname))
-			return status
-		
-		# create new GM (use GM name as display name and URL)
-		sid = engine.main_db.GM.genSession()
-		gm = engine.main_db.GM(name=name, url=name, sid=sid)
+# patreon-login callback
+@get('/vtt/patreon/callback')
+def gm_patreon():
+	if engine.login['type'] != 'patreon':
+		abort(404)
+	
+	# query session from patreon auth
+	session = engine.login_api.getSession(request)
+	
+	if session is None or session['sid'] is None:
+		# not allowed, just redirect that poor soul
+		redirect('/vtt/join')
+	
+	# test whether GM is already there
+	gm = engine.main_db.GM.select(lambda g: g.url == session['user']['id']).first()
+	if gm is None:
+		# create GM (username as display name, patreon-id as url)
+		gm = engine.main_db.GM(
+			name=session['user']['username'],
+			url=str(session['user']['id']),
+			sid=session['sid']
+		)
 		gm.postSetup()
 		engine.main_db.commit()
 		
@@ -143,15 +84,77 @@ else:
 		tmp.start()
 		tmp.join()
 		
-		expires = time.time() + engine.expire
-		response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
+		engine.logging.access('GM created using patreon with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
 		
-		engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
+	else:
+		# create new session for already existing GM
+		gm.sid = session['sid']
 		
-		engine.main_db.commit()
-		status['url'] = gm.url
-		return status
+	gm.refreshSession(response, request)
+	
+	engine.logging.access('GM name="{0}" url={1} session refreshed using patreon by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
+	
+	engine.main_db.commit()
+	redirect('/')
 
+# non-patreon login
+@post('/vtt/join')
+def post_gm_login():
+	if engine.login['type'] != '':
+		abort(404)
+	
+	status = {
+		'url'   : None,
+		'error' : ''
+	}
+	
+	# test gm name (also as url)
+	gmname = request.forms.gmname
+	if not engine.verifyUrlSection(gmname):
+		# contains invalid characters   
+		status['error'] = 'NO SPECIAL CHARS OR SPACES'
+		engine.logging.warning('Failed GM login by {0}: invalid name "{1}".'.format(engine.getClientIp(request), gmname))
+		return status
+		
+	name = gmname[:20].lower().strip()
+	if name in engine.gm_blacklist:
+		# blacklisted name
+		status['error'] = 'RESERVED NAME'  
+		engine.logging.warning('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request), gmname))
+		return status
+		
+	if len(engine.main_db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
+		# collision
+		status['error'] = 'ALREADY IN USE'   
+		engine.logging.warning('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request), gmname))
+		return status
+	
+	# create new GM (use GM name as display name and URL)
+	sid = engine.main_db.GM.genSession()
+	gm = engine.main_db.GM(name=name, url=name, sid=sid)
+	gm.postSetup()
+	engine.main_db.commit()
+	
+	# add to cache and initialize database
+	engine.cache.insert(gm)
+	gm_cache = engine.cache.get(gm)
+	
+	# @NOTE: database creation NEEDS to be run from another
+	# thread, because every bottle route has an db_session
+	# active, but creating a database from within a db_session
+	# isn't possible
+	tmp = gevent.Greenlet(run=gm_cache.connect_db)
+	tmp.start()
+	tmp.join()
+	
+	expires = time.time() + engine.expire
+	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
+	
+	engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
+	
+	engine.main_db.commit()
+	status['url'] = gm.url
+	return status
 
 # --- GM GAMES MENU ---------------------------------------------------
 
@@ -716,56 +719,63 @@ def post_image_upload(gmurl, url, posx, posy, default_size):
 
 # --- SHARDS ----------------------------------------------------------
 
-if len(engine.shards) > 0:
-	@get('/vtt/status')
-	def status_report():
-		pid = os.getpid()
-		data = dict()
-		
-		# query cpu load
-		ret = subprocess.run(["ps", "-p", str(pid), "-o", "%cpu"], capture_output=True)
-		val = ret.stdout.decode('utf-8').split('\n')[1].strip()
-		data['cpu'] = float(val)
-		
-		# query memory load
-		ret = subprocess.run(["ps", "-p", str(pid), "-o", "%mem"], capture_output=True)
-		val = ret.stdout.decode('utf-8').split('\n')[1].strip()
-		data['memory'] = float(val)
-		
-		# query number of players
-		data['num_players'] = PlayerCache.instance_count
-		
-		return data
+@get('/vtt/status')
+def status_report():
+	if len(engine.shards) == 0:
+		abort(404)
+	
+	pid = os.getpid()
+	data = dict()
+	
+	# query cpu load
+	ret = subprocess.run(["ps", "-p", str(pid), "-o", "%cpu"], capture_output=True)
+	val = ret.stdout.decode('utf-8').split('\n')[1].strip()
+	data['cpu'] = float(val)
+	
+	# query memory load
+	ret = subprocess.run(["ps", "-p", str(pid), "-o", "%mem"], capture_output=True)
+	val = ret.stdout.decode('utf-8').split('\n')[1].strip()
+	data['memory'] = float(val)
+	
+	# query number of players
+	data['num_players'] = PlayerCache.instance_count
+	
+	return data
 
-	@get('/vtt/query/<index:int>')
-	def status_query(index):
-		# ask server
-		host = engine.shards[index]
-		data = dict()   
-		data['countryCode'] = None
-		data['status']      = None
-		
-		# query server location
-		ip = host.split('://')[1].split(':')[0]
-		d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(ip)).text)
-		if 'countryCode' in d:
-			data['countryCode'] = d['countryCode'].lower()
-		
-		# query server status
-		try:
-			data['status'] = requests.get(host + '/vtt/status').text;
-		except requests.exceptions.ConnectionError as e:
-			engine.logging.error('Server {0} seems to be offline'.format(host))
-		
-		return data
+@get('/vtt/query/<index:int>')
+def status_query(index):
+	if len(engine.shards) == 0:
+		abort(404)
+	
+	# ask server
+	host = engine.shards[index]
+	data = dict()   
+	data['countryCode'] = None
+	data['status']      = None
+	
+	# query server location
+	ip = host.split('://')[1].split(':')[0]
+	d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(ip)).text)
+	if 'countryCode' in d:
+		data['countryCode'] = d['countryCode'].lower()
+	
+	# query server status
+	try:
+		data['status'] = requests.get(host + '/vtt/status').text;
+	except requests.exceptions.ConnectionError as e:
+		engine.logging.error('Server {0} seems to be offline'.format(host))
+	
+	return data
 
-	@get('/vtt/shard')
-	@view('shard')
-	def shard_list():
-		protocol = 'https' if engine.ssl else 'http'
-		own = '{0}://{1}:{2}'.format(protocol, engine.getDomain(), engine.port)
-		return dict(engine=engine, own=own)
-
+@get('/vtt/shard')
+@view('shard')
+def shard_list():
+	if len(engine.shards) == 0:
+		abort(404)
+	
+	protocol = 'https' if engine.ssl else 'http'
+	own = '{0}://{1}:{2}'.format(protocol, engine.getDomain(), engine.port)
+	return dict(engine=engine, own=own)
 
 
 

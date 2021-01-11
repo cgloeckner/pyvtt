@@ -71,8 +71,11 @@ class PathApi(object):
 			p /= gm
 		return p
 		
-	def getFancyUrlPath(self):
-		return self.root / 'fancyurl'
+	def getFancyUrlPath(self, fname=None):
+		p = self.root / 'fancyurl'
+		if fname is not None:
+			p /= '{0}.txt'.format(fname)
+		return p
 		
 	# GM- and Game-relevant paths
 		
@@ -81,7 +84,6 @@ class PathApi(object):
 		
 	def getGamePath(self, gm, game):
 		return self.getGmsPath(gm) / game
-		
 		
 
 
@@ -220,7 +222,7 @@ class PatreonApi(object):
 
 class LoggingApi(object):
 	
-	def __init__(self, info_file, error_file, access_file, warning_file):
+	def __init__(self, quiet, info_file, error_file, access_file, warning_file):
 		self.log_format = logging.Formatter('[%(asctime)s at %(module)s/%(filename)s:%(lineno)d] %(message)s')
 		
 		# setup info logger
@@ -233,7 +235,8 @@ class LoggingApi(object):
 		self.info_logger = logging.getLogger('info_log')
 		self.info_logger.setLevel(logging.INFO)
 		self.info_logger.addHandler(self.info_filehandler)
-		self.info_logger.addHandler(self.info_stdouthandler)
+		if not quiet:
+			self.info_logger.addHandler(self.info_stdouthandler)
 		
 		# setup error logger
 		self.error_filehandler = logging.FileHandler(error_file, mode='a')
@@ -339,7 +342,7 @@ class FancyUrlApi(object):
 		
 	def load(self, fname):
 		# load words
-		p = self.paths.getFancyUrlPath() / '{0}.txt'.format(fname)
+		p = self.paths.getFancyUrlPath(fname)
 		with open(p, mode='r') as h:
 			content = h.read()
 		words = content.split('\n')
