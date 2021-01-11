@@ -80,7 +80,7 @@ class Engine(object):
 		self.logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))
 		
 		# load fancy url generator api ... lol
-		self.url_generator = utils.FancyUrlApi(self)
+		self.url_generator = utils.FancyUrlApi(self.paths)
 		
 		# handle settings
 		settings_path = self.paths.getSettingsPath()

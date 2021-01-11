@@ -329,18 +329,17 @@ class ErrorReporter(object):
 
 class FancyUrlApi(object):
 	
-	def __init__(self, engine, unit_test=False, parts=['verbs', 'adjectives', 'nouns']):
-		self.engine    = engine
-		self.unit_test = unit_test
-		self.parts     = dict()
+	def __init__(self, paths):
+		self.paths = paths
+		self.parts = dict()
 		
 		# load word lists
-		for p in parts:
+		for p in ['verbs', 'adjectives', 'nouns']:
 			self.parts[p] = self.load(p)
 		
 	def load(self, fname):
 		# load words
-		p = self.engine.paths.getFancyUrlPath() / '{0}.txt'.format(fname)
+		p = self.paths.getFancyUrlPath() / '{0}.txt'.format(fname)
 		with open(p, mode='r') as h:
 			content = h.read()
 		words = content.split('\n')
@@ -363,8 +362,8 @@ class FancyUrlApi(object):
 		""" Generate a random url using <verb>-<adverb>-<noun>.
 		"""
 		results = []
-		for p in parts:
-			l = parts[p]
+		for p in self.parts:
+			l = self.parts[p]
 			w = FancyUrlApi.pick(l)
 			results.append(w)
 		return '-'.join(results)
