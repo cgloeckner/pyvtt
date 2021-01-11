@@ -409,10 +409,6 @@ div.rollbox {
 	opacity: 0.75;
 	
 	overflow: hidden;
-	/*
-	white-space: nowrap;
-	width: calc(4px + 10 * 56px);
-	*/
 }
 
 div.rollbox > span { 

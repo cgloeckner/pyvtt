@@ -369,6 +369,17 @@ function drawScene() {
 	
 	context.restore();
 	
+	// check for stopping dice shaking
+	$.each(dice_shake_timers, function(sides, remain) {
+		remain -= 1000.0 / fps;
+		var target = $('#d' + sides + 'icon');
+		if (remain <= 0 && target.hasClass('shake')) {
+			// stop shaking
+			target.removeClass('shake');
+		}
+		dice_shake_timers[sides] = remain;
+	});
+	
 	// schedule next drawing
 	setTimeout("drawScene()", 1000.0 / fps);
 }

@@ -25,6 +25,8 @@ var drag_dice    = null;    // indicates which dice is dragged around (by number
 var drag_players = null;    // indicates if players are dragged around
 var over_player  = null;    // indicates over which player the mouse is located (by name)
 
+var dice_shake_timers = {}; // dice shaking delay for each dice
+
 var default_dice_pos = {};  // default dice positions
 
 function enableZooming() {
@@ -218,7 +220,7 @@ function addRoll(sides, result, name, color, recent) {
 	other_dom_span.delay(dice_shake).fadeIn(1000, function() {});
 	
 	// and show history
-	$('#historydrop').show();
+	//$('#historydrop').show();
 }
 
 // --- ui event handles -----------------------------------------------
@@ -746,14 +748,18 @@ function onWheel(event) {
 
 /// Event handle to click a dice
 function rollDice(sides) {
-	$('#d' + sides).addClass('shake');
+	// trigger shaking in necessary
+	var target = $('#d' + sides + 'icon');
+	if (!target.hasClass('shake')) {
+		target.addClass('shake'); 
+	}
+	// reset shake timer
+	dice_shake_timers[sides] = dice_shake;
 	
 	writeSocket({
 		'OPID'  : 'ROLL',
 		'sides' : sides
-	});
-	
-	setTimeout(function() {	$('#d' + sides).removeClass('shake'); }, dice_shake);
+	}); 
 }
 
 /// Event handle to select all tokens
@@ -1012,8 +1018,6 @@ function limitPosition(container, x, y) {
 
 /// Snaps dice container to the closest edge (from x, y)
 function snapDice(x, y, container, default_snap) {
-	console.log('snap:', window.innerWidth, window.innerHeight);
-	
 	var w = container.width();
 	var h = container.height();
 	
