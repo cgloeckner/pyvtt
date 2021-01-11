@@ -20,14 +20,12 @@
 	</div>
 
 	<div id="dicebox">
-%i = 0
 %for d in [20, 12, 10, 8, 6, 4, 2]:
-		<div class="dice" id="d{{d}}box" style="top: {{100 + 50 * i}}px;" onMouseDown="onStartDragDice({{d}});">
+		<div class="dice" id="d{{d}}box" onMouseDown="onStartDragDice({{d}});">
 			<img src="/static/d{{d}}.png" id="d{{d}}" title="Roll 1D{{d}}" onClick="rollDice({{d}});" />
 
 			<div class="rollbox" id="d{{d}}rolls"></div>
 		</div>
-	%i += 1
 %end
 	</div>
 
