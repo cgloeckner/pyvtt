@@ -21,11 +21,8 @@
 
 	<div id="dicebox">
 %for d in [20, 12, 10, 8, 6, 4, 2]:
-		<div class="dice" id="d{{d}}box" onMouseDown="onStartDragDice({{d}});">
-			<img src="/static/d{{d}}.png" id="d{{d}}" title="Roll 1D{{d}}" onClick="rollDice({{d}});" />
-
-			<div class="rollbox" id="d{{d}}rolls"></div>
-		</div>
+		<img src="/static/d{{d}}.png" class="dice" id="d{{d}}icon" title="Roll 1D{{d}}" onMouseDown="onStartDragDice({{d}});" onClick="rollDice({{d}});" />
+		<div class="rollbox" id="d{{d}}rolls"></div>
 %end
 	</div>
 

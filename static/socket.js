@@ -248,13 +248,10 @@ function login(event, gmname, url, websocket_url, as_gm) {
 					select_ids        = [];
 					is_gm             = false;
 					
-					$('#d4box')[0].innerHTML   = '';
-					$('#d6box')[0].innerHTML   = '';
-					$('#d8box')[0].innerHTML   = '';
-					$('#d10box')[0].innerHTML  = '';
-					$('#d12box')[0].innerHTML  = '';
-					$('#d20box')[0].innerHTML  = '';
-					$('#players')[0].innerHTML = '';
+					$.each([2, 4, 6, 8, 10, 12, 20], function(index, sides) {
+						var d = $('#d' + sides + 'rolls');
+						d[0].innerHTML = '';
+					});
 					
 					// return to login screen
 					$('#login').fadeIn(1000, 0.0, function() {

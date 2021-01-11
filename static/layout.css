@@ -352,14 +352,10 @@ div#dicebox {
 	display: none;
 }
 
-div.dice {
+img.dice {    
 	position: absolute;
 	z-index: 3;
-	/*bottom: calc(50% - 150px);*/
-	left: 12px;
-}
-
-div.dice > img {
+	
 	user-select: none;
 	
 	width: 48px;
@@ -367,7 +363,7 @@ div.dice > img {
 	padding: 1px;
 }
 
-div.dice > img:hover {
+img.dice:hover {
 	cursor: grab;
 	
 	filter: drop-shadow(1px 1px 10px gold) 
@@ -376,7 +372,7 @@ div.dice > img:hover {
 	bottom: 5px;
 }
 
-div.dice > img:active {
+img.dice:active {
 	cursor: grabbing;
 }
 
@@ -399,7 +395,7 @@ div.dice > img:active {
 	100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
-div.dice > div.rollbox {   
+div.rollbox {   
 	user-select: none;
 	pointer-events: none;
 	
@@ -419,7 +415,7 @@ div.dice > div.rollbox {
 	*/
 }
 
-div.dice > div.rollbox > span { 
+div.rollbox > span { 
 	user-select: none;
 	pointer-events: none;
 	
@@ -441,7 +437,7 @@ div.dice > div.rollbox > span {
 	border: 1px solid white; 
 }
 
-div.dice > div.rollbox > div > span.natroll,
+div.rollbox > div > span.natroll,
 div#historydrop > div > span.natroll {
 	font-weight: bold;
 }

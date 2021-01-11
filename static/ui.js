@@ -25,8 +25,6 @@ var drag_dice    = null;    // indicates which dice is dragged around (by number
 var drag_players = null;    // indicates if players are dragged around
 var over_player  = null;    // indicates over which player the mouse is located (by name)
 
-var dice_snap = true;       // force dice to snap to borders (DEBUGGING use only!)
-
 var default_dice_pos = {};  // default dice positions
 
 function enableZooming() {
@@ -1049,7 +1047,7 @@ function snapDice(x, y, container, default_snap) {
 /// Resets dice container to default position
 function resetDicePos(sides) {
 	// reset position
-	var target = $('#d' + sides + 'box');
+	var target = $('#d' + sides + 'icon');
 	target.css('left', default_dice_pos[sides][0]);
 	target.css('top',  default_dice_pos[sides][1]);
 	
@@ -1058,38 +1056,62 @@ function resetDicePos(sides) {
 }
 
 function moveDiceTo(data, sides) {
+	var icon  = $('#d' + sides + 'icon');
+	var rolls = $('#d' + sides + 'rolls');
+	
 	// change position
-	var target = $('#d' + sides + 'box');
-	target.css('left', data[0]);
-	target.css('top',  data[1]);
+	var icon = $('#d' + sides + 'icon');
+	icon.css('left', data[0]);
+	icon.css('top',  data[1]);
+	
+	var w = icon.width();
+	var h = icon.height();
 	
 	// change rollbox orientation
-	var target = $('#d' + sides + 'rolls');
 	switch (data[2]) {
 		case 'left':
-			target.css('display', 'inline-flex');
-			target.css('flex-direction', 'row');
+			rolls.css('left',   w * 1.5);
+			rolls.css('right',  0);
+			rolls.css('top',    data[1]);
+			rolls.css('bottom', 0);
+			rolls.css('display', 'inline-flex');
+			rolls.css('flex-direction', 'row');
 			break;
-		case 'top':
-			target.css('display', 'flex');
-			target.css('flex-direction', 'column');
+		case 'top': 
+			rolls.css('left',   data[0] - w/8);
+			rolls.css('right',  0);
+			rolls.css('top',    h * 1.5);
+			rolls.css('bottom', 0);
+			rolls.css('display', 'flex');
+			rolls.css('flex-direction', 'column');
 			break;
-		default:
-			console.log(data[2], 'not supported yet');
+		case 'right':
+			rolls.css('left',   0);
+			rolls.css('right',  w * 1.5);
+			rolls.css('top',    data[1]);
+			rolls.css('bottom', 0);
+			rolls.css('display', 'inline-flex');
+			rolls.css('flex-direction', 'row-reverse');
+			break;
+		case 'bottom': 
+			rolls.css('left',   data[0] - w/8);
+			rolls.css('right',  0);
+			rolls.css('top',    0);
+			rolls.css('bottom', h * 1.5);
+			rolls.css('display', 'flex');
+			rolls.css('flex-direction', 'column-reverse');
+			break;
 	}
 }
 
 /// Drag dice container to position specified by the event
 function onDragDice(event) {
 	// drag dice box
-	var target = $('#d' + drag_dice + 'box');
+	var target = $('#d' + drag_dice + 'icon');
 	 
 	// limit position to the screen
-	var data = limitPosition(target, event.clientX, event.clientY)
-	
-	if (dice_snap) {
-		data = snapDice(data[0], data[1], target, '');
-	}
+	var data = limitPosition(target, event.clientX, event.clientY);
+	data = snapDice(data[0], data[1], target, '');
 	
 	moveDiceTo(data, drag_dice);
 	
@@ -1194,9 +1216,7 @@ function loadDicePos(sides) {
 	data[1] *= window.innerHeight;
 	
 	// handle snap
-	if (dice_snap) {
-		data = snapDice(data[0], data[1], $('#d' + sides + 'box'), data[2]);
-	}
+	data = snapDice(data[0], data[1], $('#d' + sides + 'icon'), data[2]);
 	
 	return data;
 }
