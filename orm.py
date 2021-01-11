@@ -125,7 +125,7 @@ def createGmDatabase(engine, filename):
 
 	class Game(db.Entity):
 		id     = PrimaryKey(int, auto=True)
-		url    = Required(str)
+		url    = Required(str, unique=True) # since each GM has its own games database
 		scenes = Set("Scene", cascade_delete=True) # forward deletion to scenes
 		timeid = Required(float, default=0.0) # used for cleanup
 		active = Optional(int)
