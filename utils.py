@@ -33,12 +33,13 @@ class PathApi(object):
 			
 			self.root = p / appname
 		else:
-			self.root = root
+			self.root = pathlib.Path(root) / appname
 		
 		# make sure paths exists
 		self.ensure(self.root)
 		self.ensure(self.getExportPath())
 		self.ensure(self.getGmsPath())
+		self.ensure(self.getFancyUrlPath())
 		
 	def ensure(self, path):
 		if not os.path.isdir(path):
@@ -328,18 +329,14 @@ class ErrorReporter(object):
 
 class FancyUrlApi(object):
 	
-	def __init__(self, engine):
-		self.engine = engine
-		# load word lists
-		self.verbs      = self.load('verbs')
-		self.adjectives = self.load('adjectives')
-		self.nouns      = self.load('nouns')
+	def __init__(self, engine, unit_test=False, parts=['verbs', 'adjectives', 'nouns']):
+		self.engine    = engine
+		self.unit_test = unit_test
+		self.parts     = dict()
 		
-		self.engine.logging.info(
-			'FancyUrl has {0} verbs, {1} adjectives and {2} nouns ready'.format(
-				len(self.verbs), len(self.adjectives), len(self.nouns)
-			)
-		)
+		# load word lists
+		for p in parts:
+			self.parts[p] = self.load(p)
 		
 	def load(self, fname):
 		# load words
@@ -365,8 +362,10 @@ class FancyUrlApi(object):
 	def __call__(self):
 		""" Generate a random url using <verb>-<adverb>-<noun>.
 		"""
-		v = FancyUrlApi.pick(self.verbs)
-		a = FancyUrlApi.pick(self.adjectives)
-		n = FancyUrlApi.pick(self.nouns)
-		return '{0}-{1}-{2}'.format(v, a, n)
+		results = []
+		for p in parts:
+			l = parts[p]
+			w = FancyUrlApi.pick(l)
+			results.append(w)
+		return '-'.join(results)
 

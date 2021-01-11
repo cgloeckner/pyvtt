@@ -22,10 +22,10 @@ __licence__ = 'MIT'
 
 
 
-class Engine(object):         
+class Engine(object):
 
-	def __init__(self, argv=list()):
-		self.paths = utils.PathApi(appname='pyvtt')
+	def __init__(self, argv=list(), pref_dir=None):
+		self.paths     = utils.PathApi(appname='pyvtt', root=pref_dir)
 		
 		# setup per-game stuff
 		self.checksums = dict()
@@ -39,7 +39,7 @@ class Engine(object):
 		self.debug  = False
 		self.quiet  = False
 		self.ssl    = False
-		self.shards = []
+		self.shards = list()
 		
 		self.main_db = None
 		
@@ -47,17 +47,19 @@ class Engine(object):
 		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'websocket']
 		self.url_regex    = '^[A-Za-z0-9_\-.]+$'
 		
-		self.local_gm   = False
-		self.localhost  = False
-		self.title      = 'pyvtt'
-		self.links      = None
-		self.expire     = 3600 * 24 * 30 # default: 30d
-		self.login      = dict() # login settings
-		self.login_api  = None   # login api instance
-		self.notify     = dict() # crash notify settings
-		self.notify_api = None   # notify api instance
+		self.local_gm       = False
+		self.localhost      = False
+		self.title          = 'pyvtt'
+		self.links          = list()
+		self.expire         = 3600 * 24 * 30 # default: 30d
+		self.login          = dict() # login settings
+		self.login['type']  = ''
+		self.login_api      = None   # login api instance
+		self.notify         = dict() # crash notify settings
+		self.notify['type'] = ''
+		self.notify_api     = None   # notify api instance
 		
-		self.cache      = None   # later engine cache
+		self.cache         = None   # later engine cache
 		
 		# handle commandline arguments
 		self.debug     = '--debug' in argv
