@@ -109,20 +109,20 @@ else:
 		if not engine.verifyUrlSection(gmname):
 			# contains invalid characters   
 			status['error'] = 'NO SPECIAL CHARS OR SPACES'
-			engine.logging.access('Failed GM login by {0}: invalid name "{1}".'.format(engine.getClientIp(request), gmname))
+			engine.logging.warning('Failed GM login by {0}: invalid name "{1}".'.format(engine.getClientIp(request), gmname))
 			return status
 			
 		name = gmname[:20].lower().strip()
 		if name in engine.gm_blacklist:
 			# blacklisted name
 			status['error'] = 'RESERVED NAME'  
-			engine.logging.access('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request), gmname))
+			engine.logging.warning('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request), gmname))
 			return status
 			
 		if len(engine.main_db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
 			# collision
 			status['error'] = 'ALREADY IN USE'   
-			engine.logging.access('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request), gmname))
+			engine.logging.warning('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request), gmname))
 			return status
 		
 		# create new GM (use GM name as display name and URL)
@@ -164,6 +164,14 @@ def get_game_list():
 		response.set_cookie('session', '', path='/', expires=1, secure=engine.ssl)
 		redirect('/')
 	
+	# load GM from cache
+	gm_cache = engine.cache.get(gm)
+	if gm_cache is None:
+		# remove cookie
+		engine.logging.warning('GM name="{0}" url={1} tried to relogin by {2} but he was not in the cache'.format(gm.name, gm.url, engine.getClientIp(request)))
+		response.set_cookie('session', '', path='/', expires=1, secure=engine.ssl)
+		redirect('/')
+	
 	# refresh session
 	gm.refreshSession(response, request)
 	
@@ -172,9 +180,6 @@ def get_game_list():
 	server = ''
 	if engine.local_gm:
 		server = 'http://{0}:{1}'.format(engine.getDomain(), engine.port)
-	
-	# load GM from cache
-	gm_cache = engine.cache.get(gm)
 	
 	# load game from GM's database
 	all_games = gm_cache.db.Game.select()
@@ -220,19 +225,19 @@ def post_import_game(url=None):
 		
 		# url
 		if not engine.verifyUrlSection(url):
-			engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" is invalid'.format(gm.name, gm.url, engine.getClientIp(request), url))
+			engine.logging.warning('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" is invalid'.format(gm.name, gm.url, engine.getClientIp(request), url))
 			status['error'] = 'NO SPECIAL CHARS OR SPACES'
 			return status
 		
 		if gm_cache.db.Game.select(lambda g: g.url == url).first() is not None:
-			engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" already in use'.format(gm.name, gm.url, engine.getClientIp(request), url))
+			engine.logging.warning('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" already in use'.format(gm.name, gm.url, engine.getClientIp(request), url))
 			status['error'] = 'ALREADY IN USE'
 			return status
 		
 	# upload file
 	files = request.files.getall('file')
 	if len(files) != 1:
-		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but uploaded {3} files'.format(gm.name, gm.url, engine.getClientIp(request), len(files)))
+		engine.logging.warning('GM name="{0}" url={1} tried to import game by {2} but uploaded {3} files'.format(gm.name, gm.url, engine.getClientIp(request), len(files)))
 		status['error'] = 'ONE FILE AT ONCE'
 		return status
 	
@@ -247,7 +252,7 @@ def post_import_game(url=None):
 	
 	status['file_ok'] = game is not None
 	if not status['file_ok']:
-		engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but uploaded neither an image nor a zip file'.format(gm.name, gm.url, engine.getClientIp(request), url))
+		engine.logging.warning('GM name="{0}" url={1} tried to import game by {2} but uploaded neither an image nor a zip file'.format(gm.name, gm.url, engine.getClientIp(request), url))
 		status['error'] = 'USE AN IMAGE FILE'
 		return status
 	
@@ -262,13 +267,19 @@ def post_import_game(url=None):
 @get('/vtt/export-game/<url>', apply=[asGm])
 def export_game(url):
 	gm = engine.main_db.GM.loadFromSession(request)
-	# note: asGm guards this
+	# note: asGm guards this with a redirect
 	
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
+	if gm_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried to export game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+		abort(404)
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried to export game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+		abort(404)
 	
 	# export game to zip-file
 	zip_file, zip_path = game.toZip()
@@ -281,13 +292,19 @@ def export_game(url):
 @post('/vtt/kick-players/<url>', apply=[asGm])
 def kick_players(url):
 	gm = engine.main_db.GM.loadFromSession(request)
-	# note: asGm guards this
+	# note: asGm guards this by a redirect
 	
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
+	if gm_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried to kick all players at {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+		abort(404)
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried to kick all players at {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+		abort(404)
 	
 	# load game from cache and close sockets
 	game_cache = gm_cache.get(game)
@@ -298,16 +315,26 @@ def kick_players(url):
 @post('/vtt/kick-player/<url>/<uuid>', apply=[asGm])
 def kick_player(url, uuid):
 	gm = engine.main_db.GM.loadFromSession(request)
-	# note: asGm guards this
+	# note: asGm guards this by redirect
 	
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
+	if gm_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried to kick player #{4} at {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), uuid)
+		abort(404)
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried to kick players #{4} {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), uuid)
+		abort(404)
 	
 	# fetch game cache and close sockets
 	game_cache = gm_cache.get(game)
+	if game_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried to kick player #{4} at {2} by {3} but the game was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), uuid)
+		abort(404)
+	
 	name = game_cache.closeSocket(uuid)
 	
 	engine.logging.access('Player {0} ({1}) kicked from {2} by {3}'.format(name, uuid, game.getUrl(), engine.getClientIp(request)))
@@ -316,14 +343,19 @@ def kick_player(url, uuid):
 @view('games')
 def delete_game(url):
 	gm = engine.main_db.GM.loadFromSession(request)
-	if gm is None:
-		abort(401)
+	# note: asGm guards this by redirect
 	
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
+	if gm_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried delete the game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+		abort(404)
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried delete the game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+		abort(404)
 	
 	# delete everything for that game
 	game.preDelete()
@@ -347,14 +379,19 @@ def delete_game(url):
 @view('scenes')
 def post_create_scene(url):
 	gm = engine.main_db.GM.loadFromSession(request)  
-	if gm is None:
-		abort(401)
+	# note: asGm guards this by redirect
 	
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
+	if gm_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried create a scene at game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+		abort(404)
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried create a scene at game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+		abort(404)
 	
 	# create scene
 	scene = gm_cache.db.Scene(game=game)
@@ -368,17 +405,27 @@ def post_create_scene(url):
 @view('scenes')
 def activate_scene(url, scene_id):
 	gm = engine.main_db.GM.loadFromSession(request) 
-	if gm is None:
-		abort(401)
+	# note: asGm guards this by redirect
 	
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
+	if gm_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried activate scene #{4} at game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried activate scene #{4} at game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
+	
+	# activate game
 	game.active = scene_id
 
 	gm_cache.db.commit()  
+	if game_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried activate scene #{4} at game {2} by {3} but game was in the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
 	
 	# broadcase scene switch to all players
 	game_cache = gm_cache.get(game)
@@ -392,22 +439,32 @@ def activate_scene(url, scene_id):
 @view('scenes')
 def activate_scene(url, scene_id):
 	gm = engine.main_db.GM.loadFromSession(request)
-	if gm is None:
-		abort(401)
-	 
+	# note: asGm guards this by redirect
+	
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
+	if gm_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried delete scene #{4} at game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-
+	if game is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried delete scene #{4} at game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
+	
 	# delete given scene
 	scene = gm_cache.db.Scene.select(lambda s: s.id == scene_id).first()
+	if scene is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried delete scene #{4} at game {2} by {3} but scene was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
+	
 	scene.backing = None
 	scene.delete()
 	
 	# check if active scene is still valid
 	active = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
+	assert(active is not None)
 	if active is None:
 		# check for remaining scenes
 		remain = gm_cache.db.Scene.select(lambda s: s.game == game).first()
@@ -421,6 +478,10 @@ def activate_scene(url, scene_id):
 		
 	# broadcase scene switch to all players
 	game_cache = gm_cache.get(game)
+	if game_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried delete scene #{4} at game {2} by {3} but game was not in the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
+		
 	game_cache.broadcastSceneSwitch(game)
 	
 	engine.logging.access('Game {0} got scene #{1} deleted by {2}'.format(game.getUrl(), scene_id, engine.getClientIp(request)))
@@ -431,17 +492,25 @@ def activate_scene(url, scene_id):
 @view('scenes')
 def duplicate_scene(url, scene_id):
 	gm = engine.main_db.GM.loadFromSession(request)
-	if gm is None:
-		abort(401)
-			  
+	# note: asGm guards this by redirect
+	
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
+	if gm_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried clone scene #{4} at game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried clone scene #{4} at game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
 	
 	# load required scene
 	scene = gm_cache.db.Scene.select(lambda s: s.id == scene_id).first()
+	if scene is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried clone scene #{4} at game {2} by {3} but scene was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
 	
 	# create copy of that scene
 	clone = gm_cache.db.Scene(game=game)
@@ -459,6 +528,10 @@ def duplicate_scene(url, scene_id):
 	
 	# broadcase scene switch to all players
 	game_cache = gm_cache.get(game)
+	if game_cache is None:
+		engine.logging.warning('GM name="{0}" url="{1}" tried clone scene #{4} at game {2} by {3} but game was not in the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		abort(404)
+	
 	game_cache.broadcastSceneSwitch(game)
 	
 	engine.logging.access('Game {0} got clone of scene #{1} as #{2} by {1}'.format(game.getUrl(), scene_id, clone.id, engine.getClientIp(request)))
@@ -479,9 +552,17 @@ def static_files(fname):
 def static_token(gmurl, url, fname):
 	# load GM from cache
 	gm_cache = engine.cache.getFromUrl(gmurl)
+	if gm_cache is None:
+		# @NOTE: not logged because somebody may play around with this
+		return None
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None:
+		# @NOTE: not logged because somebody may play around with this
+		return None
+	
+	# fetch image path
 	path = engine.paths.getGamePath(gmurl, url)
 	
 	return static_file(fname, root=path)
@@ -499,9 +580,23 @@ def set_player_name(gmurl, url):
 	
 	playername  = template('{{value}}', value=format(request.forms.playername))
 	playercolor = request.forms.get('playercolor')
+	  
+	# load GM from cache
+	gm_cache = engine.cache.getFromUrl(gmurl)
+	if gm_cache is None:
+		engine.logging.warning('Player tried to login {0} by {1}, but GM was not found.'.format(gmurl, engine.getClientIp(request)))
+		result['error'] = 'GAME NOT FOUND'
+		return result
+	
+	# load game from GM's database
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None: 
+		engine.logging.warning('Player tried to login {0}/{1} by {2}, but game was not found.'.format(gmurl, url, engine.getClientIp(request)))
+		result['error'] = 'GAME NOT FOUND'
+		return result
 	
 	if playername == '':
-		engine.logging.access('Player tried to login {0} by {1}, but did not provide a username.'.format(game.getUrl(), engine.getClientIp(request)))
+		engine.logging.warning('Player tried to login {0} by {1}, but did not provide a username.'.format(game.getUrl(), engine.getClientIp(request)))
 		result['error'] = 'PLEASE ENTER A NAME'
 		return result
 	
@@ -517,19 +612,18 @@ def set_player_name(gmurl, url):
 		if c < 16:
 			playercolor += '0'
 		playercolor += hex(c)[2:]
-			  
-	# load GM from cache
-	gm_cache = engine.cache.getFromUrl(gmurl)
-	
-	# load game from GM's database
-	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	
 	# check for player name collision
+	game_cache = gm_cache.get(game)
+	if game_cache is None:
+		engine.logging.warning('Player tried to login {0} by {1}, but game was not in the cache.'.format(game.getUrl(), engine.getClientIp(request)))
+		result['error'] = 'GAME NOT FOUND'
+		return result
+	
 	try:
-		game_cache = gm_cache.get(game)
 		game_cache.insert(playername, playercolor)
 	except KeyError:
-		engine.logging.access('Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.getUrl(), engine.getClientIp(request), playername))
+		engine.logging.warning('Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.getUrl(), engine.getClientIp(request), playername))
 		result['error'] = 'ALREADY IN USE'
 		return result
 	
@@ -578,10 +672,11 @@ def get_player_battlemap(gmurl, url):
 		  
 	# load GM from cache
 	gm_cache = engine.cache.getFromUrl(gmurl)
+	if gm_cache is None:
+		abort(404)
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-	
 	if game is None:
 		abort(404)
 	

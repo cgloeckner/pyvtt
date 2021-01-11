@@ -219,7 +219,7 @@ class PatreonApi(object):
 
 class LoggingApi(object):
 	
-	def __init__(self, info_file, error_file, access_file):
+	def __init__(self, info_file, error_file, access_file, warning_file):
 		self.log_format = logging.Formatter('[%(asctime)s at %(module)s/%(filename)s:%(lineno)d] %(message)s')
 		
 		# setup info logger
@@ -250,10 +250,19 @@ class LoggingApi(object):
 		self.access_logger.setLevel(logging.INFO)
 		self.access_logger.addHandler(self.access_filehandler)
 		
+		# setup warning logger
+		self.warning_filehandler = logging.FileHandler(warning_file, mode='a')
+		self.warning_filehandler.setFormatter(self.log_format)
+		
+		self.warning_logger = logging.getLogger('warning_log')   
+		self.warning_logger.setLevel(logging.WARNING)
+		self.warning_logger.addHandler(self.warning_filehandler)
+		
 		# link logging handles
-		self.info   = self.info_logger.info
-		self.error  = self.error_logger.error
-		self.access = self.access_logger.info
+		self.info    = self.info_logger.info
+		self.error   = self.error_logger.error
+		self.access  = self.access_logger.info
+		self.warning = self.warning_logger.warning
 		
 		boot = '{0} {1} {0}'.format('=' * 15, 'STARTED')
 		self.info(boot)

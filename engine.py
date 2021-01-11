@@ -69,9 +69,10 @@ class Engine(object):
 			assert(not self.local_gm)
 		
 		self.logging = utils.LoggingApi(
-			info_file   = self.paths.getLogPath('info'),
-			error_file  = self.paths.getLogPath('error'),
-			access_file = self.paths.getLogPath('access')
+			info_file    = self.paths.getLogPath('info'),
+			error_file   = self.paths.getLogPath('error'),
+			access_file  = self.paths.getLogPath('access'),
+			warning_file = self.paths.getLogPath('warning')
 		)
 		
 		self.logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))
