@@ -256,6 +256,9 @@ class GameCache(object):
 		# query latest rolls and all tokens
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				engine.logging.warning('Player {0} tried to login to {1} by {2}, but the game was not found'.format(player.name, self.url, engine.getClientIp(request)))
+				return;
 			
 			for r in self.parent.db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
 				# search playername
@@ -301,8 +304,16 @@ class GameCache(object):
 		tokens = list()
 		background_id = 0
 		with db_session:
-			scene = self.parent.db.Scene.select(lambda s: s.id == scene_id).first().backing
-			background_id = scene.id if scene is not None else None
+			scene = self.parent.db.Scene.select(lambda s: s.id == scene_id).first()
+			if scene is None:
+				engine.logging.warning('Game {0}/{1} switched to scene #{2} by {3}, but the scene was not found.'.format(self.parent.url, self.url, scene_id, engine.getClientIp(request)))
+				return;
+			
+			# get background if set
+			bg = scene.backing
+			background_id = bg.id if bg is not None else None
+			
+			# fetch token data
 			for t in self.parent.db.Token.select(lambda t: t.scene.id == scene_id):
 				tokens.append(t.to_dict())
 		
@@ -340,6 +351,10 @@ class GameCache(object):
 		
 		with db_session: 
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				engine.logging.warning('Player {0} tried to roll 1d{1} at {2}/{3} by {4}, but the game was not found'.format(player.name, sides, self.parent.url, self.url, engine.getClientIp(request)))
+				return;
+			
 			g.timeid = now
 			
 			# roll dice
@@ -380,9 +395,16 @@ class GameCache(object):
 		# query inside given rectangle
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				engine.logging.warning('Player {0} tried range select at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, engine.getClientIp(request)))
+				return;
 			g.timeid = now
 			
 			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
+			if s is None:
+				engine.logging.warning('Player {0} tried range select at {1}/{2} in scene #{3} by {4}, but the scene was not found'.format(player.name, self.parent.url, self.url, g.active, engine.getClientIp(request)))
+				return;
+				
 			token_ids = player.selected if adding else list()
 			for t in self.parent.db.Token.select(lambda t: t.scene == s and left <= t.posx and t.posx <= left + width and top <= t.posy and t.posy <= top + height): 
 				if t.size != -1:
@@ -410,8 +432,15 @@ class GameCache(object):
 		now = time.time()
 		with db_session: 
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first() 
+			if g is None:
+				engine.logging.warning('Player {0} tried clone tokens at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, engine.getClientIp(request)))
+				return;
+				
 			g.timeid = now
 			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
+			if s is None:
+				engine.logging.warning('Player {0} tried clone tokens at {1}/{2} by {4}, but the scene #{3} was not found'.format(player.name, self.parent.url, self.url, g.active, engine.getClientIp(request)))
+				return;
 			
 			# iterate provided tokens
 			for k, tid in enumerate(ids):
@@ -442,6 +471,9 @@ class GameCache(object):
 		now = time.time()
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				engine.logging.warning('Player {0} tried to update token data at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, engine.getClientIp(request)))
+				return;
 			g.timeid = now
 			
 			# iterate provided tokens
@@ -469,9 +501,15 @@ class GameCache(object):
 		tokens = list()
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				engine.logging.warning('Player {0} tried creating a tokens at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, engine.getClientIp(request)))
+				return;
 			g.timeid = now
 			
 			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
+			if g is None:
+				engine.logging.warning('Player {0} tried creating a tokens at {1}/{2} by {3}, but the scene #{4} was not found'.format(player.name, self.parent.url, self.url, engine.getClientIp(request)), g.active)
+				return;
 			
 			for k, url in enumerate(urls):
 				# create tokens in circle
@@ -555,6 +593,9 @@ class GameCache(object):
 		now = time.time()
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				engine.logging.warning('A token update broadcast could not be performed at {0}/{1} by {2}, because the game was not found'.format(self.parent.url, self.url, engine.getClientIp(request)))
+				return;
 			g.timeid = now
 			
 			for t in self.parent.db.Token.select(lambda t: t.scene.id == g.active and t.timeid >= since):
