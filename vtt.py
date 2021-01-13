@@ -148,7 +148,7 @@ def post_gm_login():
 	tmp.join()
 	
 	expires = time.time() + engine.expire
-	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.ssl)
+	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.hasSsl())
 	
 	engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
 	
@@ -164,7 +164,7 @@ def get_game_list():
 	gm = engine.main_db.GM.loadFromSession(request)
 	if gm is None:
 		# remove cookie
-		response.set_cookie('session', '', path='/', expires=1, secure=engine.ssl)
+		response.set_cookie('session', '', path='/', expires=1, secure=engine.hasSsl())
 		redirect('/')
 	
 	cookies    = ''
@@ -181,7 +181,7 @@ def get_game_list():
 	if gm_cache is None:
 		# remove cookie
 		engine.logging.warning('GM name="{0}" url={1} tried to relogin by {2} but he was not in the cache'.format(gm.name, gm.url, engine.getClientIp(request)))
-		response.set_cookie('session', '', path='/', expires=1, secure=engine.ssl)
+		response.set_cookie('session', '', path='/', expires=1, secure=engine.hasSsl())
 		redirect('/')
 	
 	# refresh session
@@ -191,7 +191,7 @@ def get_game_list():
 	
 	server = ''
 	if engine.local_gm:
-		server = 'http://{0}:{1}'.format(engine.getDomain(), engine.port)
+		server = 'http://{0}:{1}'.format(engine.getDomain(), engine.getPort())
 	
 	# load game from GM's database
 	all_games = gm_cache.db.Game.select()
@@ -380,7 +380,7 @@ def delete_game(url):
 	
 	server = ''
 	if engine.local_gm:
-		server = 'http://{0}:{1}'.format(engine.getDomain(), engine.port)
+		server = 'http://{0}:{1}'.format(engine.getDomain(), engine.getPort())
 	
 	return dict(gm=gm, server=server, all_games=all_games)
 
@@ -641,8 +641,8 @@ def set_player_name(gmurl, url):
 	
 	# save playername in client cookie
 	expire = int(time.time() + engine.expire)
-	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire, secure=engine.ssl)
-	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire, secure=engine.ssl)
+	response.set_cookie('playername', playername, path=game.getUrl(), expires=expire, secure=engine.hasSsl())
+	response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire, secure=engine.hasSsl())
 	
 	engine.logging.access('Player logged in to {0} by {1}.'.format(game.getUrl(), engine.getClientIp(request)))
 	
@@ -658,7 +658,6 @@ def set_player_name(gmurl, url):
 def get_player_battlemap(gmurl, url):
 	# try to load playername from cookie (or from GM name)
 	playername = request.get_cookie('playername', default='')
-	print(playername)
 	gm         = engine.main_db.GM.loadFromSession(request)
 	
 	# query the hosting GM
@@ -684,8 +683,8 @@ def get_player_battlemap(gmurl, url):
 		abort(404)
 	
 	user_agent = request.environ.get('HTTP_USER_AGENT')
-	protocol = 'wss' if engine.ssl else 'ws'
-	websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.port)
+	protocol = 'wss' if engine.hasSsl() else 'ws'
+	websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.getPort())
 	
 	# show battlemap with login screen ontop
 	return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=host_gm, is_gm=gm is not None)
@@ -773,8 +772,8 @@ def shard_list():
 	if len(engine.shards) == 0:
 		abort(404)
 	
-	protocol = 'https' if engine.ssl else 'http'
-	own = '{0}://{1}:{2}'.format(protocol, engine.getDomain(), engine.port)
+	protocol = 'https' if engine.hasSsl() else 'http'
+	own = '{0}://{1}:{2}'.format(protocol, engine.getDomain(), engine.getPort())
 	return dict(engine=engine, own=own)
 
 

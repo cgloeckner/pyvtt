@@ -33,12 +33,14 @@ class Engine(object):
 		
 		# webserver stuff
 		self.host   = '0.0.0.0'
-		self.domain = 'localhost'
-		self.port   = 8080 
-		self.socket = ''
+		self.hosting = {
+			'domain' : 'localhost',
+			'port'   : 8080,
+			'socket' : '',
+			'ssl'    : False
+		}
 		self.debug  = False
 		self.quiet  = False
-		self.ssl    = False
 		self.shards = list()
 		
 		self.main_db = None
@@ -46,6 +48,13 @@ class Engine(object):
 		# blacklist for GM names and game URLs
 		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'websocket']
 		self.url_regex    = '^[A-Za-z0-9_\-.]+$'
+		
+		# maximum file sizes for uploads
+		self.file_limit = {
+			"token"      : 2097152,  # 2 MB for tokens
+			"background" : 10485760, # 10 MB for backgrounds
+			"game"       : 15728640  # 15 MB for game-ZIPs
+		}
 		
 		self.local_gm       = False
 		self.localhost      = False
@@ -88,18 +97,14 @@ class Engine(object):
 		if not os.path.exists(settings_path):
 			# create default settings
 			settings = {
-				'title'  : self.title,
-				'links'  : self.links,
-				'shards' : self.shards,
-				'expire' : self.expire,
-				'hosting': {
-					'domain' : self.domain,
-					'port'   : self.port,
-					'socket' : self.socket,
-					'ssl'    : self.ssl
-				},
-				'login'  : self.login,
-				'notify' : self.notify
+				'title'      : self.title,
+				'links'      : self.links,
+				'file_limit' : self.file_limit,
+				'shards'     : self.shards,
+				'expire'     : self.expire,
+				'hosting'    : self.hosting,
+				'login'      : self.login,
+				'notify'     : self.notify
 			}
 			with open(settings_path, 'w') as h:
 				json.dump(settings, h, indent=4)
@@ -108,16 +113,14 @@ class Engine(object):
 			# load settings
 			with open(settings_path, 'r') as h:
 				settings = json.load(h)
-				self.title   = settings['title']
-				self.links   = settings['links']
-				self.shards  = settings['shards']
-				self.expire  = settings['expire']
-				self.domain  = settings['hosting']['domain']
-				self.port    = settings['hosting']['port']
-				self.socket  = settings['hosting']['socket']
-				self.ssl     = settings['hosting']['ssl']
-				self.login   = settings['login']
-				self.notify  = settings['notify']
+				self.title      = settings['title']
+				self.links      = settings['links']
+				self.file_limit = settings['file_limit']
+				self.shards     = settings['shards']
+				self.expire     = settings['expire']
+				self.hosting    = settings['hosting']
+				self.login      = settings['login']
+				self.notify     = settings['notify']
 			self.logging.info('Settings loaded')
 		
 		# show argv help
@@ -139,17 +142,17 @@ class Engine(object):
 		if self.localhost:
 			# overwrite domain and host to localhost
 			self.host   = '127.0.0.1'
-			self.domain = 'localhost'
+			self.hosting['domain'] = 'localhost'
 			self.logging.info('Overwriting connections to localhost')
-		elif self.local_gm or self.domain == '':
+		elif self.local_gm or self.hosting['domain'] == '':
 			# overwrite domain with public ip
-			self.domain = requests.get('https://api.ipify.org').text
-			self.logging.info('Overwriting Domain by Public IP: {0}'.format(self.domain))
+			self.hosting['domain'] = requests.get('https://api.ipify.org').text
+			self.logging.info('Overwriting Domain by Public IP: {0}'.format(self.hosting['domain']))
 		
 		# load patreon API
 		if self.login['type'] == 'patreon':
-			protocol = 'https' if self.ssl else 'http'
-			host_callback = '{0}://{1}:{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), self.port)
+			protocol = 'https' if self.hasSsl() else 'http'
+			host_callback = '{0}://{1}:{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), self.hosting['port'])
 			# create patreon query API
 			self.login_api = utils.PatreonApi(host_callback=host_callback, **self.login)
 		
@@ -184,7 +187,7 @@ class Engine(object):
 	def run(self):
 		certfile = ''
 		keyfile  = ''
-		if self.ssl:
+		if self.hasSsl():
 			# enable SSL
 			ssl_dir = self.paths.getSslDir()
 			certfile = ssl_dir / 'cacert.pem'
@@ -192,16 +195,16 @@ class Engine(object):
 			assert(os.path.exists(certfile))
 			assert(os.path.exists(keyfile))
 		
-		ssl_args = {'certfile': certfile, 'keyfile': keyfile} if self.ssl else {}
+		ssl_args = {'certfile': certfile, 'keyfile': keyfile} if self.hasSsl() else {}
 		
 		bottle.run(
 			host       = self.host,
-			port       = self.port,
+			port       = self.hosting['port'],
 			debug      = self.debug,
 			quiet      = self.quiet,
 			server     = VttServer,
 			# VttServer-specific
-			unixsocket = self.socket,
+			unixsocket = self.hosting['socket'],
 			# SSL-specific
 			**ssl_args
 		)
@@ -212,13 +215,19 @@ class Engine(object):
 			return 'localhost'
 		else:
 			# use domain (might be replaced by public ip)
-			return self.domain
+			return self.hosting['domain']
+		
+	def getPort(self):
+		return self.hosting['port']
+		
+	def hasSsl(self):
+		return self.hosting['ssl']
 		
 	def verifyUrlSection(self, s):
 		return bool(re.match(self.url_regex, s))
 		
 	def getClientIp(self, request):
-		if self.socket != '':
+		if self.hosting['socket'] != '':
 			return request.environ.get('HTTP_X_FORWARDED_FOR')
 		else:
 			return request.environ.get('REMOTE_ADDR')
