@@ -657,7 +657,8 @@ def set_player_name(gmurl, url):
 @view('battlemap')
 def get_player_battlemap(gmurl, url):
 	# try to load playername from cookie (or from GM name)
-	playername = request.get_cookie('playername')
+	playername = request.get_cookie('playername', default='')
+	print(playername)
 	gm         = engine.main_db.GM.loadFromSession(request)
 	
 	# query the hosting GM
