@@ -356,6 +356,14 @@ def createGmDatabase(engine, filename):
 				with zipfile.ZipFile(zip_path, 'r') as fp:
 					fp.extractall(tmp_dir)
 				
+				# create all game data
+				data = dict()
+				json_path = os.path.join(tmp_dir, 'game.json')
+				if not os.path.exists(json_path):
+					return None
+				with open(json_path , 'r') as h:
+					data = json.load(h)
+				
 				# create game
 				game = db.Game(url=url, gm_url=gm.url)
 				game.postSetup()
@@ -368,16 +376,6 @@ def createGmDatabase(engine, filename):
 						src_path = os.path.join(tmp_dir, fname)
 						dst_path = img_path / fname
 						shutil.copyfile(src_path, dst_path)
-				
-				# create all game data
-				data = dict()
-				json_path = os.path.join(tmp_dir, 'game.json')
-				if not os.path.exists(json_path):
-					game.delete()
-					db.commit()
-					return None
-				with open(json_path , 'r') as h:
-					data = json.load(h)
 				
 				# create scenes
 				for sid, s in enumerate(data["scenes"]):
