@@ -10,7 +10,7 @@ License: MIT (see LICENSE for details)
 from gevent import monkey; monkey.patch_all()
 import gevent
 
-import os, json, time, sys, psutil, random, subprocess, requests
+import os, json, time, sys, random, subprocess, requests
 
 from pony import orm
 from bottle import *
