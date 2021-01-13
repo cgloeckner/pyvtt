@@ -149,13 +149,23 @@ class Engine(object):
 			self.hosting['domain'] = requests.get('https://api.ipify.org').text
 			self.logging.info('Overwriting Domain by Public IP: {0}'.format(self.hosting['domain']))
 		
-		# load patreon API
-		if self.login['type'] == 'patreon':
-			protocol = 'https' if self.hasSsl() else 'http'
-			host_callback = '{0}://{1}:{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), self.hosting['port'])
-			# create patreon query API
-			self.login_api = utils.PatreonApi(host_callback=host_callback, **self.login)
-		
+		if self.local_gm:
+			self.login['type'] = ''
+			self.logging.info('Defaulting to dev-login for local-gm')
+		else:
+			# load patreon API
+			if self.login['type'] == 'patreon':
+				protocol = 'https' if self.hasSsl() else 'http'
+				port     = self.hosting['port']
+				if port in [80, 443]:
+					port_suffix = '' # port not required in URL
+				else:
+					port_suffix = ':{0}'.format(port)
+				host_callback = '{0}://{1}{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), port_suffix)
+				print(host_callback)
+				# create patreon query API
+				self.login_api = utils.PatreonApi(host_callback=host_callback, **self.login)
+			
 		if self.notify['type'] == 'email':
 			# create email notify API
 			self.notify_api = utils.EmailApi(self, **self.notify)
@@ -189,7 +199,7 @@ class Engine(object):
 		keyfile  = ''
 		if self.hasSsl():
 			# enable SSL
-			ssl_dir = self.paths.getSslDir()
+			ssl_dir = self.paths.getSslPath()
 			certfile = ssl_dir / 'cacert.pem'
 			keyfile  = ssl_dir / 'privkey.pem'
 			assert(os.path.exists(certfile))
