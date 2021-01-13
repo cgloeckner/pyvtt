@@ -49,5 +49,7 @@
 	</div>
 </div>
 
+<div id="error"></div>
+
 %include("footer")
 

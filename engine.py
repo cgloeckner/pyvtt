@@ -49,11 +49,11 @@ class Engine(object):
 		self.gm_blacklist = ['', 'static', 'token', 'vtt', 'websocket']
 		self.url_regex    = '^[A-Za-z0-9_\-.]+$'
 		
-		# maximum file sizes for uploads
+		# maximum file sizes for uploads (in MB)
 		self.file_limit = {
-			"token"      : 2097152,  # 2 MB for tokens
-			"background" : 10485760, # 10 MB for backgrounds
-			"game"       : 15728640  # 15 MB for game-ZIPs
+			"token"      : 2,
+			"background" : 10,
+			"game"       : 15
 		}
 		
 		self.local_gm       = False

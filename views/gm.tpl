@@ -11,7 +11,7 @@
 </div>
 %end
 
-<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.url}}');" onClick="closeGmDropdown();">  
+<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.url}}', {{file_limit['game']}}, {{file_limit['background']}});" onClick="closeGmDropdown();">  
 
 <hr />
 

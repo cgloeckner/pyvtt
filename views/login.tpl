@@ -22,8 +22,6 @@
 				
 				<p><input type="submit" value="JOIN" /></p>
 			</form> 
-			
-		<div id="error"></div>
 		</div> 
 		<hr />
 	</div>  

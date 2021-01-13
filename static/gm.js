@@ -73,14 +73,32 @@ function GmUploadDrag(event) {
 	event.preventDefault();
 }
 
-function GmUploadDrop(event, url_regex, gm_url) {
+function GmUploadDrop(event, url_regex, gm_url, max_zip, max_background) {
 	event.preventDefault();
 	
-	// fetch upload data
+	// test upload data sizes
 	var queue = $('#uploadqueue')[0];
 	queue.files = event.dataTransfer.files;
+	var sizes_ok = true;
+	if (queue.files.length != 1) {   
+		showError('USE A SINGLE FILE');
+		return;
+	}
+	var max_filesize = max_background;
+	var file_type    = 'BACKGROUND';
+	if (queue.files[0].name.endsWith('.zip')) {
+		max_filesize = max_zip;
+		file_type    = 'GAME';
+	}
+	if (queue.files[0].size > max_filesize * 1024 * 1024) {
+		showError('TOO LARGE ' + file_type + ' (MAX ' + max_filesize + ' MiB)');
+		return;
+	}
+	
+	// fetch upload data
 	var f = new FormData($('#uploadform')[0]);
 	
+	// test target game url
 	var url = $('#url').val();
 	if (url != '') {
 		// check url via regex

@@ -307,9 +307,34 @@ function onDrop(event) {
 	event.preventDefault();
 	pickCanvasPos(event);
 	
+	// TODO: uploadgrößen im server testen; upload anzahl begrenzen wenn !background_set
+	
+	// test upload data sizes
 	var queue = $('#uploadqueue')[0];
 	queue.files = event.dataTransfer.files;
+	var sizes_ok = true;
 	
+	var max_filesize = max_token_size;
+	var file_type = 'TOKEN';
+	$.each(queue.files, function(index, file) {
+		max_filesize = max_token_size;
+		if (index == 0 && !background_set) {
+			// no background set, first image is used as background
+			max_filesize = max_background_size;
+		}
+		if (file.size > max_filesize * 1024 * 1024) {
+			if (max_filesize == max_background_size) {
+				file_type = 'BACKGROUND';
+			}
+			sizes_ok = false;
+		}
+	});
+	if (!sizes_ok) {
+		showError('TOO LARGE ' + file_type + ' (MAX ' + max_filesize + ' MiB)');
+		return;
+	}
+	
+	// fetch upload data
 	var f = new FormData($('#uploadform')[0]);
 	
 	$.ajax({
@@ -990,7 +1015,7 @@ function onTop() {
 
 /// Event handle for start dragging a single dice container
 function onStartDragDice(sides) {
-	drag_player = false;
+	drag_players = false;
 	if (event.buttons == 1) {
 		// select for dragging
 		drag_dice = sides;
@@ -1004,8 +1029,8 @@ function onStartDragDice(sides) {
 /// Event handle for start dragging a players container
 function onStartDragPlayers(event) {
 	if (event.buttons == 1) {
-		drag_dice   = null;
-		drag_player = true;
+		drag_dice    = null;
+		drag_players = true;
 	} else if (event.buttons == 2) {
 		// reset players position
 		var target = $('#players');
@@ -1154,7 +1179,7 @@ function onDragStuff(event) {
 		if (drag_dice != null) { 
 			onDragDice(event);
 		}
-		if (drag_player) {
+		if (drag_players) {
 			onDragPlayers(event);
 		}
 	}

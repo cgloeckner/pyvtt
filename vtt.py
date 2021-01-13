@@ -167,15 +167,6 @@ def get_game_list():
 		response.set_cookie('session', '', path='/', expires=1, secure=engine.hasSsl())
 		redirect('/')
 	
-	cookies    = ''
-	for key in request.cookies.keys():
-		cookies += '\t{0} : {1}\n'.format(key, request.cookies[key])
-	if cookies == '':
-		cookies = '{}'
-	else:
-		cookies = '{\n' + cookies + '}'
-	print(cookies)
-	
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
 	if gm_cache is None:
@@ -197,7 +188,7 @@ def get_game_list():
 	all_games = gm_cache.db.Game.select()
 	
 	# show GM's games
-	return dict(engine=engine, gm=gm, all_games=all_games, server=server)
+	return dict(engine=engine, gm=gm, all_games=all_games, server=server, file_limit=engine.file_limit)
 
 
 # --- GM MANAGING GAMES -----------------------------------------------
@@ -474,9 +465,8 @@ def activate_scene(url, scene_id):
 	scene.backing = None
 	scene.delete()
 	
-	# check if active scene is still valid
+	# check if active scene is still valid (set another scene active if necessary)
 	active = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
-	assert(active is not None)
 	if active is None:
 		# check for remaining scenes
 		remain = gm_cache.db.Scene.select(lambda s: s.game == game).first()
@@ -648,6 +638,7 @@ def set_player_name(gmurl, url):
 	
 	result['playername']  = playername
 	result['playercolor'] = playercolor
+	result['file_limit']  = engine.file_limit
 	return result
 
 
