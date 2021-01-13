@@ -82,7 +82,11 @@ def gm_patreon():
 		# isn't possible
 		tmp = gevent.Greenlet(run=gm_cache.connect_db)
 		tmp.start()
-		tmp.join()
+		try:
+			tmp.get()
+		except:
+			# reraise greenlet's exception to trigger proper error reporting
+			raise
 		
 		engine.logging.access('GM created using patreon with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
 		
@@ -145,7 +149,11 @@ def post_gm_login():
 	# isn't possible
 	tmp = gevent.Greenlet(run=gm_cache.connect_db)
 	tmp.start()
-	tmp.join()
+	try:
+		tmp.get()
+	except:
+		# reraise greenlet's exception to trigger proper error reporting
+		raise
 	
 	expires = time.time() + engine.expire
 	response.set_cookie('session', sid, path='/', expires=expires, secure=engine.hasSsl())

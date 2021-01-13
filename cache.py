@@ -110,7 +110,11 @@ class PlayerCache(object):
 		""" Runs a greenlet to handle asyncronously. """
 		self.greenlet = gevent.Greenlet(run=self.handle)
 		self.greenlet.start()
-		self.greenlet.join()
+		try:
+			self.greenlet.get()
+		except:
+			# reraise greenlet's exception to trigger proper error reporting
+			raise
 		
 	def handle(self):
 		""" Thread-handle for dispatching player actions. """
@@ -118,23 +122,26 @@ class PlayerCache(object):
 			while True:
 				# query data and operation id
 				data = self.read()
-				if data is not None:
-					# dispatch operation
-					opid = self.fetch(data, 'OPID')
-					func = self.dispatch_map[opid]
-					func(self, data)
-				else:
+				if data is None:
+					# player quit
 					break
+				
+				# dispatch operation
+				opid = self.fetch(data, 'OPID')
+				func = self.dispatch_map[opid]
+				func(self, data)
 			
 		except WebSocketError as e:
-			# player quit   
-			print('\t{0}\tERROR\t{1}'.format(name, e))
+			# player quit
+			self.engine.logging('Player closed WebSocket by {0}'.format(engine.getClientIp(request)))
+			return
 			
-		except ProtocolError as e:
-			# error occured
-			print('\t{0}\\\tPROTOCOL\t{1}'.format(name, e))
+		except:
+			# any other exception - make sure player is logged out
+			self.parent.logout(self)
+			raise
 		
-		# logout player
+		# regular logout player
 		self.parent.logout(self)
 
 
