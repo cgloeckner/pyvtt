@@ -247,9 +247,7 @@ def post_import_game(url=None):
 		return status
 	
 	# query filesize
-	offset = files[0].file.tell()
-	size = len(files[0].file.read())
-	files[0].file.seek(offset)
+	size = engine.getSize(files[0])
 	
 	fname = files[0].filename
 	is_zip = fname.endswith('zip')
@@ -733,9 +731,7 @@ def post_image_upload(gmurl, url, posx, posy, default_size):
 		if i == 0 and not background_set:
 			max_filesize = engine.file_limit['background']
 		# determine file size
-		offset = handle.file.tell()
-		size = len(handle.file.read())
-		handle.file.seek(offset)
+		size = engine.getSize(handle)
 		# check filesize       
 		if size > max_filesize * 1024 * 1024:
 			engine.logging.warning('Player tried to an image to a game by {0} but tried to cheat on the filesize'.format(engine.getClientIp(request), url))

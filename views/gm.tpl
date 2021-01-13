@@ -32,7 +32,7 @@
 		<br />  
 	</div>
 	
-	<div id="error"></div>
+	<div id="popup"></div>
 <hr />
 
 </div>

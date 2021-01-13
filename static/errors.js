@@ -4,16 +4,22 @@ https://github.com/cgloeckner/pyvtt/
 Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 */
+
+function showPopup(msg, color, timeout, fadeout) {
+	var popup = $('#popup');
+	popup[0].innerHTML = msg;
+	popup.css('color', color);
+	popup.fadeIn(100, 0.0);
+	popup.delay(timeout).fadeOut(fadeout, 0.0);
+}
   
 function showError(msg) {
 	console.warn(msg);
-	
-	var error = $('#error');
-	error[0].innerHTML = msg;
-	if (error.css('display') == 'none') {
-		error.fadeIn(100, 0.0);
-		error.delay(7000).fadeOut(3000, 0.0);
-	}
+	showPopup(msg, 'red', 7000, 3000);
+}
+
+function showInfo(msg) {
+	showPopup(msg, 'white', 500, 500);
 }
 
 function handleError(response) {

@@ -307,7 +307,7 @@ function onDrop(event) {
 	event.preventDefault();
 	pickCanvasPos(event);
 	
-	// TODO: uploadgrößen im server testen; upload anzahl begrenzen wenn !background_set
+	showInfo('LOADING');
 	
 	// test upload data sizes
 	var queue = $('#uploadqueue')[0];

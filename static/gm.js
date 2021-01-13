@@ -76,6 +76,8 @@ function GmUploadDrag(event) {
 function GmUploadDrop(event, url_regex, gm_url, max_zip, max_background) {
 	event.preventDefault();
 	
+	showInfo('LOADING');
+	
 	// test upload data sizes
 	var queue = $('#uploadqueue')[0];
 	queue.files = event.dataTransfer.files;

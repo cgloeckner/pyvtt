@@ -49,7 +49,7 @@
 	</div>
 </div>
 
-<div id="error"></div>
+<div id="popup"></div> 
 
 %include("footer")
 

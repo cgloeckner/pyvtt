@@ -242,6 +242,14 @@ class Engine(object):
 		handle.seek(offset)
 		return hash_md5.hexdigest()
 		
+	def getSize(self, file_upload):
+		""" Determine size of a file upload.
+		"""
+		offset = file_upload.file.tell()
+		size = len(file_upload.file.read())
+		file_upload.file.seek(offset)
+		return size
+		
 	def cleanup(self):
 		""" Deletes all export games' zip files, unused images and
 		outdated dice roll results from all games.

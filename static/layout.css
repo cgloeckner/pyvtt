@@ -24,7 +24,7 @@ div.container {
 	width: 100%;
 }
 
-div#error {
+div#popup {
 	display: none;
 	
 	text-align: center;
@@ -49,7 +49,7 @@ div#error {
 	z-index: 500;
 }
 
-div.menu > div#error {
+div.menu > div#popup {
 	top: 300px;
 }
 
