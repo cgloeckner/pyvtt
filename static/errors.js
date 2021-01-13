@@ -10,7 +10,9 @@ function showPopup(msg, color, timeout, fadeout) {
 	popup[0].innerHTML = msg;
 	popup.css('color', color);
 	popup.fadeIn(100, 0.0);
-	popup.delay(timeout).fadeOut(fadeout, 0.0);
+	if (timeout != null) {
+		popup.delay(timeout).fadeOut(fadeout, 0.0);
+	}
 }
   
 function showError(msg) {
@@ -19,7 +21,7 @@ function showError(msg) {
 }
 
 function showInfo(msg) {
-	showPopup(msg, 'white', 500, 500);
+	showPopup(msg, 'white', null, null);
 }
 
 function handleError(response) {

@@ -346,6 +346,7 @@ function onDrop(event) {
 		processData: false,
 		success: function(response) {
 			// reset uploadqueue
+			$('#popup').hide();
 			$('#uploadqueue').val("");
 		}, error: function(response, msg) {
 			handleError(response);

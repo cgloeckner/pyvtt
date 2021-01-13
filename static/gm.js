@@ -147,6 +147,7 @@ function GmUploadDrop(event, url_regex, gm_url, max_zip, max_background) {
 				
 				} else {
 					// load game
+					$('#popup').hide();
 					window.location = '/' + response['url'];
 				}
 			}
