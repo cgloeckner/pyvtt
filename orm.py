@@ -13,8 +13,6 @@ from gevent import lock
 
 from pony.orm import *
 
-from PIL import Image, UnidentifiedImageError
-
 
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
@@ -182,28 +180,6 @@ def createGmDatabase(engine, filename):
 			with tempfile.NamedTemporaryFile(suffix=suffix) as tmpfile:
 				# save image to tempfile
 				handle.save(tmpfile.name, overwrite=True)
-				
-				# shrink image
-				try:
-					with Image.open(tmpfile.name) as img:
-						w = img.size[0]
-						h = img.size[1]
-						ratio = h / w
-						downscale = False
-						if h > w:
-							if h > 4000:
-								h = 4000
-								w = int(h / ratio)
-								downscale = True
-						else:
-							if w > 4000:
-								w = 4000
-								h = int(w * ratio)
-								downscale = True
-						if downscale:
-							img.resize((w, h)).save(tmpfile.name)
-				except UnidentifiedImageError:
-					return None
 				
 				# create md5 checksum for duplication test
 				new_md5 = engine.getMd5(tmpfile.file)

@@ -236,7 +236,9 @@ def post_import_game(url=None):
 			engine.logging.warning('GM name="{0}" url={1} tried to import game by {2} but game url "{3}" already in use'.format(gm.name, gm.url, engine.getClientIp(request), url))
 			status['error'] = 'ALREADY IN USE'
 			return status
-		
+	
+	status['url_ok'] = True
+	
 	# upload file
 	files = request.files.getall('file')
 	if len(files) != 1:
@@ -244,14 +246,31 @@ def post_import_game(url=None):
 		status['error'] = 'ONE FILE AT ONCE'
 		return status
 	
-	status['url_ok'] = True
+	# query filesize
+	offset = files[0].file.tell()
+	size = len(files[0].file.read())
+	files[0].file.seek(offset)
 	
 	fname = files[0].filename
 	is_zip = fname.endswith('zip')
 	if is_zip:
-		game = gm_cache.db.Game.fromZip(gm, url, files[0])
+		# test zip file size
+		limit = engine.file_limit['game']
+		if size <= limit * 1024 * 1024:
+			game = gm_cache.db.Game.fromZip(gm, url, files[0])
+		else:
+			engine.logging.warning('GM name="{0}" url={1} tried to import game by {2} but tried to cheat on the filesize'.format(gm.name, gm.url, engine.getClientIp(request), url))
+			status['error'] = 'TOO LARGE GAME (MAX {0} MiB)'.format(limit)
+			return status
 	else:
-		game = gm_cache.db.Game.fromImage(gm, url, files[0])
+		# test background file size
+		limit = engine.file_limit['background']
+		if size <= limit * 1024 * 1024:
+			game = gm_cache.db.Game.fromImage(gm, url, files[0])
+		else:   
+			engine.logging.warning('GM name="{0}" url={1} tried to import game by {2} but tried to cheat on the filesize'.format(gm.name, gm.url, engine.getClientIp(request), url))
+			status['error'] = 'TOO LARGE BACKGROUND (MAX {0} MiB)'.format(limit)
+			return status
 	
 	status['file_ok'] = game is not None
 	if not status['file_ok']:
@@ -692,11 +711,37 @@ def accept_websocket():
 def post_image_upload(gmurl, url, posx, posy, default_size):
 	# load GM from cache
 	gm_cache = engine.cache.getFromUrl(gmurl)
+	if gm_cache is None:
+		abort(404)
 	
 	# load game from GM's database to upload files
 	urls  = list()
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None:
+		abort(404)
+	
+	# load active scene
+	scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
+	if scene is None:
+		abort(404)
+	
+	background_set = scene.backing is not None
+	# query file sizes
 	files = request.files.getall('file[]')
+	for i, handle in enumerate(files):
+		max_filesize = engine.file_limit['token']
+		if i == 0 and not background_set:
+			max_filesize = engine.file_limit['background']
+		# determine file size
+		offset = handle.file.tell()
+		size = len(handle.file.read())
+		handle.file.seek(offset)
+		# check filesize       
+		if size > max_filesize * 1024 * 1024:
+			engine.logging.warning('Player tried to an image to a game by {0} but tried to cheat on the filesize'.format(engine.getClientIp(request), url))
+			abort(404)
+	
+	# upload images
 	for handle in files:
 		url = game.upload(handle)
 		urls.append(url)
