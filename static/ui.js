@@ -1206,10 +1206,10 @@ function onWindowResize(event) {
 	});
 }
 
-/// Load dice position from cookie, returns absolute position
+/// Load dice position from client's webstorage, returns absolute position
 function loadDicePos(sides) { 
-	var raw = getCookie('d' + sides)
-	if (raw == '') {
+	var raw = localStorage.getItem('d' + sides);
+	if (raw == null) {
 		// use default position
 		return default_dice_pos[sides];
 	}
@@ -1225,9 +1225,9 @@ function loadDicePos(sides) {
 	return data;
 }
 
-/// Save dice position to cookie using percentage values
+/// Save dice position to client's webstorage using percentage values
 function saveDicePos(sides, data) {
 	data[0] /= window.innerWidth;
 	data[1] /= window.innerHeight;
-	setCookie('d' + sides, JSON.stringify(data));
+	localStorage.setItem('d' + sides, JSON.stringify(data));
 }

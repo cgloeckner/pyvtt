@@ -167,6 +167,15 @@ def get_game_list():
 		response.set_cookie('session', '', path='/', expires=1, secure=engine.ssl)
 		redirect('/')
 	
+	cookies    = ''
+	for key in request.cookies.keys():
+		cookies += '\t{0} : {1}\n'.format(key, request.cookies[key])
+	if cookies == '':
+		cookies = '{}'
+	else:
+		cookies = '{\n' + cookies + '}'
+	print(cookies)
+	
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
 	if gm_cache is None:
@@ -425,13 +434,13 @@ def activate_scene(url, scene_id):
 	# activate game
 	game.active = scene_id
 
-	gm_cache.db.commit()  
+	gm_cache.db.commit()
+	
+	# broadcase scene switch to all players
+	game_cache = gm_cache.get(game)   
 	if game_cache is None:
 		engine.logging.warning('GM name="{0}" url="{1}" tried activate scene #{4} at game {2} by {3} but game was in the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
 		abort(404)
-	
-	# broadcase scene switch to all players
-	game_cache = gm_cache.get(game)
 	game_cache.broadcastSceneSwitch(game)
 	
 	engine.logging.access('Game {0} switched scene to #{1} by {2}'.format(game.getUrl(), scene_id, engine.getClientIp(request)))
@@ -650,16 +659,6 @@ def get_player_battlemap(gmurl, url):
 	# try to load playername from cookie (or from GM name)
 	playername = request.get_cookie('playername')
 	gm         = engine.main_db.GM.loadFromSession(request)
-	
-	if gm is not None:
-		if gm.url != gmurl:
-			gm = None
-	
-	if playername is None:
-		if gm is not None:
-			playername = gm.name
-		else:
-			playername = ''
 	
 	# query the hosting GM
 	host_gm = engine.main_db.GM.select(lambda g: g.url == gmurl).first()
