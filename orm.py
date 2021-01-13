@@ -372,6 +372,10 @@ def createGmDatabase(engine, filename):
 				# create all game data
 				data = dict()
 				json_path = os.path.join(tmp_dir, 'game.json')
+				if not os.path.exists(json_path):
+					game.delete()
+					db.commit()
+					return None
 				with open(json_path , 'r') as h:
 					data = json.load(h)
 				

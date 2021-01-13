@@ -256,6 +256,10 @@ def post_import_game(url=None):
 		limit = engine.file_limit['game']
 		if size <= limit * 1024 * 1024:
 			game = gm_cache.db.Game.fromZip(gm, url, files[0])
+			if game is None:
+				engine.logging.access('GM name="{0}" url={1} tried to import game by {2} but the ZIP was invalid'.format(gm.name, gm.url, engine.getClientIp(request), url))
+				status['error'] = 'CORRUPTED FILE'.format(limit)
+				return status
 		else:
 			engine.logging.warning('GM name="{0}" url={1} tried to import game by {2} but tried to cheat on the filesize'.format(gm.name, gm.url, engine.getClientIp(request), url))
 			status['error'] = 'TOO LARGE GAME (MAX {0} MiB)'.format(limit)
