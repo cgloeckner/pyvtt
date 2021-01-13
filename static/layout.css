@@ -452,9 +452,11 @@ div#historydrop > div > img {
 /* --- Players list ------------------------------------------------- */
 
 div#players {  
-	position: absolute; 
-	bottom: 10px;
+	position: absolute;
+	left: 50%;
+	bottom: 0px;
 	height: 54px;
+	transform: translate(-50%, 0);
 	 
 	display: block;
 	

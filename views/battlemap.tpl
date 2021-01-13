@@ -40,7 +40,7 @@
 		</div>
 	</div>
 
-	<div id="players" onMouseDown="onStartDragPlayers();" onWheel="onWheelPlayers();"></div>
+	<div id="players" onMouseDown="onStartDragPlayers(event);" onWheel="onWheelPlayers();"></div>
 	
 	<div class="mapfooter" id="mapfooter">
 		<form id="uploadform" method="post" enctype="multipart/form-data">

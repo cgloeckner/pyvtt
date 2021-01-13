@@ -1002,18 +1002,19 @@ function onStartDragDice(sides) {
 }
 
 /// Event handle for start dragging a players container
-function onStartDragPlayers() {
-	drag_dice   = null;
-	drag_player = true;
-}
-
-/// Limit position and align to screen using the container's size
-function limitPosition(container, x, y) {
-	var w = container.width();
-	var h = container.height();
-	var x = Math.max(0, Math.min(window.innerWidth - w,  x - w / 2));
-	var y = Math.max(0, Math.min(window.innerHeight - h, y - h / 2));
-	return [x, y];
+function onStartDragPlayers(event) {
+	if (event.buttons == 1) {
+		drag_dice   = null;
+		drag_player = true;
+	} else if (event.buttons == 2) {
+		// reset players position
+		var target = $('#players');
+		var pos = [window.innerWidth * 0.5, window.innerHeight - target.height()];
+		
+		// apply position
+		movePlayersTo(pos);
+		localStorage.removeItem('players');
+	}
 }
 
 /// Snaps dice container to the closest edge (from x, y)
@@ -1108,17 +1109,27 @@ function moveDiceTo(data, sides) {
 	}
 }
 
+function movePlayersTo(pos) {
+	var target = $('#players')
+	target.css('left', pos[0]);
+	target.css('top',  pos[1]);
+}
+
 /// Drag dice container to position specified by the event
 function onDragDice(event) {
 	// drag dice box
 	var target = $('#d' + drag_dice + 'icon');
 	 
 	// limit position to the screen
-	var data = limitPosition(target, event.clientX, event.clientY);
+	var w = target.width();
+	var h = target.height();
+	var x = Math.max(0, Math.min(window.innerWidth - w,  event.clientX - w / 2));
+	var y = Math.max(0, Math.min(window.innerHeight - h, event.clientY - h / 2));
+	var data = [x, y];
 	data = snapDice(data[0], data[1], target, '');
 	
+	// apply position
 	moveDiceTo(data, drag_dice);
-	
 	saveDicePos(drag_dice, data);
 }
 
@@ -1127,11 +1138,14 @@ function onDragPlayers(event) {
 	var target = $('#players');
 	
 	// limit position to the screen
-	var pos = limitPosition(target, event.clientX, event.clientY)
+	var w = target.width();
+	var h = target.height();
+	var x = Math.max(w / 2, Math.min(window.innerWidth - w/2, event.clientX));
+	var y = Math.max(0,     Math.min(window.innerHeight - h,  event.clientY));
+	var pos = [x, y];
 	
-	target.css('left', pos[0]);
-	target.css('top',  pos[1]);
-	target.css('bottom', '0');
+	movePlayersTo(pos);
+	savePlayersPos(pos);
 }
 
 /// Event handle for dragging a single dice container
@@ -1204,9 +1218,13 @@ function onWindowResize(event) {
 		var data = loadDicePos(sides);
 		moveDiceTo(data, sides);
 	});
+	
+	// fix players position
+	var players_pos = loadPlayersPos();
+	movePlayersTo(players_pos);
 }
 
-/// Load dice position from client's webstorage, returns absolute position
+/// Load dice position from local storage, returns absolute position
 function loadDicePos(sides) { 
 	var raw = localStorage.getItem('d' + sides);
 	if (raw == null) {
@@ -1225,9 +1243,32 @@ function loadDicePos(sides) {
 	return data;
 }
 
-/// Save dice position to client's webstorage using percentage values
+/// Save dice position to local storage using percentage values
 function saveDicePos(sides, data) {
 	data[0] /= window.innerWidth;
 	data[1] /= window.innerHeight;
 	localStorage.setItem('d' + sides, JSON.stringify(data));
+}
+
+/// Load players position from local storage, returns absolute position
+function loadPlayersPos() {
+	var raw = localStorage.getItem('players');
+	if (raw == null) {
+		// default position: bottom center
+		var target = $('#players');
+		return [window.innerWidth * 0.5, window.innerHeight - target.height()];
+	}
+	var data = JSON.parse(raw) 
+	// calculate absolute position from precentage
+	data[0] *= window.innerWidth;
+	data[1] *= window.innerHeight;
+	
+	return data;
+}
+
+/// Save players position to local storage using percentage values
+function savePlayersPos(pos) {
+	pos[0] /= window.innerWidth;
+	pos[1] /= window.innerHeight;
+	localStorage.setItem('players', JSON.stringify(pos));
 }
