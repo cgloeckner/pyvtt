@@ -205,7 +205,7 @@ class PatreonApi(object):
 		# test pledge
 		amount = PatreonApi.getUserPledgeAmount(json_data)
 		if amount >= self.min_pledge:
-			return result['granted'] = True
+			result['granted'] = True
 		
 		return result
 
