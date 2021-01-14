@@ -259,11 +259,13 @@ function onTokenResize() {
 			return;
 		}
 		var size = Math.round(token.size * ratio * 2);
-		size = Math.max(min_token_size, Math.min(max_token_size, size));
+		size = Math.max(min_token_resize, Math.min(max_token_resize, size));
 		// save size
 		// @NOTE: resizing is updated after completion, meanwhile
 		// clide-side prediction kicks in
 		token.size = size;
+		
+		console.log(token.size);
 	});
 }
 

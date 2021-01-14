@@ -118,9 +118,9 @@ var player_selections = {}; // buffer that contains selected tokens and correspo
 var culling = []; // holds tokens for culling
 var min_z = -1; // lowest known z-order
 var max_z =  1; // highest known z-order
-var min_token_size     = 30;
+var min_token_resize     = 30;
 var default_token_size = 60;
-var max_token_size     = 1000;
+var max_token_resize     = 1000;
 
 var background_set = false;
 
