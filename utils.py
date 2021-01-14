@@ -156,22 +156,17 @@ class PatreonApi(object):
 		return titles
 		
 	@staticmethod
-	def getUserPledges(json_data):
-		pledges = []  
-		titles = PatreonApi.getPledgeTitles(json_data)
-		
+	def getUserPledgeAmount(json_data):
+		amount = 0
 		for r in json_data['data']['relationships']['pledges']['data']:
 			if r['type'] == 'pledge':
 				# search included stuff for pledge_id
 				for item in json_data['included']:
 					if item['id'] == r['id']:
-						amount = item['attributes']['amount_cents']
-						pledges.append({
-							'amount' : amount,
-							'title'  : titles[amount]
-						})
-		
-		return pledges
+						cents = item['attributes']['amount_cents']
+						if cents > amount:
+							amount = cents
+		return amount
 		
 	def getAuthUrl(self):
 		""" Generate patreon-URL to access in order to fetch data. """
@@ -197,24 +192,21 @@ class PatreonApi(object):
 		json_data     = user_response.json_data
 		user          = PatreonApi.getUserInfo(json_data)
 		result = {
-			'sid'   : token,
-			'user'  : user,
-			'level' : None # None equals whitelist guest
+			'sid'     : token,
+			'user'    : user,
+			'granted' : False
 		}
 		
 		# test whitelist
 		if user['id'] in self.whitelist:
+			result['granted'] = True
 			return result
 		
 		# test pledge
-		pledges = PatreonApi.getUserPledges(json_data)
-		for item in pledges:
-			if item['amount'] >= self.min_pledge:
-				result['level'] = item['title']
-				return result
+		amount = PatreonApi.getUserPledgeAmount(json_data)
+		if amount >= self.min_pledge:
+			return result['granted'] = True
 		
-		# user neither pledged nor whitelisted
-		result['sid'] = None
 		return result
 
 
