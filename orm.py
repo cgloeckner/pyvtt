@@ -112,6 +112,7 @@ def createGmDatabase(engine, filename):
 			# delete all tokens
 			for t in self.tokens:
 				t.delete()
+			self.backing = None
 
 	# -----------------------------------------------------------------------------
 
@@ -149,11 +150,17 @@ def createGmDatabase(engine, filename):
 			engine.checksums[self.getUrl()] = data
 		
 		def postSetup(self):
+			""" Adds the game's directory and prepare the md5 cache.
+			"""
 			img_path = engine.paths.getGamePath(self.gm_url, self.url)
 			
 			with engine.locks[self.gm_url]: # make IO access safe
 				if not os.path.isdir(img_path):
 					os.mkdir(img_path)
+			
+			# add to the engine's cache
+			gm_cache = engine.cache.getFromUrl(self.gm_url)
+			gm_cache.insert(self)
 			
 			self.makeMd5s()
 		
@@ -163,15 +170,14 @@ def createGmDatabase(engine, filename):
 		
 		def getNextId(self):
 			"""Note: needs to be called from a threadsafe context."""
-			max_id = -1
-			for fname in self.getAllImages():
-				number = int(fname.split('.png')[0])
-				if number > max_id:
-					max_id = number
-			return max_id + 1
+			max_id = 0
+			fnames = self.getAllImages()
+			while '{0}.png'.format(max_id) in fnames:
+				max_id += 1
+			return max_id
 
 		def getImageUrl(self, image_id):
-			return '/token/{0}/{1}/{2}'.format(self.gm_url, self.url, image_id)
+			return '/token/{0}/{1}/{2}.png'.format(self.gm_url, self.url, image_id)
 
 		def getFileSize(self, url):
 			game_root  = engine.paths.getGamePath(self.gm_url, self.url)
@@ -194,15 +200,14 @@ def createGmDatabase(engine, filename):
 				with engine.locks[self.gm_url]: # make IO access safe
 					if new_md5 not in engine.checksums[self.getUrl()]:
 						# copy image to target
-						next_id    = self.getNextId()
-						image_id   = '{0}.png'.format(next_id)
-						local_path = os.path.join(game_root, image_id)
+						image_id   = self.getNextId()
+						local_path = game_root / '{0}.png'.format(image_id)
 						shutil.copyfile(tmpfile.name, local_path)
 						
-						# store checksum
+						# store pair: checksum => image_id
 						engine.checksums[self.getUrl()][new_md5] = image_id
 				
-				# propagate remote path
+				# propagate remote path (query image_id by checksum)
 				return self.getImageUrl(engine.checksums[self.getUrl()][new_md5])
 
 		def getAbandonedImages(self):
@@ -214,7 +219,8 @@ def createGmDatabase(engine, filename):
 			
 			abandoned = list()
 			for image_id in all_images:
-				url = self.getImageUrl(image_id)
+				# create url (ignore png-extension due to os.listdir)
+				url = self.getImageUrl(image_id.split('.png')[0])
 				# check for any tokens
 				t = db.Token.select(lambda t: t.url == url).first()
 				if t is None:
@@ -321,10 +327,6 @@ def createGmDatabase(engine, filename):
 			return zip_file, zip_path
 		
 		@staticmethod
-		def isUniqueUrl(gm, url):
-			return len(db.Game.select(lambda g: g.url == url)) == 0
-		
-		@staticmethod
 		def fromImage(gm, url, handle):
 			# create game with that image as background
 			game = db.Game(url=url, gm_url=gm.url)
@@ -348,8 +350,6 @@ def createGmDatabase(engine, filename):
 			
 			scene.backing = t
 			db.commit() 
-			gm_cache = engine.cache.get(gm)
-			gm_cache.insert(game)
 			
 			return game
 		
@@ -406,8 +406,6 @@ def createGmDatabase(engine, filename):
 						game.active = scene.id
 				
 				db.commit()
-				gm_cache = engine.cache.get(gm)
-				gm_cache.insert(game)
 				
 				return game
 	 
@@ -445,6 +443,9 @@ def createMainDatabase(engine):
 			with engine.locks[self.url]: # make IO access safe
 				if not os.path.isdir(root_path):
 					os.mkdir(root_path)
+			
+			# add to engine's GM cache
+			engine.cache.insert(self)
 			
 		def cleanup(self, gm_db, now):
 			""" Cleanup GM's games' outdated rolls, unused images or

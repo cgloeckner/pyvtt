@@ -9,8 +9,11 @@ License: MIT (see LICENSE for details)
 
 import unittest
 
-from tests.example import ExampleTest
 from tests.token import TokenTest
+from tests.scene import SceneTest
+from tests.game import GameTest
+
+from tests.example import ExampleTest
 
 def register(suite, testcase):
 	""" Register all test methods of the given testcase class
@@ -25,6 +28,8 @@ def suite():
 	"""
 	suite = unittest.TestSuite()
 	register(suite, TokenTest)
+	register(suite, SceneTest)
+	register(suite, GameTest)
 	#
 	register(suite, ExampleTest)
 	return suite
