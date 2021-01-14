@@ -189,15 +189,19 @@ function updateToken(data, force=false) {
 		addToken(data.id, data.url);
 	}
 	
-	// update token data
-	if (force) {
-		// forced movement: place directly there
-		tokens[data.id].posx = data.posx;
-		tokens[data.id].posy = data.posy;
+	if (!force && grabbed && select_ids.includes(data.id)) {
+		// ignore position
+	} else {
+		// update token data
+		if (force) {
+			// forced movement: place directly there
+			tokens[data.id].posx = data.posx;
+			tokens[data.id].posy = data.posy;
+		}
+		// use given position as target position
+		tokens[data.id].newx     = data.posx;
+		tokens[data.id].newy     = data.posy;
 	}
-	// use given position as target position
-	tokens[data.id].newx     = data.posx;
-	tokens[data.id].newy     = data.posy;
 	
 	tokens[data.id].zorder   = data.zorder;
 	tokens[data.id].size     = data.size;

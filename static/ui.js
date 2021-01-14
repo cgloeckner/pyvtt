@@ -773,7 +773,7 @@ function onMove(event) {
 		
 	} else {
 		var token = selectToken(mouse_x, mouse_y);
-			 
+		 
 		// transform cursor
 		if (token == null) {
 			$('#battlemap').css('cursor', 'default');
