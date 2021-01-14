@@ -190,11 +190,11 @@ function updateToken(data, force=false) {
 	}
 	
 	// update token data
-	//if (force) {
+	if (force) {
 		// forced movement: place directly there
 		tokens[data.id].posx = data.posx;
 		tokens[data.id].posy = data.posy;
-	//}
+	}
 	// use given position as target position
 	tokens[data.id].newx     = data.posx;
 	tokens[data.id].newy     = data.posy;
@@ -218,7 +218,7 @@ function updateToken(data, force=false) {
 		tokens[data.id].posx = canvas[0].width  / 2 / canvas_scale;
 		tokens[data.id].posy = canvas[0].height / 2 / canvas_scale;
 		tokens[data.id].newx = tokens[data.id].posx;
-		tokens[data.id].newy = tokens[data.id].newy;
+		tokens[data.id].newy = tokens[data.id].posy;
 		
 		background_set = true;
 		

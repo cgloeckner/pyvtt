@@ -729,7 +729,7 @@ function onMove(event) {
 						var tx = mouse_x + dx;
 						var ty = mouse_y + dy;
 						
-						// client-side predict
+						// client-side predict (immediately place it there)
 						t.posx = tx;
 						t.posy = ty;
 						t.newx = tx;
@@ -743,13 +743,14 @@ function onMove(event) {
 					}
 				});
 				
-				//if (socket_move_timeout <= Date.now()) {
+				// not push every position to go easy on the server
+				if (socket_move_timeout <= Date.now()) {
 					writeSocket({
 						'OPID'    : 'UPDATE',
 						'changes' : changes
 					});
 					socket_move_timeout = Date.now() + socket_move_delay;
-				//}
+				}
 			}
 		}
 		
