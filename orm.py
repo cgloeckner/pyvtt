@@ -19,6 +19,8 @@ __licence__ = 'MIT'
 
 
 
+MAX_SCENE_WIDTH = 1000
+MAX_SCENE_HEIGHT = 560
 
 def createGmDatabase(engine, filename):
 	""" Creates a new database for with GM entities such as Tokens,
@@ -44,14 +46,18 @@ def createGmDatabase(engine, filename):
 			"""Handle update of several data fields. The timeid is set if anything
 			has actually changed.
 			"""
-			if self.locked != locked:
+			if self.locked and locked is None:
+				# token is locked and not unlocked
+				return
+			
+			if locked is not None and self.locked != locked:
 				self.timeid = timeid
 				self.locked = locked
 			
 			if pos != None:
 				# force position onto scene (canvas)
-				self.posx = min(1000, max(0, pos[0]))
-				self.posy = min(560, max(0, pos[1]))
+				self.posx = min(MAX_SCENE_WIDTH, max(0, pos[0]))
+				self.posy = min(MAX_SCENE_HEIGHT, max(0, pos[1]))
 				self.timeid = timeid
 			
 			if zorder != None:
@@ -88,8 +94,8 @@ def createGmDatabase(engine, filename):
 			y = int(origin[1] + radius * c)
 			
 			# force position onto scene (canvas)
-			x = min(1000, max(0, x))
-			y = min(560, max(0, y))
+			x = min(MAX_SCENE_WIDTH, max(0, x))
+			y = min(MAX_SCENE_HEIGHT, max(0, y))
 			
 			return (x, y)
 

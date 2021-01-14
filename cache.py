@@ -502,7 +502,7 @@ class GameCache(object):
 				size   = data.get('size')
 				rotate = data.get('rotate')
 				flipx  = data.get('flipx')
-				locked = data.get('locked', False)
+				locked = data.get('locked')
 				t.update(timeid=now, pos=pos, zorder=zorder, size=size,
 					rotate=rotate, flipx=flipx, locked=locked)
 		

@@ -1,3 +1,5 @@
+%from orm import MAX_SCENE_WIDTH, MAX_SCENE_HEIGHT
+
 %include("header", title=game.url.upper())
   
 %include("login")
@@ -28,7 +30,7 @@
 
 	<div class="battlemap" id="gamecontent">
 		<div id="draghint">DRAG AN IMAGE TO START</div>
-		<canvas id="battlemap" width="1000" height="560"></canvas>
+		<canvas id="battlemap" width="{{MAX_SCENE_WIDTH}}" height="{{MAX_SCENE_HEIGHT}}"></canvas>
 			
 		<div id="tokenbar">
 			<img src="/static/flipx.png" id="tokenFlipX" draggable="false" onClick="onFlipX();" />

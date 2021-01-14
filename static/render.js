@@ -23,7 +23,8 @@ function considerViewport(x, y, width, height) {
 	return [x, y];
 }
 
-const base_width = 1000; // see initial width of canvas element
+var base_width = null; // initial width of canvas element
+var canvas_ratio = null;  // aspect ratio
 
 // --- image handling implementation ----------------------------------
 
@@ -31,17 +32,23 @@ var images = [];
 var canvas_scale = 1.0; // saved scaling
 
 function resizeCanvas() {
+	if (base_width == null) {
+		// fetch initial battlemap width
+		base_width = $('#battlemap').width();
+		canvas_ratio = $('#battlemap').height() / base_width;
+	}
+	
 	var canvas = $('#battlemap');
 	
 	// avoid breaking aspect ratio
 	// note: avoids tokens to be out of view for some players
 	var w = window.innerWidth - 10;
-	var h = w * 0.56;
+	var h = w * canvas_ratio;
 	
 	// handle too large height
 	if (h > window.innerHeight - 45) {
 		h = window.innerHeight - 45;
-		w = h / 0.56;
+		w = h / canvas_ratio;
 	}
 	
 	// apply size
@@ -157,7 +164,7 @@ function getActualSize(token, maxw, maxh) {
 			h = w * ratio;
 		}
 	} else {
-		if (ratio > 0.56) {
+		if (ratio > canvas_ratio) {
 			// resize to canvas height
 			h = maxh / canvas_scale;
 			w = h / ratio;

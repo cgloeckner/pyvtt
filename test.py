@@ -10,6 +10,7 @@ License: MIT (see LICENSE for details)
 import unittest
 
 from tests.example import ExampleTest
+from tests.token import TokenTest
 
 def register(suite, testcase):
 	""" Register all test methods of the given testcase class
@@ -23,6 +24,8 @@ def suite():
 	""" Create the entire test suite.
 	"""
 	suite = unittest.TestSuite()
+	register(suite, TokenTest)
+	#
 	register(suite, ExampleTest)
 	return suite
 
