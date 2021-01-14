@@ -235,27 +235,33 @@ function drawToken(token, color, is_background) {
 	
 	var interpolated = false;
 	
-	if (!(grabbed && select_ids.includes(token.id))) {
-		// interpolate token position if necessary
-		// @NOTE: this is skipped if a token is moved right now
-		var dx = token.newx - token.posx;
-		var dy = token.newy - token.posy;
-		if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
-			// get normalized direction vector
-			var d = Math.sqrt(dx * dx + dy * dy);
-			// scale vector
-			dx = dx * interpolation_speed / d;
-			dy = dy * interpolation_speed / d;
-			// update position
-			token.posx = parseInt(token.posx + dx);
-			token.posy = parseInt(token.posy + dy);    
-			
-			interpolated = true;
-		} else {
-			// finish movement
-			token.posx = parseInt(token.newx);
-			token.posy = parseInt(token.newy);
+	if (interpolation_speed > 0) {
+		if (!(grabbed && select_ids.includes(token.id))) {
+			// interpolate token position if necessary
+			// @NOTE: this is skipped if a token is moved right now
+			var dx = token.newx - token.posx;
+			var dy = token.newy - token.posy;
+			if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
+				// get normalized direction vector
+				var d = Math.sqrt(dx * dx + dy * dy);
+				// scale vector
+				dx = dx * interpolation_speed / d;
+				dy = dy * interpolation_speed / d;
+				// update position
+				token.posx = parseInt(token.posx + dx);
+				token.posy = parseInt(token.posy + dy);    
+				
+				interpolated = true;
+			} else {
+				// finish movement
+				token.posx = parseInt(token.newx);
+				token.posy = parseInt(token.newy);
+			}
 		}
+	} else {
+		// do not interpolate 
+		token.posx = parseInt(token.newx);
+		token.posy = parseInt(token.newy);
 	}
 	
 	// cache image if necessary
