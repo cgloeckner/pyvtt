@@ -264,8 +264,6 @@ function onTokenResize() {
 		// @NOTE: resizing is updated after completion, meanwhile
 		// clide-side prediction kicks in
 		token.size = size;
-		
-		console.log(token.size);
 	});
 }
 
