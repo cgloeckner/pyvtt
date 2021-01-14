@@ -190,12 +190,11 @@ function updateToken(data, force=false) {
 	}
 	
 	// update token data
-	if (force) {
-		console.log('Forced');
+	//if (force) {
 		// forced movement: place directly there
 		tokens[data.id].posx = data.posx;
 		tokens[data.id].posy = data.posy;
-	}
+	//}
 	// use given position as target position
 	tokens[data.id].newx     = data.posx;
 	tokens[data.id].newy     = data.posy;
