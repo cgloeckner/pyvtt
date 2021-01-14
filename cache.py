@@ -63,6 +63,7 @@ class PlayerCache(object):
 		self.socket   = None
 		
 		self.dispatch_map = {
+			'PING'   : self.parent.onPing,
 			'ROLL'   : self.parent.onRoll,
 			'SELECT' : self.parent.onSelect,
 			'RANGE'  : self.parent.onRange,
@@ -341,6 +342,13 @@ class GameCache(object):
 		
 		# remve player
 		self.remove(player.name)
+		
+	def onPing(self, player, data):
+		""" Handle player pinging the server. """
+		# pong!
+		player.write({
+			'OPID'    : 'PING'
+		}); 
 		
 	def onRoll(self, player, data):
 		""" Handle player rolling a dice. """

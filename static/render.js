@@ -380,6 +380,8 @@ function drawScene() {
 		dice_shake_timers[sides] = remain;
 	});
 	
+	updatePing();
+	
 	// schedule next drawing
 	setTimeout("drawScene()", 1000.0 / fps);
 }

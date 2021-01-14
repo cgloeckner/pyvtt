@@ -630,4 +630,11 @@ div.battlemap > div#tokenbar > img:hover {
 div.battlemap > div#tokenbar > img.dummy:hover {
 	cursor: default;
 }
-#
+
+div#ping {
+	position: absolute;
+	left: 0px;
+	bottom: 0px;
+	color: white;
+	padding-left: 5px;
+}

@@ -8,6 +8,10 @@ License: MIT (see LICENSE for details)
 var socket = null; // websocket used for client-server-interaction
 var quiet = true;
 
+var ping_delay = 2000; // delay between two pings
+var next_ping  = null; // indicates when the next ping will be sent
+var last_ping  = null; // timestamp when last ping was sent
+
 // --- game state implementation ----------------------------------------------
 
 var game_url = '';
@@ -33,6 +37,9 @@ function onSocketMessage(event) {
 	var opid = data.OPID;
 	
 	switch (opid) { 
+		case 'PING':
+			onPing(data);
+			break;
 		case 'ACCEPT':
 			onAccept(data);
 			break;  
@@ -173,6 +180,25 @@ function onRefresh(data) {
 function writeSocket(data) {
 	var raw = JSON.stringify(data);
 	socket.send(raw);
+}
+
+/// Called after drawing to update ping if necessary
+function updatePing() {
+	var now = Date.now();
+	if (now >= next_ping) {
+		// trigger next ping
+		next_ping = now + ping_delay;
+		last_ping = now;
+		writeSocket({'OPID': 'PING'});
+	}
+}
+
+/// Event handle to react on server's ping reply
+function onPing(data) {
+	// calculate time since ping request
+	var now   = Date.now();
+	var delta = now - last_ping;
+	$('#ping')[0].innerHTML = 'PING: ' + delta + 'ms';
 }
 
 /// Handles login and triggers the game
