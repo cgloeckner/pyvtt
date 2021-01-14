@@ -540,7 +540,7 @@ def duplicate_scene(url, scene_id):
 	# load required scene
 	scene = gm_cache.db.Scene.select(lambda s: s.id == scene_id).first()
 	if scene is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried clone scene #{4} at game {2} by {3} but scene was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		engine.logging.warning('GM name="{0}" url="{1}" tried clone scene #{4} at game {2} by {3} but scene was not found'.format(gm.name, gm.url, url, engine.getClientIp(request), scene_id))
 		abort(404)
 	
 	# create copy of that scene

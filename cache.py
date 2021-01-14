@@ -134,7 +134,7 @@ class PlayerCache(object):
 			
 		except WebSocketError as e:
 			# player quit
-			self.engine.logging('Player closed WebSocket by {0}'.format(engine.getClientIp(request)))
+			self.engine.logging('Player closed WebSocket by {0}'.format(self.engine.getClientIp(request)))
 			return
 			
 		except:
