@@ -902,12 +902,18 @@ function onLock() {
 }
 
 /// Event handle for resize a token
-function onStartResize() {
+function onStartResize() {  
+	drag_dice = null;
+	drag_players = false;
+	
 	drag_action = 'resize';
 }
 
 /// Event handle for rotating a token
-function onStartRotate() {
+function onStartRotate() {      
+	drag_dice = null;
+	drag_players = false;
+	
 	drag_action = 'rotate'; 
 }
 
