@@ -23,6 +23,8 @@ function considerViewport(x, y, width, height) {
 	return [x, y];
 }
 
+var interpolation_speed = 30; // speed for interpolating between two positions
+
 var base_width = null; // initial width of canvas element
 var canvas_ratio = null;  // aspect ratio
 
@@ -129,6 +131,8 @@ function Token(id, url) {
 	this.id = id;
 	this.posx = 0;
 	this.posy = 0;
+	this.newx = 0;
+	this.newy = 0;
 	this.zorder = 0;
 	this.size = default_token_size;
 	this.url = url;
@@ -179,20 +183,28 @@ function getActualSize(token, maxw, maxh) {
 }
 
 /// Update token data for the provided token (might create a new token)
-function updateToken(data) {
+function updateToken(data, force=false) {
 	// create token if necessary
-	if (!tokens.includes(data.id)) {
+	if (tokens[data.id] == null) {
 		addToken(data.id, data.url);
 	}
 	
 	// update token data
-	tokens[data.id].posx   = data.posx;
-	tokens[data.id].posy   = data.posy;
-	tokens[data.id].zorder = data.zorder;
-	tokens[data.id].size   = data.size;
-	tokens[data.id].rotate = data.rotate;
-	tokens[data.id].flipx  = data.flipx;
-	tokens[data.id].locked = data.locked;
+	if (force) {
+		console.log('Forced');
+		// forced movement: place directly there
+		tokens[data.id].posx = data.posx;
+		tokens[data.id].posy = data.posy;
+	}
+	// use given position as target position
+	tokens[data.id].newx     = data.posx;
+	tokens[data.id].newy     = data.posy;
+	
+	tokens[data.id].zorder   = data.zorder;
+	tokens[data.id].size     = data.size;
+	tokens[data.id].rotate   = data.rotate;
+	tokens[data.id].flipx    = data.flipx;
+	tokens[data.id].locked   = data.locked;
 	
 	if (data.zorder < min_z) {
 		min_z = data.zorder;
@@ -206,6 +218,8 @@ function updateToken(data) {
 		var canvas = $('#battlemap');
 		tokens[data.id].posx = canvas[0].width  / 2 / canvas_scale;
 		tokens[data.id].posy = canvas[0].height / 2 / canvas_scale;
+		tokens[data.id].newx = tokens[data.id].posx;
+		tokens[data.id].newy = tokens[data.id].newy;
 		
 		background_set = true;
 		
@@ -218,6 +232,31 @@ function updateToken(data) {
 function drawToken(token, color, is_background) {
 	var canvas = $('#battlemap');
 	var context = canvas[0].getContext("2d");
+	
+	var interpolated = false;
+	
+	if (!(grabbed && select_ids.includes(token.id))) {
+		// interpolate token position if necessary
+		// @NOTE: this is skipped if a token is moved right now
+		var dx = token.newx - token.posx;
+		var dy = token.newy - token.posy;
+		if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
+			// get normalized direction vector
+			var d = Math.sqrt(dx * dx + dy * dy);
+			// scale vector
+			dx = dx * interpolation_speed / d;
+			dy = dy * interpolation_speed / d;
+			// update position
+			token.posx = parseInt(token.posx + dx);
+			token.posy = parseInt(token.posy + dy);    
+			
+			interpolated = true;
+		} else {
+			// finish movement
+			token.posx = parseInt(token.newx);
+			token.posy = parseInt(token.newy);
+		}
+	}
 	
 	// cache image if necessary
 	if (!images.includes(token.url)) {

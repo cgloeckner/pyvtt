@@ -12,6 +12,9 @@ var ping_delay = 2000; // delay between two pings
 var next_ping  = null; // indicates when the next ping will be sent
 var last_ping  = null; // timestamp when last ping was sent
 
+var socket_move_delay = 100;
+var socket_move_timeout = 0; // delay until the next move update will be sent through the socket
+
 // --- game state implementation ----------------------------------------------
 
 var game_url = '';
@@ -113,7 +116,7 @@ function onUpdate(data) {
 
 function onCreate(data) {
 	$.each(data.tokens, function(index, token) {
-		updateToken(token);
+		updateToken(token, true);
 		
 		tokens_added[token.id] = 0.0;
 	});
@@ -121,10 +124,17 @@ function onCreate(data) {
 
 function onDelete(data) {
 	$.each(data.tokens, function(index, token) {
+		// overwrite new position with current
+		// (this will prevent from fading out at (0|0)
+		token.newx = token.posx;
+		token.newy = token.posy;
+		
 		delete tokens[token.id];
 		
 		tokens_removed[token.id] = [token, 1.0];
+		console.log(token);
 	});
+
 }
 
 function onJoin(data) {
@@ -172,7 +182,7 @@ function onRefresh(data) {
 	background_set = false;
 	tokens = [];
 	$.each(data.tokens, function(index, token) {
-		updateToken(token);
+		updateToken(token, true);
 	});
 }
 
@@ -329,7 +339,7 @@ function start(gmname, url, playername, color) {
 	// desktop controls
 	battlemap.addEventListener('mousedown',	onGrab);
 	document.addEventListener('mousemove',	onMove);
-	battlemap.addEventListener('mouseup',	onRelease);
+	document.addEventListener('mouseup',	onRelease);
 	battlemap.addEventListener('wheel',		onWheel);
 	battlemap.addEventListener('mouseout',	onRelease);
 	document.addEventListener('keydown',	onShortcut);

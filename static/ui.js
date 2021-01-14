@@ -607,11 +607,35 @@ function onGrab(event) {
 
 /// Event handle for releasing a grabbed token
 function onRelease() {
+	drag_dice = null;
+	drag_players = null;
+	
+	var was_grabbed = grabbed;
 	if (select_ids.length > 0) {
 		grabbed = false;
 	}
 	
 	$('#battlemap').css('cursor', 'default');
+	
+	if (primary_id != 0 && was_grabbed) {
+		var changes = []
+		
+		$.each(select_ids, function(index, id) {
+			var t = tokens[id];
+			if (!t.locked) {
+				changes.push({
+					'id'   : id,
+					'posx' : t.posx,
+					'posy' : t.posy
+				});
+			}
+		});
+		
+		writeSocket({
+			'OPID'    : 'UPDATE',
+			'changes' : changes
+		});
+	}
 	
 	if (select_from_x != null) {
 		// finish selection box
@@ -705,6 +729,12 @@ function onMove(event) {
 						var tx = mouse_x + dx;
 						var ty = mouse_y + dy;
 						
+						// client-side predict
+						t.posx = tx;
+						t.posy = ty;
+						t.newx = tx;
+						t.newy = ty;
+						
 						changes.push({
 							'id'   : id,
 							'posx' : tx,
@@ -713,10 +743,13 @@ function onMove(event) {
 					}
 				});
 				
-				writeSocket({
-					'OPID'    : 'UPDATE',
-					'changes' : changes
-				})
+				if (socket_move_timeout <= Date.now()) {
+					writeSocket({
+						'OPID'    : 'UPDATE',
+						'changes' : changes
+					});
+					socket_move_timeout = Date.now() + socket_move_delay;
+				}
 			}
 		}
 		
@@ -1088,8 +1121,7 @@ function resetDicePos(sides) {
 	target.css('left', default_dice_pos[sides][0]);
 	target.css('top',  default_dice_pos[sides][1]);
 	
-	// reset cookie
-	setCookie('d' + sides, '');
+	localStorage.removeItem('d' + sides);
 }
 
 function moveDiceTo(data, sides) {
