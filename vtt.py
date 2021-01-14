@@ -678,12 +678,14 @@ def set_player_name(gmurl, url):
 def get_player_battlemap(gmurl, url):
 	# try to load playername from cookie (or from GM name)
 	playername = request.get_cookie('playername', default='')
-	gm         = engine.main_db.GM.loadFromSession(request)
 	
-	# query the hosting GM
-	host_gm = engine.main_db.GM.select(lambda g: g.url == gmurl).first()
-	if host_gm is None:
-		# no such GM
+	# query whether user is the hosting GM
+	session_gm = engine.main_db.GM.loadFromSession(request)
+	gm_is_host = session_gm is not None and session_gm.url == gmurl
+	
+	# query gm of that game
+	gm = engine.main_db.GM.select(lambda gm: gm.url == gmurl).first()
+	if gm is None:
 		abort(404)
 	
 	# try to load playercolor from cookieplayercolor = request.get_cookie('playercolor')
@@ -707,7 +709,7 @@ def get_player_battlemap(gmurl, url):
 	websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.getPort())
 	
 	# show battlemap with login screen ontop
-	return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=host_gm, is_gm=gm is not None)
+	return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=gm, is_gm=gm_is_host)
 
 @get('/websocket')
 def accept_websocket():
