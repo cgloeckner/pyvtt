@@ -743,13 +743,13 @@ function onMove(event) {
 					}
 				});
 				
-				if (socket_move_timeout <= Date.now()) {
+				//if (socket_move_timeout <= Date.now()) {
 					writeSocket({
 						'OPID'    : 'UPDATE',
 						'changes' : changes
 					});
 					socket_move_timeout = Date.now() + socket_move_delay;
-				}
+				//}
 			}
 		}
 		
