@@ -23,7 +23,7 @@ function considerViewport(x, y, width, height) {
 	return [x, y];
 }
 
-var interpolation_speed = 30; // speed for interpolating between two positions
+var interpolation_speed = 0; // speed for interpolating between two positions
 
 var base_width = null; // initial width of canvas element
 var canvas_ratio = null;  // aspect ratio
