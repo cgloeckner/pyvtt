@@ -352,19 +352,19 @@ def kick_player(url, uuid):
 	# load GM from cache
 	gm_cache = engine.cache.get(gm)
 	if gm_cache is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried to kick player #{4} at {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), uuid)
+		engine.logging.warning('GM name="{0}" url="{1}" tried to kick player #{4} at {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request), uuid))
 		abort(404)
 	
 	# load game from GM's database
 	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
 	if game is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried to kick players #{4} {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), uuid)
+		engine.logging.warning('GM name="{0}" url="{1}" tried to kick players #{4} {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request), uuid))
 		abort(404)
 	
 	# fetch game cache and close sockets
 	game_cache = gm_cache.get(game)
 	if game_cache is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried to kick player #{4} at {2} by {3} but the game was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), uuid)
+		engine.logging.warning('GM name="{0}" url="{1}" tried to kick player #{4} at {2} by {3} but the game was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request), uuid))
 		abort(404)
 	
 	name = game_cache.closeSocket(uuid)
@@ -488,7 +488,7 @@ def activate_scene(url, scene_id):
 	# delete given scene
 	scene = gm_cache.db.Scene.select(lambda s: s.id == scene_id).first()
 	if scene is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried delete scene #{4} at game {2} by {3} but scene was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
+		engine.logging.warning('GM name="{0}" url="{1}" tried delete scene #{4} at game {2} by {3} but scene was not found'.format(gm.name, gm.url, url, engine.getClientIp(request), scene_id))
 		abort(404)
 	
 	scene.backing = None

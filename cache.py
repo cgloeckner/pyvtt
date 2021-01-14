@@ -314,7 +314,7 @@ class GameCache(object):
 		with db_session:
 			scene = self.parent.db.Scene.select(lambda s: s.id == scene_id).first()
 			if scene is None:
-				engine.logging.warning('Game {0}/{1} switched to scene #{2} by {3}, but the scene was not found.'.format(self.parent.url, self.url, scene_id, engine.getClientIp(request)))
+				self.engine.logging.warning('Game {0}/{1} switched to scene #{2} by {3}, but the scene was not found.'.format(self.parent.url, self.url, scene_id, self.engine.getClientIp(request)))
 				return;
 			
 			# get background if set
