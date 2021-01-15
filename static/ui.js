@@ -1149,7 +1149,6 @@ function resetDicePos(sides) {
 	rolls.css('bottom', 0);
 	rolls.css('display',        'inline-flex');
 	rolls.css('flex-direction', 'row');
-	console.log(rolls);
 	
 	localStorage.removeItem('d' + sides);
 }

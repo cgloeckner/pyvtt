@@ -749,7 +749,9 @@ class GameCache(object):
 			g.timeid = now
 			
 			for t in self.parent.db.Token.select(lambda t: t.scene.id == g.active and t.timeid >= since):
-				all_data.append(t.to_dict())
+				tmp = t.to_dict()
+				tmp['uuid'] = player.uuid
+				all_data.append(tmp)
 		
 		# broadcast update
 		self.broadcast({

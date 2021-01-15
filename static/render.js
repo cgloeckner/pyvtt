@@ -189,18 +189,28 @@ function updateToken(data, force=false) {
 		addToken(data.id, data.url);
 	}
 	
-	if (!force && grabbed && select_ids.includes(data.id)) {
-		// ignore position
-	} else {
-		// update token data
-		if (force) {
-			// forced movement: place directly there
-			tokens[data.id].posx = data.posx;
-			tokens[data.id].posy = data.posy;
+	// ignore position if this client moved it
+	var ignore = data.uuid == my_uuid;
+	// drop ignore if no client side prediction is enabled
+	if (ignore && !client_side_prediction) {
+		ignore = false;
+	}
+	
+	// forced updates are ALWAYS applied
+	if (force || !ignore) {
+		if (!force && grabbed && select_ids.includes(data.id)) {
+			// ignore position
+		} else {
+			// update token data
+			if (force) {
+				// forced movement: place directly there
+				tokens[data.id].posx = data.posx;
+				tokens[data.id].posy = data.posy;
+			}
+			// use given position as target position
+			tokens[data.id].newx     = data.posx;
+			tokens[data.id].newy     = data.posy;
 		}
-		// use given position as target position
-		tokens[data.id].newx     = data.posx;
-		tokens[data.id].newy     = data.posy;
 	}
 	
 	tokens[data.id].zorder   = data.zorder;

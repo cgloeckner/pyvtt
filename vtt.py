@@ -462,6 +462,7 @@ def static_token(gmurl, url, fname):
 @post('/<gmurl>/<url>/login')
 def set_player_name(gmurl, url):
 	result = {
+		'uuid'        : '',
 		'playername'  : '',
 		'playercolor' : '',
 		'error'       : ''

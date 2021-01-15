@@ -162,7 +162,6 @@ class Engine(object):
 				else:
 					port_suffix = ':{0}'.format(port)
 				host_callback = '{0}://{1}{2}/vtt/patreon/callback'.format(protocol, self.getDomain(), port_suffix)
-				print(host_callback)
 				# create patreon query API
 				self.login_api = utils.PatreonApi(host_callback=host_callback, **self.login)
 			

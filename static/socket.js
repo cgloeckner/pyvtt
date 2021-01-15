@@ -132,7 +132,6 @@ function onDelete(data) {
 		delete tokens[token.id];
 		
 		tokens_removed[token.id] = [token, 1.0];
-		console.log(token);
 	});
 
 }
@@ -218,7 +217,7 @@ function onPing(data) {
 function login(event, gmname, url, websocket_url, as_gm) {
 	event.preventDefault();
 	
-	$('#error').hide();
+	$('#popup').hide();
 	
 	var playername  = $('#playername').val();
 	var playercolor = $('#playercolor').val();
