@@ -288,8 +288,8 @@ div.horizdropdown > img {
 	
 	width: 48px;
 	
-	filter: drop-shadow(0px 0px 10px gold) 
-          drop-shadow(0px 0px 0 gold);
+	filter: drop-shadow(0px 0px 10px white) 
+          drop-shadow(0px 0px 0 white);
 }
 
 div.horizdropdown > div.gmhint {
@@ -334,7 +334,7 @@ div#gmdrop > div > img.active {
 }
 
 div#gmdrop > div > img.active { 
-	border: 3px groove gold;
+	border: 3px groove white;
 }
 
 img.icon:hover,
@@ -343,8 +343,8 @@ div#gmdrop > div > img.thumbnail:hover,
 div#gmdrop > div > a > img.thumbnail:hover {
 	cursor: pointer;
 	
-	filter: drop-shadow(0px 0px 10px gold) 
-          drop-shadow(0px 0px 0 gold);
+	filter: drop-shadow(0px 0px 10px white) 
+          drop-shadow(0px 0px 0 white);
 }
 
 div#gmdrop > div > div.controls {
@@ -374,8 +374,8 @@ img.dice {
 img.dice:hover {
 	cursor: grab;
 	
-	filter: drop-shadow(1px 1px 10px gold) 
-          drop-shadow(-1px -1px 0 gold);
+	filter: drop-shadow(1px 1px 10px white) 
+          drop-shadow(-1px -1px 0 white);
 	
 	bottom: 5px;
 }
@@ -430,20 +430,57 @@ div.rollbox > span {
 	padding: 3px;
 	padding-top: 5px;
 	margin-top: 7px;
-	margin-left: 10px;
+	margin-left: 10px;  
+	text-align: center; 
+	color: black;
 	
-	text-align: center;
-	font-size: x-large;
-	  
+	overflow: clip; 
+	
 	background-color: rgba(255, 255, 255, 0.75);
 	
 	border-radius: 10px;
 	border: 1px solid white; 
 }
 
-div.rollbox > div > span.natroll,
+div.rollbox > span > span.result {
+	font-size: x-large;
+	font-weight: bolder;
+	
+	position: relative;
+	top: -3px;
+}
+
+div.rollbox > span > span.result > img.binarydice {
+	width: 22px;
+}
+
+div.rollbox > span > span.player {
+	display: block;
+	font-size: xx-small;
+	
+	position: relative;
+	top: -5px;
+}
+
+div.rollbox > span.minroll > span.result {    
+	text-shadow:
+		-1px -1px 0 black,
+		1px -1px 0 black,
+		-1px 1px 0 black,
+		1px 1px 0 black;
+	color: white;
+}
+
+div.rollbox > span.maxroll > span.result { 
+	text-shadow:
+		-1px -1px 0 black,
+		1px -1px 0 black,
+		-1px 1px 0 black,
+		1px 1px 0 black; 
+	color: white;
+}
+
 div#historydrop > div > span.natroll {
-	font-weight: bold;
 }
 
 div#historydrop > div > img {
@@ -505,8 +542,8 @@ div#players > span > div.playermenu > img.right {
 div#players > span > div.playermenu > img:hover {
 	cursor: pointer;
 	filter: invert(1.0)
-		drop-shadow(1px 1px 10px gold) 
-		drop-shadow(-1px -1px 10px gold);
+		drop-shadow(1px 1px 10px white) 
+		drop-shadow(-1px -1px 10px white);
 }
 
 /* --- Map Footer --------------------------------------------------- */
@@ -623,8 +660,8 @@ div.battlemap > div#tokenbar > img#tokenTop {
 div.battlemap > div#tokenbar > img:hover {
 	cursor: pointer;
 	filter: invert(1.0)
-		drop-shadow(1px 1px 10px gold) 
-		drop-shadow(-1px -1px 10px gold);
+		drop-shadow(1px 1px 10px white) 
+		drop-shadow(-1px -1px 10px white);
 }
 
 div.battlemap > div#tokenbar > img.dummy:hover {

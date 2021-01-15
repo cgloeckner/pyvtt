@@ -183,9 +183,9 @@ function addRoll(sides, result, name, color, recent) {
 	var result_label = result
 	if (sides == 2) {
 		if (result == 2) {
-			result_label = '<img style="width: 30px;" src="/static/d2_hit.png" />'
+			result_label = '<img class="binarydice" src="/static/d2_hit.png" />'
 		} else {
-			result_label = '<img style="width: 30px;" src="/static/d2_miss.png" />'
+			result_label = '<img class="binarydice" src="/static/d2_miss.png" />'
 		}
 	}
 	
@@ -194,21 +194,27 @@ function addRoll(sides, result, name, color, recent) {
 	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
 	var his_span = '<span style="' + css + '">' + result_label + '</span>';
 	css += ' display: none;';
-	var box_span = '<span style="' + css + '">' + result_label + '</span>';
+	var box_span = '<span style="' + css + '"><span class="result">' + result_label + '</span><span class="player">' + name + '</span></span>';
 	
 	if (recent) { 
 		container.prepend(box_span);
 		
 		// prepare automatic cleanup
 		var dom_span = container.children(':first-child');
-		if (result == 1 || result == sides || sides == 2) {
-			dom_span.addClass('natroll');
+		if (sides != 2) {
+			if (result == 1) {
+				dom_span.addClass('minroll');
+			} else if (result == sides) {
+				dom_span.addClass('maxroll');
+			}
 		}
 		dom_span.delay(dice_shake).fadeIn(100, function() {
 			dom_span.delay(roll_timeout).fadeOut(2 * roll_timeout, function() { this.remove(); });
 		});
 	}
 	
+	/// @NOTE: dice history is disabled atm
+	/*
 	// also add to dice history
 	var label = '<div style="display: none"><span style="color: ' + color + '">' + name + '</span> d' + sides + ' &rArr; ';
 	if (result == 1 || result == sides) {
@@ -222,7 +228,8 @@ function addRoll(sides, result, name, color, recent) {
 	other_dom_span.delay(dice_shake).fadeIn(1000, function() {});
 	
 	// and show history
-	//$('#historydrop').show();
+	$('#historydrop').show();
+	*/
 }
 
 // --- ui event handles -----------------------------------------------
@@ -1136,7 +1143,7 @@ function resetDicePos(sides) {
 	
 	// reset roll box position and orientation 
 	var rolls = $('#d' + sides + 'rolls');
-	rolls.css('left',   default_dice_pos[sides][0] + w * 1.5);  
+	rolls.css('left',   w * 1.5);  
 	rolls.css('right',  0);
 	rolls.css('top',    default_dice_pos[sides][1]);
 	rolls.css('bottom', 0);
