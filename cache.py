@@ -60,6 +60,7 @@ class PlayerCache(object):
 		else:
 			self.country = '?'
 		
+		self.lock     = lock.RLock()
 		self.socket   = None
 		
 		self.dispatch_map = {
@@ -80,22 +81,24 @@ class PlayerCache(object):
 		
 	def read(self):
 		""" Return JSON object read from socket. """
-		try:
-			raw = self.socket.receive()
-			if raw is None:
-				return None
-			return json.loads(raw)
-		except Exception as e:
-			# send error msg back to client
-			self.socket.send(str(e)) 
-			self.socket.close()
-			raise ProtocolError('Broken JSON message')
+		with self.lock:
+			try:
+				raw = self.socket.receive()
+				if raw is None:
+					return None
+				return json.loads(raw)
+			except Exception as e:
+				# send error msg back to client
+				self.socket.send(str(e)) 
+				self.socket.close()
+				raise ProtocolError('Broken JSON message')
 		
 	def write(self, data):
 		""" Write JSON object to socket. """
-		if self.socket is not None and not self.socket.closed:
-			raw = json.dumps(data)
-			self.socket.send(raw)
+		with self.lock:
+			if self.socket is not None and not self.socket.closed:
+				raw = json.dumps(data)
+				self.socket.send(raw)
 		
 	def fetch(self, data, key):
 		""" Try to fetch key from data or raise ProtocolError. """
@@ -234,7 +237,8 @@ class GameCache(object):
 			for name in self.players:
 				p = self.players[name]
 				if p.uuid == uuid:
-					p.socket.close()
+					with p.lock:
+						p.socket.close()
 					return name
 			self.consolidateIndices()
 		
@@ -242,11 +246,12 @@ class GameCache(object):
 		""" Closes all sockets. """
 		with self.lock:
 			for name in self.players:
-				socket = self.players[name].socket
-				if socket is not None and not socket.closed:
-					socket.close()
-				else:
-					del self.players[name]
+				p = self.players[name]
+				with p.lock:
+					if p.socket is not None and not p.socket.closed:
+						p.socket.close()
+					else:
+						del self.players[name]
 			self.players = dict()
 		
 	def broadcast(self, data):
@@ -736,7 +741,9 @@ class EngineCache(object):
 		gm_cache     = self.getFromUrl(gm_url)
 		game_cache   = gm_cache.getFromUrl(game_url)
 		player_cache = game_cache.get(name)
-		player_cache.socket = socket
+		
+		with player_cache.lock:
+			player_cache.socket = socket
 		game_cache.login(player_cache)
 		
 		# handle incomming data
