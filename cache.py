@@ -236,27 +236,29 @@ class GameCache(object):
 		
 	# --- websocket implementation ------------------------------------
 		
-	def closeSocket(self, uuid):
+	def disconnect(self, uuid):
 		""" Close single socket. """
 		with self.lock:
 			for name in self.players:
 				p = self.players[name]
 				if p.uuid == uuid:
-					with p.lock:
-						p.socket.close()
-					return name
+					# close socket (will stop thread as well)
+					#with p.lock:# note: atm deadlocking
+					p.socket.close()
+				return name
 			self.consolidateIndices()
 		
-	def closeAllSockets(self):
+	def disconnectAll(self):
 		""" Closes all sockets. """
 		with self.lock:
 			for name in self.players:
 				p = self.players[name]
-				with p.lock:
-					if p.socket is not None and not p.socket.closed:
-						p.socket.close()
-					else:
-						del self.players[name]
+				#with p.lock: # note: atm deadlocking
+				if p.socket is not None and not p.socket.closed:
+					# close socket (will stop thread as well)
+					p.socket.close()
+				else:
+					del self.players[name]
 			self.players = dict()
 		
 	def broadcast(self, data):
@@ -350,8 +352,12 @@ class GameCache(object):
 			'uuid'  : player.uuid
 		})
 		
-		# remve player
-		self.remove(player.name)
+		# remove player
+		try:
+			self.remove(player.name)
+		except KeyError:
+			# @NOTE: player was kicked
+			pass
 		
 	def onPing(self, player, data):
 		""" Handle player pinging the server. """

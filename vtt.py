@@ -340,7 +340,7 @@ def kick_players(url):
 	
 	# load game from cache and close sockets
 	game_cache = gm_cache.get(game)
-	game_cache.closeAllSockets()
+	game_cache.disconnectAll()
 	
 	engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 
@@ -367,7 +367,7 @@ def kick_player(url, uuid):
 		engine.logging.warning('GM name="{0}" url="{1}" tried to kick player #{4} at {2} by {3} but the game was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request), uuid))
 		abort(404)
 	
-	name = game_cache.closeSocket(uuid)
+	name = game_cache.disconnect(uuid)
 	
 	engine.logging.access('Player {0} ({1}) kicked from {2} by {3}'.format(name, uuid, game.getUrl(), engine.getClientIp(request)))
 

@@ -1272,6 +1272,15 @@ function onPlayerOrder(direction) {
 
 /// Event handle for window resize
 function onWindowResize(event) {
+	/*
+	// vertical align game content
+	var content = $('#gamecontent'); 
+	content.css('margin-top', '0px');
+	var top = (window.innerHeight - content.innerHeight()) / 2;
+	console.log(window.innerHeight, content.innerHeight(), top);
+	content.css('margin-top', top);
+	*/
+	
 	// refresh default dice positions
 	var total_dice_height = 50 * 7; // 7 dice
 	var starty = window.innerHeight / 2 - total_dice_height / 2;

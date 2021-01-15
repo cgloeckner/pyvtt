@@ -23,7 +23,7 @@
 		<p></p>
 		
 		<div class="dropzone" id="dropzone">                                           
-			<p>DRAG AM IMAGE TO START</p>
+			<p>DRAG AN IMAGE TO START</p>
 			<form id="uploadform" method="post" enctype="multipart/form-data">
 				<input id="uploadqueue" name="file" type="file" />
 			</form>
