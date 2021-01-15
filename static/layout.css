@@ -636,6 +636,7 @@ div.battlemap > canvas#battlemap {
 
 div.battlemap > div#tokenbar {
 	position: absolute;
+	visibility: none;
 }
 
 div.battlemap > div#tokenbar > img {

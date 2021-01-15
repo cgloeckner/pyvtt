@@ -31,6 +31,8 @@ var default_dice_pos = {};  // default dice positions
 
 var client_side_prediction = true; // enable/disable client side prediction (atm used for movement only)
 
+var space_bar = false; // whether spacebar is pressed
+
 function enableZooming() {
 	zooming = $('#zooming').prop('checked');
 }
@@ -713,7 +715,7 @@ function limitViewportPosition() {
 function onMove(event) {
 	pickCanvasPos(event);
 	
-	if (event.buttons == 1) {
+	if (event.buttons == 1 && !space_bar) {
 		// left button clicked
 		
 		if (primary_id != 0 && grabbed) {
@@ -770,7 +772,7 @@ function onMove(event) {
 			}
 		}
 		
-	} else if (event.buttons == 4 && zooming) {
+	} else if ((event.buttons == 4 || (event.buttons == 1 && space_bar)) && zooming) {
 		// wheel clicked
 		$('#battlemap').css('cursor', 'grab');
 		
@@ -885,6 +887,8 @@ function deleteSelectedTokens() {
 
 /// Event handle shortcuts on (first) selected token
 function onShortcut(event) {
+	space_bar = event.keyCode == 32;
+	
 	if (event.ctrlKey) {
 		if (event.keyCode == 65) { // CTRL+A
 			selectAllTokens();
@@ -900,6 +904,11 @@ function onShortcut(event) {
 			deleteSelectedTokens();
 		}
 	}
+}
+
+/// Event handle for releasing a key
+function onKeyRelease(event) {
+	space_bar = false;
 }
 
 /// Event handle for fliping a token x-wise
