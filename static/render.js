@@ -452,6 +452,7 @@ function drawScene() {
 	});
 	
 	updatePing();
+	updateTokenbar();
 	
 	if (!client_side_prediction) {
 		updateTokenbar();

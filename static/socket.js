@@ -94,8 +94,6 @@ function onAccept(data) {
 	});
 	
 	onRefresh(data);
-	
-	updateTokenbar();
 }
 
 function onUpdate(data) {
@@ -108,10 +106,6 @@ function onUpdate(data) {
 			is_primary = true;
 		}
 	});
-	
-	if (is_primary) {
-		updateTokenbar();
-	}
 }
 
 function onCreate(data) {
@@ -133,8 +127,6 @@ function onDelete(data) {
 		
 		tokens_removed[token.id] = [token, 1.0];
 	});
-	
-	updateTokenbar();
 }
 
 function onJoin(data) {

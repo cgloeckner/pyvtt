@@ -249,8 +249,6 @@ function onDrag(event) {
 			onRotate();
 		}
 	}
-	
-	updateTokenbar();
 }
 
 function onResizeClick(event) {
@@ -757,8 +755,6 @@ function onRelease() {
 	
 	select_from_x = null;
 	select_from_y = null;
-	
-	updateTokenbar();
 }
 
 /// Limit viewport's position
@@ -874,8 +870,6 @@ function onMove(event) {
 			battlemap.css('cursor', 'grab');
 		}
 	}
-	
-	updateTokenbar();
 }
 
 /// Event handle mouse wheel scrolling
@@ -898,8 +892,6 @@ function onWheel(event) {
 		
 		displayZoom();
 	}
-	
-	updateTokenbar();
 }
 
 /// Event handle to click a dice

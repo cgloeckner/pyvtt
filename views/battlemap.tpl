@@ -29,7 +29,7 @@
 	</div>
 
 	<div class="battlemap" id="gamecontent">
-		<div id="draghint">DRAG AN IMAGE TO START</div>
+		<div id="draghint">DRAG AN IMAGE AS BACKGROUND</div>
 		<canvas id="battlemap" width="{{MAX_SCENE_WIDTH}}" height="{{MAX_SCENE_HEIGHT}}"></canvas>
 			
 		<div id="tokenbar">
