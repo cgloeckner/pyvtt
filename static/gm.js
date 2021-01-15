@@ -175,7 +175,7 @@ function addScene() {
 	writeSocket({
 		'OPID'  : 'GM-CREATE'
 	});
-	//reloadScenesDropdown();
+	reloadScenesDropdown();
 }
 
 function activateScene(scene_id) {
