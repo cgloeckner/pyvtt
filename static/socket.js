@@ -133,7 +133,8 @@ function onDelete(data) {
 		
 		tokens_removed[token.id] = [token, 1.0];
 	});
-
+	
+	updateTokenbar();
 }
 
 function onJoin(data) {
