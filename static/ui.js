@@ -253,6 +253,58 @@ function onDrag(event) {
 	updateTokenbar();
 }
 
+function onResizeClick(event) {
+	if (event.buttons == 2) {
+		var changes = [];
+		$.each(select_ids, function(index, id) {
+			var token = tokens[id];
+			
+			if (token.locked) {
+				// ignore if locked
+				return;
+			}
+			
+			token.size   = default_token_size;
+			
+			changes.push({
+				'id'     : id,
+				'size'   : token.size
+			});
+		});
+		
+		writeSocket({
+			'OPID'    : 'UPDATE',
+			'changes' : changes
+		});
+	}
+}
+
+function onRotateClick(event) {
+	if (event.buttons == 2) {
+		var changes = [];
+		$.each(select_ids, function(index, id) {
+			var token = tokens[id];
+			
+			if (token.locked) {
+				// ignore if locked
+				return;
+			}
+			
+			token.rotate = 0.0;
+			
+			changes.push({
+				'id'     : id,
+				'rotate' : token.rotate
+			});
+		});
+		
+		writeSocket({
+			'OPID'    : 'UPDATE',
+			'changes' : changes
+		});
+	}
+}
+
 function onTokenResize() {
 	var first_token = tokens[primary_id] 
 	
@@ -824,6 +876,7 @@ function onMove(event) {
 /// Event handle mouse wheel scrolling
 function onWheel(event) {
 	if (zooming) {
+		var show = false;
 		// modify zoom
 		if (event.deltaY > 0) {
 			// zoom out
@@ -831,10 +884,14 @@ function onWheel(event) {
 			if (viewport.zoom < 0.5) {
 				viewport.zoom = 0.5;
 			}
+			show = true;
 		} else if (event.deltaY < 0) {
 			// zoom in
 			viewport.zoom *= 1.05;
+			show = true;
 		}
+		
+		displayZoom();
 	}
 	
 	updateTokenbar();

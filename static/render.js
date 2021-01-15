@@ -15,7 +15,13 @@ function resetViewport() {
 		'y'    : 0,
 		'zoom' : 1.0
 	};
+	
+	displayZoom();
 };
+
+function displayZoom() {
+	$('#zoom')[0].innerHTML = 'Zoom: ' + parseInt(viewport.zoom*100) + '%';
+}
 
 /// Modify given position considering viewport
 function considerViewport(x, y, width, height) {

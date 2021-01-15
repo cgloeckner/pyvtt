@@ -37,8 +37,8 @@
 			<img src="/static/locked.png" id="tokenLock" draggable="false" onClick="onLock();" />
 			<img src="/static/top.png" id="tokenTop" draggable="false" onClick="onTop();" />
 			<img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="onBottom();" />
-			<img src="/static/resize.png" id="tokenResize" onDragStart="onStartResize();" onDragEnd="onQuitAction();"/>
-			<img src="/static/rotate.png" id="tokenRotate" onDragStart="onStartRotate();" onDragEnd="onQuitAction();" />
+			<img src="/static/resize.png" id="tokenResize" onMouseDown="onResizeClick(event);" onDragStart="onStartResize();" onDragEnd="onQuitAction();"/>
+			<img src="/static/rotate.png" id="tokenRotate" onMouseDown="onRotateClick(event);" onDragStart="onStartRotate();" onDragEnd="onQuitAction();" />
 		</div>
 	</div>
 
@@ -46,6 +46,7 @@
 	
 	<div class="mapfooter" id="mapfooter">
 		<div id="ping">tba</div>
+		<div id="zoom" onClick="resetViewport();">Zoom: 100%</div>
 		<form id="uploadform" method="post" enctype="multipart/form-data">
 			<input id="uploadqueue" name="file[]" type="file" multiple />
 		</form>
