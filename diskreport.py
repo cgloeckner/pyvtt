@@ -93,6 +93,6 @@ if __name__ == '__main__':
 	games = str(games)
 	while len(games) < 10:
 		games = ' ' + games
-	print('{0} |{1} files |{2} games \t| {3}'.format(sizes, files, games, gm['name']))
+	print('{0} |{1} files |{2} games \t| {3} GMs'.format(sizes, files, games, len(report)))
 	
 
