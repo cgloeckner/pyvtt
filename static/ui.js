@@ -782,6 +782,7 @@ function limitViewportPosition() {
 /// Event handle for moving a grabbed token (if not locked)
 function onMove(event) {
 	pickCanvasPos(event);
+	var battlemap = $('#battlemap');
 	
 	if (event.buttons == 1 && !space_bar) {
 		// left button clicked
@@ -791,11 +792,11 @@ function onMove(event) {
 			 
 			// transform cursor
 			if (token == null) {
-				$('#battlemap').css('cursor', 'default');
+				battlemap.css('cursor', 'default');
 			} else if (token.locked) {
-				$('#battlemap').css('cursor', 'not-allowed');
+				battlemap.css('cursor', 'not-allowed');
 			} else {                                         
-				$('#battlemap').css('cursor', 'grab');
+				battlemap.css('cursor', 'grab');
 			}
 			
 			if (token != null && !token.locked) {
@@ -812,6 +813,10 @@ function onMove(event) {
 						// move relative to primary token
 						var tx = mouse_x + dx;
 						var ty = mouse_y + dy;
+						
+						// limit pos to screen
+						tx = Math.max(0, Math.min(tx, base_width));
+						ty = Math.max(0, Math.min(ty, base_width * canvas_ratio));
 						
 						if (client_side_prediction) {
 							// client-side predict (immediately place it there)
@@ -842,7 +847,7 @@ function onMove(event) {
 		
 	} else if ((event.buttons == 4 || (event.buttons == 1 && space_bar)) && zooming) {
 		// wheel clicked
-		$('#battlemap').css('cursor', 'grab');
+		battlemap.css('cursor', 'grab');
 		
 		dx = event.movementX;
 		dy = event.movementY;
@@ -862,11 +867,11 @@ function onMove(event) {
 		 
 		// transform cursor
 		if (token == null) {
-			$('#battlemap').css('cursor', 'default');
+			battlemap.css('cursor', 'default');
 		} else if (token.locked) {
-			$('#battlemap').css('cursor', 'not-allowed');
+			battlemap.css('cursor', 'not-allowed');
 		} else {                                         
-			$('#battlemap').css('cursor', 'grab');
+			battlemap.css('cursor', 'grab');
 		}
 	}
 	
