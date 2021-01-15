@@ -307,6 +307,11 @@ function onDrop(event) {
 	event.preventDefault();
 	pickCanvasPos(event);
 	
+	if (drag_dice != null) {
+		// prevent dragging dice or players be seen as image upload
+		return;
+	}
+	
 	showInfo('LOADING');
 	
 	// test upload data sizes

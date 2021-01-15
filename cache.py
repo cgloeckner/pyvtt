@@ -39,7 +39,7 @@ class PlayerCache(object):
 	"""
 	instance_count = 0 # instance counter for server status
 	
-	def __init__(self, engine, parent, name, color):
+	def __init__(self, engine, parent, name, color, is_gm):
 		PlayerCache.instance_count += 1
 		
 		self.engine   = engine
@@ -49,6 +49,7 @@ class PlayerCache(object):
 		self.uuid     = uuid.uuid1().hex # used for HTML DOM id
 		self.selected = list()
 		self.index    = parent.getNextId() # used for ordering players in the UI
+		self.is_gm    = is_gm # whether this player is the GM or not
 		
 		self.greenlet = None
 		
@@ -60,7 +61,7 @@ class PlayerCache(object):
 		else:
 			self.country = '?'
 		
-		self.lock     = lock.RLock()
+		#self.lock     = lock.RLock() # note: atm deadlocking
 		self.socket   = None
 		
 		self.dispatch_map = {
@@ -71,7 +72,11 @@ class PlayerCache(object):
 			'CLONE'  : self.parent.onClone,
 			'UPDATE' : self.parent.onUpdate,
 			'DELETE' : self.parent.onDelete,
-			'ORDER'  : self.parent.onOrder
+			'ORDER'  : self.parent.onOrder,
+			'GM-CREATE'   : self.parent.onCreateScene,
+			'GM-ACTIVATE' : self.parent.onActivateScene,
+			'GM-CLONE'    : self.parent.onCloneScene,
+			'GM-DELETE'   : self.parent.onDeleteScene
 		}
 		
 	def __del__(self):
@@ -81,24 +86,24 @@ class PlayerCache(object):
 		
 	def read(self):
 		""" Return JSON object read from socket. """
-		with self.lock:
-			try:
-				raw = self.socket.receive()
-				if raw is None:
-					return None
-				return json.loads(raw)
-			except Exception as e:
-				# send error msg back to client
-				self.socket.send(str(e)) 
-				self.socket.close()
-				raise ProtocolError('Broken JSON message')
+		try:
+			#with self.lock: # note: atm deadlocking
+			raw = self.socket.receive()
+			if raw is None:
+				return None
+			return json.loads(raw)
+		except Exception as e:
+			# send error msg back to client
+			self.socket.send(str(e)) 
+			self.socket.close()
+			raise ProtocolError('Broken JSON message')
 		
 	def write(self, data):
 		""" Write JSON object to socket. """
-		with self.lock:
-			if self.socket is not None and not self.socket.closed:
-				raw = json.dumps(data)
-				self.socket.send(raw)
+		raw = json.dumps(data)
+		#with self.lock: # note: atm deadlocking
+		if self.socket is not None and not self.socket.closed:           
+			self.socket.send(raw)
 		
 	def fetch(self, data, key):
 		""" Try to fetch key from data or raise ProtocolError. """
@@ -137,7 +142,7 @@ class PlayerCache(object):
 			
 		except WebSocketError as e:
 			# player quit
-			self.engine.logging('Player closed WebSocket by {0}'.format(self.engine.getClientIp(request)))
+			self.engine.logging('Player closed WebSocket by {0}'.format(self.ip))
 			return
 			
 		except:
@@ -188,11 +193,11 @@ class GameCache(object):
 		
 	# --- cache implementation ----------------------------------------
 		
-	def insert(self, name, color):
+	def insert(self, name, color, is_gm):
 		with self.lock:
 			if name in self.players:
 				raise KeyError
-			self.players[name] = PlayerCache(self.engine, self, name, color)
+			self.players[name] = PlayerCache(self.engine, self, name, color, is_gm)
 			self.consolidateIndices()
 			return self.players[name]
 		
@@ -270,7 +275,7 @@ class GameCache(object):
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried to login to {1} by {2}, but the game was not found'.format(player.name, self.url, engine.getClientIp(request)))
+				engine.logging.warning('Player {0} tried to login to {1} by {2}, but the game was not found'.format(player.name, self.url, player.ip))
 				return;
 			
 			for r in self.parent.db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
@@ -319,7 +324,7 @@ class GameCache(object):
 		with db_session:
 			scene = self.parent.db.Scene.select(lambda s: s.id == scene_id).first()
 			if scene is None:
-				self.engine.logging.warning('Game {0}/{1} switched to scene #{2} by {3}, but the scene was not found.'.format(self.parent.url, self.url, scene_id, self.engine.getClientIp(request)))
+				self.engine.logging.warning('Game {0}/{1} switched to scene #{2}, but the scene was not found.'.format(self.parent.url, self.url, scene_id))
 				return;
 			
 			# get background if set
@@ -372,7 +377,7 @@ class GameCache(object):
 		with db_session: 
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried to roll 1d{1} at {2}/{3} by {4}, but the game was not found'.format(player.name, sides, self.parent.url, self.url, engine.getClientIp(request)))
+				engine.logging.warning('Player {0} tried to roll 1d{1} at {2}/{3} by {4}, but the game was not found'.format(player.name, sides, self.parent.url, self.url, player.ip))
 				return;
 			
 			g.timeid = now
@@ -416,13 +421,13 @@ class GameCache(object):
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried range select at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, engine.getClientIp(request)))
+				engine.logging.warning('Player {0} tried range select at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
 				return;
 			g.timeid = now
 			
 			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
 			if s is None:
-				engine.logging.warning('Player {0} tried range select at {1}/{2} in scene #{3} by {4}, but the scene was not found'.format(player.name, self.parent.url, self.url, g.active, engine.getClientIp(request)))
+				engine.logging.warning('Player {0} tried range select at {1}/{2} in scene #{3} by {4}, but the scene was not found'.format(player.name, self.parent.url, self.url, g.active, player.ip))
 				return;
 				
 			token_ids = player.selected if adding else list()
@@ -453,13 +458,13 @@ class GameCache(object):
 		with db_session: 
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first() 
 			if g is None:
-				engine.logging.warning('Player {0} tried clone tokens at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, engine.getClientIp(request)))
+				engine.logging.warning('Player {0} tried clone tokens at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
 				return;
 				
 			g.timeid = now
 			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
 			if s is None:
-				engine.logging.warning('Player {0} tried clone tokens at {1}/{2} by {4}, but the scene #{3} was not found'.format(player.name, self.parent.url, self.url, g.active, engine.getClientIp(request)))
+				engine.logging.warning('Player {0} tried clone tokens at {1}/{2} by {4}, but the scene #{3} was not found'.format(player.name, self.parent.url, self.url, g.active, player.ip))
 				return;
 			
 			# iterate provided tokens
@@ -492,7 +497,7 @@ class GameCache(object):
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried to update token data at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, engine.getClientIp(request)))
+				engine.logging.warning('Player {0} tried to update token data at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
 				return;
 			g.timeid = now
 			
@@ -522,14 +527,14 @@ class GameCache(object):
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried creating a tokens at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, engine.getClientIp(request)))
-				return;
+				engine.logging.warning('Player {0} tried creating a tokens at {1}/{2}, but the game was not found'.format(player.name, self.parent.url, self.url))
+				return
 			g.timeid = now
 			
 			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried creating a tokens at {1}/{2} by {3}, but the scene #{4} was not found'.format(player.name, self.parent.url, self.url, engine.getClientIp(request)), g.active)
-				return;
+				engine.logging.warning('Player {0} tried creating a tokens at {1}/{2}, but the scene #{4} was not found'.format(player.name, self.parent.url, self.url, g.active))
+				return
 			
 			for k, url in enumerate(urls):
 				# create tokens in circle
@@ -605,6 +610,125 @@ class GameCache(object):
 			'indices' : update
 		});
 		
+	def onCreateScene(self, player, data):
+		""" GM: Create new scene. """
+		if not player.is_gm:
+			self.engine.logging.warning('Player tried to create a scene but was not the GM by {0}'.format(player.ip))
+			return
+		 
+		# query game 
+		now = time.time()
+		with db_session:
+			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				self.engine.logging.warning('GM tried to create a scene but game not found {0}'.format(player.ip))
+				return;
+			g.timeid = now
+			# create new, active scene
+			scene = self.parent.db.Scene(game=g)
+			self.parent.db.commit()
+			g.active = scene.id
+			# broadcast scene switch
+			self.broadcastSceneSwitch(g) 
+		
+	def onActivateScene(self, player, data):
+		""" GM: Activate a given scene. """
+		if not player.is_gm:
+			self.engine.logging.warning('Player tried to activate a scene but was not the GM by {0}'.format(player.ip))
+			return
+		
+		scene_id = data['scene']
+		 
+		# query game 
+		now = time.time()
+		with db_session:
+			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				self.engine.logging.warning('GM tried to activate a scene but game not found {0}'.format(player.ip))
+				return;
+			g.timeid = now
+			# test scene id
+			s = self.parent.db.Scene.select(lambda s: s.id == scene_id).first()
+			if s is None: 
+				self.engine.logging.warning('GM tried to activate a scene but scene not found {0}'.format(player.ip))
+				return
+			# active scene
+			g.active = scene_id
+			self.parent.db.commit()
+			# broadcast scene switch
+			self.broadcastSceneSwitch(g) 
+		
+	def onCloneScene(self, player, data):
+		""" GM: Clone a given scene. """
+		if not player.is_gm:
+			self.engine.logging.warning('Player tried to clone a scene but was not the GM by {0}'.format(player.ip))
+			return
+		
+		scene_id = data['scene']
+		 
+		# query game 
+		now = time.time()
+		with db_session:
+			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				self.engine.logging.warning('GM tried to clone a scene but game not found {0}'.format(player.ip))
+				return;
+			g.timeid = now
+			# test scene id
+			s = self.parent.db.Scene.select(lambda s: s.id == scene_id).first()
+			if s is None: 
+				self.engine.logging.warning('GM tried to clone a scene but scene not found {0}'.format(player.ip))
+				return
+			# clone scene and its tokens (except background)
+			clone = self.parent.db.Scene(game=g)
+			for t in s.tokens:
+				if t.size != -1:
+				   self.parent.db.Token(
+						scene=clone, url=t.url, posx=t.posx, posy=t.posy,
+						zorder=t.zorder, size=t.size, rotate=t.rotate,
+						flipx=t.flipx, locked=t.locked
+					)
+			self.parent.db.commit()
+			g.active = clone.id
+			# broadcast scene switch
+			self.broadcastSceneSwitch(g)
+		
+	def onDeleteScene(self, player, data):
+		""" GM: Delete a given scene. """
+		if not player.is_gm:
+			self.engine.logging.warning('Player tried to clone a scene but was not the GM by {0}'.format(player.ip))
+			return
+		
+		scene_id = data['scene']
+		 
+		# query game 
+		now = time.time()
+		with db_session:
+			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				self.engine.logging.warning('GM tried to delete a scene but game not found {0}'.format(player.ip))
+				return;
+			g.timeid = now
+			# delete
+			s = self.parent.db.Scene.select(lambda s: s.id == scene_id).first()
+			if s is None: 
+				self.engine.logging.warning('GM tried to delete a scene but scene not found {0}'.format(player.ip))
+				return
+			s.preDelete()
+			s.delete()
+			self.parent.db.commit()
+			# set new active scene if necessary
+			if g.active == s.id:
+				remain = self.parent.db.Scene.select(lambda s: s.game == g).first()
+				if remain is None:
+					# create new scene
+					remain = self.parent.db.Scene(game=g)
+					self.parent.db.commit()
+				g.active = remain.id
+				self.parent.db.commit()
+				# broadcast scene switch
+				self.broadcastSceneSwitch(g) 
+		
 	def broadcastTokenUpdate(self, player, since):
 		""" Broadcast updated tokens. """
 		# fetch all changed tokens
@@ -614,7 +738,7 @@ class GameCache(object):
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('A token update broadcast could not be performed at {0}/{1} by {2}, because the game was not found'.format(self.parent.url, self.url, engine.getClientIp(request)))
+				self.engine.logging.warning('A token update broadcast could not be performed at {0}/{1} by {2}, because the game was not found'.format(self.parent.url, self.url, self.engine.getClientIp(request)))
 				return;
 			g.timeid = now
 			
@@ -742,8 +866,8 @@ class EngineCache(object):
 		game_cache   = gm_cache.getFromUrl(game_url)
 		player_cache = game_cache.get(name)
 		
-		with player_cache.lock:
-			player_cache.socket = socket
+		#with player_cache.lock: # note: atm deadlocking
+		player_cache.socket = socket
 		game_cache.login(player_cache)
 		
 		# handle incomming data

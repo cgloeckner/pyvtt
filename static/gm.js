@@ -159,38 +159,45 @@ function GmUploadDrop(event, url_regex, gm_url, max_zip, max_background) {
 
 // --- GM ingame tokenbar handles -------------------------------------
 
-function addScene() {
+function reloadScenesDropdown() { 
+	showInfo('Loading');
+	$('#gmdrop')[0].innerHTML = '';
 	$.post(
-		url='/vtt/create-scene/' + game_url,
-		success=function(data) {
-			$('#gmdrop')[0].innerHTML = data; 
+		url='/vtt/query-scenes/' + game_url,
+		success=function(data) {          
+			$('#popup').hide();
+			$('#gmdrop')[0].innerHTML = data;
 		}
 	);
+}
+
+function addScene() {
+	writeSocket({
+		'OPID'  : 'GM-CREATE'
+	});
+	//reloadScenesDropdown();
 }
 
 function activateScene(scene_id) {
-	$.post(
-		url='/vtt/activate-scene/' + game_url + '/' + scene_id,
-		success=function(data) {       
-			$('#gmdrop')[0].innerHTML = data;
-		}
-	);
+	writeSocket({
+		'OPID'  : 'GM-ACTIVATE',
+		'scene' : scene_id
+	});     
+	reloadScenesDropdown();
 }
 
 function cloneScene(scene_id) {                                                                  
-	$.post(
-		url='/vtt/clone-scene/' + game_url + '/' + scene_id,
-		success=function(data) { 
-			$('#gmdrop')[0].innerHTML = data;
-		}
-	);
+	writeSocket({
+		'OPID'  : 'GM-CLONE',
+		'scene' : scene_id
+	});
+	reloadScenesDropdown();
 }
 
 function deleteScene(scene_id) {
-	$.post(
-		url='/vtt/delete-scene/' + game_url + '/' + scene_id,
-		success=function(data) {
-			$('#gmdrop')[0].innerHTML = data;
-		}
-	);
+	writeSocket({
+		'OPID'  : 'GM-DELETE',
+		'scene' : scene_id
+	});  
+	reloadScenesDropdown();
 }

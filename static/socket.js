@@ -189,6 +189,9 @@ function onRefresh(data) {
 /// Send data JSONified to server via the websocket
 function writeSocket(data) {
 	var raw = JSON.stringify(data);
+	if (!quiet) {
+		console.info(data);
+	}
 	socket.send(raw);
 }
 

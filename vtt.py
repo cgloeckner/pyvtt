@@ -407,7 +407,7 @@ def delete_game(url):
 
 # --- GM MANAGING SCENES ----------------------------------------------
 
-@post('/vtt/create-scene/<url>', apply=[asGm])
+@post('/vtt/query-scenes/<url>', apply=[asGm])
 @view('scenes')
 def post_create_scene(url):
 	gm = engine.main_db.GM.loadFromSession(request)  
@@ -424,148 +424,6 @@ def post_create_scene(url):
 	if game is None:
 		engine.logging.warning('GM name="{0}" url="{1}" tried create a scene at game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)))
 		abort(404)
-	
-	# create scene
-	scene = gm_cache.db.Scene(game=game)
-	gm_cache.db.commit()
-	
-	engine.logging.access('Game {0} got a new scene by {1}'.format(game.getUrl(), engine.getClientIp(request)))
-	
-	return dict(engine=engine, game=game)
-
-@post('/vtt/activate-scene/<url>/<scene_id>', apply=[asGm])
-@view('scenes')
-def activate_scene(url, scene_id):
-	gm = engine.main_db.GM.loadFromSession(request) 
-	# note: asGm guards this by redirect
-	
-	# load GM from cache
-	gm_cache = engine.cache.get(gm)
-	if gm_cache is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried activate scene #{4} at game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
-		abort(404)
-	
-	# load game from GM's database
-	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-	if game is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried activate scene #{4} at game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
-		abort(404)
-	
-	# activate game
-	game.active = scene_id
-
-	gm_cache.db.commit()
-	
-	# broadcase scene switch to all players
-	game_cache = gm_cache.get(game)   
-	if game_cache is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried activate scene #{4} at game {2} by {3} but game was in the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
-		abort(404)
-	game_cache.broadcastSceneSwitch(game)
-	
-	engine.logging.access('Game {0} switched scene to #{1} by {2}'.format(game.getUrl(), scene_id, engine.getClientIp(request)))
-	
-	return dict(engine=engine, game=game)
-
-@post('/vtt/delete-scene/<url>/<scene_id>', apply=[asGm]) 
-@view('scenes')
-def activate_scene(url, scene_id):
-	gm = engine.main_db.GM.loadFromSession(request)
-	# note: asGm guards this by redirect
-	
-	# load GM from cache
-	gm_cache = engine.cache.get(gm)
-	if gm_cache is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried delete scene #{4} at game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
-		abort(404)
-	
-	# load game from GM's database
-	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-	if game is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried delete scene #{4} at game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
-		abort(404)
-	
-	# delete given scene
-	scene = gm_cache.db.Scene.select(lambda s: s.id == scene_id).first()
-	if scene is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried delete scene #{4} at game {2} by {3} but scene was not found'.format(gm.name, gm.url, url, engine.getClientIp(request), scene_id))
-		abort(404)
-	
-	scene.backing = None
-	scene.delete()
-	
-	# check if active scene is still valid (set another scene active if necessary)
-	active = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
-	if active is None:
-		# check for remaining scenes
-		remain = gm_cache.db.Scene.select(lambda s: s.game == game).first()
-		if remain is None:
-			# create new scene
-			remain = gm_cache.db.Scene(game=game)
-			gm_cache.db.commit()
-		# adjust active scene
-		game.active = remain.id
-		gm_cache.db.commit()
-		
-	# broadcase scene switch to all players
-	game_cache = gm_cache.get(game)
-	if game_cache is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried delete scene #{4} at game {2} by {3} but game was not in the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
-		abort(404)
-		
-	game_cache.broadcastSceneSwitch(game)
-	
-	engine.logging.access('Game {0} got scene #{1} deleted by {2}'.format(game.getUrl(), scene_id, engine.getClientIp(request)))
-	
-	return dict(engine=engine, game=game)
-	
-@post('/vtt/clone-scene/<url>/<scene_id>', apply=[asGm]) 
-@view('scenes')
-def duplicate_scene(url, scene_id):
-	gm = engine.main_db.GM.loadFromSession(request)
-	# note: asGm guards this by redirect
-	
-	# load GM from cache
-	gm_cache = engine.cache.get(gm)
-	if gm_cache is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried clone scene #{4} at game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
-		abort(404)
-	
-	# load game from GM's database
-	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-	if game is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried clone scene #{4} at game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
-		abort(404)
-	
-	# load required scene
-	scene = gm_cache.db.Scene.select(lambda s: s.id == scene_id).first()
-	if scene is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried clone scene #{4} at game {2} by {3} but scene was not found'.format(gm.name, gm.url, url, engine.getClientIp(request), scene_id))
-		abort(404)
-	
-	# create copy of that scene
-	clone = gm_cache.db.Scene(game=game)
-	# copy tokens (but ignore background)
-	for t in scene.tokens:
-		if t.size != -1:
-			n = gm_cache.db.Token(
-				scene=clone, url=t.url, posx=t.posx, posy=t.posy, zorder=t.zorder,
-				size=t.size, rotate=t.rotate, flipx=t.flipx, locked=t.locked
-			)
-	
-	gm_cache.db.commit()
-	
-	game.active = clone.id 
-	
-	# broadcase scene switch to all players
-	game_cache = gm_cache.get(game)
-	if game_cache is None:
-		engine.logging.warning('GM name="{0}" url="{1}" tried clone scene #{4} at game {2} by {3} but game was not in the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)), scene_id)
-		abort(404)
-	
-	game_cache.broadcastSceneSwitch(game)
-	
-	engine.logging.access('Game {0} got clone of scene #{1} as #{2} by {1}'.format(game.getUrl(), scene_id, clone.id, engine.getClientIp(request)))
 	
 	return dict(engine=engine, game=game)
 
@@ -651,8 +509,12 @@ def set_player_name(gmurl, url):
 		result['error'] = 'GAME NOT FOUND'
 		return result
 	
+	# query whether user is the hosting GM
+	session_gm = engine.main_db.GM.loadFromSession(request)
+	gm_is_host = session_gm is not None and session_gm.url == gmurl
+	
 	try:
-		game_cache.insert(playername, playercolor)
+		game_cache.insert(playername, playercolor, is_gm=gm_is_host)
 	except KeyError:
 		engine.logging.warning('Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.getUrl(), engine.getClientIp(request), playername))
 		result['error'] = 'ALREADY IN USE'

@@ -207,6 +207,9 @@ class Engine(object):
 		
 		ssl_args = {'certfile': certfile, 'keyfile': keyfile} if self.hasSsl() else {}
 		
+		if self.notify_api is not None:
+			self.notify_api.notifyStart()
+		
 		bottle.run(
 			host       = self.host,
 			port       = self.hosting['port'],

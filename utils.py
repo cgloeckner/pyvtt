@@ -105,6 +105,21 @@ class EmailApi(object):
 		self.smtp.starttls()
 		self.smtp.login(self.user, self.password)
 		
+	def notifyStart(self):
+		# create mail content
+		frm = 'From: pyvtt Server <{0}>'.format(self.sender)
+		to  = 'To: Developers <{0}>'.format(self.sender)
+		sub = 'Subject: Server Online'
+		plain = '{0}\n{1}\n{2}\n'.format(frm, to, sub)
+		
+		# send email
+		try:
+			self.smtp.sendmail(self.sender, self.sender, plain)
+		except smtplib.SMTPSenderRefused:
+			# re-login and re-try
+			self.login()
+			self.smtp.sendmail(self.sender, self.sender, plain)
+		
 	def __call__(self, error_id, message):
 		# create mail content
 		frm = 'From: pyvtt Server <{0}>'.format(self.sender)
