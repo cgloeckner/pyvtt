@@ -33,6 +33,8 @@ var client_side_prediction = true; // enable/disable client side prediction (atm
 
 var space_bar = false; // whether spacebar is pressed
 
+var token_rotate_lock_threshold = 15;
+
 function enableZooming() {
 	zooming = $('#zooming').prop('checked');
 }
@@ -296,6 +298,20 @@ function onRotate(event) {
 	norm_mouse = Math.sqrt(mouse_dx * mouse_dx + mouse_dy * mouse_dy);
 	radians    = Math.acos(dotp / (norm_icon * norm_mouse));
 	angle      = radians * 180 / 3.14;
+	
+	// try to lock token to multiples of 90 degree
+	if (Math.abs(angle) < token_rotate_lock_threshold) {
+		angle = 0;
+	}
+	if (Math.abs(angle-90) < token_rotate_lock_threshold) {
+		angle = 90;
+	}
+	if (Math.abs(angle-180) < token_rotate_lock_threshold) {
+		angle = 180;
+	}
+	if (Math.abs(angle-270) < token_rotate_lock_threshold) {
+		angle = 270;
+	}
 	
 	if (mouse_dx < 0) {
 		angle *= -1;
