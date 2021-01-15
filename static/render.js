@@ -437,6 +437,10 @@ function drawScene() {
 	
 	updatePing();
 	
+	if (!client_side_prediction) {
+		updateTokenbar();
+	}
+	
 	// schedule next drawing
 	setTimeout("drawScene()", 1000.0 / fps);
 }

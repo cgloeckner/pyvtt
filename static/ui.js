@@ -29,6 +29,8 @@ var dice_shake_timers = {}; // dice shaking delay for each dice
 
 var default_dice_pos = {};  // default dice positions
 
+var client_side_prediction = true; // enable/disable client side prediction (atm used for movement only)
+
 function enableZooming() {
 	zooming = $('#zooming').prop('checked');
 }
@@ -630,8 +632,8 @@ function onRelease() {
 			if (!t.locked) {
 				changes.push({
 					'id'   : id,
-					'posx' : t.posx,
-					'posy' : t.posy
+					'posx' : t.newx,
+					'posy' : t.newy
 				});
 			}
 		});
@@ -734,9 +736,11 @@ function onMove(event) {
 						var tx = mouse_x + dx;
 						var ty = mouse_y + dy;
 						
-						// client-side predict (immediately place it there)
-						t.posx = tx;
-						t.posy = ty;
+						if (client_side_prediction) {
+							// client-side predict (immediately place it there)
+							t.posx = tx;
+							t.posy = ty;
+						}
 						t.newx = tx;
 						t.newy = ty;
 						
@@ -1043,7 +1047,7 @@ function onTop() {
 		if (token.locked) {
 			token.zorder = -1;
 		} else {
-			token.zorder = max_z - 1;
+			token.zorder = max_z + 1;
 			++max_z;
 		}
 		
@@ -1122,10 +1126,23 @@ function snapDice(x, y, container, default_snap) {
 
 /// Resets dice container to default position
 function resetDicePos(sides) {
-	// reset position
-	var target = $('#d' + sides + 'icon');
-	target.css('left', default_dice_pos[sides][0]);
-	target.css('top',  default_dice_pos[sides][1]);
+	// reset dice position
+	var icon = $('#d' + sides + 'icon');
+	icon.css('left', default_dice_pos[sides][0]);
+	icon.css('top',  default_dice_pos[sides][1]);
+	
+	var w = icon.width();
+	var h = icon.height();
+	
+	// reset roll box position and orientation 
+	var rolls = $('#d' + sides + 'rolls');
+	rolls.css('left',   default_dice_pos[sides][0] + w * 1.5);  
+	rolls.css('right',  0);
+	rolls.css('top',    default_dice_pos[sides][1]);
+	rolls.css('bottom', 0);
+	rolls.css('display',        'inline-flex');
+	rolls.css('flex-direction', 'row');
+	console.log(rolls);
 	
 	localStorage.removeItem('d' + sides);
 }
