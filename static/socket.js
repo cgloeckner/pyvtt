@@ -338,7 +338,7 @@ function start(gmname, url, playername, color) {
 	document.addEventListener('mousemove',	onMove);
 	document.addEventListener('mouseup',	onRelease);
 	battlemap.addEventListener('wheel',		onWheel);
-	battlemap.addEventListener('mouseout',	onRelease);
+	//battlemap.addEventListener('mouseout',	onRelease);
 	document.addEventListener('keydown',	onShortcut);
 	document.addEventListener('keyup',		onKeyRelease);
 	
