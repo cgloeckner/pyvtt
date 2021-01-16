@@ -80,7 +80,7 @@ span.links {
 	right: 0;
 	bottom: 0;
 	z-index: 100;
-	padding: 5px;
+	padding: 3px;
 	
 	color: white;
 }
@@ -94,7 +94,7 @@ div.form {
 	margin-right: auto;
 	width: 50%;
 }
-														  p 
+
 input {
 	color: black;
 }
@@ -574,7 +574,7 @@ div#players > span > div.playermenu > img:hover {
 
 div.mapfooter {
 	position: absolute;
-	bottom: 5px;
+	bottom: 2px;
 	width: 100%;
 }
 
@@ -704,7 +704,7 @@ div#version {
 div#ping {
 	left: 0px;
 	bottom: 0px;
-	padding-left: 5px;
+	padding-left: 3px;
 }
 
 div#zoom {
