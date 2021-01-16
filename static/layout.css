@@ -302,10 +302,17 @@ div.horizdropdown > div.gmhint > img#gmhint {
 	display: block;
 	left: 50%;
 	
+	cursor: pointer;
+	
 	width: 32px; 
 	
 	filter: none;
 	z-index: 10;
+}
+
+div.horizdropdown > div.gmhint > img#gmhint:hover {
+	filter: drop-shadow(0px 0px 10px white) 
+          drop-shadow(0px 0px 0 white);
 }
 
 img.icon {
