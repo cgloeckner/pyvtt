@@ -1158,7 +1158,7 @@ function onTop() {
 }
 
 /// Event handle for start dragging a single dice container
-function onStartDragDice(event, sides) {
+function onStartDragDice(sides) {
 	drag_players = false;
 	if (event.buttons == 1) {
 		// select for dragging
@@ -1171,7 +1171,7 @@ function onStartDragDice(event, sides) {
 }
    
 /// Event handle for stop dragging a single dice container
-function onEndDragPlayers() {
+function onEndDragDice() {
 	drag_dice = null;
 }
 
