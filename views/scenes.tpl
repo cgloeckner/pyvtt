@@ -1,4 +1,4 @@
-	<img class="largeicon" src="/static/add.png" onClick="addScene();" />
+	<img class="largeicon" src="/static/add.png" onClick="addScene();" draggable="false" />
 %for s in game.scenes.order_by(lambda s: s.id):
 	%url = "/static/empty.jpg"
 	%if s.backing is not None:
@@ -9,10 +9,10 @@
 		%css = "active"
 	%end
 	<div>
-		<img class="{{css}}" src="{{url}}" onClick="activateScene({{s.id}})" />
+		<img class="{{css}}" src="{{url}}" onClick="activateScene({{s.id}})" draggable="false" />
 		<div class="controls">
-			<img class="icon" src="/static/copy.png" onClick="cloneScene({{s.id}});" />
-			<img class="icon" src="/static/delete.png" onClick="deleteScene({{s.id}});" />
+			<img class="icon" src="/static/copy.png" onClick="cloneScene({{s.id}});" draggable="false" />
+			<img class="icon" src="/static/delete.png" onClick="deleteScene({{s.id}});" draggable="false" />
 		</div>
 	</div>
 %end 

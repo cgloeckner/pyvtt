@@ -6,7 +6,7 @@
 	%include("games")
 	</div>
 	<div class="gmhint">
-		<img id="gmhint" src="/static/bottom.png" />
+		<img id="gmhint" src="/static/bottom.png" draggable="false" />
 	</div>
 </div>
 %end
@@ -19,7 +19,7 @@
 
 	<div class="form">
 		<p>ENTER GAME NAME (optional)</p>
-		<p><input type="text" id="url" value="" maxlength="30" autocomplete="off" /> <img src="/static/rotate.png" class="icon" onClick="fancyUrl();" title="PICK NONSENSE" /></p>
+		<p><input type="text" id="url" value="" maxlength="30" autocomplete="off" /> <img src="/static/rotate.png" class="icon" onClick="fancyUrl();" title="PICK NONSENSE" draggable="false" /></p>
 		<p></p>
 		
 		<div class="dropzone" id="dropzone">                                           

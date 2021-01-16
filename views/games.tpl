@@ -5,11 +5,11 @@
 		%url = active.backing.url
 	%end
 	<div>
-		<a href="{{server}}/{{gm.url}}/{{g.url}}" target="_blank"><img class="thumbnail" title="{{g.url}}" src="{{url}}" /></a>
+		<a href="{{server}}/{{gm.url}}/{{g.url}}" draggable="false" target="_blank"><img class="thumbnail" title="{{g.url}}" draggable="false" src="{{url}}" /></a>
 		<div class="controls">                                     
-			<img class="icon" src="/static/kick.gif" onClick="kickPlayers('{{g.url}}');" />
-			<a href="/vtt/export-game/{{g.url}}"><img class="icon" src="/static/export.png"></a>
-			<img class="icon" src="/static/delete.png" onClick="deleteGame('{{g.url}}');" />
+			<img class="icon" src="/static/kick.gif" onClick="kickPlayers('{{g.url}}');" draggable="false" />
+			<a href="/vtt/export-game/{{g.url}}" draggable="false"><img class="icon" src="/static/export.png" draggable="false"></a>
+			<img class="icon" src="/static/delete.png" onClick="deleteGame('{{g.url}}');" draggable="false" />
 		</div>
 	</div>
 %end 
