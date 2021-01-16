@@ -61,6 +61,10 @@ class PlayerCache(object):
 		else:
 			self.country = '?'
 		
+		# add login to stats
+		login_data = [self.is_gm, time.time(), self.country, self.ip, PlayerCache.instance_count]
+		self.engine.logging.stats(json.dumps(login_data))
+		
 		#self.lock     = lock.RLock() # note: atm deadlocking
 		self.socket   = None
 		
