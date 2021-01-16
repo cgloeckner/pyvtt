@@ -462,7 +462,7 @@ div.rollbox > span > span.player {
 	top: -5px;
 }
 
-div.rollbox > span.minroll > span.result.
+div.rollbox > span.minroll > span.result,
 div.rollbox > span.maxroll > span.result { 
 	text-shadow:
 		-1px -1px 0 black,
