@@ -110,12 +110,23 @@ class Login(object):
 def print_stats(title, data, key, func):
 	print(title)
 	print('-' * len(title))
+	# get total
 	total = 0
 	for h in data:
 		l = func(data[h][key])
 		if l > 0:
-			print ('    {0}\t{1}'.format(h, '*' * l))
 			total += l
+	# print percentages
+	for h in data:
+		l = func(data[h][key])
+		if l > 0:
+			n = int(100 * l / total)
+			perc = '{0}'.format(n)
+			if len(perc) == 1:
+				perc = '  ' + perc
+			elif len(perc) == 2:
+				perc = ' ' + perc
+			print ('    {0}\t{2}% {1}'.format(h, '*' * n, perc))
 	print('Total: {0}'.format(total))
 
 def stats_report(engine):
@@ -163,7 +174,7 @@ def stats_report(engine):
 	
 	print_stats('Logins per Country', per_country, 'logins', lambda k: k)
 	print()
-	print_stats('IPs per Country', per_country, 'ips', lambda k: k)
+	print_stats('IPs per Country', per_country, 'ips', lambda k: len(k))
 
 
 if __name__ == '__main__':
