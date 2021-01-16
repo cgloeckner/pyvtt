@@ -11,7 +11,7 @@
 	%include("scenes")
 		</div>
 		<div class="gmhint">
-			<img id="gmhint" src="/static/bottom.png" />
+			<img id="gmhint" src="/static/bottom.png" draggable="false" />
 		</div>
 	</div>
 %end

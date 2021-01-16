@@ -542,6 +542,7 @@ div#players > span.player {
 	border-radius: 10px;
 	text-align: center;
 	color: black;
+	min-width: 80px;
 }
 
 div#players > span > div.playermenu {

@@ -157,13 +157,13 @@ function showPlayer(p, force=false) {
 	// create player menu for this player
 	var menu = '<div class="playermenu" id="playermenu_' + p.uuid + '">'
 	if (p.index > 0) {
-		menu += '<img src="/static/left.png" class="left" onClick="onPlayerOrder(-1);" />'
+		menu += '<img src="/static/left.png" draggable="false" class="left" onClick="onPlayerOrder(-1);" />'
 	}
 	if (is_gm && p.uuid != my_uuid) {
-		menu += '<img src="/static/kick.gif" class="center" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
+		menu += '<img src="/static/kick.gif" draggable="false" class="center" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
 	}
 	if (!p.is_last) {
-		menu += '<img src="/static/right.png" class="right" onClick="onPlayerOrder(1);" />';
+		menu += '<img src="/static/right.png" draggable="false" class="right" onClick="onPlayerOrder(1);" />';
 	}
 	menu += '</div>';
 	
@@ -1213,13 +1213,13 @@ function snapDice(x, y, container, default_snap) {
 	var dx = window.innerWidth  - x; // distance to right
 	var dy = window.innerHeight - y; // distance to bottom
 	
-	if (default_snap == 'left' || x < Math.min(y, dx, dy)) {
+	if (default_snap == 'left' || x <= Math.min(y, dx, dy)) {
 		// snap to left
 		return [min_x, y, 'left'];
-	} else if (default_snap == 'top' || y < Math.min(x, dx, dy)) {
+	} else if (default_snap == 'top' || y <= Math.min(x, dx, dy)) {
 		// snap to top                 
 		return [x, min_y, 'top'];   
-	} else if (default_snap == 'right' || dx < Math.min(x, y, dy)) {
+	} else if (default_snap == 'right' || dx <= Math.min(x, y, dy)) {
 		// snap to right          
 		return [max_x, y, 'right'];
 	} else {
