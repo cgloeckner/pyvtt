@@ -94,15 +94,24 @@ class PlayerCache(object):
 		
 	def read(self):
 		""" Return JSON object read from socket. """
+		# fetch raw data
 		try:
 			#with self.lock: # note: atm deadlocking
 			raw = self.socket.receive()
+		except WebSocketError as e:
+			# close socket
+			self.socket = None
+		if self.socket is None:
+			return None 
+		# parse json
+		try:
 			if raw is None:
 				return None
 			return json.loads(raw)
 		except Exception as e:
 			# send error msg back to client
 			self.socket.send(str(e)) 
+			# close socket
 			self.socket.close()
 			raise ProtocolError('Broken JSON message')
 		

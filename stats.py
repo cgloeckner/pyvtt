@@ -163,7 +163,7 @@ def stats_report(engine):
 	
 	print_stats('Logins per Country', per_country, 'logins', lambda k: k)
 	print()
-	print_stats('Logins per Country', per_country, 'logins', lambda k: k)
+	print_stats('IPs per Country', per_country, 'ips', lambda k: k)
 
 
 if __name__ == '__main__':

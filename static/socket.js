@@ -254,6 +254,7 @@ function login(event, gmname, url, websocket_url, as_gm) {
 					
 					$('#version')[0].innerHTML = 'v' + version;
 					
+					$('#popup').hide();
 					onWindowResize();
 				});
 				

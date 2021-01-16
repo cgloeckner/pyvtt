@@ -20,10 +20,12 @@
 		<div id="historydrop"></div>
 		<!--<img id="historyhint" src="/static/history.png" />//-->
 	</div>
+	
+	<div id="dicehistory"></div>
 
 	<div id="dicebox">
 %for d in [20, 12, 10, 8, 6, 4, 2]:
-		<img src="/static/d{{d}}.png" class="dice" id="d{{d}}icon" title="Roll 1D{{d}}" onMouseDown="onStartDragDice({{d}});"  onClick="rollDice({{d}});" />
+		<img src="/static/d{{d}}.png" class="dice" id="d{{d}}icon" title="Roll 1D{{d}}" onMouseDown="onStartDragDice({{d}});" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});" onMouseEnter="onEnterDice({{d}});" onMouseOut="onLeaveDice({{d}});" />
 		<div class="rollbox" id="d{{d}}rolls"></div>
 %end
 	</div>
@@ -42,7 +44,7 @@
 		</div>
 	</div>
 
-	<div id="players" onMouseDown="onStartDragPlayers(event);" onWheel="onWheelPlayers();"></div>
+	<div id="players" onMouseDown="onStartDragPlayers(event);" onDragEnd="onEndDragPlayers();" onWheel="onWheelPlayers();"></div>
 	
 	<div class="mapfooter" id="mapfooter">
 		<div id="ping">Ping: unknown</div>

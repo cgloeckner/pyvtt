@@ -36,6 +36,7 @@ var space_bar = false; // whether spacebar is pressed
 var token_rotate_lock_threshold = 15; // threshold for lock-in a token rotation
 var token_last_angle = null;
 
+var show_dice_history = false;
 
 function enableZooming() {
 	zooming = $('#zooming').prop('checked');
@@ -197,9 +198,9 @@ function addRoll(sides, result, name, color, recent) {
 	
 	// create dice result
 	var container = $('#d' + sides + 'rolls');
-	css = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
-	var his_span = '<span style="' + css + '">' + result_label + '</span>';
-	css += ' display: none;';
+	glow = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
+	//var his_span = '<span style="' + css + '">' + result_label + '</span>';
+	css = glow + ' display: none;';
 	var box_span = '<span style="' + css + '"><span class="result">' + result_label + '</span><span class="player">' + name + '</span></span>';
 	
 	if (recent) { 
@@ -219,23 +220,11 @@ function addRoll(sides, result, name, color, recent) {
 		});
 	}
 	
-	/// @NOTE: dice history is disabled atm
-	/*
 	// also add to dice history
-	var label = '<div style="display: none"><span style="color: ' + color + '">' + name + '</span> d' + sides + ' &rArr; ';
-	if (result == 1 || result == sides) {
-		label += '<span class="natroll">' + result + '</span>';
-	} else {
-		label += result;
-	}
-	label += '</div>';
-	$('#historydrop').prepend(label);
-	var other_dom_span = $('#historydrop').children(':first-child');
-	other_dom_span.delay(dice_shake).fadeIn(1000, function() {});
-	
-	// and show history
-	$('#historydrop').show();
-	*/
+	var label = '<span class="history"><img style="' + glow + '" src="/static/d' + sides + '.png" class="dice" /><span class="result">' + result + '</span></span>';
+	$('#dicehistory').prepend(label);
+	var other_dom_span = $('#dicehistory').children(':first-child');
+	other_dom_span.delay(dice_shake).fadeIn(250, function() {});
 }
 
 // --- ui event handles -----------------------------------------------
@@ -698,9 +687,6 @@ function onGrab(event) {
 
 /// Event handle for releasing a grabbed token
 function onRelease() {
-	drag_dice = null;
-	drag_players = null;
-	
 	var was_grabbed = grabbed;
 	if (select_ids.length > 0) {
 		grabbed = false;
@@ -917,6 +903,16 @@ function rollDice(sides) {
 		'OPID'  : 'ROLL',
 		'sides' : sides
 	}); 
+}
+
+function onEnterDice(sides) {
+	if (show_dice_history) {
+		$('#dicehistory').delay(1000).fadeIn(500);
+	}
+}
+
+function onLeaveDice(sides) {
+	$('#dicehistory').hide();
 }
 
 /// Event handle to select all tokens
@@ -1162,7 +1158,7 @@ function onTop() {
 }
 
 /// Event handle for start dragging a single dice container
-function onStartDragDice(sides) {
+function onStartDragDice(event, sides) {
 	drag_players = false;
 	if (event.buttons == 1) {
 		// select for dragging
@@ -1172,6 +1168,11 @@ function onStartDragDice(sides) {
 		// reset dice position
 		resetDicePos(sides);
 	}
+}
+   
+/// Event handle for stop dragging a single dice container
+function onEndDragPlayers() {
+	drag_dice = null;
 }
 
 /// Event handle for start dragging a players container
@@ -1188,6 +1189,11 @@ function onStartDragPlayers(event) {
 		movePlayersTo(pos);
 		localStorage.removeItem('players');
 	}
+}
+   
+/// Event handle for stop dragging a single players container
+function onEndDragPlayers() {
+	drag_players = false;
 }
 
 /// Snaps dice container to the closest edge (from x, y)
@@ -1256,13 +1262,13 @@ function moveDiceTo(data, sides) {
 	var w = icon.width();
 	var h = icon.height();
 	
-	// change rollbox orientation
+	// change rollbox (pos + orientation) and history (pos)
 	switch (data[2]) {
 		case 'left':
 			rolls.css('left',   w * 1.5);
 			rolls.css('right',  0);
 			rolls.css('top',    data[1]);
-			rolls.css('bottom', 0);
+			rolls.css('bottom', 0);          
 			rolls.css('display', 'inline-flex');
 			rolls.css('flex-direction', 'row');
 			break;
@@ -1291,6 +1297,8 @@ function moveDiceTo(data, sides) {
 			rolls.css('flex-direction', 'column-reverse');
 			break;
 	}
+	
+	// change dice history position
 }
 
 function movePlayersTo(pos) {

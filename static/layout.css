@@ -462,15 +462,7 @@ div.rollbox > span > span.player {
 	top: -5px;
 }
 
-div.rollbox > span.minroll > span.result {    
-	text-shadow:
-		-1px -1px 0 black,
-		1px -1px 0 black,
-		-1px 1px 0 black,
-		1px 1px 0 black;
-	color: white;
-}
-
+div.rollbox > span.minroll > span.result.
 div.rollbox > span.maxroll > span.result { 
 	text-shadow:
 		-1px -1px 0 black,
@@ -480,18 +472,50 @@ div.rollbox > span.maxroll > span.result {
 	color: white;
 }
 
-div#historydrop > div > span.natroll {
+div#dicehistory {
+	position: absolute;
+	display: none;
+	
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	
+	width: 50%;
+	height: 50%;
+	
+	z-index: 10;
+	
+	overflow: hidden;
+	
+	background-color: rgba(0, 0, 0, 0.25);
+	border: 1px solid black;
+	border-radius: 25px;
 }
 
-div#historydrop > div > img {
+div#dicehistory > span.history {
 	display: inline-block;
-	user-select: none;
+	width: 50px;
+	height: 50px;
+}
+
+div#dicehistory > span.history > span.result {
+	position: relative;
+	top: 9px;
 	
-	width: 48px;
-	height: 48px;
-	padding: 1px;
+	z-index: 4;
+	font-size: xx-large;
+	font-weight: bold;
 	
-	vertical-align: bottom;
+	display: inline-block;
+	width: 100%;
+	text-align: center;
+	 
+	text-shadow:
+		-2px -2px 0 black,
+		2px -2px 0 black,
+		-2px 2px 0 black,
+		2px 2px 0 black; 
+	color: white;
 }
 
 /* --- Players list ------------------------------------------------- */
@@ -673,7 +697,7 @@ div#ping,
 div#zoom,
 div#version {
 	position: absolute;
-	color: white;
+	color: grey;
 	bottom: 0px;
 }
 
