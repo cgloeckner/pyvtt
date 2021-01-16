@@ -126,7 +126,7 @@ def print_stats(title, data, key, func):
 				perc = '  ' + perc
 			elif len(perc) == 2:
 				perc = ' ' + perc
-			print ('    {0}\t{2}% {1}'.format(h, '*' * n, perc))
+			print (' {0}\t| {2}% {1} {3}'.format(h, '*' * n, perc, n))
 	print('Total: {0}'.format(total))
 
 def stats_report(engine):
