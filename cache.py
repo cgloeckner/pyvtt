@@ -88,6 +88,10 @@ class PlayerCache(object):
 		
 	# --- websocket implementation ------------------------------------
 		
+	def isOnline(self):
+		""" Returns if socket is ok. """
+		return self.socket is not None and not self.socket.closed
+		
 	def read(self):
 		""" Return JSON object read from socket. """
 		try:
@@ -106,8 +110,12 @@ class PlayerCache(object):
 		""" Write JSON object to socket. """
 		raw = json.dumps(data)
 		#with self.lock: # note: atm deadlocking
-		if self.socket is not None and not self.socket.closed:           
-			self.socket.send(raw)
+		try:
+			if self.isOnline():
+				self.socket.send(raw)
+		except WebSocketError:
+			# close socket
+			self.socket = None
 		
 	def fetch(self, data, key):
 		""" Try to fetch key from data or raise ProtocolError. """
@@ -199,7 +207,7 @@ class GameCache(object):
 		
 	def insert(self, name, color, is_gm):
 		with self.lock:
-			if name in self.players:
+			if name in self.players and self.players[name].isOnline():
 				raise KeyError
 			self.players[name] = PlayerCache(self.engine, self, name, color, is_gm)
 			self.consolidateIndices()
@@ -258,7 +266,7 @@ class GameCache(object):
 			for name in self.players:
 				p = self.players[name]
 				#with p.lock: # note: atm deadlocking
-				if p.socket is not None and not p.socket.closed:
+				if self.players[name].isOnline():
 					# close socket (will stop thread as well)
 					p.socket.close()
 				else:
