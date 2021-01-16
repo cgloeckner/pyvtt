@@ -11,6 +11,7 @@
 		<th></th>
 		<th>SERVER</th>
 		<th>STATUS</th>
+		<th>PLAYERS</th>
 	</tr>
 %i = 0
 %for host in engine.shards:
@@ -22,6 +23,7 @@
 		<td><a href="{{host}}/">{{host}}</a></td>
 	%end
 		<td id="status{{i}}">UNKNOWN</td>
+		<td id="players{{i}}">UNKNOWN</td>
 	</tr>
 	%i += 1
 %end 
@@ -31,6 +33,8 @@
 
 <script>
 function queryShard(index, host) {
+	var now = Date.now()
+	
 	$.ajax({
 		url: '/vtt/query/' + index,
 		type: 'GET',
@@ -41,9 +45,10 @@ function queryShard(index, host) {
 			}
 			
 			// fallback output
-			var color  = 'red'
-			var status = 'OFFLINE';
-			var hint   = 'Please report this';
+			var color   = 'red'
+			var status  = 'OFFLINE';
+			var hint    = 'Please report this';
+			var players = 'UNKNOWN'
 			
 			// try to parse status
 			try {
@@ -64,13 +69,15 @@ function queryShard(index, host) {
 					color  = 'green';
 					status = 'VERY GOOD';
 				}
-				hint = 'CPU: ' + data.cpu + '%, Memory: ' + data.memory + '%, ' + data.num_players + ' Players active';
+				hint    = data.cpu + '% CPU\n' + data.memory + '% Memory';
+				players = data.num_players;
 			} catch (e) {
 				console.warn('Server Status unknown: ', host);
 			}
 			
 			// show result
 			$('#status' + index)[0].innerHTML = '<span style="color: ' + color + '" title="' + hint + '">' + status + '</span>';
+			$('#players' + index)[0].innerHTML = '<span style="color: ' + color + '">' + players + '</span>';
 		}
 	});
 }
