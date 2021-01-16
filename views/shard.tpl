@@ -1,10 +1,10 @@
-%include("header", title="Shards")
+%include("header", title="Servers")
 
 <div class="menu"> 
 
 <hr />
 
-<h1>SHARDS</h1>
+<h1>{{engine.title}} SERVERS</h1>
 
 <table class="status"> 
 	<tr>
@@ -26,6 +26,8 @@
 	%i += 1
 %end 
 </table>
+
+<br />
 
 <script>
 function queryShard(index, host) {
