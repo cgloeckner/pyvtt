@@ -10,7 +10,8 @@ License: MIT (see LICENSE for details)
 <head>
 	<meta charset="UTF-8"> 
 	<link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon"> 
-	<script src="/static/jquery-3.3.1.min.js"></script>
+	<script src="/static/jquery-3.3.1.min.js"></script>  
+	<script src="/static/version.js"></script>   
 	<script src="/static/errors.js"></script>   
 	<script src="/static/dropdown.js"></script>   
 	<script src="/static/render.js"></script>  

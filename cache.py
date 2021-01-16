@@ -142,7 +142,7 @@ class PlayerCache(object):
 			
 		except WebSocketError as e:
 			# player quit
-			self.engine.logging('Player closed WebSocket by {0}'.format(self.ip))
+			self.engine.logging.access('Player closed WebSocket by {0}'.format(self.ip))
 			return
 			
 		except:
@@ -510,6 +510,9 @@ class GameCache(object):
 			# iterate provided tokens
 			for data in changes:
 				t = self.parent.db.Token.select(lambda t: t.id == data['id']).first()
+				if t is None:
+					# ignore deleted token
+					continue
 				# fetch changed data (accepting None)
 				posx   = data.get('posx')
 				posy   = data.get('posy')

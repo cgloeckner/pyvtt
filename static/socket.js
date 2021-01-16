@@ -252,6 +252,8 @@ function login(event, gmname, url, websocket_url, as_gm) {
 					$('#dicebox').css('display', 'block');
 					$('#dicebox').animate({ opacity: '+=1.0' }, 2000);
 					
+					$('#version')[0].innerHTML = 'v' + version;
+					
 					onWindowResize();
 				});
 				

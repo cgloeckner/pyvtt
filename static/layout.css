@@ -670,11 +670,16 @@ div.battlemap > div#tokenbar > img.dummy:hover {
 }
 
 div#ping,
-div#zoom {
+div#zoom,
+div#version {
 	position: absolute;
+	color: white;
+	bottom: 0px;
+}
+
+div#ping {
 	left: 0px;
 	bottom: 0px;
-	color: white;
 	padding-left: 5px;
 }
 
@@ -682,4 +687,8 @@ div#zoom {
 	left: 120px;
 	
 	cursor: pointer;
+}
+
+div#version {
+	left: 240px;
 }

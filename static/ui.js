@@ -33,7 +33,9 @@ var client_side_prediction = true; // enable/disable client side prediction (atm
 
 var space_bar = false; // whether spacebar is pressed
 
-var token_rotate_lock_threshold = 15;
+var token_rotate_lock_threshold = 15; // threshold for lock-in a token rotation
+var token_last_angle = null;
+
 
 function enableZooming() {
 	zooming = $('#zooming').prop('checked');
@@ -373,10 +375,17 @@ function onRotate(event) {
 		if (token.locked) {
 			return;
 		}
-		// save rotation
+		
+		// undo last rotation
+		if (token_last_angle != null) {
+			token.rotate -= token_last_angle;
+		}
+		token_last_angle = angle;
+		
+		// apply rotation
 		// @NOTE: rotation is updated after completion, meanwhile
 		// clide-side prediction kicks in
-		token.rotate = angle;
+		token.rotate += angle;
 	});
 }
 
@@ -1043,7 +1052,8 @@ function onStartRotate() {
 	drag_dice = null;
 	drag_players = false;
 	
-	drag_action = 'rotate'; 
+	drag_action      = 'rotate'; 
+	token_last_angle = null;
 }
 
 /// Event handle for ending token resize
@@ -1076,6 +1086,8 @@ function onQuitRotate() {
 		'OPID'    : 'UPDATE',
 		'changes' : changes
 	});
+	
+	token_last_angle = null;
 }
 
 /// Event handle for quitting rotation/resize dragging

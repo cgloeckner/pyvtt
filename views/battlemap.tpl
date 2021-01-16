@@ -45,8 +45,9 @@
 	<div id="players" onMouseDown="onStartDragPlayers(event);" onWheel="onWheelPlayers();"></div>
 	
 	<div class="mapfooter" id="mapfooter">
-		<div id="ping">tba</div>
+		<div id="ping">Ping: unknown</div>
 		<div id="zoom" onClick="resetViewport();">Zoom: 100%</div>
+		<div id="version">unknown version</div>
 		<form id="uploadform" method="post" enctype="multipart/form-data">
 			<input id="uploadqueue" name="file[]" type="file" multiple />
 		</form>
