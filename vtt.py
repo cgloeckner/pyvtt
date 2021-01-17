@@ -56,7 +56,7 @@ def gm_patreon():
 	# query session from patreon auth
 	session = engine.login_api.getSession(request)
 	
-	if session is None or session['sid'] is None:
+	if not session['granted']:
 		# not allowed, just redirect that poor soul
 		redirect('/vtt/join')
 	
