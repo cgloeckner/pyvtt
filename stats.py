@@ -7,12 +7,13 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import os, pathlib, json
+import sys, os, pathlib, json
 from datetime import datetime
 
 from pony.orm import db_session
 
 from engine import Engine
+from utils import PathApi
 
 
 __author__ = 'Christian Glöckner'
@@ -129,10 +130,10 @@ def print_stats(title, data, key, func):
 			print (' {0}\t| {2}% {1} {3}'.format(h, '*' * n, perc, l))
 	print('Total: {0}'.format(total))
 
-def stats_report(engine):
+def stats_report(paths):
 	# parse stats from logfile
 	data = list()
-	fname = engine.paths.getLogPath('stats')
+	fname = paths.getLogPath('stats')
 	with open(fname, 'r') as h:
 		content = h.read()
 		for line in content.split('\n'):
@@ -178,11 +179,13 @@ def stats_report(engine):
 
 
 if __name__ == '__main__':
-	engine = Engine(argv=['--quiet'])
-	
-	disk_report(engine)
-	
-	print('*' * 80)
-	
-	stats_report(engine)
+	if '--disk' in sys.argv:
+		engine = Engine(argv=['--quiet'])
+		disk_report(engine)
+		ok = True
+	elif '--login' in sys.argv:
+		paths = PathApi(appname='pyvtt', root=None)
+		stats_report(paths)
+	else:
+		print('Run with `--disk` for disk analysis or `--login` for login analysis.')
 
