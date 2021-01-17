@@ -198,30 +198,30 @@ function addRoll(sides, result, name, color, recent) {
 	
 	// create dice result
 	var container = $('#d' + sides + 'rolls');
-	glow = 'filter: drop-shadow(1px 1px 5px ' + color + ') drop-shadow(-1px -1px 0 ' + color + ');';
-	//var his_span = '<span style="' + css + '">' + result_label + '</span>';
-	css = glow + ' display: none;';
-	var box_span = '<span style="' + css + '"><span class="result">' + result_label + '</span><span class="player">' + name + '</span></span>';
+	var coloring = 'border: 2px solid ' + color + ';';
+	var ani_css = '';
+	var lbl_css = '';
+	if (result == 1) {
+		ani_css = 'minani';
+		lbl_css = ' minroll';
+	} else if (result == sides) {
+		ani_css = 'maxani';
+		lbl_css = ' maxroll';
+	}
+	var box_span = '<span style="display: none;"><span class="roll' + lbl_css + '" style="' + coloring + '"><span class="result">' + result_label + '</span><span class="player" style="color: ' + color + ';">' + name + '</span></span><span class="' + ani_css + '"></span></span>';
 	
 	if (recent) { 
 		container.prepend(box_span);
 		
 		// prepare automatic cleanup
 		var dom_span = container.children(':first-child');
-		if (sides != 2) {
-			if (result == 1) {
-				dom_span.addClass('minroll');
-			} else if (result == sides) {
-				dom_span.addClass('maxroll');
-			}
-		}
 		dom_span.delay(dice_shake).fadeIn(100, function() {
 			dom_span.delay(roll_timeout).fadeOut(2 * roll_timeout, function() { this.remove(); });
 		});
 	}
 	
 	// also add to dice history
-	var label = '<span class="history"><img style="' + glow + '" src="/static/d' + sides + '.png" class="dice" /><span class="result">' + result + '</span></span>';
+	var label = '<span class="history"><img style="' + coloring + '" src="/static/d' + sides + '.png" class="dice" /><span class="result">' + result + '</span></span>';
 	$('#dicehistory').prepend(label);
 	var other_dom_span = $('#dicehistory').children(':first-child');
 	other_dom_span.delay(dice_shake).fadeIn(250, function() {});
@@ -898,6 +898,11 @@ function rollDice(sides) {
 	}
 	// reset shake timer
 	dice_shake_timers[sides] = dice_shake;
+	
+	// trigger dice poof by re-applying CSS class
+	// @NOTE: delay required (else nothing will happen)
+	var poofani = $('#d' + sides + 'poofani');
+	poofani.removeClass('dicepoof').hide().delay(10).show().addClass('dicepoof');
 	
 	writeSocket({
 		'OPID'  : 'ROLL',

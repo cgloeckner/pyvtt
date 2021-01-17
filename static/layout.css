@@ -367,8 +367,12 @@ div#dicebox {
 	display: none;
 }
 
-img.dice {    
+div.dice {
+	user-select: none;
 	position: absolute;
+}
+
+div.dice > img {    
 	z-index: 3;
 	
 	user-select: none;
@@ -378,7 +382,7 @@ img.dice {
 	padding: 1px;
 }
 
-img.dice:hover {
+div.dice > img:hover {
 	cursor: grab;
 	
 	filter: drop-shadow(1px 1px 10px white) 
@@ -387,7 +391,7 @@ img.dice:hover {
 	bottom: 5px;
 }
 
-img.dice:active {
+div.dice > img:active {
 	cursor: grabbing;
 }
 
@@ -410,6 +414,24 @@ img.dice:active {
 	100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
+.dicepoof {
+	position: relative;
+	top: -60px;
+	left: -8px;
+	
+	user-select: none;
+	pointer-events: none;
+	
+	width: 64px;
+	height: 64px;
+	background: transparent url('/static/dice_poof.png') left center;
+	animation: dicepoof 0.8s steps(9);
+}
+
+@keyframes dicepoof {
+	100% { background-position: -576px; }
+}
+
 div.rollbox {   
 	user-select: none;
 	pointer-events: none;
@@ -426,7 +448,7 @@ div.rollbox {
 	overflow: hidden;
 }
 
-div.rollbox > span { 
+div.rollbox > span > span.roll { 
 	user-select: none;
 	pointer-events: none;
 	
@@ -446,10 +468,10 @@ div.rollbox > span {
 	background-color: rgba(255, 255, 255, 0.75);
 	
 	border-radius: 10px;
-	border: 1px solid white; 
+	/*border: 1px solid white; */
 }
 
-div.rollbox > span > span.result {
+div.rollbox > span > span.roll > span.result {
 	font-size: x-large;
 	font-weight: bolder;
 	
@@ -457,26 +479,56 @@ div.rollbox > span > span.result {
 	top: -3px;
 }
 
-div.rollbox > span > span.result > img.binarydice {
+div.rollbox > span > span.roll > span.result > img.binarydice {
 	width: 22px;
 }
 
-div.rollbox > span > span.player {
+div.rollbox > span > span.roll > span.player {
 	display: block;
 	font-size: xx-small;
+	
+	white-space: nowrap;
 	
 	position: relative;
 	top: -5px;
 }
 
-div.rollbox > span.minroll > span.result,
-div.rollbox > span.maxroll > span.result { 
+div.rollbox > span > span.minroll > span.result,
+div.rollbox > span > span.maxroll > span.result { 
 	text-shadow:
 		-1px -1px 0 black,
 		1px -1px 0 black,
 		-1px 1px 0 black,
 		1px 1px 0 black; 
 	color: white;
+	
+}
+
+div.rollbox > span > span.maxroll > span.result {
+	filter: drop-shadow(0px 0px 10px gold) 
+		drop-shadow(0px 0px 0 gold);
+	color: gold;
+}
+
+div.rollbox > span > span.minani {
+}
+
+div.rollbox > span > span.maxani {
+	position: relative;
+	top: -64px;
+	
+	user-select: none;
+	pointer-events: none;
+	display: block;
+	
+	width: 64px;
+	height: 64px;
+	background: transparent url('/static/dice_max.png') left center;
+	animation: dicemax 0.8s steps(9);
+}
+
+@keyframes dicemax {
+	100% { background-position: -576px; }
 }
 
 div#dicehistory {
