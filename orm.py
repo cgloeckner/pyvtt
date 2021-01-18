@@ -172,8 +172,10 @@ def createGmDatabase(engine, filename):
 			"""Note: needs to be called from a threadsafe context."""
 			max_id = 0
 			fnames = self.getAllImages()
-			while '{0}.png'.format(max_id) in fnames:
-				max_id += 1
+			split = lambda s: int(s.split('.png')[0])
+			if len(fnames) > 0:
+				last_png = max(fnames, key=split)
+				max_id   = split(last_png) + 1
 			return max_id
 
 		def getImageUrl(self, image_id):

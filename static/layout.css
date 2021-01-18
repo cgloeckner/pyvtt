@@ -6,7 +6,7 @@ License: MIT (see LICENSE for details)
 */
 
 body {
-	font-family: Sans-Serif;
+	font-family: sans;
 	font-size: 11pt;
 	
 	overflow: hidden;
@@ -209,47 +209,6 @@ div#game {
 
 /* --- Settings Area ------------------------------------------------ */
 
-div.verticdropdown {
-	height: calc(100% - 10px);
-	
-	position: absolute;
-	right: 5px;
-	
-	z-index: 1;
-}
-
-div.verticdropdown > div#historydrop {
-	display: inline-block;
-	position: absolute;
-	z-index: 5;
-	
-	right: -130px;
-	
-	height: calc(100% - 40px);
-	top: 15px;
-	
-	width: 135px;
-	border: 1px solid black;
-	
-	background-color: rgba(100, 100, 100, 0.75);
-	border-radius: 10px;
-	
-	padding: 5px;
-	
-	margin: 2px; 
-	margin-top: auto;
-	margin-bottom: auto;
-	
-	overflow-y: auto;
-	scrollbar-color: white black;
-	
-	z-index: 20;
-}
-
-div.verticdropdown > div#historydrop > div {
-	color: white;
-}
-
 /* --- GM Area ------------------------------------------------------ */
 
 div.horizdropdown {
@@ -372,7 +331,11 @@ div.dice {
 	position: absolute;
 }
 
-div.dice > img {    
+div.dice > div {
+	position: relative;
+}
+
+div.dice > div >img {    
 	z-index: 3;
 	
 	user-select: none;
@@ -382,7 +345,7 @@ div.dice > img {
 	padding: 1px;
 }
 
-div.dice > img:hover {
+div.dice > div >img:hover {
 	cursor: grab;
 	
 	filter: drop-shadow(1px 1px 10px white) 
@@ -391,13 +354,12 @@ div.dice > img:hover {
 	bottom: 5px;
 }
 
-div.dice > img:active {
+div.dice > div >img:active {
 	cursor: grabbing;
 }
 
 .shake {
-	animation: shake 0.5s;
-	animation-iteration-count: infinite;
+	animation: shake 1s;
 }
 
 @keyframes shake {
@@ -415,8 +377,8 @@ div.dice > img:active {
 }
 
 .dicepoof {
-	position: relative;
-	top: -58px;
+	position: absolute;
+	top: -5px;
 	left: -5px;
 	
 	user-select: none;
@@ -424,8 +386,8 @@ div.dice > img:active {
 	
 	width: 64px;
 	height: 64px;
-	background: transparent url('/static/dice_poof.png') left center;
-	animation: dicepoof 0.8s steps(10);
+	background: url('/static/dice_poof.png') left center;
+	animation: dicepoof 0.66s steps(10);
 }
 
 @keyframes dicepoof {
@@ -442,13 +404,10 @@ div.rollbox {
 	 
 	display: inline-flex;
 	flex-direction: row; 
-	
-	opacity: 0.75;
-	
-	overflow: hidden;
 }
 
 div.rollbox > span {
+	position: relative;
 	width: 54px;
 }
 
@@ -461,19 +420,15 @@ div.rollbox > span > span.roll {
 	
 	display: inline-block;
 	margin: 2px;
-	padding: 3px;
-	padding-top: 5px;
-	margin-top: 7px;
-	margin-left: 15px;  
+	padding: 5px;
 	text-align: center; 
 	color: black;
 	
 	overflow: clip; 
 	
-	background-color: rgba(255, 255, 255, 0.75);
+	background-color: rgba(255, 255, 255, 0.66);
 	
 	border-radius: 10px;
-	/*border: 1px solid white; */
 }
 
 div.rollbox > span > span.roll > span.result {
@@ -484,8 +439,8 @@ div.rollbox > span > span.roll > span.result {
 	top: -3px;
 }
 
-div.rollbox > span > span.roll > span.result > img.binarydice {
-	width: 22px;
+div.rollbox > span > span.roll > span.skull {
+	font-family: serif;
 }
 
 div.rollbox > span > span.roll > span.player {
@@ -512,69 +467,23 @@ div.rollbox > span > span.minani {
 }
 
 div.rollbox > span > span.maxani {
-	position: relative;
-	top: -64px;
-	left: 5px;
+	position: absolute;
+	top: -106px;
+	left: -20px;
 	
-	display: inline;
 	user-select: none;
 	pointer-events: none;
-	display: block;
+	display: inline-block;
 	
-	width: 64px;
-	height: 64px;
-	background: transparent url('/static/dice_max.png') left center;
-	animation: dicemax 1s steps(17);
+	width: 100px;
+	height: 108px;
+	background: url('/static/dice_max.png') left center;
+	animation: dicemax 0.75s steps(12) infinite;
 }
 
 @keyframes dicemax {
-	100% { background-position: -1088px; }
-}
-
-div#dicehistory {
-	position: absolute;
-	display: none;
-	
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	
-	width: 50%;
-	height: 50%;
-	
-	z-index: 10;
-	
-	overflow: hidden;
-	
-	background-color: rgba(0, 0, 0, 0.25);
-	border: 1px solid black;
-	border-radius: 25px;
-}
-
-div#dicehistory > span.history {
-	display: inline-block;
-	width: 50px;
-	height: 50px;
-}
-
-div#dicehistory > span.history > span.result {
-	position: relative;
-	top: 9px;
-	
-	z-index: 4;
-	font-size: xx-large;
-	font-weight: bold;
-	
-	display: inline-block;
-	width: 100%;
-	text-align: center;
-	 
-	text-shadow:
-		-2px -2px 0 black,
-		2px -2px 0 black,
-		-2px 2px 0 black,
-		2px 2px 0 black; 
-	color: white;
+	0% {background-position: 0px; }
+	100% { background-position: -1200px; }
 }
 
 /* --- Players list ------------------------------------------------- */
@@ -754,6 +663,7 @@ div.battlemap > div#tokenbar > img.dummy:hover {
 }
 
 div#ping,
+div#fps,
 div#zoom,
 div#version {
 	position: absolute;
@@ -763,16 +673,19 @@ div#version {
 
 div#ping {
 	left: 0px;
-	bottom: 0px;
-	padding-left: 3px;
+	padding-left: 5px;
+}
+
+div#fps {
+	left: 120px;
 }
 
 div#zoom {
-	left: 120px;
+	left: 200px;
 	
 	cursor: pointer;
 }
 
 div#version {
-	left: 240px;
+	left: 320px;
 }

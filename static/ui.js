@@ -25,8 +25,6 @@ var drag_dice    = null;    // indicates which dice is dragged around (by number
 var drag_players = null;    // indicates if players are dragged around
 var over_player  = null;    // indicates over which player the mouse is located (by name)
 
-var dice_shake_timers = {}; // dice shaking delay for each dice
-
 var default_dice_pos = {};  // default dice positions
 
 var client_side_prediction = true; // enable/disable client side prediction (atm used for movement only)
@@ -36,7 +34,9 @@ var space_bar = false; // whether spacebar is pressed
 var token_rotate_lock_threshold = 15; // threshold for lock-in a token rotation
 var token_last_angle = null;
 
-var show_dice_history = false;
+var fade_dice = true;
+
+var dice_sides = [2, 4, 6, 8, 10, 12, 20];
 
 function enableZooming() {
 	zooming = $('#zooming').prop('checked');
@@ -186,19 +186,7 @@ function hidePlayer(uuid) {
 var roll_timeout = 10000.0; // ms until roll will START to disappear
 
 function addRoll(sides, result, name, color, recent) {
-	// special case: d2
-	var result_label = result
-	if (sides == 2) {
-		if (result == 2) {
-			result_label = '<img class="binarydice" src="/static/d2_hit.png" />'
-		} else {
-			result_label = '<img class="binarydice" src="/static/d2_miss.png" />'
-		}
-	}
-	
-	// create dice result
-	var container = $('#d' + sides + 'rolls');
-	var coloring = 'border: 2px solid ' + color + ';';
+	// handling min-/max-rolls
 	var ani_css = '';
 	var lbl_css = '';
 	if (result == 1) {
@@ -208,23 +196,45 @@ function addRoll(sides, result, name, color, recent) {
 		ani_css = 'maxani';
 		lbl_css = ' maxroll';
 	}
-	var box_span = '<span style="display: none;"><span class="roll' + lbl_css + '" style="' + coloring + '"><span class="result">' + result_label + '</span><span class="player" style="color: ' + color + ';">' + name + '</span></span><span class="' + ani_css + '"></span></span>';
+	rslt_css = '';
 	
-	if (recent) { 
-		container.prepend(box_span);
+	// special case: d2
+	var result_label = result
+	if (sides == 2) {
+		if (result == 2) {
+			result_label = '&#x2620;'; // skull
+			rslt_css += ' skull' ;
+		} else {
+			result_label = '&mdash;'; // slash
+		}
+	} 
+	
+	if (recent) {
+		// create dice result
+		var parent_span = '<span style="display: none;">';
+		var box_span    = '<span class="roll' + lbl_css + '" style="border: 3px inset ' + color + ';">';
+		var result_span = '<span class="result' + rslt_css + '">';
+		var player_span = '<span class="player" style="color: ' + color + ';">';
+		var dice_result_span =
+			parent_span + '\n'
+				+ '\t' + box_span + '\n'
+					+ '\t\t' + result_span + result_label + '</span>\n'
+					+ '\t\t' + player_span + name + '</span>\n'
+				+ '\t</span>\n'
+				+ '\t<span class="' + ani_css + '"></span>\n'
+			+ '</span>';
+		 
+		var container = $('#d' + sides + 'rolls');
+		container.prepend(dice_result_span);
 		
 		// prepare automatic cleanup
 		var dom_span = container.children(':first-child');
 		dom_span.delay(dice_shake).fadeIn(100, function() {
-			dom_span.delay(roll_timeout).fadeOut(2 * roll_timeout, function() { this.remove(); });
+			if (fade_dice) {
+				dom_span.delay(roll_timeout).fadeOut(2 * roll_timeout, function() { this.remove(); });
+			}
 		});
-	}
-	
-	// also add to dice history
-	var label = '<span class="history"><img style="' + coloring + '" src="/static/d' + sides + '.png" class="dice" /><span class="result">' + result + '</span></span>';
-	$('#dicehistory').prepend(label);
-	var other_dom_span = $('#dicehistory').children(':first-child');
-	other_dom_span.delay(dice_shake).fadeIn(250, function() {});
+	};
 }
 
 // --- ui event handles -----------------------------------------------
@@ -891,17 +901,11 @@ function onWheel(event) {
 
 /// Event handle to click a dice
 function rollDice(sides) {
-	// trigger shaking in necessary
+	// trigger dice shaking and poof (by re-applying CSS class)
 	var target = $('#d' + sides + 'icon');
-	if (!target.hasClass('shake')) {
-		target.addClass('shake'); 
-	}
-	// reset shake timer
-	dice_shake_timers[sides] = dice_shake;
-	
-	// trigger dice poof by re-applying CSS class
-	// @NOTE: delay required (else nothing will happen)
-	var poofani = $('#d' + sides + 'poofani');
+	var poofani = $('#d' + sides + 'poofani');      
+	// @NOTE: delay required (else nothing will happen) 
+	target.removeClass('shake').hide().delay(10).show().addClass('shake');
 	poofani.removeClass('dicepoof').hide().delay(10).show().addClass('dicepoof');
 	
 	writeSocket({
@@ -910,14 +914,15 @@ function rollDice(sides) {
 	}); 
 }
 
-function onEnterDice(sides) {
-	if (show_dice_history) {
-		$('#dicehistory').delay(1000).fadeIn(500);
+function toggleDiceHistory() {
+	var history = $('#dicehistory');
+	console.log(history.css('display'));
+	
+	if (history.css('display') == 'none') {
+		history.fadeIn(500);
+	} else {
+		history.fadeOut(500);
 	}
-}
-
-function onLeaveDice(sides) {
-	$('#dicehistory').hide();
 }
 
 /// Event handle to select all tokens
@@ -1234,25 +1239,12 @@ function snapDice(x, y, container, default_snap) {
 }
 
 /// Resets dice container to default position
-function resetDicePos(sides) {
-	// reset dice position
-	var icon = $('#d' + sides + 'icon');
-	icon.css('left', default_dice_pos[sides][0]);
-	icon.css('top',  default_dice_pos[sides][1]);
-	
-	var w = icon.width();
-	var h = icon.height();
-	
-	// reset roll box position and orientation 
-	var rolls = $('#d' + sides + 'rolls');
-	rolls.css('left',   w * 1.5);  
-	rolls.css('right',  0);
-	rolls.css('top',    default_dice_pos[sides][1]);
-	rolls.css('bottom', 0);
-	rolls.css('display',        'inline-flex');
-	rolls.css('flex-direction', 'row');
-	
+function resetDicePos(sides) { 
 	localStorage.removeItem('d' + sides);
+	
+	// move to default pos
+	var data = [default_dice_pos[sides][0], default_dice_pos[sides][1], 'left'];
+	moveDiceTo(data, sides);
 }
 
 function moveDiceTo(data, sides) {
@@ -1278,9 +1270,9 @@ function moveDiceTo(data, sides) {
 			rolls.css('flex-direction', 'row');
 			break;
 		case 'top': 
-			rolls.css('left',   data[0] - w/8);
+			rolls.css('left',   data[0]);
 			rolls.css('right',  0);
-			rolls.css('top',    h * 1.5);
+			rolls.css('top',    h * 1.5 - w/4);
 			rolls.css('bottom', 0);
 			rolls.css('display', 'flex');
 			rolls.css('flex-direction', 'column');
@@ -1294,10 +1286,10 @@ function moveDiceTo(data, sides) {
 			rolls.css('flex-direction', 'row-reverse');
 			break;
 		case 'bottom': 
-			rolls.css('left',   data[0] - w/8);
+			rolls.css('left',   data[0]);
 			rolls.css('right',  0);
 			rolls.css('top',    0);
-			rolls.css('bottom', h * 1.5);
+			rolls.css('bottom', h * 1.5 - w/4);
 			rolls.css('display', 'flex');
 			rolls.css('flex-direction', 'column-reverse');
 			break;

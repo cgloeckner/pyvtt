@@ -290,10 +290,13 @@ function login(event, gmname, url, websocket_url, as_gm) {
 					select_ids        = [];
 					is_gm             = false;
 					
+					last_dice_timeid  = 0;
+					last_dice_series  = null;
+					
 					max_background_size = null;
 					max_token_size      = null;
 					
-					$.each([2, 4, 6, 8, 10, 12, 20], function(index, sides) {
+					$.each(dice_sides, function(index, sides) {
 						var d = $('#d' + sides + 'rolls');
 						d[0].innerHTML = '';
 					});

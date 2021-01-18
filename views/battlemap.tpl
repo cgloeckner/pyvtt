@@ -16,18 +16,13 @@
 	</div>
 %end
 
-	<div class="verticdropdown" onClick="toggleHistoryDropdown()">
-		<div id="historydrop"></div>
-		<!--<img id="historyhint" src="/static/history.png" />//-->
-	</div>
-	
-	<div id="dicehistory"></div>
-
 	<div id="dicebox">
 %for d in [20, 12, 10, 8, 6, 4, 2]:
 		<div class="dice" id="d{{d}}icon">
-			<img src="/static/d{{d}}.png" title="Roll 1D{{d}}" onMouseDown="onStartDragDice({{d}});" onMouseUp="onEndDragDice();" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});" onMouseEnter="onEnterDice({{d}});" onMouseOut="onLeaveDice({{d}});" />
-			<div id="d{{d}}poofani"></div>
+			<div>
+				<img src="/static/d{{d}}.png" title="Roll 1D{{d}}" onMouseDown="onStartDragDice({{d}});" onMouseUp="onEndDragDice();" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});" />
+				<div class="proofani" id="d{{d}}poofani"></div>
+			</div>
 		</div>
 		<div class="rollbox" id="d{{d}}rolls"></div>
 %end
@@ -50,7 +45,8 @@
 	<div id="players" onMouseDown="onStartDragPlayers(event);" onDragEnd="onEndDragPlayers();" onWheel="onWheelPlayers();"></div>
 	
 	<div class="mapfooter" id="mapfooter">
-		<div id="ping">Ping: unknown</div>
+		<div id="ping">Ping: &infin;</div>
+		<div id="fps">0 FPS</div>
 		<div id="zoom" onClick="resetViewport();">Zoom: 100%</div>
 		<div id="version">unknown version</div>
 		<form id="uploadform" method="post" enctype="multipart/form-data">

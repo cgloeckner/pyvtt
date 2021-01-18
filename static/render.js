@@ -5,7 +5,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 */
 
-var fps = 60;
+var target_fps = 60;
 
 var viewport = null;
 
@@ -357,6 +357,9 @@ function drawToken(token, color, is_background) {
 	context.restore();
 }
 
+var last_update = 0; // timestamp with integer ms
+var num_frames  = 0; // number of frames since `last_update` was reset
+
 /// Draw the entire scene (locked tokens in the background, unlocked in foreground)
 function drawScene() {
 	clearCanvas();
@@ -440,22 +443,20 @@ function drawScene() {
 	
 	context.restore();
 	
-	// check for stopping dice shaking
-	$.each(dice_shake_timers, function(sides, remain) {
-		remain -= 1000.0 / fps;
-		var target = $('#d' + sides + 'icon');
-		if (remain <= 0 && target.hasClass('shake')) {
-			// stop shaking
-			target.removeClass('shake');
-		}
-		dice_shake_timers[sides] = remain;
-	});
-	
 	updatePing();
 	updateTokenbar();
 	
 	if (!client_side_prediction) {
 		updateTokenbar();
+	}
+	
+	// update fps counter
+	num_frames += 1;
+	var now = Date.now();
+	if (now >= last_update + 1000.0) {
+		$('#fps')[0].innerHTML = num_frames + ' FPS';
+		num_frames = 0;
+		last_update = now;
 	}
 	
 	// schedule next drawing

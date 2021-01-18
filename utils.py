@@ -352,6 +352,16 @@ class FancyUrlApi(object):
 		self.paths = paths
 		self.parts = dict()
 		
+		# create default words if necessary
+		v = ['be', 'have', 'do', 'say', 'go', 'get', 'make', 'know', 'think', 'take']
+		a = ['able', 'bad', 'best', 'better', 'big', 'black', 'certain', 'clear', 'different', 'early', 'easy']
+		n = ['area', 'book', 'business', 'case', 'child', 'company', 'country', 'day', 'eye', 'fact']
+		for t in [('verbs', v), ('adjectives', a), ('nouns', n)]:
+			p = self.paths.getFancyUrlPath(t[0])
+			if not os.path.exists(p):
+				with open(p, mode='w') as h:
+					h.write('\n'.join(t[1]))
+		
 		# load word lists
 		for p in ['verbs', 'adjectives', 'nouns']:
 			self.parts[p] = self.load(p)

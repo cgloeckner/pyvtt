@@ -65,19 +65,19 @@ class GameTest(EngineTest):
 		i = game.getNextId()
 		self.assertEqual(i, 0)
 		
-		# gap used for next id
+		# gaps ignored for next_id
 		img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
-		for i in [0, 1, 2, 3, 4, 6, 7, 8]:
+		for i in [0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 12]:
 			p = img_path / '{0}.png'.format(i)
 			p.touch()
 		i = game.getNextId()
-		self.assertEqual(i, 5)
+		self.assertEqual(i, 13)
 		
 		# first unused id
 		p = img_path / '5.png'
 		p.touch()     
 		i = game.getNextId()
-		self.assertEqual(i, 9)
+		self.assertEqual(i, 13)
 		
 	@db_session
 	def test_getImageUrl(self):
@@ -196,8 +196,8 @@ class GameTest(EngineTest):
 		game.preDelete()
 		self.assertFalse(os.path.exists(img_path))
 		gm_cache = self.engine.cache.getFromUrl('url456')
-		with self.assertRaises(KeyError):
-			gm_cache.get(game)
+		game_cache = gm_cache.get(game)
+		self.assertEqual(game_cache, None)
 		
 		# delete game
 		game.delete()
