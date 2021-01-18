@@ -12,7 +12,6 @@ from datetime import datetime
 
 from pony.orm import db_session
 
-from engine import Engine
 from utils import PathApi
 
 
@@ -27,38 +26,43 @@ def formatBytes(b):
 		return '{0} KiB  '.format(int(b / 1024))
 	return '{0} Bytes'.format(b)
 
-def disk_report(engine):
+def disk_report(paths):
 	listing = list()
 	with db_session:
-		for gm in engine.main_db.GM.select():
-			gm_cache = engine.cache.get(gm)
+		gms_path = paths.getGmsPath()
+		# query all GMs
+		for gm_url in os.listdir(gms_path):
 			report = dict()
-			report['name']  = '{0}#{1}'.format(gm.name, gm.url)
+			report['name']  = '#{0}'.format(gm_url)
 			report['games'] = 0
-			total_sizes     = os.path.getsize(engine.paths.getDatabasePath(gm.url))
+			total_sizes     = os.path.getsize(paths.getDatabasePath(gm_url))
 			total_files     = 1 # gm.db
-			# query all games by this gm
-			for game in gm_cache.db.Game.select():
-				# fetch image metadata
-				game_path = engine.paths.getGamePath(gm.url, game.url)
-				imglist   = os.listdir(game_path)
-				imgsize   = 0
+			games_path = paths.getGmsPath(gm_url)
+			# query all games by this GM
+			for game_url in os.listdir(games_path):
+				if not os.path.isdir(games_path / game_url):
+					continue
+				img_path = paths.getGamePath(gm_url, game_url)
+				imglist  = os.listdir(img_path)
+				imgsize  = 0
+				# query all images at this game
 				for f in imglist:
-					imgsize += os.path.getsize(game_path / f)
+					imgsize += os.path.getsize(img_path / f)
 				report['games'] += 1
 				total_files += len(imglist)
 				total_sizes += imgsize
 			report['total_files'] = total_files
 			report['total_sizes'] = total_sizes
 			listing.append(report)
+	return listing
 	
-	print('GMs, Games, Files, Used Disk Space of {0}'.format(engine.title))
-	print('\n   Space Used   | Number of Files |  Number of Games    | GM')
-	print('-' * 80)
+def print_disk(listing):
+	out =  'GMs, Games, Files, Used Disk Space\n'
+	out += '\n   Space Used   | Number of Files |  Number of Games    | GM\n'
+	out += '-' * 80 + '\n'
 	games = 0 
 	sizes = 0
 	files = 0
-	
 	# per GM
 	for gm in listing:
 		total_sizes = formatBytes(gm['total_sizes'])
@@ -70,14 +74,14 @@ def disk_report(engine):
 		total_games = str(gm['games'])
 		while len(total_games) < 10:
 			total_games = ' ' + total_games
-		print('{0} |{1} files |{2} games \t| {3}'.format(total_sizes, total_files, total_games, gm['name']))
+		out += '{0} |{1} files |{2} games \t| {3}\n'.format(total_sizes, total_files, total_games, gm['name'])
 		
 		games += gm['games']
 		sizes += gm['total_sizes']
 		files += gm['total_files']
 	
 	# total
-	print('=' * 5 + '~ TOTAL ~' + '=' * 65)
+	out += '=' * 5 + '~ TOTAL ~' + '=' * 65 + '\n'
 	
 	sizes = formatBytes(sizes)
 	while len(sizes) < 15:
@@ -88,7 +92,9 @@ def disk_report(engine):
 	games = str(games)
 	while len(games) < 10:
 		games = ' ' + games
-	print('{0} |{1} files |{2} games \t| {3} GMs'.format(sizes, files, games, len(listing)))
+	out += '{0} |{1} files |{2} games \t| {3} GMs\n'.format(sizes, files, games, len(listing))
+	
+	return out
 
 
 # ---------------------------------------------------------------------
@@ -108,9 +114,9 @@ class Login(object):
 	def getDatetime(self):
 		return datetime.fromtimestamp(self.timeid)
 
-def print_stats(title, data, key, func):
-	print(title)
-	print('-' * len(title))
+def print_stats(title, data, key, func, rowfunc):
+	out = title + '\n'
+	out += '-' * len(title) + '\n'
 	# get total
 	total = 0
 	for h in data:
@@ -127,8 +133,9 @@ def print_stats(title, data, key, func):
 				perc = '  ' + perc
 			elif len(perc) == 2:
 				perc = ' ' + perc
-			print (' {0}\t| {2}% {1} {3}'.format(h, '*' * n, perc, l))
-	print('Total: {0}'.format(total))
+			out += ' {0}\t| {2}% {1} {3}\n'.format(rowfunc(h), '*' * n, perc, l)
+	out += 'Total: {0}\n'.format(total)
+	return out
 
 def stats_report(paths):
 	# parse stats from logfile
@@ -142,10 +149,17 @@ def stats_report(paths):
 			data.append(Login(*json.loads(line)))
 	
 	# build statistics
-	per_hours   = dict()
-	per_country = dict()
+	per_hours    = dict()
+	per_country  = dict()
+	per_weekdays = dict()
 	for h in range(24):
 		per_hours[h] = {
+			'logins'  : 0,
+			'ips'     : set(),
+			'players' : 0
+		}
+	for d in range(7):
+		per_weekdays[d] = {
 			'logins'  : 0,
 			'ips'     : set(),
 			'players' : 0
@@ -164,28 +178,60 @@ def stats_report(paths):
 			}
 		per_country[l.country]['logins'] += 1
 		per_country[l.country]['ips'].add(l.ip)
+		
+		weekday = l.getDatetime().weekday()
+		per_weekdays[weekday]['logins'] += 1
+		per_weekdays[weekday]['ips'].add(l.ip)
+		per_weekdays[weekday]['players'] = max(per_weekdays[weekday]['players'], l.num_players)
 		  
-	print()
-	print_stats('Logins per Hour (UTC)', per_hours, 'logins', lambda k: k)
-	print()
-	print_stats('IPs per Hour (UTC)', per_hours, 'ips', lambda k: len(k))
-	print()
-	print_stats('Players per Hour (UTC)', per_hours, 'players', lambda k: k) 
-	print()
-	
-	print_stats('Logins per Country', per_country, 'logins', lambda k: k)
-	print()
-	print_stats('IPs per Country', per_country, 'ips', lambda k: len(k))
+	return per_hours, per_country, per_weekdays
+
+
+def weekday2str(i):
+	if i == 0:
+		return 'Mon'
+	elif i == 1:
+		return 'Tue'
+	elif i == 2:
+		return 'Wed'
+	elif i == 3:
+		return 'Thu'
+	elif i == 4:
+		return 'Fri'
+	elif i == 5:
+		return 'Sat'
+	else:
+		return 'Sun'
 
 
 if __name__ == '__main__':
-	if '--disk' in sys.argv:
-		engine = Engine(argv=['--quiet'])
-		disk_report(engine)
-		ok = True
-	elif '--login' in sys.argv:
-		paths = PathApi(appname='pyvtt', root=None)
-		stats_report(paths)
-	else:
-		print('Run with `--disk` for disk analysis or `--login` for login analysis.')
+	paths = PathApi(appname='pyvtt', root=None)
+	
+	analysis = paths.root / 'analysis.txt'
+	
+	disk_analysis = disk_report(paths)
+	per_hours, per_country, per_weekdays = stats_report(paths)
+	
+	# create disk report
+	with open(analysis, 'w') as h:
+		h.write(print_disk(disk_analysis))
+		h.write('\n\n')
+		h.write(print_stats('Logins per Hour (UTC)', per_hours, 'logins', lambda k: k, lambda k: k))
+		h.write('\n\n')
+		h.write(print_stats('IPs per Hour (UTC)', per_hours, 'ips', lambda k: len(k), lambda k: k))
+		h.write('\n\n')
+		h.write(print_stats('Players per Hour (UTC)', per_hours, 'players', lambda k: k, lambda k: k))
+		h.write('\n\n')
+		h.write(print_stats('Logins per Weekday (UTC)', per_weekdays, 'logins', lambda k: k, weekday2str))
+		h.write('\n\n')
+		h.write(print_stats('IPs per Weekday (UTC)', per_weekdays, 'ips', lambda k: len(k), weekday2str))
+		h.write('\n\n')
+		h.write(print_stats('Players per Weekday (UTC)', per_weekdays, 'players', lambda k: k, weekday2str))
+		h.write('\n\n')
+		h.write(print_stats('Logins per Country', per_country, 'logins', lambda k: k, lambda k: k))
+		h.write('\n\n')
+		h.write(print_stats('IPs per Country', per_country, 'ips', lambda k: len(k), lambda k: k))
+	
+	print('Analysis written to {0}'.format(analysis))
+
 

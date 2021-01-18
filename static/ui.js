@@ -231,9 +231,15 @@ function addRoll(sides, result, name, color, recent) {
 		var dom_span = container.children(':first-child');
 		dom_span.delay(dice_shake).fadeIn(100, function() {
 			if (fade_dice) {
-				dom_span.delay(roll_timeout).fadeOut(2 * roll_timeout, function() { this.remove(); });
+				dom_span.delay(roll_timeout).fadeOut(500, function() { this.remove(); });
 			}
 		});
+		
+		if (ani_css == 'maxani') {
+			// let animation fade out earlier
+			var ani = $(dom_span.children()[1]);
+			ani.delay(3000).fadeOut(500);
+		}
 	};
 }
 
