@@ -214,7 +214,7 @@ function addRoll(sides, result, name, color, recent) {
 		var parent_span = '<span style="display: none;">';
 		var box_span    = '<span class="roll' + lbl_css + '" style="border: 3px inset ' + color + ';">';
 		var result_span = '<span class="result' + rslt_css + '">';
-		var player_span = '<span class="player" style="color: ' + color + ';">';
+		var player_span = '<span class="player">';
 		var dice_result_span =
 			parent_span + '\n'
 				+ '\t' + box_span + '\n'

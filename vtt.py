@@ -493,6 +493,8 @@ def set_player_name(gmurl, url):
 	# limit length, trim whitespaces
 	playername = playername[:30].strip()
 	
+	# @NOTE: this feature isn't really required anymore
+	"""
 	# make player color less bright
 	parts       = [int(playercolor[1:3], 16), int(playercolor[3:5], 16), int(playercolor[5:7], 16)]
 	playercolor = '#'
@@ -502,6 +504,7 @@ def set_player_name(gmurl, url):
 		if c < 16:
 			playercolor += '0'
 		playercolor += hex(c)[2:]
+	"""
 	
 	# check for player name collision
 	game_cache = gm_cache.get(game)
