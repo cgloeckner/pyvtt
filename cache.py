@@ -224,7 +224,10 @@ class GameCache(object):
 		
 	def get(self, name):
 		with self.lock:
-			return self.players[name]
+			try:
+				return self.players[name]
+			except KeyError:
+				return None
 		
 	def getData(self):
 		result = list()
@@ -835,7 +838,10 @@ class GmCache(object):
 		
 	def getFromUrl(self, url):
 		with self.lock:
-			return self.games[url]
+			try:
+				return self.games[url]
+			except KeyError:
+				return None
 		
 	def remove(self, game):
 		with self.lock:
@@ -876,7 +882,10 @@ class EngineCache(object):
 		
 	def getFromUrl(self, url):
 		with self.lock:
-			return self.gms[url]
+			try:
+				return self.gms[url]
+			except KeyError:
+				return None
 		
 	def remove(self, gm):
 		with self.lock:

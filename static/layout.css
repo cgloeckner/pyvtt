@@ -416,8 +416,8 @@ div.dice > img:active {
 
 .dicepoof {
 	position: relative;
-	top: -60px;
-	left: -8px;
+	top: -58px;
+	left: -5px;
 	
 	user-select: none;
 	pointer-events: none;
@@ -425,11 +425,11 @@ div.dice > img:active {
 	width: 64px;
 	height: 64px;
 	background: transparent url('/static/dice_poof.png') left center;
-	animation: dicepoof 0.8s steps(9);
+	animation: dicepoof 0.8s steps(10);
 }
 
 @keyframes dicepoof {
-	100% { background-position: -576px; }
+	100% { background-position: -640px; }
 }
 
 div.rollbox {   
@@ -448,18 +448,23 @@ div.rollbox {
 	overflow: hidden;
 }
 
+div.rollbox > span {
+	width: 54px;
+}
+
 div.rollbox > span > span.roll { 
 	user-select: none;
 	pointer-events: none;
 	
-	display: inline-block;
 	width: 36px;
 	height: 30px;
+	
+	display: inline-block;
 	margin: 2px;
 	padding: 3px;
 	padding-top: 5px;
 	margin-top: 7px;
-	margin-left: 10px;  
+	margin-left: 15px;  
 	text-align: center; 
 	color: black;
 	
@@ -493,7 +498,6 @@ div.rollbox > span > span.roll > span.player {
 	top: -5px;
 }
 
-div.rollbox > span > span.minroll > span.result,
 div.rollbox > span > span.maxroll > span.result { 
 	text-shadow:
 		-1px -1px 0 black,
@@ -504,19 +508,15 @@ div.rollbox > span > span.maxroll > span.result {
 	
 }
 
-div.rollbox > span > span.maxroll > span.result {
-	filter: drop-shadow(0px 0px 10px gold) 
-		drop-shadow(0px 0px 0 gold);
-	color: gold;
-}
-
 div.rollbox > span > span.minani {
 }
 
 div.rollbox > span > span.maxani {
 	position: relative;
 	top: -64px;
+	left: 5px;
 	
+	display: inline;
 	user-select: none;
 	pointer-events: none;
 	display: block;
@@ -524,11 +524,11 @@ div.rollbox > span > span.maxani {
 	width: 64px;
 	height: 64px;
 	background: transparent url('/static/dice_max.png') left center;
-	animation: dicemax 0.8s steps(9);
+	animation: dicemax 1s steps(17);
 }
 
 @keyframes dicemax {
-	100% { background-position: -576px; }
+	100% { background-position: -1088px; }
 }
 
 div#dicehistory {
