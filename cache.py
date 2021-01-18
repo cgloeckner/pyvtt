@@ -301,7 +301,7 @@ class GameCache(object):
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried to login to {1} by {2}, but the game was not found'.format(player.name, self.url, player.ip))
+				self.engine.logging.warning('Player {0} tried to login to {1} by {2}, but the game was not found'.format(player.name, self.url, player.ip))
 				return;
 			
 			for r in self.parent.db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
@@ -407,7 +407,7 @@ class GameCache(object):
 		with db_session: 
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried to roll 1d{1} at {2}/{3} by {4}, but the game was not found'.format(player.name, sides, self.parent.url, self.url, player.ip))
+				self.engine.logging.warning('Player {0} tried to roll 1d{1} at {2}/{3} by {4}, but the game was not found'.format(player.name, sides, self.parent.url, self.url, player.ip))
 				return;
 			
 			g.timeid = now
@@ -451,13 +451,13 @@ class GameCache(object):
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried range select at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
+				self.engine.logging.warning('Player {0} tried range select at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
 				return;
 			g.timeid = now
 			
 			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
 			if s is None:
-				engine.logging.warning('Player {0} tried range select at {1}/{2} in scene #{3} by {4}, but the scene was not found'.format(player.name, self.parent.url, self.url, g.active, player.ip))
+				self.engine.logging.warning('Player {0} tried range select at {1}/{2} in scene #{3} by {4}, but the scene was not found'.format(player.name, self.parent.url, self.url, g.active, player.ip))
 				return;
 				
 			token_ids = player.selected if adding else list()
@@ -488,13 +488,13 @@ class GameCache(object):
 		with db_session: 
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first() 
 			if g is None:
-				engine.logging.warning('Player {0} tried clone tokens at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
+				self.engine.logging.warning('Player {0} tried clone tokens at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
 				return;
 				
 			g.timeid = now
 			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
 			if s is None:
-				engine.logging.warning('Player {0} tried clone tokens at {1}/{2} by {4}, but the scene #{3} was not found'.format(player.name, self.parent.url, self.url, g.active, player.ip))
+				self.engine.logging.warning('Player {0} tried clone tokens at {1}/{2} by {4}, but the scene #{3} was not found'.format(player.name, self.parent.url, self.url, g.active, player.ip))
 				return;
 			
 			# iterate provided tokens
@@ -527,7 +527,7 @@ class GameCache(object):
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried to update token data at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
+				self.engine.logging.warning('Player {0} tried to update token data at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
 				return;
 			g.timeid = now
 			
@@ -560,13 +560,13 @@ class GameCache(object):
 		with db_session:
 			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried creating a tokens at {1}/{2}, but the game was not found'.format(player.name, self.parent.url, self.url))
+				self.engine.logging.warning('Player {0} tried creating a tokens at {1}/{2}, but the game was not found'.format(player.name, self.parent.url, self.url))
 				return
 			g.timeid = now
 			
 			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
 			if g is None:
-				engine.logging.warning('Player {0} tried creating a tokens at {1}/{2}, but the scene #{4} was not found'.format(player.name, self.parent.url, self.url, g.active))
+				self.engine.logging.warning('Player {0} tried creating a tokens at {1}/{2}, but the scene #{4} was not found'.format(player.name, self.parent.url, self.url, g.active))
 				return
 			
 			for k, url in enumerate(urls):
