@@ -7,10 +7,8 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import sys, os, pathlib, json
-from datetime import datetime
-
-from pony.orm import db_session
+import time, datetime, os, json
+import xlsxwriter
 
 from utils import PathApi
 
@@ -22,172 +20,24 @@ __licence__ = 'MIT'
 def formatBytes(b):
 	if b > 1024 * 1024:
 		return '{0} MiB  '.format(int(b / (1024*1024)))
-	if b > 1024:
-		return '{0} KiB  '.format(int(b / 1024))
-	return '{0} Bytes'.format(b)
+	else:
+		return '< 1 MiB'
 
-def disk_report(paths):
-	listing = list()
-	with db_session:
-		gms_path = paths.getGmsPath()
-		# query all GMs
-		for gm_url in os.listdir(gms_path):
-			report = dict()
-			report['name']  = '#{0}'.format(gm_url)
-			report['games'] = 0
-			total_sizes     = os.path.getsize(paths.getDatabasePath(gm_url))
-			total_files     = 1 # gm.db
-			games_path = paths.getGmsPath(gm_url)
-			# query all games by this GM
-			for game_url in os.listdir(games_path):
-				if not os.path.isdir(games_path / game_url):
-					continue
-				img_path = paths.getGamePath(gm_url, game_url)
-				imglist  = os.listdir(img_path)
-				imgsize  = 0
-				# query all images at this game
-				for f in imglist:
-					imgsize += os.path.getsize(img_path / f)
-				report['games'] += 1
-				total_files += len(imglist)
-				total_sizes += imgsize
-			report['total_files'] = total_files
-			report['total_sizes'] = total_sizes
-			listing.append(report)
-	return listing
-	
-def print_disk(listing):
-	out =  'GMs, Games, Files, Used Disk Space\n'
-	out += '\n   Space Used   | Number of Files |  Number of Games    | GM\n'
-	out += '-' * 80 + '\n'
-	games = 0 
-	sizes = 0
-	files = 0
-	# per GM
-	for gm in listing:
-		total_sizes = formatBytes(gm['total_sizes'])
-		while len(total_sizes) < 15:
-			total_sizes = ' ' + total_sizes
-		total_files = str(gm['total_files'])
-		while len(total_files) < 10:
-			total_files = ' ' + total_files
-		total_games = str(gm['games'])
-		while len(total_games) < 10:
-			total_games = ' ' + total_games
-		out += '{0} |{1} files |{2} games \t| {3}\n'.format(total_sizes, total_files, total_games, gm['name'])
-		
-		games += gm['games']
-		sizes += gm['total_sizes']
-		files += gm['total_files']
-	
-	# total
-	out += '=' * 5 + '~ TOTAL ~' + '=' * 65 + '\n'
-	
-	sizes = formatBytes(sizes)
-	while len(sizes) < 15:
-		sizes = ' ' + sizes
-	files = str(files)
-	while len(files) < 10:
-		files = ' ' + files
-	games = str(games)
-	while len(games) < 10:
-		games = ' ' + games
-	out += '{0} |{1} files |{2} games \t| {3} GMs\n'.format(sizes, files, games, len(listing))
-	
-	return out
+def getHour(stamp):
+	"""Hour"""
+	return datetime.datetime.fromtimestamp(stamp).hour
 
+def getWeekday(stamp):
+	"""Weekday"""
+	return datetime.datetime.fromtimestamp(stamp).weekday()
 
-# ---------------------------------------------------------------------
+def formatHour(h):
+	if h < 12:
+		return '{0}-{1} am'.format(h, h+1)
+	else:
+		return '{0}-{1} pm'.format(h-12, h-11)
 
-class Login(object):
-	
-	def __init__(self, is_gm, timeid, country, ip, num_players):
-		self.is_gm       = is_gm
-		self.timeid      = timeid
-		self.country     = country
-		self.ip          = ip
-		self.num_players = num_players
-		
-	def __repr__(self):
-		return '<Login|{0}|{1}|{2}|{3}|{4}>'.format(self.is_gm, self.timeid, self.country, self.ip, self.num_players)
-		
-	def getDatetime(self):
-		return datetime.fromtimestamp(self.timeid)
-
-def print_stats(title, data, key, func, rowfunc):
-	out = title + '\n'
-	out += '-' * len(title) + '\n'
-	# get total
-	total = 0
-	for h in data:
-		l = func(data[h][key])
-		if l > 0:
-			total += l
-	# print percentages
-	for h in data:
-		l = func(data[h][key])
-		if l > 0:
-			n = int(100 * l / total)
-			perc = '{0}'.format(n)
-			if len(perc) == 1:
-				perc = '  ' + perc
-			elif len(perc) == 2:
-				perc = ' ' + perc
-			out += ' {0}\t| {2}% {1} {3}\n'.format(rowfunc(h), '*' * n, perc, l)
-	out += 'Total: {0}\n'.format(total)
-	return out
-
-def stats_report(paths):
-	# parse stats from logfile
-	data = list()
-	fname = paths.getLogPath('stats')
-	with open(fname, 'r') as h:
-		content = h.read()
-		for line in content.split('\n'):
-			if line == '':
-				continue
-			data.append(Login(*json.loads(line)))
-	
-	# build statistics
-	per_hours    = dict()
-	per_country  = dict()
-	per_weekdays = dict()
-	for h in range(24):
-		per_hours[h] = {
-			'logins'  : 0,
-			'ips'     : set(),
-			'players' : 0
-		}
-	for d in range(7):
-		per_weekdays[d] = {
-			'logins'  : 0,
-			'ips'     : set(),
-			'players' : 0
-		}
-	
-	for l in data:
-		hour = l.getDatetime().hour
-		per_hours[hour]['logins'] += 1
-		per_hours[hour]['ips'].add(l.ip)
-		per_hours[hour]['players'] = max(per_hours[hour]['players'], l.num_players)
-		
-		if l.country not in per_country:
-			per_country[l.country] = {
-				'logins' : 0,
-				'ips'    : set()
-			}
-		per_country[l.country]['logins'] += 1
-		per_country[l.country]['ips'].add(l.ip)
-		
-		weekday = l.getDatetime().weekday()
-		per_weekdays[weekday]['logins'] += 1
-		per_weekdays[weekday]['ips'].add(l.ip)
-		per_weekdays[weekday]['players'] = max(per_weekdays[weekday]['players'], l.num_players)
-		  
-	return per_hours, per_country, per_weekdays
-
-
-def weekday2str(i):
+def formatWeekday(i):
 	if i == 0:
 		return 'Mon'
 	elif i == 1:
@@ -204,34 +54,278 @@ def weekday2str(i):
 		return 'Sun'
 
 
-if __name__ == '__main__':
-	paths = PathApi(appname='pyvtt', root=None)
-	
-	analysis = paths.root / 'analysis.txt'
-	
-	disk_analysis = disk_report(paths)
-	per_hours, per_country, per_weekdays = stats_report(paths)
-	
-	# create disk report
-	with open(analysis, 'w') as h:
-		h.write(print_disk(disk_analysis))
-		h.write('\n\n')
-		h.write(print_stats('Logins per Hour (UTC)', per_hours, 'logins', lambda k: k, lambda k: k))
-		h.write('\n\n')
-		h.write(print_stats('IPs per Hour (UTC)', per_hours, 'ips', lambda k: len(k), lambda k: k))
-		h.write('\n\n')
-		h.write(print_stats('Players per Hour (UTC)', per_hours, 'players', lambda k: k, lambda k: k))
-		h.write('\n\n')
-		h.write(print_stats('Logins per Weekday (UTC)', per_weekdays, 'logins', lambda k: k, weekday2str))
-		h.write('\n\n')
-		h.write(print_stats('IPs per Weekday (UTC)', per_weekdays, 'ips', lambda k: len(k), weekday2str))
-		h.write('\n\n')
-		h.write(print_stats('Players per Weekday (UTC)', per_weekdays, 'players', lambda k: k, weekday2str))
-		h.write('\n\n')
-		h.write(print_stats('Logins per Country', per_country, 'logins', lambda k: k, lambda k: k))
-		h.write('\n\n')
-		h.write(print_stats('IPs per Country', per_country, 'ips', lambda k: len(k), lambda k: k))
-	
-	print('Analysis written to {0}'.format(analysis))
+# ---------------------------------------------------------------------
 
+class GameDiskReport(object):
+	
+	def __init__(self, paths, gm_url, game_url):
+		self.url = game_url
+		
+		# query all images
+		p = paths.getGamePath(gm_url, game_url)
+		self.all_images = os.listdir(p)
+		
+		# query total size
+		self.size = 0
+		for fname in self.all_images:
+			self.size += os.path.getsize(p / fname)
+
+
+class GmDiskReport(object):
+	
+	def __init__(self, paths, gm_url):
+		self.url       = gm_url    
+		self.num_files = 1 # gm.db
+		self.size      = os.path.getsize(paths.getDatabasePath(gm_url))
+		
+		# query all games
+		self.games = list()
+		p = paths.getGmsPath(gm_url)
+		for game_url in os.listdir(p):
+			if os.path.isdir(p / game_url):
+				r = GameDiskReport(paths, gm_url, game_url)
+				self.num_files += len(r.all_images)
+				self.size      += r.size
+				self.games.append(r)
+		
+	def __call__(self, row, sheet):
+		sheet.write(row, 0, self.url)
+		sheet.write(row, 1, len(self.games))
+		sheet.write(row, 2, self.num_files)
+		sheet.write(row, 3, formatBytes(self.size))
+
+
+class FullDiskReport(object):
+	
+	def __init__(self, paths):
+		# query all GMs
+		self.gms       = list()
+		self.num_games = 0
+		self.num_files = 0
+		self.size      = 0
+		p = paths.getGmsPath()
+		for gm_url in os.listdir(p):
+			r = GmDiskReport(paths, gm_url)
+			self.num_games += len(r.games)
+			self.num_files += r.num_files
+			self.size      += r.size
+			self.gms.append(r)
+		
+	def __call__(self, doc):
+		align = doc.add_format({'align': 'center'})
+		title = doc.add_format({'align': 'center', 'bold' : True})
+		
+		# prepare new worksheet
+		sheet = doc.add_worksheet('Disk Report')
+		sheet.set_column(0, 0, 20, align)
+		sheet.set_column(1, 3, 15, align)
+		
+		# header
+		for col, caption in enumerate(['GM ID', 'Games', 'Files', 'Space']):
+			sheet.write(0, col, caption, title)
+		
+		# write report data
+		row = 1
+		for gm_report in self.gms:
+			gm_report(row, sheet)
+			row += 1
+		
+		# footer
+		sheet.write(row+1, 0, '{0} GMs'.format(len(self.gms)), title)
+		sheet.write(row+1, 1, '{0} Games'.format(self.num_games), title)
+		sheet.write(row+1, 2, '{0} Files'.format(self.num_files), title)
+		sheet.write(row+1, 3, formatBytes(self.size), title)
+
+
+class StatsReport(object):
+	
+	def __init__(self):
+		self.paths = PathApi(appname='pyvtt', root=None)
+		self.fname = self.paths.root / 'analysis.xlsx'
+		self.doc   = xlsxwriter.Workbook(self.fname)
+		
+		self.full_disk_report  = FullDiskReport(self.paths)
+		self.full_login_report = FullLoginReport(self.paths)
+		
+		self.full_disk_report(self.doc)
+		self.full_login_report(self.doc)
+		
+		self.doc.close()
+
+
+class LoginRecord(object):
+	
+	def __init__(self, is_gm, timeid, country, ip, num_players):
+		self.is_gm       = is_gm
+		self.timeid      = timeid
+		self.country     = country
+		self.ip          = ip
+		self.num_players = num_players
+
+
+class CountryLoginReport(object):
+	
+	def __init__(self, country):
+		self.country     = country
+		self.num_logins  = 0
+		self.ips         = set()
+		
+	def update(self, record):
+		self.num_logins += 1
+		self.ips.add(record.ip)
+		
+	def __call__(self, row, sheet, total_logins, total_ips):
+		sheet.write(row, 0, self.country)
+		sheet.write(row, 1, self.num_logins)
+		sheet.write(row, 2, len(self.ips))   
+		sheet.write(row, 3, self.num_logins / total_logins)
+		sheet.write(row, 4, len(self.ips) / total_ips)
+
+
+class PerCountryLoginReport(object):
+	
+	def __init__(self, records, since=0):
+		self.reports     = dict()
+		self.num_logins  = 0
+		self.ips         = set()
+		for r in records:
+			if r.timeid >= since:
+				self.num_logins += 1
+				self.ips.add(r.ip)
+				# create new report
+				if r.country not in self.reports:
+					self.reports[r.country] = CountryLoginReport(r.country)
+				# update with record
+				self.reports[r.country].update(r)
+		
+	def __call__(self, doc):
+		align = doc.add_format({'align': 'center'})
+		title = doc.add_format({'align': 'center', 'bold' : True})
+		perc  = doc.add_format({'align': 'center', 'num_format': '0.00" "%'})
+		
+		# prepare new worksheet
+		sheet = doc.add_worksheet('Logins by Country')
+		sheet.set_column(0, 2, 15, align)
+		sheet.set_column(3, 4, 10, perc)
+		
+		for col, caption in enumerate(['Country', 'Logins', 'IPs', 'Logins (%)', 'IPs (%)']):
+			sheet.write(0, col, caption, title)
+		
+		# write report data
+		row = 1
+		for country in self.reports:
+			self.reports[country](row, sheet, self.num_logins, len(self.ips))
+			row += 1
+		
+		# footer
+		sheet.write(row+1, 0, '{0} Countries'.format(len(self.reports)), title)
+		sheet.write(row+1, 1, '{0} Logins'.format(self.num_logins), title)
+		sheet.write(row+1, 2, '{0} IPs'.format(len(self.ips)), title)
+
+
+class TimestampLoginReport(object):
+	
+	def __init__(self, label):
+		self.label       = label
+		self.num_logins  = 0
+		self.num_players = 0
+		self.ips         = set()
+		
+	def update(self, record):
+		self.num_logins += 1
+		self.num_players = max(self.num_players, record.num_players)
+		self.ips.add(record.ip)
+		
+	def __call__(self, row, sheet, total_logins, total_ips):
+		sheet.write(row, 0, self.label)
+		sheet.write(row, 1, self.num_players)
+		sheet.write(row, 2, self.num_logins)
+		sheet.write(row, 3, len(self.ips))                 
+		sheet.write(row, 4, self.num_logins / total_logins)
+		sheet.write(row, 5, len(self.ips) / total_ips)
+		
+
+class PerTimestampLoginReport(object):
+	
+	def __init__(self, records, extract_func, print_func, since=0):
+		self.extract_func = extract_func # extract e.g. hour from timestamp
+		self.print_func   = print_func   # match e.g. 0 to Monday
+		self.reports      = dict()
+		self.num_logins   = 0
+		self.ips          = set()
+		for r in records:   
+			if r.timeid >= since:
+				self.num_logins += 1
+				self.ips.add(r.ip)
+				time_point = extract_func(r.timeid)
+				# create new report
+				if time_point not in self.reports:
+					self.reports[time_point] = TimestampLoginReport(print_func(time_point))
+				# update with record
+				self.reports[time_point].update(r)
+		
+	def __call__(self, doc, add_label=None):
+		align = doc.add_format({'align': 'center'})
+		title = doc.add_format({'align': 'center', 'bold' : True})
+		perc  = doc.add_format({'align': 'center', 'num_format': '0.00" "%'})
+		
+		# prepare new worksheet
+		label = 'Logins by {0}'.format(self.extract_func.__doc__)
+		if add_label is not None:
+			label += add_label
+		sheet = doc.add_worksheet(label)
+		sheet.set_column(0, 3, 15, align)
+		sheet.set_column(4, 5, 10, perc)
+		
+		for col, caption in enumerate([self.extract_func.__doc__, 'Active Players', 'Logins', 'IPs', 'Logins (%)', 'IPs (%)']):
+			sheet.write(0, col, caption, title)
+		
+		# write report data
+		max_row = 1
+		for time_point in self.reports:
+			current_row = time_point + 1
+			self.reports[time_point](current_row, sheet, self.num_logins, len(self.ips))
+			max_row = max(max_row, current_row)
+		
+		# footer                     
+		sheet.write(max_row+2, 2, '{0} Logins'.format(self.num_logins), title)
+		sheet.write(max_row+2, 3, '{0} IPs'.format(len(self.ips)), title)
+
+
+class FullLoginReport(object):
+	
+	def __init__(self, paths):
+		# parse stats from dedicated logfile
+		self.records = list()
+		with open(paths.getLogPath('stats'), 'r') as h:
+			content = h.read()
+			for line in content.split('\n'):
+				if line == '':
+					continue
+				args = json.loads(line)
+				self.records.append(LoginRecord(*args))
+		
+		# build statistics
+		self.per_country = PerCountryLoginReport(self.records)
+		self.per_hour    = PerTimestampLoginReport(self.records, getHour, formatHour)
+		self.per_weekday = PerTimestampLoginReport(self.records, getWeekday, formatWeekday)
+		
+		since = time.time() - 3600*24*7*4 # last 4 weeks
+		self.per_hour_month    = PerTimestampLoginReport(self.records, getHour, formatHour, since=since)
+		self.per_weekday_month = PerTimestampLoginReport(self.records, getWeekday, formatWeekday, since=since)
+		
+		since = time.time() - 3600*24
+		self.yesterday = PerTimestampLoginReport(self.records, getHour, formatHour, since=since)
+		
+	def __call__(self, doc):
+		self.per_country(doc)
+		self.per_hour(doc)
+		self.per_weekday(doc)
+		self.per_hour_month(doc, ' (4 weeks)')
+		self.per_weekday_month(doc, ' (4 weeks)')
+		self.yesterday(doc, ' (24 hours)')
+
+
+if __name__ == '__main__':
+	StatsReport()
 
