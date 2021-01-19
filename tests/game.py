@@ -297,6 +297,12 @@ class GameTest(EngineTest):
 		self.assertEqual(len(tokens), 1)
 		self.assertEqual(tokens.first().size, -1)
 		
+		# assert token's image exist
+		img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+		img_id = tokens.first().url.split('/')[-1]
+		img_fname = img_path / img_id
+		self.assertTrue(os.path.exists(img_fname))
+		
 	@db_session
 	def test_fromZip(self):
 		game = self.db.Game(url='foo', gm_url='url456')
@@ -342,5 +348,16 @@ class GameTest(EngineTest):
 			# order isn't important here
 			self.assertEqual(set([4, 8]), set([len(query1), len(query2)]))
 			
-			# @note: exact token data isn't tested here
+			# assert all images being there
+			new_img_path = self.engine.paths.getGamePath(game2.gm_url, game2.url)
+			for t in query1:
+				img_id = t.url.split('/')[-1]
+				img_fname = new_img_path / img_id
+				self.assertTrue(os.path.exists(img_fname))
+			for t in query2:
+				img_id = t.url.split('/')[-1]
+				img_fname = new_img_path / img_id
+				self.assertTrue(os.path.exists(img_fname))
+			
+			# @note: exact token data (position etc.) isn't tested here
 			
