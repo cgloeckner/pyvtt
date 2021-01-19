@@ -19,8 +19,11 @@ __licence__ = 'MIT'
 
 
 
-MAX_SCENE_WIDTH = 1000
+MAX_SCENE_WIDTH  = 1000
 MAX_SCENE_HEIGHT = 560
+
+MIN_TOKEN_SIZE   = 30
+MAX_TOKEN_SIZE   = 1000
 
 def createGmDatabase(engine, filename):
 	""" Creates a new database for with GM entities such as Tokens,
@@ -65,7 +68,7 @@ def createGmDatabase(engine, filename):
 				self.timeid = timeid
 			
 			if size != None:
-				self.size = size
+				self.size = min(MAX_TOKEN_SIZE, max(MIN_TOKEN_SIZE, size))
 				self.timeid = timeid
 				
 			if rotate != None:

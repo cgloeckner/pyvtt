@@ -28,8 +28,8 @@ class TokenTest(unittest.TestCase):
 		t = self.db.Token(scene=demo_scene, url='dummy', posx=200, posy=150, size=20, zorder=5, rotate=33.4, flipx=True)
 		
 		# moving token
-		t.update(timeid=124, pos=(90, 123))
-		self.assertEqual(t.timeid, 124)
+		t.update(timeid=100, pos=(90, 123))
+		self.assertEqual(t.timeid, 100)
 		self.assertEqual(t.posx, 90)
 		self.assertEqual(t.posy, 123)
 		self.assertEqual(t.size, 20)
@@ -38,11 +38,19 @@ class TokenTest(unittest.TestCase):
 		self.assertTrue(t.flipx)
 		self.assertFalse(t.locked)
 		
-		# todo: test moving outside
+		# cannot move outside canvas bounds
+		t.update(timeid=110, pos=(-1, -1))
+		self.assertEqual(t.posx, 0)
+		self.assertEqual(t.posy, 0)
+		t.update(timeid=111, pos=(orm.MAX_SCENE_WIDTH+1, orm.MAX_SCENE_HEIGHT+1))
+		self.assertEqual(t.posx, orm.MAX_SCENE_WIDTH)
+		self.assertEqual(t.posy, orm.MAX_SCENE_HEIGHT)
+		# move back to regular position
+		t.update(timeid=112, pos=(90, 123))
 		
 		# resizing token
-		t.update(timeid=125, size=39)
-		self.assertEqual(t.timeid, 125)
+		t.update(timeid=113, size=39)
+		self.assertEqual(t.timeid, 113)
 		self.assertEqual(t.posx, 90)
 		self.assertEqual(t.posy, 123)
 		self.assertEqual(t.size, 39)
@@ -50,6 +58,16 @@ class TokenTest(unittest.TestCase):
 		self.assertEqual(t.rotate, 33.4)
 		self.assertTrue(t.flipx)
 		self.assertFalse(t.locked)
+		
+		# cannot resize token with too small or too large value
+		t.update(timeid=114, size=orm.MIN_TOKEN_SIZE-1)
+		self.assertEqual(t.size, orm.MIN_TOKEN_SIZE)
+		t.update(timeid=115, size=orm.MAX_TOKEN_SIZE+1)
+		self.assertEqual(t.size, orm.MAX_TOKEN_SIZE)
+		t.update(timeid=116, size=-1)
+		self.assertEqual(t.size, orm.MIN_TOKEN_SIZE)
+		# resoue back to regular size
+		t.update(timeid=117, size=39)
 		
 		# layering token
 		t.update(timeid=126, zorder=10)
