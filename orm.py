@@ -278,7 +278,7 @@ def createGmDatabase(engine, filename):
 			)
 			for t in game_tokens:
 				tokens.append({
-					"url"    : t.url.split('/')[-1], # remove game url (will not persist!)
+					"url"    : int(t.url.split('/')[-1].split('.png')[0]), # only take image id
 					"posx"   : t.posx,
 					"posy"   : t.posy,
 					"zorder" : t.zorder,
@@ -395,8 +395,11 @@ def createGmDatabase(engine, filename):
 					# create tokens for that scene
 					for token_id in s["tokens"]:
 						token_data = data["tokens"][token_id]
+						url = token_data['url']
+						if isinstance(url, str): # backwards compatibility
+							url = url.split('.png')[0]
 						t = db.Token(                                
-							scene=scene, url=game.getImageUrl(token_data['url']),
+							scene=scene, url=game.getImageUrl(url),
 							posx=token_data['posx'], posy=token_data['posy'],
 							zorder=token_data['zorder'], size=token_data['size'],
 							rotate=token_data['rotate'], flipx=token_data['flipx'],
