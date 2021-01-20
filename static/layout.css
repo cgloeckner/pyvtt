@@ -254,6 +254,8 @@ div.horizdropdown > img {
 div.horizdropdown > div.gmhint {
 	position: absolute;
 	width: 100%;
+	
+	z-index: 10px;
 }
 
 div.horizdropdown > div.gmhint > img#gmhint {
@@ -631,7 +633,7 @@ div.battlemap > canvas#battlemap {
 
 div.battlemap > div#tokenbar {
 	position: absolute;
-	visibility: none;
+	visibility: hidden;
 	
 	user-select: none;
 }
