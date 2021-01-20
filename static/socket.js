@@ -334,8 +334,8 @@ function start(gmname, url, playername, color) {
 	});
 	
 	// drop zone implementation (using canvas) --> also as players :) 
-	battlemap.addEventListener('dragover',	onDrag);
-	battlemap.addEventListener('drop', 		onDrop);
+	document.addEventListener('dragover',	onDrag);
+	document.addEventListener('drop', 		onDrop);
 	
 	// desktop controls
 	battlemap.addEventListener('mousedown',	onGrab);

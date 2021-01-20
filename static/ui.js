@@ -442,7 +442,6 @@ function onDrop(event) {
 		processData: false,
 		success: function(response) {
 			// reset uploadqueue
-			$('#popup').hide();
 			$('#uploadqueue').val("");
 			
 			// load images if necessary
@@ -459,6 +458,8 @@ function onDrop(event) {
 				'size' : default_token_size,
 				'urls' : response
 			});
+			
+			$('#popup').hide();
 		}, error: function(response, msg) {
 			handleError(response);
 		}
@@ -804,6 +805,7 @@ function limitViewportPosition() {
 /// Event handle for moving a grabbed token (if not locked)
 function onMove(event) {
 	pickCanvasPos(event);
+	
 	var battlemap = $('#battlemap');
 	
 	if (event.buttons == 1 && !space_bar) {
