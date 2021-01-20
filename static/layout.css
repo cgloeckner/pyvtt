@@ -470,6 +470,8 @@ div.rollbox > span > span.maxani {
 	top: -106px;
 	left: -20px;
 	
+	z-index: 5;
+	
 	user-select: none;
 	pointer-events: none;
 	display: inline-block;
