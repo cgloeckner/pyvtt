@@ -20,7 +20,7 @@
 				<p>PLAYER COLOR</p>
 				<input type="color" name="playercolor" id="playercolor" value="{{playercolor}}">
 				
-				<p><input type="submit" value="JOIN" /></p>
+				<p><input type="submit" id="loginbtn" value="JOIN" /></p>
 			</form> 
 		</div> 
 		<hr />

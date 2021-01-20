@@ -37,8 +37,8 @@
 			<img src="/static/locked.png" id="tokenLock" draggable="false" onClick="onLock();" />
 			<img src="/static/top.png" id="tokenTop" draggable="false" onClick="onTop();" />
 			<img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="onBottom();" />
-			<img src="/static/resize.png" id="tokenResize" onMouseDown="onResizeClick(event);" onDragStart="onStartResize();" onDragEnd="onQuitAction();"/>
-			<img src="/static/rotate.png" id="tokenRotate" onMouseDown="onRotateClick(event);" onDragStart="onStartRotate();" onDragEnd="onQuitAction();" />
+			<img src="/static/resize.png" id="tokenResize" draggable="false" onMouseDown="onResizeClick(event);" onDragStart="onStartResize();" onDragEnd="onQuitAction();"/>
+			<img src="/static/rotate.png" id="tokenRotate" draggable="false" onMouseDown="onRotateClick(event);" onDragStart="onStartRotate();" onDragEnd="onQuitAction();" />
 		</div>
 	</div>
 

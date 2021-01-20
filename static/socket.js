@@ -237,25 +237,25 @@ function login(event, gmname, url, websocket_url, as_gm) {
 				
 			} else {
 				$('#historydrop').hide();
+				$('#loginbtn').hide();
 				
-				// hide login screen
-				$('#game').fadeIn(1000, 0.0);
-				
-				$('#login').fadeOut(1000, 0.0, function() {
-					$('#login').hide();
-					
+				$('#game').fadeIn(500, 0.0, function() {
 					// show players
 					$('#mapfooter').css('display', 'block');
-					$('#mapfooter').animate({ opacity: '+=1.0' }, 2000);
+					$('#mapfooter').animate({ opacity: '+=1.0' }, 1000);
 					
-					// show dicebox
-					$('#dicebox').css('display', 'block');
-					$('#dicebox').animate({ opacity: '+=1.0' }, 2000);
+					// show dice
+					$('#dicebox').css('display', 'block'); 
+					$('#dicebox').animate({ opacity: '+=1.0' }, 500);
 					
 					$('#version')[0].innerHTML = 'v' + version;
 					
-					$('#popup').hide();
 					onWindowResize();
+				});
+				
+				$('#login').fadeOut(500, 0.0, function() {
+					$('#login').hide();
+					$('#popup').hide();
 				});
 				
 				resetViewport();
@@ -301,7 +301,8 @@ function login(event, gmname, url, websocket_url, as_gm) {
 						d[0].innerHTML = '';
 					});
 					
-					// return to login screen
+					// return to login screen     
+					$('#loginbtn').show();
 					$('#login').fadeIn(1000, 0.0, function() {
 						showError('CONNECTION LOST');
 					});

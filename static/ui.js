@@ -249,6 +249,8 @@ function onDrag(event) {
 	event.preventDefault();
 	pickCanvasPos(event);
 	
+	console.log(event);
+	
 	if (primary_id != 0) {
 		if (drag_action == 'resize') {
 			onTokenResize();
@@ -820,7 +822,6 @@ function onMove(event) {
 	var battlemap = $('#battlemap');
 	var w = battlemap.width();
 	var h = battlemap.height();
-	console.log(w, h);
 	
 	if (event.buttons == 1 && !space_bar) {
 		// left button clicked
@@ -1131,7 +1132,7 @@ function onLock() {
 }
 
 /// Event handle for resize a token
-function onStartResize() {  
+function onStartResize() {
 	drag_dice = null;
 	drag_players = false;
 	
@@ -1476,15 +1477,6 @@ function onPlayerOrder(direction) {
 
 /// Event handle for window resize
 function onWindowResize(event) {
-	/*
-	// vertical align game content
-	var content = $('#gamecontent'); 
-	content.css('margin-top', '0px');
-	var top = (window.innerHeight - content.innerHeight()) / 2;
-	console.log(window.innerHeight, content.innerHeight(), top);
-	content.css('margin-top', top);
-	*/
-	
 	// refresh default dice positions
 	var total_dice_height = 50 * 7; // 7 dice
 	var starty = window.innerHeight / 2 - total_dice_height / 2;

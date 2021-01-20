@@ -215,13 +215,13 @@ div.horizdropdown {
 	width: calc(100% - 10px);
 	
 	overflow-x: hidden; 
-	z-index: 1;
+	z-index: 10;
 }
 
 div.horizdropdown > div#gmdrop {
 	display: inline-block;
 	position: absolute;
-	z-index: 5;
+	z-index: 15;
 	
 	top: -122px;
 	
@@ -266,7 +266,6 @@ div.horizdropdown > div.gmhint > img#gmhint {
 	width: 32px; 
 	
 	filter: none;
-	z-index: 10;
 }
 
 div.horizdropdown > div.gmhint > img#gmhint:hover {
@@ -329,15 +328,15 @@ div#dicebox {
 div.dice {
 	user-select: none;
 	position: absolute;
+	
+	z-index: 1;  
 }
 
 div.dice > div {
 	position: relative;
 }
 
-div.dice > div >img {    
-	z-index: 3;
-	
+div.dice > div > img {
 	user-select: none;
 	
 	width: 48px;
@@ -345,7 +344,7 @@ div.dice > div >img {
 	padding: 1px;
 }
 
-div.dice > div >img:hover {
+div.dice > div > img:hover {
 	cursor: grab;
 	
 	filter: drop-shadow(1px 1px 10px white) 
@@ -354,8 +353,8 @@ div.dice > div >img:hover {
 	bottom: 5px;
 }
 
-div.dice > div >img:active {
-	cursor: grabbing;
+div.dice > div > img:active {
+	cursor: grabbing;   
 }
 
 .shake {
@@ -400,15 +399,15 @@ div.rollbox {
 	
 	position: absolute;
 	
-	z-index: 0;
-	 
 	display: inline-flex;
 	flex-direction: row; 
+	
+	z-index: 1;
 }
 
 div.rollbox > span {
 	position: relative;
-	width: 54px;
+	width: 54px; 
 }
 
 div.rollbox > span > span.roll { 
@@ -428,7 +427,7 @@ div.rollbox > span > span.roll {
 	
 	background-color: rgba(255, 255, 255, 0.66);
 	
-	border-radius: 10px;
+	border-radius: 10px;   
 }
 
 div.rollbox > span > span.roll > span.result {
@@ -489,9 +488,10 @@ div.rollbox > span > span.maxani {
 /* --- Players list ------------------------------------------------- */
 
 div#players {  
-	position: absolute;
+	position: absolute; 
 	left: 50%;
 	bottom: 0px;
+	
 	height: 54px;
 	transform: translate(-50%, 0);
 	 
@@ -571,7 +571,6 @@ div.warning {
 	top: 25%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	z-index: 20;
 	
 	color: red;
 	font-size: xxx-large;
@@ -596,8 +595,6 @@ div.warning {
 }
 
 div.battlemap {
-	padding-top: 25px;
-	
 	position: absolute;
 	top: 50%;
 	left: 50%;
@@ -610,7 +607,7 @@ div.battlemap > div#draghint {
 	left: 50%;
 	transform: translate(-50%, -50%);
 	
-	z-index: 50;
+	z-index: 9000;
 	
 	font-size: large;
 	color: white;
@@ -624,7 +621,6 @@ div.battlemap > div#draghint {
 div.battlemap > canvas#battlemap {
 	background-color: rgba(100, 100, 100, 0.25);
 	border: 1px solid black;
-	z-index: 1;
 	
 	display: block;
 	margin-left: auto;
