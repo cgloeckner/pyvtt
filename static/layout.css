@@ -572,7 +572,7 @@ div#login {
 
 div.warning {
 	position: absolute;
-	top: 25%;
+	top: 5%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 	
@@ -583,7 +583,7 @@ div.warning {
 	-webkit-text-stroke-width: 2px;
 	-webkit-text-stroke-color: black;
 	
-	animation: blink 1s linear infinite;
+	animation: blink 2s linear infinite;
 } 
 
 @keyframes blink {
