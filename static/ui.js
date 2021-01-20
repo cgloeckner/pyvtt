@@ -507,12 +507,7 @@ function updateTokenbar() {
 		}
 		
 		// position tokenbar centered to token
-		var box = canvas[0].getBoundingClientRect();
-		
-		$('#tokenbar').css('left', box.left + 'px');
-		$('#tokenbar').css('top',  box.top  + 'px');
-		$('#tokenbar').css('visibility', '');
-		
+		var canvas_pos = canvas.position()
 		var x = token.posx;
 		var y = token.posy;
 		  
@@ -533,6 +528,10 @@ function updateTokenbar() {
 		// consider canvas scale (by windows size)  
 		x *= canvas_scale;
 		y *= canvas_scale;
+		
+		$('#tokenbar').css('left', canvas_pos.left + 'px');
+		$('#tokenbar').css('top',  canvas_pos.top  + 'px');
+		$('#tokenbar').css('visibility', '');
 		
 		$.each(token_icons, function(index, name) { 
 			// calculate position based on angle
