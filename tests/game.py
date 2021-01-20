@@ -121,12 +121,18 @@ class GameTest(EngineTest):
 		self.assertEqual(old_id, new_id)
 		self.assertEqual(url, new_url)
 		
+	def test_getIdFromUrl(self):
+		self.assertEqual(self.db.Game.getIdFromUrl('/foo/bar/3.17.png'), 3)
+		self.assertEqual(self.db.Game.getIdFromUrl('/0.'), 0)
+		with self.assertRaises(ValueError):
+			self.db.Game.getIdFromUrl('/a.')
+		
 	@db_session
 	def test_getAbandonedImages(self):
 		game = self.db.Game(url='foo', gm_url='url456')
 		game.postSetup()
 		
-		# create two empty files (to mimic uploaded images)
+		# create empty files (to mimic uploaded images)
 		img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
 		id1 = game.getNextId()
 		p1 = img_path / '{0}.png'.format(id1)
@@ -134,17 +140,26 @@ class GameTest(EngineTest):
 		id2 = game.getNextId()
 		p2 = img_path / '{0}.png'.format(id2)
 		p2.touch()
+		id3 = game.getNextId()
+		p3 = img_path / '{0}.png'.format(id3)
+		p3.touch()
+		id4 = game.getNextId()
+		p4 = img_path / '{0}.png'.format(id4)
+		p4.touch()
 		
-		# assoign second file to token
+		# assign second file to token
 		demo_scene = self.db.Scene(game=game)
 		url = game.getImageUrl(id2)
 		self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
 		self.db.commit()
 		
-		# expect first file to be abandoned
+		# expect 1st and 3rd file to be abandoned
+		# @NOTE: 2nd is assigned, 4th is the last (keeps next id consistent)
 		abandoned = game.getAbandonedImages()
 		self.assertIn(str(p1), abandoned)
 		self.assertNotIn(str(p2), abandoned)
+		self.assertIn(str(p3), abandoned)
+		self.assertNotIn(str(p4), abandoned)
 		
 	@db_session
 	def test_cleanup(self):

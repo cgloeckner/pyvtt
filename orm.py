@@ -214,7 +214,11 @@ def createGmDatabase(engine, filename):
 				
 				# propagate remote path (query image_id by checksum)
 				return self.getImageUrl(engine.checksums[self.getUrl()][new_md5])
-
+		
+		@staticmethod
+		def getIdFromUrl(url):
+			return int(url.split('/')[-1].split('.')[0])
+		
 		def getAbandonedImages(self):
 			# check all existing images
 			game_root = engine.paths.getGamePath(self.gm_url, self.url)
@@ -223,9 +227,15 @@ def createGmDatabase(engine, filename):
 				all_images = self.getAllImages()
 			
 			abandoned = list()
+			last_id = self.getNextId() - 1
 			for image_id in all_images:
+				this_id = int(image_id.split('.')[0])
+				if this_id == last_id:
+					# keep this image to avoid next id to cause
+					# unexpected browser cache behavior
+					continue
 				# create url (ignore png-extension due to os.listdir)
-				url = self.getImageUrl(image_id.split('.png')[0])
+				url = self.getImageUrl(this_id)
 				# check for any tokens
 				t = db.Token.select(lambda t: t.url == url).first()
 				if t is None:
