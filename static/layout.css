@@ -255,7 +255,7 @@ div.horizdropdown > div.gmhint {
 	position: absolute;
 	width: 100%;
 	
-	z-index: 10px;
+	z-index: 10;
 }
 
 div.horizdropdown > div.gmhint > img#gmhint {
