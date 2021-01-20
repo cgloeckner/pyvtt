@@ -572,9 +572,10 @@ div#login {
 
 div.warning {
 	position: absolute;
-	top: 5%;
+	top: 0px;
 	left: 50%;
 	transform: translate(-50%, -50%);
+	z-index: 100;
 	
 	color: red;
 	font-size: xxx-large;
