@@ -73,6 +73,7 @@ class PlayerCache(object):
 			'ROLL'   : self.parent.onRoll,
 			'SELECT' : self.parent.onSelect,
 			'RANGE'  : self.parent.onRange,
+			'CREATE' : self.parent.onCreate,
 			'CLONE'  : self.parent.onClone,
 			'UPDATE' : self.parent.onUpdate,
 			'DELETE' : self.parent.onDelete,
@@ -551,8 +552,14 @@ class GameCache(object):
 		
 		self.broadcastTokenUpdate(player, now)  
 		
-	def onCreate(self, pos, urls, default_size):
+	def onCreate(self, player, data):
 		""" Handle player creating tokens. """
+		# fetch token data
+		posx = data['posx']
+		posy = data['posy']
+		size = data['size']
+		urls = json.loads(data['urls'])
+		
 		# create tokens
 		now = time.time()
 		n = len(urls)
@@ -571,9 +578,9 @@ class GameCache(object):
 			
 			for k, url in enumerate(urls):
 				# create tokens in circle
-				x, y = self.parent.db.Token.getPosByDegree(pos, k, n)
+				x, y = self.parent.db.Token.getPosByDegree((posx, posy), k, n)
 				t = self.parent.db.Token(scene=s.id, timeid=now, url=url,
-					size=default_size, posx=x, posy=y)
+					size=size, posx=x, posy=y)
 				
 				self.parent.db.commit()
 				

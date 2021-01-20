@@ -585,6 +585,53 @@ def accept_websocket():
 		# note: this keeps the websocket open during the session
 		engine.cache.listen(socket)
 
+@post('/<gmurl>/<url>/upload')
+def post_image_upload(gmurl, url):
+	# load GM from cache
+	gm_cache = engine.cache.getFromUrl(gmurl)
+	if gm_cache is None:
+		abort(404)
+	
+	# load game from GM's database to upload files
+	urls  = list()
+	game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+	if game is None:
+		abort(404)
+	
+	# load active scene
+	scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
+	if scene is None:
+		abort(404)
+	
+	background_set = scene.backing is not None
+	# query file sizes
+	files = request.files.getall('file[]')
+	for i, handle in enumerate(files):
+		max_filesize = engine.file_limit['token']
+		if i == 0 and not background_set:
+			max_filesize = engine.file_limit['background']
+		# determine file size
+		size = engine.getSize(handle)
+		# check filesize       
+		if size > max_filesize * 1024 * 1024:
+			engine.logging.warning('Player tried to an image to a game by {0} but tried to cheat on the filesize'.format(engine.getClientIp(request), url))
+			abort(404)
+	
+	# upload images
+	for handle in files:
+		url = game.upload(handle)
+		urls.append(url)
+		engine.logging.access('Image upload {0} by {1}'.format(url, engine.getClientIp(request)))
+	
+	# return urls
+	# @NOTE: request was non-JSON to allow upload, so urls need to be encoded
+	return json.dumps(urls)
+	
+	# create tokens and broadcast creation
+	#game_cache = gm_cache.get(game)
+	#game_cache.onCreate((posx, posy), urls, default_size)
+
+"""
 @post('/<gmurl>/<url>/upload/<posx:int>/<posy:int>/<default_size:int>')
 def post_image_upload(gmurl, url, posx, posy, default_size):
 	# load GM from cache
@@ -626,7 +673,7 @@ def post_image_upload(gmurl, url, posx, posy, default_size):
 	# create tokens and broadcast creation
 	game_cache = gm_cache.get(game)
 	game_cache.onCreate((posx, posy), urls, default_size)
-
+"""
 
 # --- SHARDS ----------------------------------------------------------
 

@@ -247,6 +247,17 @@ function updateToken(data, force=false) {
 	}
 }
 
+/// Start loading image into cache
+function loadImage(url) {
+	if (images[url] == null) {
+		if (!quiet) {
+			console.info('Loading image ' + url);
+		}
+		images[url] = new Image();
+		images[url].src = url;
+	}
+}
+
 /// Draws a single token (show_ui will show the selection box around it)
 function drawToken(token, color, is_background) {
 	var canvas = $('#battlemap');
@@ -284,10 +295,7 @@ function drawToken(token, color, is_background) {
 	}
 	
 	// cache image if necessary
-	if (!images.includes(token.url)) {
-		images[token.url] = new Image();
-		images[token.url].src = token.url;
-	}
+	loadImage(token.url);
 	
 	var sizes = getActualSize(token, canvas[0].width, canvas[0].height);
 	sizes[0] *= canvas_scale;

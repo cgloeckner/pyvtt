@@ -146,10 +146,11 @@ def createGmDatabase(engine, filename):
 		def makeMd5s(self):
 			data = dict()
 			root = engine.paths.getGamePath(self.gm_url, self.url)
-			for fname in self.getAllImages():
+			all_images = self.getAllImages()
+			for fname in all_images:
 				with open(root / fname, "rb") as handle:
 					md5 = engine.getMd5(handle)
-					data[md5] = fname
+					data[md5] = int(fname.split('.')[0])
 			engine.checksums[self.getUrl()] = data
 		
 		def postSetup(self):
@@ -186,8 +187,8 @@ def createGmDatabase(engine, filename):
 
 		def getFileSize(self, url):
 			game_root  = engine.paths.getGamePath(self.gm_url, self.url)
-			image_id   = url.split('/')[-1]
-			local_path = os.path.join(game_root, image_id)
+			img_fname  = url.split('/')[-1]
+			local_path = os.path.join(game_root, img_fname)
 			return os.path.getsize(local_path)
 
 		def upload(self, handle):

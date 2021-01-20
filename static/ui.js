@@ -434,7 +434,7 @@ function onDrop(event) {
 	var f = new FormData($('#uploadform')[0]);
 	
 	$.ajax({
-		url: '/' + gm_name + '/' + game_url + '/upload/' + mouse_x + '/' + mouse_y + '/' + default_token_size,
+		url: '/' + gm_name + '/' + game_url + '/upload',
 		type: 'POST',
 		data: f,
 		contentType: false,
@@ -444,6 +444,21 @@ function onDrop(event) {
 			// reset uploadqueue
 			$('#popup').hide();
 			$('#uploadqueue').val("");
+			
+			// load images if necessary
+			var urls = JSON.parse(response);
+			$.each(urls, function(index, url) {
+				loadImage(url);
+			});
+			
+			// trigger token creation via websocket
+			writeSocket({
+				'OPID' : 'CREATE',
+				'posx' : mouse_x,
+				'posy' : mouse_y,
+				'size' : default_token_size,
+				'urls' : response
+			});
 		}, error: function(response, msg) {
 			handleError(response);
 		}
