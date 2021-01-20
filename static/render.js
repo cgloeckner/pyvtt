@@ -11,16 +11,16 @@ var viewport = null;
 
 function resetViewport() {
 	viewport = {
-		'x'    : 0, // in canvas scale
-		'y'    : 0,
+		'x'    : base_width / 2, // left in [0, 1000]
+		'y'    : base_width * canvas_ratio / 2,
 		'zoom' : 1.0
 	};
 	
 	displayZoom();
 };
 
-var ZOOM_MOVE_SPEED   = 25.0;
-var ZOOM_FACTOR_SPEED = 1.05;
+var ZOOM_MOVE_SPEED   = 20.0;
+var ZOOM_FACTOR_SPEED = 1.035;
 
 function displayZoom() {
 	$('#zoom')[0].innerHTML = 'Zoom: ' + parseInt(viewport.zoom*100) + '%';
@@ -397,8 +397,11 @@ function drawScene() {
 	
 	context.translate(sizes[0] * rel_x, sizes[1] * rel_y);
 	context.scale(viewport.zoom, viewport.zoom);
+	context.translate(
+		(base_width / 2                - viewport.x) * canvas_scale,
+		(base_width * canvas_ratio / 2 - viewport.y) * canvas_scale
+	);
 	context.translate(-sizes[0] * rel_x, -sizes[1] * rel_y);
-	context.translate(-viewport.x, -viewport.y);
 	
 	// draw tokens
 	if (background != null) {

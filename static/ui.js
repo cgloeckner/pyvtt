@@ -513,38 +513,47 @@ function updateTokenbar() {
 		$('#tokenbar').css('top',  box.top  + 'px');
 		$('#tokenbar').css('visibility', '');
 		
+		var x = token.posx;
+		var y = token.posy;
+		  
+		// consider viewport position
+		x -= viewport.x;
+		y -= viewport.y;
+		x += base_width / 2;
+		y += base_width * canvas_ratio / 2;
+		
+		// consider viewport zooming (centered)
+		x -= base_width / 2;
+		y -= base_width / 2 * canvas_ratio;
+		x *= viewport.zoom;
+		y *= viewport.zoom;    
+		x += base_width / 2;
+		y += base_width / 2 * canvas_ratio;
+		
+		// consider canvas scale (by windows size)  
+		x *= canvas_scale;
+		y *= canvas_scale;
+		
 		$.each(token_icons, function(index, name) { 
-			// consider canvas scale (by windows size)  
-			var x = token.posx * canvas_scale;
-			var y = token.posy * canvas_scale;
-			
-			// consider viewport position
-			x -= viewport.x;
-			y -= viewport.y;
-			
-			// consider viewport zooming (centered)
-			x -= canvas[0].width  / 2;
-			y -= canvas[0].height / 2;
-			x *= viewport.zoom;
-			y *= viewport.zoom;    
-			x += canvas[0].width  / 2;
-			y += canvas[0].height / 2;
-			
 			// calculate position based on angle
 			var degree = 360.0 / token_icons.length;
-			var s = Math.sin((-90.0 + index * degree) * 3.14 / 180);
-			var c = Math.cos((-90.0 + index * degree) * 3.14 / 180);
+			var s = Math.sin((-index * degree) * 3.14 / 180);
+			var c = Math.cos((-index * degree) * 3.14 / 180);
 			
-			x += size * c * 0.8;
-			y += size * s * 0.8;
+			var radius = size * 0.8 * canvas_scale;
+			var icon_x = x - radius * s;
+			var icon_y = y - radius * c;
 			
 			// force position to be on the screen
-			x = Math.max(0, Math.min(canvas.width(), x));
-			y = Math.max(0, Math.min(canvas.height(), y));
+			icon_x = Math.max(0, Math.min(canvas.width(), icon_x));
+			icon_y = Math.max(0, Math.min(canvas.height(), icon_y));
 			
 			// place icon
-			$('#token' + name).css('left', x - 12 + 'px');
-			$('#token' + name).css('top',  y - 12 + 'px');
+			var icon = $('#token' + name);
+			var w = icon.width();
+			var h = icon.height();
+			icon.css('left', icon_x - w / 2 + 'px');
+			icon.css('top',  icon_y - h / 2 + 'px');
 		});
 		
 		// handle locked mode
@@ -586,22 +595,24 @@ function pickCanvasPos(event) {
 	var box = canvas.getBoundingClientRect();
 	mouse_x = mouse_x - box.left;
 	mouse_y = mouse_y - box.top;
-	     
-	// consider viewport zooming (centered)
-	mouse_x -= canvas.width  / 2;
-	mouse_y -= canvas.height / 2;
-	mouse_x /= viewport.zoom;
-	mouse_y /= viewport.zoom;    
-	mouse_x += canvas.width  / 2;
-	mouse_y += canvas.height / 2;
-	
-	// consider viewport position
-	mouse_x += viewport.x;
-	mouse_y += viewport.y;
 	
 	// consider canvas scale (by windows size)   
 	mouse_x /= canvas_scale;
 	mouse_y /= canvas_scale;
+	
+	// consider viewport zooming (centered)
+	mouse_x -= base_width / 2;
+	mouse_y -= base_width * canvas_ratio / 2;
+	mouse_x /= viewport.zoom;
+	mouse_y /= viewport.zoom;     
+	mouse_x += base_width / 2;
+	mouse_y += base_width * canvas_ratio / 2;
+	
+	// consider (centered) viewport position
+	mouse_x += viewport.x;
+	mouse_y += viewport.y;
+	mouse_x -= base_width / 2;
+	mouse_y -= base_width * canvas_ratio / 2;
 	
 	mouse_x = parseInt(mouse_x);
 	mouse_y = parseInt(mouse_y);
@@ -786,20 +797,21 @@ function onRelease() {
 
 /// Limit viewport's position
 function limitViewportPosition() {
-	var dom_canvas = $('#battlemap')[0];
-	var width  = dom_canvas.width;
-	var height = dom_canvas.height;
-	var view_w = width;
-	var view_h = height;
+	var canvas = $('#battlemap')[0];
+	var width  = base_width;
+	var height = base_width * canvas_ratio;
 	
-	var min_x = -view_w / 2;
-	var max_x =  view_w / 2;
+	// calculate visible area
+	var visible_w = width  / viewport.zoom;
+	var visible_h = height / viewport.zoom;
 	
-	var min_y = -view_h / 2;
-	var max_y =  view_h / 2;
+	var min_x = visible_w / 2; 
+	var min_y = visible_h / 2;
+	var max_x = width  - min_x;
+	var max_y = height - min_y;
 	
 	viewport.x = Math.max(min_x, Math.min(max_x, viewport.x));
-	viewport.y  = Math.max(min_y, Math.min(max_y, viewport.y));
+	viewport.y = Math.max(min_y, Math.min(max_y, viewport.y));
 }
 
 /// Event handle for moving a grabbed token (if not locked)
@@ -807,6 +819,9 @@ function onMove(event) {
 	pickCanvasPos(event);
 	
 	var battlemap = $('#battlemap');
+	var w = battlemap.width();
+	var h = battlemap.height();
+	console.log(w, h);
 	
 	if (event.buttons == 1 && !space_bar) {
 		// left button clicked
@@ -838,9 +853,16 @@ function onMove(event) {
 						var tx = mouse_x + dx;
 						var ty = mouse_y + dy;
 						
-						// limit pos to screen
-						tx = Math.max(0, Math.min(tx, base_width));
-						ty = Math.max(0, Math.min(ty, base_width * canvas_ratio));
+						// limit pos to screen (half size as padding)
+						// @NOTE: padding isn't enough (see: resize, rotation), maybe it's even desired not do pad it
+						/*var size = getActualSize(token, battlemap.width(), battlemap.height());
+						var padding_x = parseInt(size[0] / 2);
+						var padding_y = parseInt(size[1] / 2);
+						*/
+						var padding_x = 0;
+						var padding_y = 0;
+						tx = Math.max(padding_x, Math.min(tx, base_width                - padding_x));
+						ty = Math.max(padding_y, Math.min(ty, base_width * canvas_ratio - padding_y));
 						
 						if (client_side_prediction) {
 							// client-side predict (immediately place it there)
@@ -906,24 +928,31 @@ function onWheel(event) {
 		var show = false;
 		var canvas = $('#battlemap');
 		
+		// default: zoom using viewport's center
+		var reference_x = viewport.x;
+		var reference_y = viewport.y;
+		
 		// modify zoom
 		if (event.deltaY > 0) {
 			// zoom out
 			viewport.zoom /= ZOOM_FACTOR_SPEED;
-			if (viewport.zoom < 0.5) {
-				viewport.zoom = 0.5;
+			if (viewport.zoom < 1.0) {
+				viewport.zoom = 1.0;
 			}
 			show = true;
 		} else if (event.deltaY < 0) {
 			// zoom in
 			viewport.zoom *= ZOOM_FACTOR_SPEED;
 			show = true;
+			
+			// zoom using mouse position
+			reference_x = mouse_x;
+			reference_y = mouse_y;
 		}
 		
-		// calculate centering pos by mouse
-		var rel_x = mouse_x / base_width - 0.5;
-		var rel_y = mouse_y / (base_width * canvas_ratio) - 0.5;
-		
+		// calculate view's position
+		var rel_x = reference_x / base_width;
+		var rel_y = reference_y / (base_width * canvas_ratio);
 		var x = base_width * rel_x;
 		var y = base_width * canvas_ratio * rel_y;
 		
@@ -952,7 +981,6 @@ function onWheel(event) {
 		}
 		
 		limitViewportPosition();
-		console.log(viewport);
 		
 		displayZoom();
 	}
@@ -975,7 +1003,6 @@ function rollDice(sides) {
 
 function toggleDiceHistory() {
 	var history = $('#dicehistory');
-	console.log(history.css('display'));
 	
 	if (history.css('display') == 'none') {
 		history.fadeIn(500);
