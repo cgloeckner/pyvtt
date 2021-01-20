@@ -533,7 +533,7 @@ function updateTokenbar() {
 		
 		$('#tokenbar').css('left', canvas_pos.left + 'px');
 		$('#tokenbar').css('top',  canvas_pos.top  + 'px');
-		$('#tokenbar').css('visibility', '');
+		$('#tokenbar').css('visibility', 'visible');
 		
 		$.each(token_icons, function(index, name) { 
 			// calculate position based on angle
