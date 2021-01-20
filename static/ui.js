@@ -398,7 +398,7 @@ function onDrop(event) {
 	event.preventDefault();
 	pickCanvasPos(event);
 	
-	if (drag_dice != null || drag_action != '') {
+	if (drag_dice != null || drag_action != '' || drag_players) {
 		// prevent dragging dice or players be seen as image upload
 		return;
 	}
