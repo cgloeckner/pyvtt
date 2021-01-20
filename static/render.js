@@ -19,14 +19,11 @@ function resetViewport() {
 	displayZoom();
 };
 
+var ZOOM_MOVE_SPEED   = 25.0;
+var ZOOM_FACTOR_SPEED = 1.05;
+
 function displayZoom() {
 	$('#zoom')[0].innerHTML = 'Zoom: ' + parseInt(viewport.zoom*100) + '%';
-}
-
-/// Modify given position considering viewport
-function considerViewport(x, y, width, height) {
-	
-	return [x, y];
 }
 
 var interpolation_speed = 25; // speed for interpolating between two positions
@@ -394,10 +391,13 @@ function drawScene() {
 	
 	context.save();
 	
-	// handle viewport
-	context.translate(sizes[0] / 2, sizes[1] / 2);
+	// handle viewport (zoom where mouse is)
+	var rel_x = 0.5;
+	var rel_y = 0.5;
+	
+	context.translate(sizes[0] * rel_x, sizes[1] * rel_y);
 	context.scale(viewport.zoom, viewport.zoom);
-	context.translate(-sizes[0] / 2, -sizes[1] / 2);
+	context.translate(-sizes[0] * rel_x, -sizes[1] * rel_y);
 	context.translate(-viewport.x, -viewport.y);
 	
 	// draw tokens

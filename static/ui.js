@@ -904,19 +904,55 @@ function onMove(event) {
 function onWheel(event) {
 	if (zooming) {
 		var show = false;
+		var canvas = $('#battlemap');
+		
 		// modify zoom
 		if (event.deltaY > 0) {
 			// zoom out
-			viewport.zoom /= 1.05;
+			viewport.zoom /= ZOOM_FACTOR_SPEED;
 			if (viewport.zoom < 0.5) {
 				viewport.zoom = 0.5;
 			}
 			show = true;
 		} else if (event.deltaY < 0) {
 			// zoom in
-			viewport.zoom *= 1.05;
+			viewport.zoom *= ZOOM_FACTOR_SPEED;
 			show = true;
 		}
+		
+		// calculate centering pos by mouse
+		var rel_x = mouse_x / base_width - 0.5;
+		var rel_y = mouse_y / (base_width * canvas_ratio) - 0.5;
+		
+		var x = base_width * rel_x;
+		var y = base_width * canvas_ratio * rel_y;
+		
+		// shift viewport position slightly towards desired direction
+		if (x > viewport.x) {
+			viewport.x += ZOOM_MOVE_SPEED;
+			if (viewport.x > x) {
+				viewport.x = x;
+			}
+		} else if (x < viewport.x) {
+			viewport.x -= ZOOM_MOVE_SPEED;
+			if (viewport.x < x) {
+				viewport.x = x;
+			}
+		}
+		if (y > viewport.y) {
+			viewport.y += ZOOM_MOVE_SPEED;
+			if (viewport.y > y) {
+				viewport.y = y;
+			}
+		} else if (y < viewport.y) {
+			viewport.y -= ZOOM_MOVE_SPEED;
+			if (viewport.y < y) {
+				viewport.y = y;
+			}
+		}
+		
+		limitViewportPosition();
+		console.log(viewport);
 		
 		displayZoom();
 	}
