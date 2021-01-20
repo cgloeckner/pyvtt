@@ -20,7 +20,7 @@ function resetViewport() {
 };
 
 var ZOOM_MOVE_SPEED   = 20.0;
-var ZOOM_FACTOR_SPEED = 1.035;
+var ZOOM_FACTOR_SPEED = 1.05;
 
 function displayZoom() {
 	$('#zoom')[0].innerHTML = 'Zoom: ' + parseInt(viewport.zoom*100) + '%';

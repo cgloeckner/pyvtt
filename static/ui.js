@@ -958,23 +958,23 @@ function onWheel(event) {
 		
 		// shift viewport position slightly towards desired direction
 		if (x > viewport.x) {
-			viewport.x += ZOOM_MOVE_SPEED;
+			viewport.x += ZOOM_MOVE_SPEED / viewport.zoom;
 			if (viewport.x > x) {
 				viewport.x = x;
 			}
 		} else if (x < viewport.x) {
-			viewport.x -= ZOOM_MOVE_SPEED;
+			viewport.x -= ZOOM_MOVE_SPEED / viewport.zoom;
 			if (viewport.x < x) {
 				viewport.x = x;
 			}
 		}
 		if (y > viewport.y) {
-			viewport.y += ZOOM_MOVE_SPEED;
+			viewport.y += ZOOM_MOVE_SPEED / viewport.zoom;
 			if (viewport.y > y) {
 				viewport.y = y;
 			}
 		} else if (y < viewport.y) {
-			viewport.y -= ZOOM_MOVE_SPEED;
+			viewport.y -= ZOOM_MOVE_SPEED / viewport.zoom;
 			if (viewport.y < y) {
 				viewport.y = y;
 			}
