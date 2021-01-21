@@ -501,7 +501,7 @@ def createMainDatabase(engine):
 			# remove GM from engine's cache
 			engine.cache.remove(self)
 			
-		def refreshSession(self, response, request):
+		def refreshSession(self, response):
 			""" Refresh session id. """
 			now = time.time()
 			self.timeid = now

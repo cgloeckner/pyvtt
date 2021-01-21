@@ -94,7 +94,7 @@ def gm_patreon():
 		# create new session for already existing GM
 		gm.sid = session['sid']
 		
-	gm.refreshSession(response, request)
+	gm.refreshSession(response)
 	
 	engine.logging.access('GM name="{0}" url={1} session refreshed using patreon by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
 	
@@ -184,7 +184,7 @@ def get_game_list():
 		redirect('/')
 	
 	# refresh session
-	gm.refreshSession(response, request)
+	gm.refreshSession(response)
 	
 	engine.logging.access('GM name="{0}" url={1} session refreshed by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
 	

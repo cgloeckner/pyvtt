@@ -9,9 +9,11 @@ License: MIT (see LICENSE for details)
 
 import unittest
 
+# testing orm.py
 from tests.token import TokenTest
 from tests.scene import SceneTest
 from tests.game import GameTest
+from tests.gm import GmTest
 
 from tests.example import ExampleTest
 
@@ -30,6 +32,7 @@ def suite():
 	register(suite, TokenTest)
 	register(suite, SceneTest)
 	register(suite, GameTest)
+	register(suite, GmTest)
 	#
 	register(suite, ExampleTest)
 	return suite
