@@ -23,7 +23,11 @@ from tests.fancy_url_api import FancyUrlApiTest
 # testing engine.py
 from tests.engine import EngineTest
 
-from tests.example import ExampleTest
+# testing cache.py
+from tests.engine_cache import EngineCacheTest
+
+
+# ---------------------------------------------------------------------
 
 def register(suite, testcase):
 	""" Register all test methods of the given testcase class
@@ -48,8 +52,9 @@ def suite():
 	register(suite, FancyUrlApiTest)
 	
 	register(suite, EngineTest)
-	#
-	register(suite, ExampleTest)
+	
+	register(suite, EngineCacheTest)
+	
 	return suite
 
 if __name__ == '__main__':

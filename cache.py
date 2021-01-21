@@ -837,6 +837,8 @@ class GmCache(object):
 	def insert(self, game):
 		url = game.url
 		with self.lock:
+			if url in self.games:
+				raise KeyError
 			self.games[url] = GameCache(self.engine, self, game)
 			return self.games[url]
 		
@@ -881,6 +883,8 @@ class EngineCache(object):
 	def insert(self, gm):
 		url = gm.url
 		with self.lock:
+			if url in self.gms:
+				raise KeyError
 			self.gms[url] = GmCache(self.engine, gm)
 			return self.gms[url]
 		

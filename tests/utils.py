@@ -9,6 +9,8 @@ License: MIT (see LICENSE for details)
 
 import unittest, webtest, sys, tempfile, pathlib, bottle
 
+from geventwebsocket.exceptions import WebSocketError
+
 import vtt
 from utils import PathApi
 from engine import Engine
@@ -36,3 +38,30 @@ class EngineBaseTest(unittest.TestCase):
 		del self.engine
 		del self.tmpdir
 
+
+# ---------------------------------------------------------------------
+
+class SocketDummy(object):
+	""" Dummy class for working with a socket.
+	"""
+	
+	def __init__(self):
+		self.read_buffer  = list()
+		self.write_buffer = list()
+		
+		self.closed = False
+		
+	def receive(self):
+		if self.closed:
+			raise WebSocketError('SocketDummy is closed')
+		return self.read_buffer.pop(0)
+		
+	def send(self, s):
+		if self.closed:
+			raise WebSocketError('SocketDummy is closed')
+		self.write_buffer.append(s)
+		
+	def close(self):
+		if self.closed:
+			raise WebSocketError('SocketDummy is closed')
+		self.closed = True
