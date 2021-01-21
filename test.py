@@ -20,6 +20,9 @@ from tests.path_api import PathApiTest
 from tests.logging_api import LoggingApiTest
 from tests.fancy_url_api import FancyUrlApiTest
 
+# testing engine.py
+from tests.engine import EngineTest
+
 from tests.example import ExampleTest
 
 def register(suite, testcase):
@@ -43,6 +46,8 @@ def suite():
 	register(suite, PathApiTest)
 	register(suite, LoggingApiTest)
 	register(suite, FancyUrlApiTest)
+	
+	register(suite, EngineTest)
 	#
 	register(suite, ExampleTest)
 	return suite
@@ -54,7 +59,8 @@ if __name__ == '__main__':
 	untested = [
 		'utils/EmailApi',
 		'utils/PatreonApi',
-		'utils/ErrorReporter'
+		'utils/ErrorReporter',
+		'server/VttServer'
 	]
 	
 	print('')

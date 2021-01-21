@@ -14,9 +14,9 @@ from pony.orm import db_session
 
 import orm
 
-from tests.utils import EngineTest
+from tests.utils import EngineBaseTest
 
-class GameTest(EngineTest):
+class GameTest(EngineBaseTest):
 	
 	def setUp(self):
 		super().setUp()

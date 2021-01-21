@@ -14,9 +14,9 @@ from pony.orm import db_session
 
 import orm
 
-from tests.utils import EngineTest
+from tests.utils import EngineBaseTest
 
-class GmTest(EngineTest):
+class GmTest(EngineBaseTest):
 	
 	@db_session
 	def test_postSetup(self):
@@ -86,7 +86,6 @@ class GmTest(EngineTest):
 			# so only 15 rolls remain in total 
 			all_rolls = gm_cache.db.Roll.select()
 			self.assertEqual(len(all_rolls), 15)
-			
 		
 	def test_preDelete(self):
 		with db_session:

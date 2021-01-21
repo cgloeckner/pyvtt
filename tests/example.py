@@ -7,9 +7,9 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-from tests.utils import EngineTest
+from tests.utils import EngineBaseTest
 
-class ExampleTest(EngineTest):
+class ExampleTest(EngineBaseTest):
 	
 	def test_landingpage(self):
 		# expect redirect to login
