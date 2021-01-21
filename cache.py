@@ -270,6 +270,7 @@ class GameCache(object):
 					# close socket (will stop thread as well)
 					#with p.lock:# note: atm deadlocking
 					p.socket.close()
+				del self.players[name]
 				return name
 			self.consolidateIndices()
 		
@@ -282,8 +283,7 @@ class GameCache(object):
 				if self.players[name].isOnline():
 					# close socket (will stop thread as well)
 					p.socket.close()
-				else:
-					del self.players[name]
+				del self.players[name]
 			self.players = dict()
 		
 	def broadcast(self, data):
