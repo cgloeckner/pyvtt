@@ -147,7 +147,7 @@ class Engine(object):
 			self.logging.info('Overwriting connections to localhost')
 		elif self.local_gm or self.hosting['domain'] == '':
 			# overwrite domain with public ip
-			self.hosting['domain'] = requests.get('https://api.ipify.org').text
+			self.hosting['domain'] = self.getPublicIp()
 			self.logging.info('Overwriting Domain by Public IP: {0}'.format(self.hosting['domain']))
 		
 		if self.local_gm:
@@ -244,6 +244,15 @@ class Engine(object):
 			return request.environ.get('HTTP_X_FORWARDED_FOR')
 		else:
 			return request.environ.get('REMOTE_ADDR')
+		
+	def getCountryFromIp(self, ip):
+		d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(ip)).text)
+		if 'countryCode' in d:
+			return d['countryCode'].lower()
+		return '?' # fallback case
+		
+	def getPublicIp(self):
+		return requests.get('https://api.ipify.org').text
 		
 	@staticmethod
 	def getMd5(handle):

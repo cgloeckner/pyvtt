@@ -9,7 +9,7 @@ License: MIT (see LICENSE for details)
 
 from pony.orm import db_session
 
-import cache
+import cache, orm
 
 from tests.utils import EngineBaseTest
 
@@ -21,7 +21,7 @@ class GmCacheTest(EngineBaseTest):
 		with db_session:
 			gm = self.engine.main_db.GM(name='user123', url='foo', sid='123456')
 			gm.postSetup()
-			self.cache = self.engine.get(gm)
+			self.cache = self.engine.cache.get(gm)
 		
 		# create GM database
 		self.db = orm.createGmDatabase(engine=self.engine, filename=':memory:')
@@ -91,3 +91,6 @@ class GmCacheTest(EngineBaseTest):
 		with self.assertRaises(KeyError):
 			self.cache.remove(dummy_gm)
 		
+		# can re-insert game
+		game_cache = self.cache.insert(game1)
+		self.assertIsNotNone(game_cache)

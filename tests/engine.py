@@ -55,6 +55,8 @@ class EngineTest(EngineBaseTest):
 		argv.append('--quiet')
 		self.engine = engine.Engine(argv=argv, pref_dir=self.root)
 		
+		self.monkeyPatch()
+		
 	def test_run(self):
 		print('\nEngine.run is not tested')
 		
@@ -117,6 +119,12 @@ class EngineTest(EngineBaseTest):
 		settings['hosting']['socket'] = '/path/to/socket' 
 		self.reloadEngine(settings=settings)
 		self.assertEqual(self.engine.getClientIp(dummy_request), '5.6.7.8')
+		
+	def test_getCountryFromIp(self):
+		print('\nEngine.getCountryFromIp() is not tested')
+		
+	def test_getPublicIp(self):
+		print('\nEngine.getPublicIp() is not tested')
 		
 	def test_getMd5(self):
 		print('\nEngine.getMd5() is not tested')

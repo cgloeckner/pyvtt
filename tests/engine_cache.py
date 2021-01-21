@@ -85,6 +85,10 @@ class EngineCacheTest(EngineBaseTest):
 		dummy_gm = DummyGm('more-crap')
 		with self.assertRaises(KeyError):
 			cache.remove(dummy_gm)
+			
+		# can re-insert gm
+		gm_cache = cache.insert(gm1)
+		self.assertIsNotNone(gm_cache)
 		
 	def test_listen(self):
 		print('\nEngineCache.listen() is not tested')

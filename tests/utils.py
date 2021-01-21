@@ -32,6 +32,13 @@ class EngineBaseTest(unittest.TestCase):
 		self.engine = Engine(argv=['--quiet'], pref_dir=self.root)
 		self.app    = webtest.TestApp(self.engine.app)
 		
+		self.monkeyPatch()
+		
+	def monkeyPatch(self):
+		# monkey-patch engine
+		self.engine.getPublicIp = lambda: '?.?.?.?'
+		self.engine.getCountryFromIp = lambda ip: 'unknown'
+		
 	def tearDown(self):
 		# unload engine
 		del self.app

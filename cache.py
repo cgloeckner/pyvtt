@@ -55,11 +55,7 @@ class PlayerCache(object):
 		
 		# fetch country from ip
 		self.ip       = self.engine.getClientIp(request)
-		d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(self.ip)).text)
-		if 'countryCode' in d:
-			self.country = d['countryCode'].lower()
-		else:
-			self.country = '?'
+		self.country  = self.engine.getCountryFromIp(self.ip)
 		
 		# add login to stats
 		login_data = [self.is_gm, time.time(), self.country, self.ip, PlayerCache.instance_count]
@@ -200,7 +196,7 @@ class GameCache(object):
 			self.next_id += 1
 			return ret
 		
-	def consolidateIndices(self):
+	def rebuildIndices(self):
 		""" This one fixes the player indices by removing gaps.
 		This is run when a player is inserted or removed (including
 		kicked).
@@ -220,7 +216,7 @@ class GameCache(object):
 			if name in self.players and self.players[name].isOnline():
 				raise KeyError
 			self.players[name] = PlayerCache(self.engine, self, name, color, is_gm)
-			self.consolidateIndices()
+			self.rebuildIndices()
 			return self.players[name]
 		
 	def get(self, name):
@@ -257,7 +253,7 @@ class GameCache(object):
 	def remove(self, name):
 		with self.lock:
 			del self.players[name]
-			self.consolidateIndices()
+			self.rebuildIndices()
 		
 	# --- websocket implementation ------------------------------------
 		
@@ -272,7 +268,7 @@ class GameCache(object):
 					p.socket.close()
 				del self.players[name]
 				return name
-			self.consolidateIndices()
+			self.rebuildIndices()
 		
 	def disconnectAll(self):
 		""" Closes all sockets. """

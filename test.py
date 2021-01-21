@@ -25,6 +25,8 @@ from tests.engine import EngineTest
 
 # testing cache.py
 from tests.engine_cache import EngineCacheTest
+from tests.gm_cache import GmCacheTest
+from tests.game_cache import GameCacheTest
 
 
 # ---------------------------------------------------------------------
@@ -54,6 +56,8 @@ def suite():
 	register(suite, EngineTest)
 	
 	register(suite, EngineCacheTest)
+	register(suite, GmCacheTest) 
+	register(suite, GameCacheTest)
 	
 	return suite
 
