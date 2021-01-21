@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import unittest, os, pathlib, tempfile, zipfile, json
+import os, pathlib, tempfile, zipfile, json
 
 from bottle import FileUpload
 from pony.orm import db_session

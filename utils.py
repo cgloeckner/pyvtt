@@ -90,6 +90,7 @@ class PathApi(object):
 # ---------------------------------------------------------------------
 
 # Email API for error notification
+# @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class EmailApi(object):
 	
 	def __init__(self, engine, **data):
@@ -138,6 +139,7 @@ class EmailApi(object):
 
 # ---------------------------------------------------------------------
 
+# @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class PatreonApi(object):
 	
 	def __init__(self, host_callback, **data):

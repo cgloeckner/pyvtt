@@ -15,6 +15,10 @@ from tests.scene import SceneTest
 from tests.game import GameTest
 from tests.gm import GmTest
 
+# testing utils.py
+from tests.path_api import PathApiTest
+from tests.logging_api import LoggingApiTest
+
 from tests.example import ExampleTest
 
 def register(suite, testcase):
@@ -29,10 +33,14 @@ def suite():
 	""" Create the entire test suite.
 	"""
 	suite = unittest.TestSuite()
+	
 	register(suite, TokenTest)
 	register(suite, SceneTest)
 	register(suite, GameTest)
 	register(suite, GmTest)
+	
+	register(suite, PathApiTest)
+	register(suite, LoggingApiTest)
 	#
 	register(suite, ExampleTest)
 	return suite
@@ -40,3 +48,11 @@ def suite():
 if __name__ == '__main__':
 	runner = unittest.TextTestRunner()
 	runner.run(suite())
+	
+	untested = ['utils/EmailApi', 'utils/PatreonApi']
+	
+	print('')
+	print('REMINDER: The following classes are not tested automatically:')
+	for s in untested:
+		print('\t{0}'.format(s))
+	print('Make sure to test them manually')

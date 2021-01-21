@@ -21,7 +21,7 @@ class EngineTest(unittest.TestCase):
 		root        = pathlib.Path(self.tmpdir.name)
 		
 		# pregenerate paths api for dummyfiles            
-		paths = PathApi(appname='pyvtt', root=root)
+		paths = PathApi(appname='unittest', root=root)
 		for w in ['verbs', 'adjectives', 'nouns']:
 			with open(paths.getFancyUrlPath() / '{0}.txt'.format(w), 'w') as h:
 				h.write('demo')
@@ -34,4 +34,5 @@ class EngineTest(unittest.TestCase):
 		# unload engine
 		del self.app
 		del self.engine
+		del self.tmpdir
 
