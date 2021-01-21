@@ -249,8 +249,6 @@ function onDrag(event) {
 	event.preventDefault();
 	pickCanvasPos(event);
 	
-	console.log(event);
-	
 	if (primary_id != 0) {
 		if (drag_action == 'resize') {
 			onTokenResize();
