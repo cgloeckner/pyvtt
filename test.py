@@ -18,6 +18,7 @@ from tests.gm import GmTest
 # testing utils.py
 from tests.path_api import PathApiTest
 from tests.logging_api import LoggingApiTest
+from tests.fancy_url_api import FancyUrlApiTest
 
 from tests.example import ExampleTest
 
@@ -41,6 +42,7 @@ def suite():
 	
 	register(suite, PathApiTest)
 	register(suite, LoggingApiTest)
+	register(suite, FancyUrlApiTest)
 	#
 	register(suite, ExampleTest)
 	return suite
@@ -49,7 +51,11 @@ if __name__ == '__main__':
 	runner = unittest.TextTestRunner()
 	runner.run(suite())
 	
-	untested = ['utils/EmailApi', 'utils/PatreonApi']
+	untested = [
+		'utils/EmailApi',
+		'utils/PatreonApi',
+		'utils/ErrorReporter'
+	]
 	
 	print('')
 	print('REMINDER: The following classes are not tested automatically:')

@@ -294,10 +294,11 @@ class LoggingApi(object):
 
 # ---------------------------------------------------------------------
 
+# @NOTE: this class is not covered in the unit tests but during integration test
 class ErrorReporter(object):
 
 	def __init__(self, engine):
-		self.engine     = engine
+		self.engine = engine
 		
 	def getStacktrace(self):
 		# fetch exception traceback
