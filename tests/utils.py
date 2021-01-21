@@ -7,8 +7,9 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import unittest, webtest, sys, tempfile, pathlib, bottle
+import unittest, webtest, sys, tempfile, pathlib, json
 
+import bottle
 from geventwebsocket.exceptions import WebSocketError
 
 import vtt
@@ -57,16 +58,29 @@ class SocketDummy(object):
 		self.write_buffer = list()
 		
 		self.closed = False
+		self.block  = True
 		
 	def receive(self):
 		if self.closed:
 			raise WebSocketError('SocketDummy is closed')
-		return self.read_buffer.pop(0)
+		# block if buffer empty
+		while self.block and len(self.read_buffer) == 0:
+			time.sleep(0.01)
+		# yield buffer element
+		if len(self.read_buffer) > 0:
+			return self.read_buffer.pop(0)
+		return None
+		
+	def push_receive(self, data):
+		self.read_buffer.append(json.dumps(data))
 		
 	def send(self, s):
 		if self.closed:
 			raise WebSocketError('SocketDummy is closed')
 		self.write_buffer.append(s)
+		
+	def pop_send(self):
+		return json.loads(self.write_buffer.pop(0))
 		
 	def close(self):
 		if self.closed:

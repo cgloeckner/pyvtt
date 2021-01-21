@@ -46,7 +46,7 @@ class PlayerCache(object):
 		self.parent   = parent # parent cache object
 		self.name     = name
 		self.color    = color
-		self.uuid     = uuid.uuid1().hex # used for HTML DOM id
+		self.uuid     = uuid.uuid4().hex # used for HTML DOM id
 		self.selected = list()
 		self.index    = parent.getNextId() # used for ordering players in the UI
 		self.is_gm    = is_gm # whether this player is the GM or not
@@ -257,37 +257,6 @@ class GameCache(object):
 		
 	# --- websocket implementation ------------------------------------
 		
-	def disconnect(self, uuid):
-		""" Close single socket. """
-		with self.lock:
-			for name in self.players:
-				p = self.players[name]
-				if p.uuid == uuid:
-					# close socket (will stop thread as well)
-					#with p.lock:# note: atm deadlocking
-					p.socket.close()
-				del self.players[name]
-				return name
-			self.rebuildIndices()
-		
-	def disconnectAll(self):
-		""" Closes all sockets. """
-		with self.lock:
-			for name in self.players:
-				p = self.players[name]
-				#with p.lock: # note: atm deadlocking
-				if self.players[name].isOnline():
-					# close socket (will stop thread as well)
-					p.socket.close()
-				del self.players[name]
-			self.players = dict()
-		
-	def broadcast(self, data):
-		""" Broadcast given data to all clients. """
-		with self.lock:
-			for name in self.players:
-				self.players[name].write(data)
-		
 	def login(self, player):
 		""" Handle player login. """
 		# notify player about all players and  latest rolls
@@ -340,6 +309,84 @@ class GameCache(object):
 			'indices' : update
 		});
 		
+	def logout(self, player):
+		""" Handle player logout. """
+		# broadcast logout to all players
+		self.broadcast({
+			'OPID' : 'QUIT',
+			'name' : player.name,
+			'uuid'  : player.uuid
+		})
+		
+		# remove player
+		try:
+			self.remove(player.name)
+		except KeyError:
+			# @NOTE: player was kicked
+			pass
+		
+	def disconnect(self, uuid):
+		""" Close single socket. """
+		with self.lock:
+			for name in self.players:
+				p = self.players[name]
+				if p.uuid == uuid:
+					# close socket (will stop thread as well)
+					#with p.lock:# note: atm deadlocking
+					p.socket.close()
+				del self.players[name]
+				return name
+			self.rebuildIndices()
+		
+	def disconnectAll(self):
+		""" Closes all sockets. """
+		with self.lock:
+			for name in self.players:
+				p = self.players[name]
+				#with p.lock: # note: atm deadlocking
+				if self.players[name].isOnline():
+					# close socket (will stop thread as well)
+					p.socket.close()
+			self.players = dict()
+		
+	def broadcast(self, data):
+		""" Broadcast given data to all clients. """
+		with self.lock:
+			for name in self.players:
+				self.players[name].write(data)
+		
+	def broadcastTokenUpdate(self, player, since):
+		""" Broadcast updated tokens. """
+		# fetch all changed tokens
+		all_data = list()    
+		
+		now = time.time()
+		with db_session:
+			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				self.engine.logging.warning('A token update broadcast could not be performed at {0}/{1} by {2}, because the game was not found'.format(self.parent.url, self.url, self.engine.getClientIp(request)))
+				return;
+			g.timeid = now
+			
+			for t in self.parent.db.Token.select(lambda t: t.scene.id == g.active and t.timeid >= since):
+				tmp = t.to_dict()
+				tmp['uuid'] = player.uuid
+				all_data.append(tmp)
+		
+		# broadcast update
+		self.broadcast({
+			'OPID'    : 'UPDATE',
+			'tokens'  : all_data
+		});
+		
+	def broadcastSceneSwitch(self, game):
+		""" Broadcast scene switch. """
+		# collect all tokens for the given scene
+		refresh_data = self.fetchRefresh(game.active)
+		
+		# broadcast switch
+		self.broadcast(refresh_data);
+
 	def fetchRefresh(self, scene_id):
 		""" Performs a full refresh on all tokens. """  
 		tokens = list()
@@ -363,22 +410,6 @@ class GameCache(object):
 			'tokens'     : tokens,
 			'background' : background_id
 		}
-		
-	def logout(self, player):
-		""" Handle player logout. """
-		# broadcast logout to all players
-		self.broadcast({
-			'OPID' : 'QUIT',
-			'name' : player.name,
-			'uuid'  : player.uuid
-		})
-		
-		# remove player
-		try:
-			self.remove(player.name)
-		except KeyError:
-			# @NOTE: player was kicked
-			pass
 		
 	def onPing(self, player, data):
 		""" Handle player pinging the server. """
@@ -765,38 +796,6 @@ class GameCache(object):
 				# broadcast scene switch
 				self.broadcastSceneSwitch(g) 
 		
-	def broadcastTokenUpdate(self, player, since):
-		""" Broadcast updated tokens. """
-		# fetch all changed tokens
-		all_data = list()    
-		
-		now = time.time()
-		with db_session:
-			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
-			if g is None:
-				self.engine.logging.warning('A token update broadcast could not be performed at {0}/{1} by {2}, because the game was not found'.format(self.parent.url, self.url, self.engine.getClientIp(request)))
-				return;
-			g.timeid = now
-			
-			for t in self.parent.db.Token.select(lambda t: t.scene.id == g.active and t.timeid >= since):
-				tmp = t.to_dict()
-				tmp['uuid'] = player.uuid
-				all_data.append(tmp)
-		
-		# broadcast update
-		self.broadcast({
-			'OPID'    : 'UPDATE',
-			'tokens'  : all_data
-		});
-		
-	def broadcastSceneSwitch(self, game):
-		""" Broadcast scene switch. """
-		# collect all tokens for the given scene
-		refresh_data = self.fetchRefresh(game.active)
-		
-		# broadcast switch
-		self.broadcast(refresh_data);
-
 
 # ---------------------------------------------------------------------
 
