@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import unittest, webtest, sys, tempfile, pathlib, json
+import unittest, webtest, sys, tempfile, pathlib, json, time
 
 import bottle
 from geventwebsocket.exceptions import WebSocketError
