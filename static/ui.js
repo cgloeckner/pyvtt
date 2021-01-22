@@ -744,8 +744,8 @@ function onRelease() {
 			if (!t.locked) {
 				changes.push({
 					'id'   : id,
-					'posx' : t.newx,
-					'posy' : t.newy
+					'posx' : parseInt(t.newx),
+					'posy' : parseInt(t.newy)
 				});
 			}
 		});
@@ -872,8 +872,8 @@ function onMove(event) {
 						
 						changes.push({
 							'id'   : id,
-							'posx' : tx,
-							'posy' : ty
+							'posx' : parseInt(tx),
+							'posy' : parseInt(ty)
 						});
 					}
 				});
