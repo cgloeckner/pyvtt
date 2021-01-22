@@ -629,7 +629,7 @@ def post_image_upload(gmurl, url):
 	
 	# create tokens and broadcast creation
 	#game_cache = gm_cache.get(game)
-	#game_cache.onCreate((posx, posy), urls, default_size)
+	#game_cache.onCreateToken((posx, posy), urls, default_size)
 
 """
 @post('/<gmurl>/<url>/upload/<posx:int>/<posy:int>/<default_size:int>')
@@ -672,7 +672,7 @@ def post_image_upload(gmurl, url, posx, posy, default_size):
 	
 	# create tokens and broadcast creation
 	game_cache = gm_cache.get(game)
-	game_cache.onCreate((posx, posy), urls, default_size)
+	game_cache.onCreateToken((posx, posy), urls, default_size)
 """
 
 # --- SHARDS ----------------------------------------------------------

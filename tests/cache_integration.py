@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import time
+import time, copy
 
 from pony.orm import db_session
 
@@ -257,7 +257,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
-		player_cache3 = game_cache.insert('carlie', 'green', False)
+		player_cache3 = game_cache.insert('carlos', 'green', False)
 		player_cache3.socket = socket3
 		
 		# update some tokens in active scene
@@ -299,7 +299,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
-		player_cache3 = game_cache.insert('carlie', 'green', False)
+		player_cache3 = game_cache.insert('carlos', 'green', False)
 		player_cache3.socket = socket3
 		
 		with db_session:
@@ -330,7 +330,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
-		player_cache3 = game_cache.insert('carlie', 'green', False)
+		player_cache3 = game_cache.insert('carlos', 'green', False)
 		player_cache3.socket = socket3
 		
 		# fetch refresh data
@@ -393,7 +393,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
-		player_cache3 = game_cache.insert('carlie', 'green', False)
+		player_cache3 = game_cache.insert('carlos', 'green', False)
 		player_cache3.socket = socket3
 		
 		# trigger roll different dice and expect ROLLs
@@ -430,7 +430,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
-		player_cache3 = game_cache.insert('carlie', 'green', False)
+		player_cache3 = game_cache.insert('carlos', 'green', False)
 		player_cache3.socket = socket3
 		
 		# trigger selection and expect SELECT broadcast
@@ -448,6 +448,10 @@ class CacheIntegrationTest(EngineBaseTest):
 		self.assertEqual(answer1['selected'], player_cache1.selected)
 		# expect player's selection being updated
 		self.assertEqual(player_cache1.selected, selected)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
 		
 		# trigger selection reste and expect SELECT broadcast  
 		selected = list()
@@ -477,7 +481,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
-		player_cache3 = game_cache.insert('carlie', 'green', False)
+		player_cache3 = game_cache.insert('carlos', 'green', False)
 		player_cache3.socket = socket3
 		
 		# place some tokens for query
@@ -528,6 +532,10 @@ class CacheIntegrationTest(EngineBaseTest):
 		#self.assertIn(at_top.id,    player_cache1.selected)
 		#self.assertIn(at_bottom.id, player_cache1.selected)
 		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
 		# trigger range query on empty space
 		query = {
 			'adding' : False,
@@ -546,6 +554,10 @@ class CacheIntegrationTest(EngineBaseTest):
 		
 		self.assertEqual(answer1['OPID'], 'SELECT')
 		self.assertEqual(len(player_cache1.selected), 0)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
 		
 		# trigger adding range query on empty space
 		player_cache1.selected = [145634]  
@@ -568,6 +580,10 @@ class CacheIntegrationTest(EngineBaseTest):
 		self.assertEqual(len(player_cache1.selected), 1)
 		self.assertIn(145634, player_cache1.selected)
 		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
 		# trigger adding range query on regular space
 		query = {
 			'adding' : True,
@@ -589,5 +605,464 @@ class CacheIntegrationTest(EngineBaseTest):
 		self.assertIn(145634,    player_cache1.selected)
 		self.assertIn(inside.id, player_cache1.selected)
 		
-	# @TODO: next: test_onClone
-
+	def test_onOrder(self):
+		socket1 = SocketDummy()
+		socket2 = SocketDummy()
+		socket3 = SocketDummy()
+		
+		# insert players
+		gm_cache   = self.engine.cache.getFromUrl('foo')
+		game_cache = gm_cache.getFromUrl('bar')
+		player_cache1 = game_cache.insert('arthur', 'red', False)
+		player_cache1.socket = socket1
+		player_cache2 = game_cache.insert('bob', 'yellow', False)
+		player_cache2.socket = socket2
+		player_cache3 = game_cache.insert('carlos', 'green', False)
+		player_cache3.socket = socket3
+		
+		# moving player left triggers ORDER broadcast
+		game_cache.onOrder(player_cache2, {'name': 'bob', 'direction': -1})
+		
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		
+		self.assertEqual(answer1['OPID'], 'ORDER')
+		expected = {
+			player_cache1.uuid: 1,
+			player_cache2.uuid: 0,
+			player_cache3.uuid: 2
+		}
+		self.assertEqual(answer1['indices'], expected)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# moving player right triggers ORDER broadcast
+		game_cache.onOrder(player_cache2, {'name': 'bob', 'direction': 1})
+		
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		
+		self.assertEqual(answer1['OPID'], 'ORDER')
+		expected = {
+			player_cache1.uuid: 0,
+			player_cache2.uuid: 1,
+			player_cache3.uuid: 2
+		}
+		self.assertEqual(answer1['indices'], expected)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# cannot move more then one spot 
+		game_cache.onOrder(player_cache2, {'name': 'bob', 'direction': 2})
+		
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertIsNone(answer1)
+		self.assertIsNone(answer2)
+		self.assertIsNone(answer3)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# cannot move without direction
+		game_cache.onOrder(player_cache2, {'name': 'bob', 'direction': 0})
+		
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertIsNone(answer1)
+		self.assertIsNone(answer2)
+		self.assertIsNone(answer3)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# cannot move unknown player
+		game_cache.onOrder(player_cache2, {'name': 'roger', 'direction': 0})
+		
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertIsNone(answer1)
+		self.assertIsNone(answer2)
+		self.assertIsNone(answer3)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# moving first player left triggers ORDER with unchanged data
+		game_cache.onOrder(player_cache2, {'name': 'arthur', 'direction': -1})  
+		
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		
+		self.assertEqual(answer1['OPID'], 'ORDER')
+		self.assertEqual(answer1['indices'], expected)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# moving last player right triggers ORDER with unchanged data
+		game_cache.onOrder(player_cache2, {'name': 'carlos', 'direction': 1})  
+		
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		
+		self.assertEqual(answer1['OPID'], 'ORDER')
+		self.assertEqual(answer1['indices'], expected)
+		
+	def test_onUpdateToken(self):
+		socket1 = SocketDummy()
+		socket2 = SocketDummy()
+		socket3 = SocketDummy()
+		
+		# insert players
+		gm_cache   = self.engine.cache.getFromUrl('foo')
+		game_cache = gm_cache.getFromUrl('bar')
+		player_cache1 = game_cache.insert('arthur', 'red', False)
+		player_cache1.socket = socket1
+		player_cache2 = game_cache.insert('bob', 'yellow', False)
+		player_cache2.socket = socket2
+		player_cache3 = game_cache.insert('carlos', 'green', False)
+		player_cache3.socket = socket3
+		
+		# create demo token
+		with db_session:
+			game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
+			last_update = game.timeid
+			scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
+			token = gm_cache.db.Token(scene=scene, url='/test', posx=30, posy=15, size=20)
+		
+		def query_token():
+			with db_session:
+				game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
+				last_update = game.timeid
+				scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
+				return gm_cache.db.Token.select(lambda t: t.id == token.id).first()
+		
+		default_update = { 'changes': [ {'id': token.id} ] }
+		
+		# token can be updated without actual data causing empty 'UPDATE' broadcast
+		update_data = copy.deepcopy(default_update)
+		game_cache.onUpdateToken(player_cache1, update_data)
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 0)
+		# expect game expiring timer being updated
+		self.assertGreater(game.id, last_update)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# trigger update for invalid token expecting empty 'UPDATE' broadcast
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['id'] = 5467357467 
+		game_cache.onUpdateToken(player_cache1, update_data) 
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 0)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# trigger token's position update
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['posx'] = 38
+		update_data['changes'][0]['posy'] = 43
+		game_cache.onUpdateToken(player_cache1, update_data)
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 1)
+		token = query_token()
+		self.assertEqual(token.posx, 38)
+		self.assertEqual(token.posy, 43)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# cannot modify token's posx only
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['posx'] = 100
+		game_cache.onUpdateToken(player_cache1, update_data)
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 0)
+		token = query_token()
+		self.assertEqual(token.posx, 38)
+		self.assertEqual(token.posy, 43)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# cannot modify token's posy only
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['posy'] = 100
+		game_cache.onUpdateToken(player_cache1, update_data)
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 0)
+		token = query_token()
+		self.assertEqual(token.posx, 38)
+		self.assertEqual(token.posy, 43)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# trigger token's size update
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['size'] = 50
+		game_cache.onUpdateToken(player_cache1, update_data) 
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 1) 
+		token = query_token()
+		self.assertEqual(token.size, 50)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# trigger token's zorder-layering update
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['zorder'] = 13
+		game_cache.onUpdateToken(player_cache1, update_data) 
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 1)
+		token = query_token()
+		self.assertEqual(token.zorder, 13)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# trigger token's rotate update
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['rotate'] = 22.25
+		game_cache.onUpdateToken(player_cache1, update_data) 
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 1)
+		token = query_token()
+		self.assertAlmostEqual(token.rotate, 22.25)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# trigger token's flip-x update
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['flipx'] = True
+		game_cache.onUpdateToken(player_cache1, update_data) 
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 1) 
+		token = query_token()
+		self.assertTrue(token.flipx)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# trigger token's flip-x redo update
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['flipx'] = False
+		game_cache.onUpdateToken(player_cache1, update_data) 
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 1)
+		token = query_token()
+		self.assertFalse(token.flipx)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# trigger token's locking update
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['locked'] = True
+		game_cache.onUpdateToken(player_cache1, update_data) 
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 1) 
+		token = query_token()
+		self.assertTrue(token.locked)
+		
+		socket1.clearAll()
+		socket2.clearAll()
+		socket3.clearAll()
+		
+		# trigger token's unlocking update
+		update_data = copy.deepcopy(default_update)
+		update_data['changes'][0]['locked'] = False
+		game_cache.onUpdateToken(player_cache1, update_data) 
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'UPDATE')
+		self.assertEqual(len(answer1['tokens']), 1) 
+		token = query_token()
+		self.assertFalse(token.locked)
+		
+	def test_onCreateToken(self):
+		socket1 = SocketDummy()
+		socket2 = SocketDummy()
+		socket3 = SocketDummy()
+		
+		# insert players
+		gm_cache   = self.engine.cache.getFromUrl('foo')
+		game_cache = gm_cache.getFromUrl('bar')
+		player_cache1 = game_cache.insert('arthur', 'red', False)
+		player_cache1.socket = socket1
+		player_cache2 = game_cache.insert('bob', 'yellow', False)
+		player_cache2.socket = socket2
+		player_cache3 = game_cache.insert('carlos', 'green', False)
+		player_cache3.socket = socket3
+		
+		default_data = {
+			'posx' : 50,
+			'posy' : 67,
+			'size' : 23,
+			'urls' : list()
+		}
+		
+		def active_scene():
+			game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
+			return gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
+		
+		def purge_scene():
+			scene = active_scene()
+			for t in scene.tokens:
+				t.delete()
+		
+		def recent_tokens():
+			scene = active_scene()
+			return list(scene.tokens)
+			
+		def get_token(tid):
+			return gm_cache.db.Token.select(lambda t: t.id == tid).first()
+		
+		with db_session:
+			old_timeid = max(recent_tokens(), key=lambda t: t.timeid).timeid
+		
+		# trigger token creation and expect CREATE broadcast
+		with db_session:
+			purge_scene()
+		create_data = copy.deepcopy(default_data) 
+		create_data['urls'] = ['/foo/bar.png', '/some/test.png', '/unit/test.png']
+		game_cache.onCreateToken(player_cache1, create_data)
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		self.assertEqual(answer1['OPID'], 'CREATE')          
+		self.assertEqual(len(answer1['tokens']), 3)
+		distances = list()
+		for i, d in enumerate(answer1['tokens']):
+			with db_session:
+				t = get_token(d['id'])
+			# test for corret data
+			self.assertGreater(answer1['tokens'][i]['timeid'], old_timeid)
+			if i == 0:
+				# first token is background
+				self.assertEqual(answer1['tokens'][i]['size'], -1)
+			else:
+				# other tokens regular ones
+				self.assertEqual(answer1['tokens'][i]['size'], 23)
+			self.assertEqual(answer1['tokens'][i]['url'],  create_data['urls'][i])
+			# test for being in sync with token data
+			self.assertEqual(answer1['tokens'][i]['id'],    t.id)  
+			self.assertEqual(answer1['tokens'][i]['timeid'], t.timeid)
+			self.assertEqual(answer1['tokens'][i]['size'],  t.size)
+			self.assertEqual(answer1['tokens'][i]['url'],   t.url)
+			self.assertEqual(answer1['tokens'][i]['posx'],  t.posx)
+			self.assertEqual(answer1['tokens'][i]['posy'],  t.posy)
+			# calculate distance to original position
+			dx = default_data['posx'] - t.posx
+			dy = default_data['posy'] - t.posy
+			distances.append((dx**2 + dy**2)**0.5)
+		# expect all tokns having a similar distance from  each other
+		min_dist = min(distances)
+		max_dist = max(distances)
+		self.assertLess(max_dist - min_dist, 10)
+		# expect background being linked to scene
+		with db_session:
+			scene = active_scene()
+			self.assertIsNotNone(scene.backing)
+			token = get_token(scene.backing.id)
+			self.assertEqual(token.back, scene)
+			
+		# TODO test onDeleteToken, onCloneToken, onCreateScene, onActivateScene, onCloneScene, onDeleteScene

@@ -69,11 +69,11 @@ class PlayerCache(object):
 			'ROLL'   : self.parent.onRoll,
 			'SELECT' : self.parent.onSelect,
 			'RANGE'  : self.parent.onRange,
-			'CREATE' : self.parent.onCreate,
-			'CLONE'  : self.parent.onClone,
-			'UPDATE' : self.parent.onUpdate,
-			'DELETE' : self.parent.onDelete,
-			'ORDER'  : self.parent.onOrder,
+			'ORDER'  : self.parent.onOrder,     
+			'UPDATE' : self.parent.onUpdateToken,
+			'CREATE' : self.parent.onCreateToken,
+			'CLONE'  : self.parent.onCloneToken,
+			'DELETE' : self.parent.onDeleteToken,
 			'GM-CREATE'   : self.parent.onCreateScene,
 			'GM-ACTIVATE' : self.parent.onActivateScene,
 			'GM-CLONE'    : self.parent.onCloneScene,
@@ -503,7 +503,139 @@ class GameCache(object):
 			'selected' : player.selected,
 		});
 		
-	def onClone(self, player, data):
+	def onOrder(self, player, data):
+		""" Handle reordering a player box. """
+		# fetch name and direction
+		name      = data['name']
+		direction = data['direction']
+		
+		if direction not in [1, -1]:
+			# ignore invalid directions
+			return
+		
+		# move in order, fix gaps
+		indices = dict()
+		update  = dict()
+		with self.lock:
+			# determine source and destination player
+			src = self.players[name].index
+			dst = src + direction
+			for n in self.players:
+				if self.players[n].index == dst:
+					# swap indices
+					self.players[name].index = dst
+					self.players[n].index    = src
+					break
+			
+			# fetch update data for client: uuid => index
+			for n in self.players:
+				p = self.players[n]
+				update[p.uuid] = p.index
+		
+		# broadcast ALL indices
+		self.broadcast({
+			'OPID'    : 'ORDER',
+			'indices' : update
+		});
+		
+	def onUpdateToken(self, player, data):
+		""" Handle player changing token data. """
+		# fetch changes' data
+		changes = data['changes']
+		
+		now = time.time()
+		with db_session:
+			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				self.engine.logging.warning('Player {0} tried to update token data at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
+				return;
+			g.timeid = now
+			
+			# iterate provided tokens
+			for data in changes:
+				t = self.parent.db.Token.select(lambda t: t.id == data['id']).first()
+				if t is None:
+					# ignore deleted token
+					continue
+				# fetch changed data (accepting None)
+				posx   = data.get('posx')
+				posy   = data.get('posy')
+				pos    = None if posx is None or posy is None else (posx, posy)
+				zorder = data.get('zorder')
+				size   = data.get('size')
+				rotate = data.get('rotate')
+				flipx  = data.get('flipx')
+				locked = data.get('locked')
+				t.update(timeid=now, pos=pos, zorder=zorder, size=size,
+					rotate=rotate, flipx=flipx, locked=locked)
+		
+		self.broadcastTokenUpdate(player, now)  
+		
+	def onCreateToken(self, player, data):
+		""" Handle player creating tokens. """
+		# fetch token data
+		posx = data['posx']
+		posy = data['posy']
+		size = data['size']
+		#urls = json.loads(data['urls'])
+		urls = data['urls']
+		
+		# create tokens
+		now = time.time()
+		n = len(urls)
+		tokens = list()
+		with db_session:
+			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+			if g is None:
+				self.engine.logging.warning('Player {0} tried creating a tokens at {1}/{2}, but the game was not found'.format(player.name, self.parent.url, self.url))
+				return
+			g.timeid = now
+			
+			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
+			if g is None:
+				self.engine.logging.warning('Player {0} tried creating a tokens at {1}/{2}, but the scene #{4} was not found'.format(player.name, self.parent.url, self.url, g.active))
+				return
+			
+			for k, url in enumerate(urls):
+				# create tokens in circle
+				x, y = self.parent.db.Token.getPosByDegree((posx, posy), k, n)
+				t = self.parent.db.Token(scene=s.id, timeid=now, url=url,
+					size=size, posx=x, posy=y)
+				
+				self.parent.db.commit()
+				
+				# use first token as background if necessary
+				if s.backing is None:
+					t.size    = -1
+					s.backing = t
+				
+				tokens.append(t.to_dict())
+		
+		# broadcast creation
+		self.broadcast({
+			'OPID'   : 'CREATE',
+			'tokens' : tokens
+		})
+		
+	def onDeleteToken(self, player, data):
+		""" Handle player deleting tokens. """
+		# delete tokens
+		tokens = data['tokens']
+		data   = list()
+		with db_session:
+			for tid in tokens:
+				t = self.parent.db.Token.select(lambda t: t.id == tid).first()
+				if t is not None:
+					data.append(t.to_dict())
+					t.delete()
+		
+		# broadcast delete
+		self.broadcast({
+			'OPID'   : 'DELETE',
+			'tokens' : data
+		})
+		
+	def onCloneToken(self, player, data):
 		""" Handle player cloning tokens. """
 		# fetch clone data
 		ids  = data['ids']
@@ -545,137 +677,6 @@ class GameCache(object):
 			'OPID'   : 'CREATE',
 			'tokens' : tokens
 		})
-		
-	def onUpdate(self, player, data):
-		""" Handle player changing token data. """
-		# fetch changes' data
-		changes = data['changes']
-		
-		now = time.time()
-		with db_session:
-			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
-			if g is None:
-				self.engine.logging.warning('Player {0} tried to update token data at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
-				return;
-			g.timeid = now
-			
-			# iterate provided tokens
-			for data in changes:
-				t = self.parent.db.Token.select(lambda t: t.id == data['id']).first()
-				if t is None:
-					# ignore deleted token
-					continue
-				# fetch changed data (accepting None)
-				posx   = data.get('posx')
-				posy   = data.get('posy')
-				pos    = None if posx is None or posy is None else (posx, posy)
-				zorder = data.get('zorder')
-				size   = data.get('size')
-				rotate = data.get('rotate')
-				flipx  = data.get('flipx')
-				locked = data.get('locked')
-				t.update(timeid=now, pos=pos, zorder=zorder, size=size,
-					rotate=rotate, flipx=flipx, locked=locked)
-		
-		self.broadcastTokenUpdate(player, now)  
-		
-	def onCreate(self, player, data):
-		""" Handle player creating tokens. """
-		# fetch token data
-		posx = data['posx']
-		posy = data['posy']
-		size = data['size']
-		urls = json.loads(data['urls'])
-		
-		# create tokens
-		now = time.time()
-		n = len(urls)
-		tokens = list()
-		with db_session:
-			g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
-			if g is None:
-				self.engine.logging.warning('Player {0} tried creating a tokens at {1}/{2}, but the game was not found'.format(player.name, self.parent.url, self.url))
-				return
-			g.timeid = now
-			
-			s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
-			if g is None:
-				self.engine.logging.warning('Player {0} tried creating a tokens at {1}/{2}, but the scene #{4} was not found'.format(player.name, self.parent.url, self.url, g.active))
-				return
-			
-			for k, url in enumerate(urls):
-				# create tokens in circle
-				x, y = self.parent.db.Token.getPosByDegree((posx, posy), k, n)
-				t = self.parent.db.Token(scene=s.id, timeid=now, url=url,
-					size=size, posx=x, posy=y)
-				
-				self.parent.db.commit()
-				
-				# use first token as background if necessary
-				if s.backing is None:
-					t.size    = -1
-					s.backing = t
-				
-				tokens.append(t.to_dict())
-		
-		# broadcast creation
-		self.broadcast({
-			'OPID'   : 'CREATE',
-			'tokens' : tokens
-		})
-		
-	def onDelete(self, player, data):
-		""" Handle player deleting tokens. """
-		# delete tokens
-		tokens = data['tokens']
-		data   = list()
-		with db_session:
-			for tid in tokens:
-				t = self.parent.db.Token.select(lambda t: t.id == tid).first()
-				if t is not None:
-					data.append(t.to_dict())
-					t.delete()
-		
-		# broadcast delete
-		self.broadcast({
-			'OPID'   : 'DELETE',
-			'tokens' : data
-		})
-		
-	def onOrder(self, player, data):
-		""" Handle reordering a player box. """
-		# fetch name and direction
-		name      = data['name']
-		direction = data['direction']
-		
-		if direction not in [1, -1]:
-			# ignore invalid directions
-			return
-		
-		# move in order, fix gaps
-		indices = dict()
-		update  = dict()
-		with self.lock:
-			# determine source and destination player
-			src = self.players[name].index
-			dst = src + direction
-			for n in self.players:
-				if self.players[n].index == dst:
-					# swap indices
-					self.players[name].index = dst
-					self.players[n].index    = src
-					break
-			
-			# fetch update data for client: uuid => index
-			for n in self.players:
-				p = self.players[n]
-				update[p.uuid] = p.index
-		
-		# broadcast ALL indices
-		self.broadcast({
-			'OPID'    : 'ORDER',
-			'indices' : update
-		});
 		
 	def onCreateScene(self, player, data):
 		""" GM: Create new scene. """

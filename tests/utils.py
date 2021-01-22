@@ -54,6 +54,9 @@ class SocketDummy(object):
 	"""
 	
 	def __init__(self):
+		self.clearAll()
+		
+	def clearAll(self):
 		self.read_buffer  = list()
 		self.write_buffer = list()
 		
