@@ -93,7 +93,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		
 		# @NOTE: adding the player is previously done by an Ajax-POST
 		game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
-		player_cache = game_cache.insert('arthur', 'red', True)
+		player_cache = game_cache.insert('arthur', 'red', False)
 		
 		# @NOTE: this also tests login() on the relevant GameCache and
 		# an async handle() on the PlayerCache.
@@ -114,7 +114,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		
 		# insert players
 		game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
-		player_cache1 = game_cache.insert('arthur', 'red', True)
+		player_cache1 = game_cache.insert('arthur', 'red', False)
 		player_cache1.socket = old_socket
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = new_socket
@@ -169,7 +169,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		
 		# insert players
 		game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
-		player_cache1 = game_cache.insert('arthur', 'red', True)
+		player_cache1 = game_cache.insert('arthur', 'red', False)
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
@@ -190,7 +190,7 @@ class CacheIntegrationTest(EngineBaseTest):
 	def test_disconnect(self):
 		# insert player
 		game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
-		player_cache = game_cache.insert('arthur', 'red', True)
+		player_cache = game_cache.insert('arthur', 'red', False)
 		player_cache.socket = SocketDummy()
 		
 		# disconnect him
@@ -208,7 +208,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
 		player_cache1 = game_cache.insert('arthur', 'red', False)
 		player_cache1.socket = SocketDummy()
-		player_cache2 = game_cache.insert('gabriel', 'blue', True)
+		player_cache2 = game_cache.insert('gabriel', 'blue', False)
 		player_cache2.socket = SocketDummy()
 		player_cache3 = game_cache.insert('bob', 'yellow', False)
 		player_cache3.socket = SocketDummy()
@@ -231,7 +231,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		
 		# insert players
 		game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
-		player_cache1 = game_cache.insert('arthur', 'red', True)
+		player_cache1 = game_cache.insert('arthur', 'red', False)
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
@@ -253,7 +253,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		# insert players
 		gm_cache   = self.engine.cache.getFromUrl('foo')
 		game_cache = gm_cache.getFromUrl('bar')
-		player_cache1 = game_cache.insert('arthur', 'red', True)
+		player_cache1 = game_cache.insert('arthur', 'red', False)
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
@@ -295,7 +295,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		# insert players
 		gm_cache   = self.engine.cache.getFromUrl('foo')
 		game_cache = gm_cache.getFromUrl('bar')
-		player_cache1 = game_cache.insert('arthur', 'red', True)
+		player_cache1 = game_cache.insert('arthur', 'red', False)
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
@@ -326,7 +326,7 @@ class CacheIntegrationTest(EngineBaseTest):
 		# insert players
 		gm_cache   = self.engine.cache.getFromUrl('foo')
 		game_cache = gm_cache.getFromUrl('bar')
-		player_cache1 = game_cache.insert('arthur', 'red', True)
+		player_cache1 = game_cache.insert('arthur', 'red', False)
 		player_cache1.socket = socket1
 		player_cache2 = game_cache.insert('bob', 'yellow', False)
 		player_cache2.socket = socket2
@@ -338,7 +338,7 @@ class CacheIntegrationTest(EngineBaseTest):
 			game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
 			data = game_cache.fetchRefresh(game.active)
 			
-			scene = gm_cache.db.Scene.select(lambda s: s.game == game).first()
+			scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
 			
 			# expect complete REFRESH update
 			self.assertEqual(data['OPID'], 'REFRESH')
@@ -358,12 +358,110 @@ class CacheIntegrationTest(EngineBaseTest):
 				self.assertIn('timeid', t)
 			
 			# fetch data of a scene without background
-			other_scene = list(game.scenes)[1]
+			other_scene = list(game.scenes)[0]
+			if other_scene == scene:
+				other_scene = list(game.scenes)[1]
 			data = game_cache.fetchRefresh(other_scene.id)
 			 
 			# expect complete REFRESH update
 			self.assertEqual(data['OPID'], 'REFRESH')
 			self.assertEqual(data['background'], None)
 		
-	# @TODO: next: test_onPing()
-
+	def test_onPing(self):
+		socket = SocketDummy()
+		
+		# insert player
+		gm_cache   = self.engine.cache.getFromUrl('foo')
+		game_cache = gm_cache.getFromUrl('bar')
+		player_cache = game_cache.insert('arthur', 'red', False)
+		player_cache.socket = socket
+		
+		# trigger ping and expect answer
+		game_cache.onPing(player_cache, {})
+		answer = socket.pop_send()
+		self.assertEqual(answer['OPID'], 'PING')
+		
+	def test_onRoll(self): 
+		socket1 = SocketDummy()
+		socket2 = SocketDummy()
+		socket3 = SocketDummy()
+		
+		# insert players
+		gm_cache   = self.engine.cache.getFromUrl('foo')
+		game_cache = gm_cache.getFromUrl('bar')
+		player_cache1 = game_cache.insert('arthur', 'red', False)
+		player_cache1.socket = socket1
+		player_cache2 = game_cache.insert('bob', 'yellow', False)
+		player_cache2.socket = socket2
+		player_cache3 = game_cache.insert('carlie', 'green', False)
+		player_cache3.socket = socket3
+		
+		# trigger roll different dice and expect ROLLs
+		sides = self.engine.getSupportedDice()
+		for s in sides:
+			game_cache.onRoll(player_cache1, {'sides': s})
+			answer1 = socket1.pop_send()
+			answer2 = socket2.pop_send()
+			answer3 = socket3.pop_send()
+			self.assertEqual(answer1, answer2)
+			self.assertEqual(answer1, answer3)
+			self.assertEqual(answer1['OPID'], 'ROLL')
+			self.assertEqual(answer1['color'], player_cache1.color)
+			self.assertEqual(answer1['sides'], s)
+			self.assertIn('result', answer1)
+			self.assertTrue(answer1['recent'])
+			self.assertEqual(answer1['name'], player_cache1.name)
+		
+		# cannot roll unsupported dice
+		self.assertNotIn(7, sides)
+		game_cache.onRoll(player_cache1, {'sides': 7})
+		answer = socket1.pop_send()
+		self.assertIsNone(answer)
+		
+	def test_onSelect(self): 
+		socket1 = SocketDummy()
+		socket2 = SocketDummy()
+		socket3 = SocketDummy()
+		
+		# insert players
+		gm_cache   = self.engine.cache.getFromUrl('foo')
+		game_cache = gm_cache.getFromUrl('bar')
+		player_cache1 = game_cache.insert('arthur', 'red', False)
+		player_cache1.socket = socket1
+		player_cache2 = game_cache.insert('bob', 'yellow', False)
+		player_cache2.socket = socket2
+		player_cache3 = game_cache.insert('carlie', 'green', False)
+		player_cache3.socket = socket3
+		
+		# trigger selection and expect SELECT broadcast
+		selected = [37, 134, 623]
+		game_cache.onSelect(player_cache1, {'selected': selected})
+		
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		
+		self.assertEqual(answer1['OPID'], 'SELECT')
+		self.assertEqual(answer1['color'], player_cache1.color)
+		self.assertEqual(answer1['selected'], player_cache1.selected)
+		# expect player's selection being updated
+		self.assertEqual(player_cache1.selected, selected)
+		
+		# trigger selection reste and expect SELECT broadcast  
+		selected = list()
+		game_cache.onSelect(player_cache1, {'selected': selected})
+		
+		answer1 = socket1.pop_send()
+		answer2 = socket2.pop_send()
+		answer3 = socket3.pop_send()
+		self.assertEqual(answer1, answer2)
+		self.assertEqual(answer1, answer3)
+		
+		self.assertEqual(answer1['OPID'], 'SELECT')
+		self.assertEqual(answer1['color'], player_cache1.color)
+		self.assertEqual(answer1['selected'], player_cache1.selected)
+		# expect player's selection being updated
+		self.assertEqual(player_cache1.selected, selected)
+	

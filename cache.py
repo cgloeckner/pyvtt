@@ -426,7 +426,7 @@ class GameCache(object):
 		result = random.randrange(1, sides+1)
 		roll_id = None
 		
-		if sides not in [2, 4, 6, 8, 10, 12, 20]:
+		if sides not in self.engine.getSupportedDice():
 			# ignore unsupported dice
 			return
 		
@@ -878,8 +878,8 @@ class EngineCache(object):
 	def insert(self, gm):
 		url = gm.url
 		with self.lock:
-			if url in self.gms:
-				raise KeyError
+			# @NOTE: existing GmCache is replaced
+			# (e.g. relogin by user)
 			self.gms[url] = GmCache(self.engine, gm)
 			return self.gms[url]
 		

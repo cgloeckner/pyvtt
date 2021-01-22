@@ -23,9 +23,9 @@ class EngineCacheTest(EngineBaseTest):
 			gm1.postSetup()
 			gm2.postSetup()
 		
-		# force 2nd insertion
-		with self.assertRaises(KeyError):
-			cache.insert(gm1)
+		# 2nd insertion is fine (GmCache is replaced)
+		# @NOTE: the user may delete cookies and relogin
+		cache.insert(gm1)
 		
 	def test_get(self):  
 		cache = self.engine.cache

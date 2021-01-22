@@ -140,6 +140,10 @@ class EngineTest(EngineBaseTest):
 			size = self.engine.getSize(fupload)
 			self.assertEqual(size, 4953)
 		
+	def test_getSupportedDice(self):
+		dice = self.engine.getSupportedDice()
+		self.assertEqual(dice, [2, 4, 6, 8, 10, 12, 20])
+		
 	def test_cleanup(self):
 		now = time.time()
 		

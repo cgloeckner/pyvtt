@@ -80,7 +80,9 @@ class SocketDummy(object):
 		self.write_buffer.append(s)
 		
 	def pop_send(self):
-		return json.loads(self.write_buffer.pop(0))
+		if len(self.write_buffer) > 0:
+			return json.loads(self.write_buffer.pop(0))
+		return None
 		
 	def close(self):
 		if self.closed:
