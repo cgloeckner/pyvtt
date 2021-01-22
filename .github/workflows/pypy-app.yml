@@ -22,9 +22,9 @@ jobs:
         pypy-version: 3.8
     - name: Install dependencies
       run: |
-        pypy3 -m pip install --upgrade pip
-        pypy3 -m pip install bottle gevent gevent-websocket patreon pony psutil webtest
-        if [ -f requirements.txt ]; then pypy3 -m pip install -r requirements.txt; fi
+        pypy -m pip install --upgrade pip
+        pypy -m pip install bottle gevent gevent-websocket patreon pony psutil webtest
+        if [ -f requirements.txt ]; then pypy -m pip install -r requirements.txt; fi
     - name: Test Unittests
       run: |
-        pypy3 test.py
+        pypy test.py
