@@ -15,7 +15,7 @@ import cache, orm
 
 from test.utils import EngineBaseTest, SocketDummy
 
-class CacheIntegrationTest(EngineBaseTest):
+class PlayerCacheTest(EngineBaseTest):
     
     def setUp(self):
         super().setUp()
@@ -91,12 +91,19 @@ class CacheIntegrationTest(EngineBaseTest):
         """ Helper to purge a scene from all tokens. """
         for t in scene.tokens:
             t.delete()
-        
+    
+    def purge_game(self, gm='foo', game='bar'):
+        """ Helper to purge a game from all scenes. """
+        gm_cache = self.engine.cache.getFromUrl(gm)
+        game = gm_cache.db.Game.select(lambda g: g.url == game).first()
+        for s in game.scenes:
+            s.preDelete()
+            s.delete()
+    
     def get_token(self, tid, gm='foo'):
         """ Helper to query a token from a game by its id. """  
         gm_cache = self.engine.cache.getFromUrl(gm)
         return gm_cache.db.Token.select(lambda t: t.id == tid).first()
-        
         
     def test_getMetaData(self):  
         game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
@@ -141,8 +148,6 @@ class CacheIntegrationTest(EngineBaseTest):
         # expect player to be disconnected
         player_cache = game_cache.get('arthur')
         self.assertIsNone(player_cache)
-        
-        
         
     def test_login(self):
         old_socket = SocketDummy()
@@ -1228,7 +1233,334 @@ class CacheIntegrationTest(EngineBaseTest):
         min_dist = min(distances)
         max_dist = max(distances)
         self.assertLess(max_dist - min_dist, 10)
+    
+    def test_onCreateScene(self):
+        socket1 = SocketDummy()
+        socket2 = SocketDummy()
+        socket3 = SocketDummy()
         
+        # insert players
+        gm_cache   = self.engine.cache.getFromUrl('foo')
+        game_cache = gm_cache.getFromUrl('bar')
+        player_cache1 = game_cache.insert('arthur', 'red', False)
+        player_cache1.socket = socket1
+        player_cache2 = game_cache.insert('bob', 'yellow', True)
+        player_cache2.socket = socket2
+        player_cache3 = game_cache.insert('carlos', 'green', False)
+        player_cache3.socket = socket3
+        
+        # GM can create a scene
+        with db_session:
+            last_scene = self.active_scene()
+        game_cache.onCreateScene(player_cache2, {})
+        # expect REFRESH broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'REFRESH')
+        # @NOTE: REFRESH is tested in-depth somewhere else
+        # expect new scene to be active                  
+        with db_session:
+            new_scene = self.active_scene()
+        self.assertNotEqual(last_scene.id, new_scene.id)
 
+        # non-GM cannot create a scene
+        last_scene = new_scene    
+        game_cache.onCreateScene(player_cache1, {})
+        # expect no broadcast   
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertIsNone(answer1)
+        # except old scene to stay active        
+        with db_session:
+            new_scene = self.active_scene()  
+        self.assertEqual(last_scene.id, new_scene.id)
+    
+    def test_onActivateScene(self):
+        socket1 = SocketDummy()
+        socket2 = SocketDummy()
+        socket3 = SocketDummy()
         
-        # TODO test onCreateScene, onActivateScene, onCloneScene, onDeleteScene
+        # insert players
+        gm_cache   = self.engine.cache.getFromUrl('foo')
+        game_cache = gm_cache.getFromUrl('bar')
+        player_cache1 = game_cache.insert('arthur', 'red', False)
+        player_cache1.socket = socket1
+        player_cache2 = game_cache.insert('bob', 'yellow', True)
+        player_cache2.socket = socket2
+        player_cache3 = game_cache.insert('carlos', 'green', False)
+        player_cache3.socket = socket3
+
+        with db_session:
+            self.purge_game()
+        game_cache.onCreateScene(player_cache2, {})
+        game_cache.onCreateScene(player_cache2, {})
+        socket1.clearAll()
+        socket2.clearAll()
+        socket3.clearAll()
+
+        # query all scenes in that game
+        with db_session:
+            all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
+            active = self.active_scene()
+        self.assertEqual(len(all_scene_ids), 2)
+        self.assertEqual(all_scene_ids[1], active.id)
+        
+        # GM can activate a scene
+        game_cache.onActivateScene(player_cache2, {'scene': all_scene_ids[0]})
+        # expect REFRESH broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'REFRESH')
+        # @NOTE: REFRESH is tested in-depth somewhere else
+        # expect 1st scene to be active   
+        with db_session:
+            active = self.active_scene()
+        self.assertEqual(all_scene_ids[0], active.id)
+
+        # non-GM cannot switch scene   
+        game_cache.onActivateScene(player_cache1, {'scene': all_scene_ids[1]}) 
+        # expect no broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertIsNone(answer1)
+        # expect 1st scene to still be active   
+        with db_session:
+            active = self.active_scene()
+        self.assertEqual(all_scene_ids[0], active.id)
+
+        # cannot switch to unknown scene   
+        game_cache.onActivateScene(player_cache2, {'scene': 57375367}) 
+        # expect no broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertIsNone(answer1)
+        # expect 1st scene to still be active   
+        with db_session:
+            active = self.active_scene()
+        self.assertEqual(all_scene_ids[0], active.id)
+        
+    def test_onCloneScene(self): 
+        socket1 = SocketDummy()
+        socket2 = SocketDummy()
+        socket3 = SocketDummy()
+        
+        # insert players
+        gm_cache   = self.engine.cache.getFromUrl('foo')
+        game_cache = gm_cache.getFromUrl('bar')
+        player_cache1 = game_cache.insert('arthur', 'red', False)
+        player_cache1.socket = socket1
+        player_cache2 = game_cache.insert('bob', 'yellow', True)
+        player_cache2.socket = socket2
+        player_cache3 = game_cache.insert('carlos', 'green', False)
+        player_cache3.socket = socket3
+
+        def reset():
+            with db_session:
+                self.purge_game()
+            game_cache.onCreateScene(player_cache2, {})
+            game_cache.onCreateScene(player_cache2, {})
+            socket1.clearAll()
+            socket2.clearAll()
+            socket3.clearAll()
+            
+            # query all scenes in that game
+            with db_session:
+                all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
+                active = self.active_scene()
+                self.assertEqual(len(all_scene_ids), 2)
+                self.assertEqual(all_scene_ids[1], active.id)
+                # create some tokens and background
+                gm_cache.db.Token(scene=active, url='wallpaper', posx=1, posy=2, size=-1)
+                for t in range(3):
+                    gm_cache.db.Token(scene=active, url='test', posx=20, posy=21, size=3,
+                        rotate=22.5, flipx=True, locked=True)
+                return all_scene_ids, active
+        
+        # clear game
+        all_scene_ids, active = reset()
+            
+        # GM can clone a scene
+        game_cache.onCloneScene(player_cache2, {'scene': all_scene_ids[1]}) 
+        # expect REFRESH broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'REFRESH')
+        # @NOTE: REFRESH is tested in-depth somewhere else
+        # expect a new scene to be active
+        last_active = active
+        with db_session:   
+            active = self.active_scene()
+            self.assertNotEqual(last_active.id, active.id)
+            # ... with all tokens
+            for t in active.tokens:
+                self.assertEqual(t.url, 'test')
+                self.assertEqual(t.posx, 20)
+                self.assertEqual(t.posy, 21)
+                self.assertEqual(t.size, 3)
+                self.assertAlmostEqual(t.rotate, 22.5)
+                self.assertTrue(t.flipx)
+                self.assertTrue(t.locked)
+        # ... but no background
+        self.assertIsNone(active.backing)
+        
+        # non-GM cannot clone a scene
+        last_active = active
+        game_cache.onCloneScene(player_cache1, {'scene': all_scene_ids[1]}) 
+        # expect no broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertIsNone(answer1)
+        # expect last active scene still being active
+        with db_session:   
+            active = self.active_scene()
+        self.assertEqual(active.id, last_active.id)
+
+        # clear game       
+        all_scene_ids, last_active = reset()
+        
+        # clone an unknown scene scene
+        game_cache.onCloneScene(player_cache1, {'scene': 234656456}) 
+        # expect no broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertIsNone(answer1)
+        # expect last active scene still being active
+        with db_session:   
+            active = self.active_scene()
+        self.assertEqual(active.id, last_active.id)
+
+    def test_onDeleteScene(self):
+        socket1 = SocketDummy()
+        socket2 = SocketDummy()
+        socket3 = SocketDummy()
+        
+        # insert players
+        gm_cache   = self.engine.cache.getFromUrl('foo')
+        game_cache = gm_cache.getFromUrl('bar')
+        player_cache1 = game_cache.insert('arthur', 'red', False)
+        player_cache1.socket = socket1
+        player_cache2 = game_cache.insert('bob', 'yellow', True)
+        player_cache2.socket = socket2
+        player_cache3 = game_cache.insert('carlos', 'green', False)
+        player_cache3.socket = socket3
+
+        def reset():
+            with db_session:
+                self.purge_game()
+            game_cache.onCreateScene(player_cache2, {})
+            game_cache.onCreateScene(player_cache2, {})
+            socket1.clearAll()
+            socket2.clearAll()
+            socket3.clearAll()
+            
+            # query all scenes in that game
+            with db_session:
+                all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
+                active = self.active_scene()
+                self.assertEqual(len(all_scene_ids), 2)
+                self.assertEqual(all_scene_ids[1], active.id)
+
+            return all_scene_ids, active
+        
+        # clear game
+        all_scene_ids, active = reset()
+            
+        # GM can delete an inactive scene
+        game_cache.onDeleteScene(player_cache2, {'scene': all_scene_ids[0]}) 
+        # expect no broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertIsNone(answer1)
+        # except first id to be missing now
+        with db_session:
+            self.assertIsNone(gm_cache.db.Scene.select(lambda s: s.id == all_scene_ids[0]).first())
+        
+        # clear game
+        all_scene_ids, active = reset()
+
+        # GM can delete an active scene
+        game_cache.onDeleteScene(player_cache2, {'scene': active.id})
+        # expect REFRESH broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'REFRESH')
+
+        # @NOTE: REFRESH is tested in-depth somewhere else
+        # except first id to be missing now
+        with db_session:
+            self.assertIsNone(gm_cache.db.Scene.select(lambda s: s.id == active.id).first())
+        # expect another scene to be active
+        with db_session:
+            now_active = self.active_scene()
+        self.assertNotEqual(active.id, now_active.id)
+            
+        # non-GM cannot delete a scene  
+        game_cache.onDeleteScene(player_cache1, {'scene': all_scene_ids[0]}) 
+        # expect no broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertIsNone(answer1)
+        # except first id still being there
+        self.assertIsNotNone(gm_cache.db.Scene.select(lambda s: s.id == all_scene_ids[0]))
+
+        # reset to only one scene
+        with db_session:
+            self.purge_game()
+        game_cache.onCreateScene(player_cache2, {})
+        socket1.clearAll()
+        socket2.clearAll()
+        socket3.clearAll()
+        
+        with db_session:
+            active = self.active_scene()
+        
+        # GM can delete the last remaining scene
+        game_cache.onDeleteScene(player_cache2, {'scene': active.id}) 
+        # expect REFRESH broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'REFRESH')
+        # @NOTE: REFRESH is tested in-depth somewhere else
+        # except first id to be missing now
+        with db_session:
+            self.assertIsNone(gm_cache.db.Scene.select(lambda s: s.id == all_scene_ids[0]).first())
+        # expect a new scene being created
+        with db_session:
+            now_active = self.active_scene()
+        self.assertNotEqual(active.id, now_active.id)
