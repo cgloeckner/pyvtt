@@ -331,7 +331,7 @@ class ErrorReporter(object):
                     cookies = '{\n' + cookies + '}'
                 # dump metadata (e.g. in case of websocket error)
                 meta_dump = ''
-                if 'metadata' in error:
+                try:
                     data = error.metadata
                     for key in data:
                         meta_dump += '\t{0} : {1}\n'.format(key, data[key])
@@ -339,7 +339,9 @@ class ErrorReporter(object):
                         meta_dump = '{}'
                     else:
                         meta_dump = '{\n' + meta_dump + '}'
-                message = 'Error ID  = #{0}\nRoute URL = {1}\nClient-IP = {2}\nCookies   = {3}\\Cookies   = {4}\n\n{5}'.format(
+                except KeyError:
+                    meta_dump = '{}'
+                message = 'Error ID  = #{0}\nRoute URL = {1}\nClient-IP = {2}\nCookies   = {3}\nMetadata   = {4}\n\n{5}'.format(
                     error_id, full_url, client_ip, cookies, meta_dump, stacktrace)
                 
                 # log error and notify developer
