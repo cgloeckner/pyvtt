@@ -33,49 +33,49 @@ from tests.cache_integration import CacheIntegrationTest
 # ---------------------------------------------------------------------
 
 def register(suite, testcase):
-	""" Register all test methods of the given testcase class
-	to the given suite.
-	"""
-	for method in dir(testcase):
-		if method.startswith('test_'):
-			suite.addTest(testcase(method))
+    """ Register all test methods of the given testcase class
+    to the given suite.
+    """
+    for method in dir(testcase):
+        if method.startswith('test_'):
+            suite.addTest(testcase(method))
 
 def suite():
-	""" Create the entire test suite.
-	"""
-	suite = unittest.TestSuite()
-	
-	register(suite, TokenTest)
-	register(suite, SceneTest)
-	register(suite, GameTest)
-	register(suite, GmTest)
-	
-	register(suite, PathApiTest)
-	register(suite, LoggingApiTest)
-	register(suite, FancyUrlApiTest)
-	
-	register(suite, EngineTest)
-	
-	register(suite, EngineCacheTest)
-	register(suite, GmCacheTest) 
-	register(suite, GameCacheTest)
-	register(suite, CacheIntegrationTest)
-	
-	return suite
+    """ Create the entire test suite.
+    """
+    suite = unittest.TestSuite()
+    
+    register(suite, TokenTest)
+    register(suite, SceneTest)
+    register(suite, GameTest)
+    register(suite, GmTest)
+    
+    register(suite, PathApiTest)
+    register(suite, LoggingApiTest)
+    register(suite, FancyUrlApiTest)
+    
+    register(suite, EngineTest)
+    
+    register(suite, EngineCacheTest)
+    register(suite, GmCacheTest) 
+    register(suite, GameCacheTest)
+    register(suite, CacheIntegrationTest)
+    
+    return suite
 
 if __name__ == '__main__':
-	runner = unittest.TextTestRunner()
-	runner.run(suite())
-	
-	untested = [
-		'utils/EmailApi',
-		'utils/PatreonApi',
-		'utils/ErrorReporter',
-		'server/VttServer'
-	]
-	
-	print('')
-	print('REMINDER: The following classes are not tested automatically:')
-	for s in untested:
-		print('\t{0}'.format(s))
-	print('Make sure to test them manually')
+    runner = unittest.TextTestRunner()
+    runner.run(suite())
+    
+    untested = [
+        'utils/EmailApi',
+        'utils/PatreonApi',
+        'utils/ErrorReporter',
+        'server/VttServer'
+    ]
+    
+    print('')
+    print('REMINDER: The following classes are not tested automatically:')
+    for s in untested:
+        print('\t{0}'.format(s))
+    print('Make sure to test them manually')
