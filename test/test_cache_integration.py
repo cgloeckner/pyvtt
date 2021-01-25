@@ -9,8 +9,6 @@ License: MIT (see LICENSE for details)
 
 import time, copy
 
-from gevent import monkey; monkey.patch_all()
-
 from pony.orm import db_session
 
 import cache, orm
@@ -1085,5 +1083,74 @@ class CacheIntegrationTest(EngineBaseTest):
             self.assertIsNotNone(scene.backing)
             token = get_token(scene.backing.id)
             self.assertEqual(token.back, scene)
+    
+    def test_onDeleteToken(self):
+        socket1 = SocketDummy()
+        socket2 = SocketDummy()
+        socket3 = SocketDummy()
+        
+        # insert players
+        gm_cache   = self.engine.cache.getFromUrl('foo')
+        game_cache = gm_cache.getFromUrl('bar')
+        player_cache1 = game_cache.insert('arthur', 'red', False)
+        player_cache1.socket = socket1
+        player_cache2 = game_cache.insert('bob', 'yellow', False)
+        player_cache2.socket = socket2
+        player_cache3 = game_cache.insert('carlos', 'green', False)
+        player_cache3.socket = socket3
+        
+        def active_scene():
+            game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
+            return gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
+        
+        def purge_scene():
+            scene = active_scene()
+            for t in scene.tokens:
+                t.delete()
+        
+        def recent_tokens():
+            scene = active_scene()
+            return list(scene.tokens)
             
-        # TODO test onDeleteToken, onCloneToken, onCreateScene, onActivateScene, onCloneScene, onDeleteScene
+        def get_token(tid):
+            return gm_cache.db.Token.select(lambda t: t.id == tid).first()
+        
+        # can delete tokens
+        with db_session:
+            purge_scene()
+            scene = active_scene()
+            t1 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+            t2 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+            t3 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+            t4 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+        ids = [t1.id, t3.id]
+        game_cache.onDeleteToken(player_cache1, {'tokens': ids})
+        # expect DELETE broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'DELETE')          
+        self.assertEqual(len(answer1['tokens']), 2)
+        self.assertEqual(answer1['tokens'], ids)
+        # expect tokens to be deleted
+        with db_session:
+            remain = [t.id for t in recent_tokens()]
+            self.assertNotIn(t1.id, remain)
+            self.assertIn(t2.id, remain)
+            self.assertNotIn(t3.id, remain)
+            self.assertIn(t4.id, remain)
+
+        # cannot delete already deleted token 
+        ids = [t3.id]
+        game_cache.onDeleteToken(player_cache1, {'tokens': ids}) 
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertIsNone(answer1)
+
+            
+        # TODO test onCloneToken, onCreateScene, onActivateScene, onCloneScene, onDeleteScene

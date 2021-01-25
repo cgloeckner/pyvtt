@@ -6,28 +6,28 @@ License: MIT (see LICENSE for details)
 */
 
 function showPopup(msg, color, timeout, fadeout) {
-	var popup = $('#popup');
-	popup[0].innerHTML = msg;
-	popup.css('color', color);
-	popup.fadeIn(100, 0.0);
-	if (timeout != null) {
-		popup.delay(timeout).fadeOut(fadeout, 0.0);
-	}
+    var popup = $('#popup');
+    popup[0].innerHTML = msg;
+    popup.css('color', color);
+    popup.fadeIn(100, 0.0);
+    if (timeout != null) {
+        popup.delay(timeout).fadeOut(fadeout, 0.0);
+    }
 }
   
 function showError(msg) {
-	console.warn(msg);
-	showPopup(msg, 'red', 7000, 3000);
+    console.warn(msg);
+    showPopup(msg, 'red', 7000, 3000);
 }
 
 function showInfo(msg) {
-	showPopup(msg, 'white', null, null);
+    showPopup(msg, 'white', null, null);
 }
 
 function handleError(response) {
-	// parse error_id from response
-	var error_id = response.responseText.split('<pre>')[1].split('</pre>')[0]
-	
-	// redirect to error page
-	window.location = '/vtt/error/' + error_id;
+    // parse error_id from response
+    var error_id = response.responseText.split('<pre>')[1].split('</pre>')[0]
+    
+    // redirect to error page
+    window.location = '/vtt/error/' + error_id;
 }

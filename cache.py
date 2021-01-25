@@ -631,19 +631,20 @@ class GameCache(object):
         """ Handle player deleting tokens. """
         # delete tokens
         tokens = data['tokens']
-        data   = list()
+        ids    = list()
         with db_session:
             for tid in tokens:
                 t = self.parent.db.Token.select(lambda t: t.id == tid).first()
                 if t is not None:
-                    data.append(t.to_dict())
+                    ids.append(tid)
                     t.delete()
-        
-        # broadcast delete
-        self.broadcast({
-            'OPID'   : 'DELETE',
-            'tokens' : data
-        })
+
+        if len(ids) > 0:
+            # broadcast delete
+            self.broadcast({
+                'OPID'   : 'DELETE',
+                'tokens' : ids
+            })
         
     def onCloneToken(self, player, data):
         """ Handle player cloning tokens. """
