@@ -12,7 +12,6 @@ import unittest, webtest, sys, tempfile, pathlib, json, time
 import bottle
 from geventwebsocket.exceptions import WebSocketError
 
-import vtt
 from utils import PathApi
 from engine import Engine
 
