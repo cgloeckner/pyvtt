@@ -81,6 +81,23 @@ class CacheIntegrationTest(EngineBaseTest):
                 gm_cache.db.Token(scene=scene2, url='/foo', posx=20+i ,
                     posy=30, size=40)
         
+    def active_scene(self, gm='foo', game='bar'):
+        """ Helper to query active scene of a game. """
+        gm_cache = self.engine.cache.getFromUrl(gm)
+        game = gm_cache.db.Game.select(lambda g: g.url == game).first()
+        return gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
+        
+    def purge_scene(self, scene):
+        """ Helper to purge a scene from all tokens. """
+        for t in scene.tokens:
+            t.delete()
+        
+    def get_token(self, tid, gm='foo'):
+        """ Helper to query a token from a game by its id. """  
+        gm_cache = self.engine.cache.getFromUrl(gm)
+        return gm_cache.db.Token.select(lambda t: t.id == tid).first()
+        
+        
     def test_getMetaData(self):  
         game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
         player_cache   = game_cache.insert('arthur', 'red', False)
@@ -1017,28 +1034,14 @@ class CacheIntegrationTest(EngineBaseTest):
             'urls' : list()
         }
         
-        def active_scene():
-            game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
-            return gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
-        
-        def purge_scene():
-            scene = active_scene()
-            for t in scene.tokens:
-                t.delete()
-        
-        def recent_tokens():
-            scene = active_scene()
-            return list(scene.tokens)
-            
-        def get_token(tid):
-            return gm_cache.db.Token.select(lambda t: t.id == tid).first()
         
         with db_session:
-            old_timeid = max(recent_tokens(), key=lambda t: t.timeid).timeid
+            scene = self.active_scene()
+            old_timeid = max(list(scene.tokens), key=lambda t: t.timeid).timeid
         
         # trigger token creation and expect CREATE broadcast
         with db_session:
-            purge_scene()
+            self.purge_scene(self.active_scene())
         create_data = copy.deepcopy(default_data) 
         create_data['urls'] = ['/foo/bar.png', '/some/test.png', '/unit/test.png']
         game_cache.onCreateToken(player_cache1, create_data)
@@ -1052,7 +1055,7 @@ class CacheIntegrationTest(EngineBaseTest):
         distances = list()
         for i, d in enumerate(answer1['tokens']):
             with db_session:
-                t = get_token(d['id'])
+                t = self.get_token(d['id'])
             # test for corret data
             self.assertGreater(answer1['tokens'][i]['timeid'], old_timeid)
             if i == 0:
@@ -1079,9 +1082,9 @@ class CacheIntegrationTest(EngineBaseTest):
         self.assertLess(max_dist - min_dist, 10)
         # expect background being linked to scene
         with db_session:
-            scene = active_scene()
+            scene = self.active_scene()
             self.assertIsNotNone(scene.backing)
-            token = get_token(scene.backing.id)
+            token = self.get_token(scene.backing.id)
             self.assertEqual(token.back, scene)
     
     def test_onDeleteToken(self):
@@ -1099,26 +1102,10 @@ class CacheIntegrationTest(EngineBaseTest):
         player_cache3 = game_cache.insert('carlos', 'green', False)
         player_cache3.socket = socket3
         
-        def active_scene():
-            game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
-            return gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
-        
-        def purge_scene():
-            scene = active_scene()
-            for t in scene.tokens:
-                t.delete()
-        
-        def recent_tokens():
-            scene = active_scene()
-            return list(scene.tokens)
-            
-        def get_token(tid):
-            return gm_cache.db.Token.select(lambda t: t.id == tid).first()
-        
         # can delete tokens
         with db_session:
-            purge_scene()
-            scene = active_scene()
+            scene = self.active_scene()
+            self.purge_scene(scene)
             t1 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
             t2 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
             t3 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
@@ -1135,16 +1122,25 @@ class CacheIntegrationTest(EngineBaseTest):
         self.assertEqual(len(answer1['tokens']), 2)
         self.assertEqual(answer1['tokens'], ids)
         # expect tokens to be deleted
-        with db_session:
-            remain = [t.id for t in recent_tokens()]
+        with db_session:       
+            scene = self.active_scene()
+            remain = [t.id for t in scene.tokens]
             self.assertNotIn(t1.id, remain)
             self.assertIn(t2.id, remain)
             self.assertNotIn(t3.id, remain)
             self.assertIn(t4.id, remain)
 
         # cannot delete already deleted token 
-        ids = [t3.id]
-        game_cache.onDeleteToken(player_cache1, {'tokens': ids}) 
+        game_cache.onDeleteToken(player_cache1, {'tokens': [t3.id]}) 
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertIsNone(answer1)
+        
+        # cannot delete unknown token
+        game_cache.onDeleteToken(player_cache1, {'tokens': [67546345]}) 
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1152,5 +1148,87 @@ class CacheIntegrationTest(EngineBaseTest):
         self.assertEqual(answer1, answer3)
         self.assertIsNone(answer1)
 
-            
-        # TODO test onCloneToken, onCreateScene, onActivateScene, onCloneScene, onDeleteScene
+    def test_onCloneToken(self):
+        socket1 = SocketDummy()
+        socket2 = SocketDummy()
+        socket3 = SocketDummy()
+        
+        # insert players
+        gm_cache   = self.engine.cache.getFromUrl('foo')
+        game_cache = gm_cache.getFromUrl('bar')
+        player_cache1 = game_cache.insert('arthur', 'red', False)
+        player_cache1.socket = socket1
+        player_cache2 = game_cache.insert('bob', 'yellow', False)
+        player_cache2.socket = socket2
+        player_cache3 = game_cache.insert('carlos', 'green', False)
+        player_cache3.socket = socket3
+        
+        # can clone token
+        with db_session:
+            scene = self.active_scene()
+            self.purge_scene(scene)
+            t1 = gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
+            t2 = gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
+            t3 = gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
+            t4 = gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
+        data = {
+            'ids': [t3.id],
+            'posx': 100,
+            'posy': 80
+        }
+        game_cache.onCloneToken(player_cache1, data)
+        # expect CREATE broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'CREATE')
+        # @NOTE: CREATE is tested in-depth on its own
+        # test token data                          
+        self.assertEqual(len(answer1['tokens']), 1)
+        with db_session:
+            clone = self.get_token(answer1['tokens'][0]['id'])
+        self.assertEqual(clone.url, t3.url)
+        self.assertEqual(clone.zorder, t3.zorder)
+        self.assertEqual(clone.size, t3.size)
+        self.assertEqual(clone.rotate, t3.rotate)
+        self.assertEqual(clone.flipx, t3.flipx)
+        self.assertFalse(clone.locked) # cloned tokens are not locked by default
+
+        # can clone multiple tokens
+        with db_session:
+            scene = self.active_scene()
+            self.purge_scene(scene)
+            t1 = gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
+            t2 = gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
+            t3 = gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
+            t4 = gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
+        data = {
+            'ids': [t1.id, t3.id, t4.id],
+            'posx': 100,
+            'posy': 80
+        }
+        game_cache.onCloneToken(player_cache1, data) 
+        # expect CREATE broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'CREATE')
+        # expect tokens to be around provided position
+        distances = list()
+        with db_session:
+            for tdata in answer1['tokens']:
+                t = self.get_token(tdata['id'])
+                dx = data['posx'] - t.posx
+                dy = data['posy'] - t.posy
+                distances.append((dx**2 + dy**2)**0.5)
+        min_dist = min(distances)
+        max_dist = max(distances)
+        self.assertLess(max_dist - min_dist, 10)
+        
+
+        
+        # TODO test onCreateScene, onActivateScene, onCloneScene, onDeleteScene
