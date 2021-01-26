@@ -339,7 +339,7 @@ class ErrorReporter(object):
                         meta_dump = '{}'
                     else:
                         meta_dump = '{\n' + meta_dump + '}'
-                except KeyError:
+                except AttributeError:
                     meta_dump = '{}'
                 message = 'Error ID  = #{0}\nRoute URL = {1}\nClient-IP = {2}\nCookies   = {3}\nMetadata   = {4}\n\n{5}'.format(
                     error_id, full_url, client_ip, cookies, meta_dump, stacktrace)

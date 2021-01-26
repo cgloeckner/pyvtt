@@ -23,18 +23,6 @@ __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 
-   
-# decorator for GM-routes
-def asGm(callback):
-    def wrapper(*args, **kwargs):
-        session = request.get_cookie('session')
-        if session is None:
-            redirect('/vtt/join')
-        return callback(*args, **kwargs)
-    return wrapper
-
-
-
 def setup_gm_routes(engine):
 
     # shared login page
@@ -95,6 +83,7 @@ def setup_gm_routes(engine):
         engine.logging.access('GM name="{0}" url={1} session refreshed using patreon by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
         
         engine.main_db.commit()
+        # redirect to GM's game overview
         redirect('/')
 
     # non-patreon login
@@ -160,14 +149,15 @@ def setup_gm_routes(engine):
         status['url'] = gm.url
         return status
 
-    @get('/', apply=[asGm])
+    @get('/')
     @view('gm')
     def get_game_list():
         gm = engine.main_db.GM.loadFromSession(request)
         if gm is None:
             # remove cookie
             response.set_cookie('session', '', path='/', max_age=1, secure=engine.hasSsl())
-            redirect('/')
+            # redirect to login screen
+            redirect('/vtt/join')
         
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -175,7 +165,7 @@ def setup_gm_routes(engine):
             # remove cookie
             engine.logging.warning('GM name="{0}" url={1} tried to relogin by {2} but he was not in the cache'.format(gm.name, gm.url, engine.getClientIp(request)))
             response.set_cookie('session', '', path='/', max_age=1, secure=engine.hasSsl())
-            redirect('/')
+            abort(404)
         
         # refresh session
         gm.refreshSession(response)
@@ -196,8 +186,8 @@ def setup_gm_routes(engine):
     def call_fancy_url():
         return engine.url_generator()
 
-    @post('/vtt/import-game/', apply=[asGm])
-    @post('/vtt/import-game/<url>', apply=[asGm])
+    @post('/vtt/import-game/')
+    @post('/vtt/import-game/<url>')
     def post_import_game(url=None):
         status = {
             'url_ok'  : False,
@@ -209,7 +199,7 @@ def setup_gm_routes(engine):
         # check GM
         gm = engine.main_db.GM.loadFromSession(request) 
         if gm is None:
-            abort(401)
+            abort(404)
            
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -287,10 +277,11 @@ def setup_gm_routes(engine):
         status['url'] = game.getUrl();
         return status
 
-    @get('/vtt/export-game/<url>', apply=[asGm])
+    @get('/vtt/export-game/<url>')
     def export_game(url):
         gm = engine.main_db.GM.loadFromSession(request)
-        # note: asGm guards this with a redirect
+        if gm is None:
+            abort(404)
         
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -312,10 +303,11 @@ def setup_gm_routes(engine):
         # offer file for downloading
         return static_file(zip_file, root=zip_path, download=zip_file, mimetype='application/zip')
 
-    @post('/vtt/kick-players/<url>', apply=[asGm])
+    @post('/vtt/kick-players/<url>')
     def kick_players(url):
         gm = engine.main_db.GM.loadFromSession(request)
-        # note: asGm guards this by a redirect
+        if gm is None:
+            abort(404)
         
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -335,10 +327,11 @@ def setup_gm_routes(engine):
         
         engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 
-    @post('/vtt/kick-player/<url>/<uuid>', apply=[asGm])
+    @post('/vtt/kick-player/<url>/<uuid>')
     def kick_player(url, uuid):
         gm = engine.main_db.GM.loadFromSession(request)
-        # note: asGm guards this by redirect
+        if gm is None:
+            abort(404)
         
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -362,11 +355,11 @@ def setup_gm_routes(engine):
         
         engine.logging.access('Player {0} ({1}) kicked from {2} by {3}'.format(name, uuid, game.getUrl(), engine.getClientIp(request)))
 
-    @post('/vtt/delete-game/<url>', apply=[asGm])
+    @post('/vtt/delete-game/<url>')
     @view('games')
     def delete_game(url):
-        gm = engine.main_db.GM.loadFromSession(request)
-        # note: asGm guards this by redirect
+        if gm is None:
+            abort(404)
         
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -395,11 +388,12 @@ def setup_gm_routes(engine):
         
         return dict(gm=gm, server=server, all_games=all_games)
 
-    @post('/vtt/query-scenes/<url>', apply=[asGm])
+    @post('/vtt/query-scenes/<url>')
     @view('scenes')
     def post_create_scene(url):
-        gm = engine.main_db.GM.loadFromSession(request)  
-        # note: asGm guards this by redirect
+        gm = engine.main_db.GM.loadFromSession(request)
+        if gm is None:
+            abort(404)
         
         # load GM from cache
         gm_cache = engine.cache.get(gm)

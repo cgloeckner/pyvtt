@@ -1,6 +1,6 @@
 <div id="login">
 	
-%if 'mobile' in user_agent.lower():
+%if user_agent is not None and 'mobile' in user_agent.lower():
 	<div class="warning">
 		<p>MOBILE DEVICES NOT SUPPORTED</p>
 	</div>

@@ -30,7 +30,8 @@ class EngineBaseTest(unittest.TestCase):
         
         # load engine app into webtest
         self.engine = Engine(argv=['--quiet'], pref_dir=self.root)
-        self.app    = webtest.TestApp(self.engine.app)
+        self.engine.app.catchall = False
+        self.app = webtest.TestApp(self.engine.app)
         
         self.monkeyPatch()
         

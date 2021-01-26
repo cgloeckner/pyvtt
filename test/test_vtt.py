@@ -16,6 +16,37 @@ import vtt
 from test.utils import EngineBaseTest
 
 
+
+def makeImage(w, h):
+    pil_img = Image.new(mode='RGB', size=(w, h))
+    with tempfile.NamedTemporaryFile('wb') as wh:
+        pil_img.save(wh.name, 'BMP')
+        with open(wh.name, 'rb') as rh:
+            return rh.read()
+
+def makeZip(fname, data, n):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # create json
+        json_path = os.path.join(tmp_dir, 'game.json')
+        with open(json_path , 'w') as jh:
+            jh.write(data)
+        # create image
+        for i in range(n):         
+            img_path = os.path.join(tmp_dir, '{0}.bmp'.format(i))
+            img_file = Image.new(mode='RGB', size=(1024, 1024))
+            img_file.save(img_path)
+        # pack zip
+        zip_path = os.path.join(tmp_dir, '{0}.zip'.format(fname))
+        with zipfile.ZipFile(zip_path, "w") as zh:
+            zh.write(json_path, 'game.json')
+            for i in range(n):  
+                zh.write(img_path, '{0}.bmp'.format(i))
+        with open(zip_path, 'rb') as rh:
+            return rh.read()
+        
+
+
+
 class VttTest(EngineBaseTest):
 
     def setUp(self):
@@ -27,7 +58,7 @@ class VttTest(EngineBaseTest):
     def test_get_root(self):
         # expect redirect to login
         ret = self.app.get('/')
-        self.assertEqual(ret.status_int, 302) # redirect
+        self.assertEqual(ret.status_int, 302)
         self.assertEqual(ret.location, 'http://localhost:80/vtt/join')
         ret = ret.follow() 
         self.assertEqual(ret.status_int, 200)
@@ -121,18 +152,12 @@ class VttTest(EngineBaseTest):
         self.assertEqual(len(fancy_url.split('-')), 3)
         for word in fancy_url.split('-'):
             self.assertNotEqual(word, '')
-    
+
     def test_vtt_importgame(self):
         # create some images
-        def img2bytes(w, h):
-            pil_img = Image.new(mode='RGB', size=(w, h))
-            with tempfile.NamedTemporaryFile('wb') as wh:
-                pil_img.save(wh.name, 'BMP')
-                with open(wh.name, 'rb') as rh:
-                    return rh.read()
-        img_small = img2bytes(512, 512)
-        img_large = img2bytes(1500, 1500)
-        img_huge  = img2bytes(2000, 2000)
+        img_small = makeImage(512, 512)
+        img_large = makeImage(1500, 1500)
+        img_huge  = makeImage(2000, 2000)
         mib = 2**20
         self.assertLess(len(img_small), mib)       
         self.assertLess(len(img_large), 11 * mib)
@@ -144,25 +169,6 @@ class VttTest(EngineBaseTest):
             'tokens': [],
             'scenes': [{'tokens': [], 'backing': None}]
         })
-        def makeZip(fname, data, n):
-            with tempfile.TemporaryDirectory() as tmp_dir:
-                # create json
-                json_path = os.path.join(tmp_dir, 'game.json')
-                with open(json_path , 'w') as jh:
-                    jh.write(data)
-                # create image
-                for i in range(n):         
-                    img_path = os.path.join(tmp_dir, '{0}.bmp'.format(i))
-                    img_file = Image.new(mode='RGB', size=(1024, 1024))
-                    img_file.save(img_path)
-                # pack zip
-                zip_path = os.path.join(tmp_dir, '{0}.zip'.format(fname))
-                with zipfile.ZipFile(zip_path, "w") as zh:
-                    zh.write(json_path, 'game.json')
-                    for i in range(n):  
-                        zh.write(img_path, '{0}.bmp'.format(i))
-                with open(zip_path, 'rb') as rh:
-                    return rh.read()
         
         zip_normal = makeZip('zip2', empty_game, 4)
         zip_huge   = makeZip('zip2', empty_game, 8)
@@ -182,19 +188,25 @@ class VttTest(EngineBaseTest):
 
         # cannot import image without GM session
         ret = self.app.post('/vtt/import-game/',
-            upload_files=[('file', 'test.png', img_small)], xhr=True)
-        self.assertEqual(ret.status_int, 302) # redirect
-        self.assertEqual(ret.location, 'http://localhost:80/vtt/join')
-        ret = ret.follow()
-        self.assertEqual(ret.status_int, 200) # login
+            upload_files=[('file', 'test.png', img_small)], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
 
         # cannot import zip without GM session
         ret = self.app.post('/vtt/import-game/',
-            upload_files=[('file', 'test.zip', img_small)], xhr=True)
-        self.assertEqual(ret.status_int, 302) # redirect
-        self.assertEqual(ret.location, 'http://localhost:80/vtt/join')
-        ret = ret.follow()   
-        self.assertEqual(ret.status_int, 200) # login
+            upload_files=[('file', 'test.zip', img_small)], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        self.app.set_cookie('session', 'something-that-shall-fake-a-session')
+        
+        # cannot import image without valid GM session
+        ret = self.app.post('/vtt/import-game/',
+            upload_files=[('file', 'test.png', img_small)], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        # cannot import zip without valid GM session
+        ret = self.app.post('/vtt/import-game/',
+            upload_files=[('file', 'test.zip', img_small)], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
 
         # login again
         self.app.set_cookie('session', sid)
@@ -220,6 +232,8 @@ class VttTest(EngineBaseTest):
         self.assertTrue(ret.json['file_ok'])
         self.assertEqual(ret.json['error'], '')
         self.assertEqual(ret.json['url'], 'arthur/test-url-1')
+        ret = self.app.get('/arthur/test-url-1')
+        self.assertEqual(ret.status_int, 200)
         
         # cannot use custom url twice
         ret = self.app.post('/vtt/import-game/test-url-1',
@@ -239,6 +253,8 @@ class VttTest(EngineBaseTest):
         self.assertTrue(ret.json['file_ok'])
         self.assertEqual(ret.json['error'], '')
         self.assertEqual(ret.json['url'], 'arthur/test-url-1-but-this-time-with-')
+        ret = self.app.get('/arthur/test-url-1-but-this-time-with-')
+        self.assertEqual(ret.status_int, 200)
         
         # cannot import image with invalid url
         ret = self.app.post('/vtt/import-game/test url-2',
@@ -247,7 +263,9 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.content_type, 'application/json')   
         self.assertEqual(ret.json['error'], 'NO SPECIAL CHARS OR SPACES')
         self.assertEqual(ret.json['url'], '')
-        self.assertFalse(ret.json['url_ok'])
+        self.assertFalse(ret.json['url_ok'])   
+        ret = self.app.get('/arthur/test url-2', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
         
         # cannot import multiple files at once
         for url in ['', 'test-url-3']:
@@ -261,6 +279,8 @@ class VttTest(EngineBaseTest):
             self.assertTrue(ret.json['url_ok'])
             self.assertFalse(ret.json['file_ok'])
             self.assertEqual(ret.json['error'], 'ONE FILE AT ONCE')
+        ret = self.app.get('/arthur/test-url-3', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
         
         # can upload large background
         for url in ['', 'test-url-4']:
@@ -273,6 +293,8 @@ class VttTest(EngineBaseTest):
             self.assertEqual(ret.json['error'], '')
             if url != '':
                 self.assertEqual(ret.json['url'], 'arthur/test-url-4')
+        ret = self.app.get('/arthur/test-url-4')
+        self.assertEqual(ret.status_int, 200)
             
         # cannot upload too large background
         for url in ['', 'test-url-5']:
@@ -284,6 +306,8 @@ class VttTest(EngineBaseTest):
             self.assertFalse(ret.json['file_ok'])
             self.assertEqual(ret.json['error'], 'TOO LARGE BACKGROUND (MAX 10 MiB)')
             self.assertEqual(ret.json['url'], '')
+        ret = self.app.get('/arthur/test-url-5', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
         
         # cannot upload a fake zip file
         for url in ['', 'test-url-6']:
@@ -295,6 +319,8 @@ class VttTest(EngineBaseTest):
             self.assertFalse(ret.json['file_ok'])
             self.assertEqual(ret.json['error'], 'CORRUPTED FILE')   
             self.assertEqual(ret.json['url'], '')
+        ret = self.app.get('/arthur/test-url-6', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
         
         # can upload zip file
         for url in ['', 'test-url-7']:
@@ -305,6 +331,8 @@ class VttTest(EngineBaseTest):
             self.assertTrue(ret.json['url_ok'])
             self.assertTrue(ret.json['file_ok'])
             self.assertEqual(ret.json['error'], '')
+        ret = self.app.get('/arthur/test-url-7')
+        self.assertEqual(ret.status_int, 200)
         
         # cannot upload too large zip file
         for url in ['', 'test-url-8']:
@@ -315,6 +343,8 @@ class VttTest(EngineBaseTest):
             self.assertTrue(ret.json['url_ok'])
             self.assertFalse(ret.json['file_ok'])
             self.assertEqual(ret.json['error'], 'TOO LARGE GAME (MAX 15 MiB)')
+        ret = self.app.get('/arthur/test-url-8', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
         
         # cannot upload any other file format
         for url in ['', 'test-url-9']:
@@ -325,8 +355,97 @@ class VttTest(EngineBaseTest):
             self.assertTrue(ret.json['url_ok'])
             self.assertFalse(ret.json['file_ok'])
             self.assertEqual(ret.json['error'], 'USE AN IMAGE FILE')
-            self.assertEqual(ret.json['url'], '')
+            self.assertEqual(ret.json['url'], '')  
+        ret = self.app.get('/arthur/test-url-9', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
 
+    def test_exportgame(self):
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        arthur_sid = self.app.cookies['session']
         
+        # create a game 
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-exportgame-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        self.assertEqual(ret.content_type, 'application/json')
+        self.assertTrue(ret.json['url_ok'])
+        self.assertTrue(ret.json['file_ok'])
+        self.assertEqual(ret.json['error'], '')
+        self.assertEqual(ret.json['url'], 'arthur/test-exportgame-1')
+
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'bob'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        bob_sid = self.app.cookies['session']
+        
+        # create a game 
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/this-one-is-bob',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        self.assertEqual(ret.content_type, 'application/json')
+        self.assertTrue(ret.json['url_ok'])
+        self.assertTrue(ret.json['file_ok'])
+        self.assertEqual(ret.json['error'], '')
+        self.assertEqual(ret.json['url'], 'bob/this-one-is-bob')
+
+        # reset app to clear cookies
+        self.app.reset()
+        
+        # cannot export game without GM session
+        ret = self.app.get('/vtt/export-game/test-exportgame-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        self.app.set_cookie('session', 'something-that-shall-fake-a-session')
+        
+        # cannot export game without valid GM session
+        ret = self.app.get('/vtt/export-game/test-exportgame-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        # login as arthur
+        self.app.set_cookie('session', arthur_sid)
+        
+        # can export existing game
+        ret = self.app.get('/vtt/export-game/test-exportgame-1')
+        self.assertEqual(ret.status_int, 200)
+        
+        # can export another GM's game
+        ret = self.app.get('/vtt/export-game/this-one-is-bob', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+        
+        # cannot export unknown game
+        ret = self.app.get('/vtt/export-game/test-anything-else', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+        
+
+
+        """ @get('/vtt/export-game/<url>', apply=[asGm])
+    def export_game(url):
+        gm = engine.main_db.GM.loadFromSession(request)
+        # note: asGm guards this with a redirect
+        
+        # load GM from cache
+        gm_cache = engine.cache.get(gm)
+        if gm_cache is None:
+            engine.logging.warning('GM name="{0}" url="{1}" tried to export game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+            abort(404)
+        
+        # load game from GM's database
+        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        if game is None:
+            engine.logging.warning('GM name="{0}" url="{1}" tried to export game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+            abort(404)
+        
+        # export game to zip-file
+        zip_file, zip_path = game.toZip()
+         
+        engine.logging.access('Game {0} exported by {1}'.format(game.getUrl(), engine.getClientIp(request)))
+        
+        # offer file for downloading
+        return static_file(zip_file, root=zip_path, download=zip_file, mimetype='application/zip')
+        """
         
     # @NOTE: next is /vtt/export-game
