@@ -10,6 +10,7 @@ License: MIT (see LICENSE for details)
 import os, pathlib, time, uuid, tempfile, shutil, zipfile, json, math
 
 from gevent import lock
+from PIL import Image, UnidentifiedImageError
 
 from pony.orm import *
 
@@ -198,6 +199,13 @@ def createGmDatabase(engine, filename):
             with tempfile.NamedTemporaryFile(suffix=suffix) as tmpfile:
                 # save image to tempfile
                 handle.save(tmpfile.name, overwrite=True)
+
+                # check file format
+                try:
+                    Image.open(tmpfile.name)
+                except UnidentifiedImageError:
+                    # unsupported file format
+                    return None
                 
                 # create md5 checksum for duplication test
                 new_md5 = engine.getMd5(tmpfile.file)
@@ -375,16 +383,24 @@ def createGmDatabase(engine, filename):
             with tempfile.TemporaryDirectory() as tmp_dir:
                 zip_path = os.path.join(tmp_dir, handle.filename)
                 handle.save(str(zip_path))
-                with zipfile.ZipFile(zip_path, 'r') as fp:
-                    fp.extractall(tmp_dir)
-                
+                try:
+                    with zipfile.ZipFile(zip_path, 'r') as fp:
+                        fp.extractall(tmp_dir)
+                except zipfile.BadZipFile:
+                    # zip is corrupted
+                    return None
+
                 # create all game data
                 data = dict()
                 json_path = os.path.join(tmp_dir, 'game.json')
                 if not os.path.exists(json_path):
                     return None
-                with open(json_path , 'r') as h:
-                    data = json.load(h)
+                try:
+                    with open(json_path , 'r') as h:
+                        data = json.load(h)
+                except json.decoder.JSONDecodeError:
+                    # json is corrupted
+                    return None
                 
                 # create game
                 game = db.Game(url=url, gm_url=gm.url)
@@ -400,30 +416,35 @@ def createGmDatabase(engine, filename):
                         shutil.copyfile(src_path, dst_path)
                 
                 # create scenes
-                for sid, s in enumerate(data["scenes"]):
-                    scene = db.Scene(game=game)
+                try:
+                    for sid, s in enumerate(data["scenes"]):
+                        scene = db.Scene(game=game)
+                        
+                        # create tokens for that scene
+                        for token_id in s["tokens"]:
+                            token_data = data["tokens"][token_id]
+                            url = token_data['url']
+                            if isinstance(url, str): # backwards compatibility
+                                url = url.split('.png')[0]
+                            t = db.Token(                                
+                                scene=scene, url=game.getImageUrl(url),
+                                posx=token_data['posx'], posy=token_data['posy'],
+                                zorder=token_data['zorder'], size=token_data['size'],
+                                rotate=token_data['rotate'], flipx=token_data['flipx'],
+                                locked=token_data['locked']
+                            )
+                            if s["backing"] == token_id:
+                                db.commit()
+                                scene.backing = t
+                        
+                        if game.active is None:
+                            # select first scene as active
+                            game.active = scene.id
+                except KeyError as e:
+                    # delete game
+                    game.delete()
+                    return None
                     
-                    # create tokens for that scene
-                    for token_id in s["tokens"]:
-                        token_data = data["tokens"][token_id]
-                        url = token_data['url']
-                        if isinstance(url, str): # backwards compatibility
-                            url = url.split('.png')[0]
-                        t = db.Token(                                
-                            scene=scene, url=game.getImageUrl(url),
-                            posx=token_data['posx'], posy=token_data['posy'],
-                            zorder=token_data['zorder'], size=token_data['size'],
-                            rotate=token_data['rotate'], flipx=token_data['flipx'],
-                            locked=token_data['locked']
-                        )
-                        if s["backing"] == token_id:
-                            db.commit()
-                            scene.backing = t
-                    
-                    if game.active is None:
-                        # select first scene as active
-                        game.active = scene.id
-                
                 db.commit()
                 
                 return game

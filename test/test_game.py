@@ -11,6 +11,7 @@ import os, pathlib, tempfile, zipfile, json
 
 from bottle import FileUpload
 from pony.orm import db_session
+from PIL import Image
 
 import orm
 
@@ -183,32 +184,49 @@ class GameTest(EngineBaseTest):
         game = self.db.Game(url='foo', gm_url='url456')
         game.postSetup()
         
-        # prepare FileUpload (with this file for demoing purpose)
-        fupload = FileUpload(open(__file__, 'rb'), 'test.png', 'test.png')
-        
-        # test upload result
-        old_id = game.getNextId()
-        url = game.upload(fupload)
-        new_id = game.getNextId()
-        self.assertEqual(old_id + 1, new_id)
-        self.assertEqual(url, game.getImageUrl(old_id))
-        
-        # test file exists   
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
-        p = img_path / '{0}.png'.format(old_id)
-        self.assertTrue(os.path.exists(p))
-        
-        # check md5 being stored
-        md5 = self.engine.getMd5(fupload.file)
-        checksums = self.engine.checksums[game.getUrl()]
-        self.assertIn(md5, checksums)
-        
-        # try to reupload file: same file used
-        old_id = game.getNextId()
-        new_url = game.upload(fupload)
-        new_id = game.getNextId()
-        self.assertEqual(old_id, new_id)
-        self.assertEqual(url, new_url)
+        # can upload image file
+        pil_img = Image.new(mode='RGB', size=(32, 32))
+        with tempfile.NamedTemporaryFile('wb') as wh:
+            pil_img.save(wh.name, 'PNG')
+            with open(wh.name, 'rb') as rh:
+                # prepare fileupload
+                fupload = FileUpload(rh, 'test.png', 'test.png')
+                
+                # test upload result
+                old_id = game.getNextId()
+                url = game.upload(fupload)
+                new_id = game.getNextId()
+                self.assertEqual(old_id + 1, new_id)
+                self.assertEqual(url, game.getImageUrl(old_id))
+                
+                # test file exists   
+                img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+                p = img_path / '{0}.png'.format(old_id)
+                self.assertTrue(os.path.exists(p))
+                
+                # check md5 being stored
+                md5 = self.engine.getMd5(fupload.file)
+                checksums = self.engine.checksums[game.getUrl()]
+                self.assertIn(md5, checksums)
+                
+                # try to reupload file: same file used
+                old_id = game.getNextId()
+                new_url = game.upload(fupload)
+                new_id = game.getNextId()
+                self.assertEqual(old_id, new_id)
+                self.assertEqual(url, new_url)
+
+        # cannot upload broken file
+        with tempfile.NamedTemporaryFile('wb') as wh:
+            wh.write(b'0' * 2**20)
+            with open(wh.name, 'rb') as rh:
+                # prepare fileupload
+                fupload = FileUpload(rh, 'test.png', 'test.png')
+                
+                # test upload result
+                old_id = game.getNextId()
+                url = game.upload(fupload)
+                self.assertIsNone(url)
         
     def test_getIdFromUrl(self):
         self.assertEqual(self.db.Game.getIdFromUrl('/foo/bar/3.17.png'), 3)
@@ -385,27 +403,31 @@ class GameTest(EngineBaseTest):
         
     @db_session
     def test_fromImage(self):
-        # create fake fileupload to mimic image
-        fupload = FileUpload(open(__file__, 'rb'), 'test.png', __file__)
-        
-        game = self.db.Game.fromImage(
-            gm=self.engine.main_db.GM.select(lambda g: g.url == 'url456').first(),
-            url='bar',
-            handle=fupload
-        )
-        
-        # assert one scene with only one token, which the background
-        self.assertEqual(len(game.scenes), 1)
-        scene = list(game.scenes)[0]
-        tokens = self.db.Token.select(lambda t: t.scene == scene)
-        self.assertEqual(len(tokens), 1)
-        self.assertEqual(tokens.first().size, -1)
-        
-        # assert token's image exist
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
-        img_id = tokens.first().url.split('/')[-1]
-        img_fname = img_path / img_id
-        self.assertTrue(os.path.exists(img_fname))
+        pil_img = Image.new(mode='RGB', size=(32, 32))
+        with tempfile.NamedTemporaryFile('wb') as wh:
+            pil_img.save(wh.name, 'PNG')
+            with open(wh.name, 'rb') as rh:
+                # prepare fileupload
+                fupload = FileUpload(rh, 'test.png', 'test.png')
+                
+                game = self.db.Game.fromImage(
+                    gm=self.engine.main_db.GM.select(lambda g: g.url == 'url456').first(),
+                    url='bar',
+                    handle=fupload
+                )
+                
+                # assert one scene with only one token, which the background
+                self.assertEqual(len(game.scenes), 1)
+                scene = list(game.scenes)[0]
+                tokens = self.db.Token.select(lambda t: t.scene == scene)
+                self.assertEqual(len(tokens), 1)
+                self.assertEqual(tokens.first().size, -1)
+                
+                # assert token's image exist
+                img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+                img_id = tokens.first().url.split('/')[-1]
+                img_fname = img_path / img_id
+                self.assertTrue(os.path.exists(img_fname))
         
     @db_session
     def test_fromZip(self):
@@ -463,5 +485,27 @@ class GameTest(EngineBaseTest):
                 img_fname = new_img_path / img_id
                 self.assertTrue(os.path.exists(img_fname))
             
-            # @note: exact token data (position etc.) isn't tested here
+            # @NOTE: exact token data (position etc.) isn't tested here
+        
+        # create corrupt json file inside zip
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            # manipulate json
+            json_path = os.path.join(tmp_dir, 'game.json')
+            with open(json_path , 'w') as h:
+                h.write('{some[brokenstuff": "(}]')
             
+            # pack zip (without any images)
+            with zipfile.ZipFile(zip_path, "w") as h:
+                h.write(json_path, 'game.json')
+
+        # try to upload that corrupted file
+        with open(zip_path, 'rb') as fp:
+            fupload = FileUpload(fp, 'demo.zip', 'demo.zip')
+            
+            game3 = self.db.Game.fromZip(
+                gm=self.engine.main_db.GM.select(lambda g: g.url == 'url456').first(),
+                url='bar',
+                handle=fupload
+            )
+            self.assertIsNone(game3) 
+

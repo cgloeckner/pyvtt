@@ -663,8 +663,11 @@ def setup_player_routes(engine):
         # upload images
         for handle in files:
             url = game.upload(handle)
-            urls.append(url)
-            engine.logging.access('Image upload {0} by {1}'.format(url, engine.getClientIp(request)))
+            if url is not None:
+                urls.append(url)
+                engine.logging.access('Image upload {0} by {1}'.format(url, engine.getClientIp(request)))
+            else:
+                engine.logging.access('Image failed to upload by {0}'.format(engine.getClientIp(request)))
         
         # return urls
         # @NOTE: request was non-JSON to allow upload, so urls need to be encoded
