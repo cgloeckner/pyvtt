@@ -456,7 +456,7 @@ function onDrop(event) {
                 'posx' : mouse_x,
                 'posy' : mouse_y,
                 'size' : default_token_size,
-                'urls' : response
+                'urls' : urls
             });
             
             $('#popup').hide();

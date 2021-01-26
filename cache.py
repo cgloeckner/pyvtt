@@ -587,7 +587,6 @@ class GameCache(object):
         posx = data['posx']
         posy = data['posy']
         size = data['size']
-        #urls = json.loads(data['urls'])
         urls = data['urls']
         
         # create tokens
