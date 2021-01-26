@@ -419,33 +419,44 @@ class VttTest(EngineBaseTest):
         # cannot export unknown game
         ret = self.app.get('/vtt/export-game/test-anything-else', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
-        
 
+    def test_vtt_kickplayers(self):
+        pass # Not Yet Implemented
+        
+    def test_vtt_kickplayer(self):
+        pass # Not Yet Implemented
+        
+    def test_vtt_deletegame(self):
+        pass # Not Yet Implemented
+        
+    def test_vtt_queryscenes(self):
+        pass # Not Yet Implemented
+        
+    def test_vtt_status(self):
+        pass # Not Yet Implemented
+        
+    def test_vtt_query(self):
+        pass # Not Yet Implemented
+        
+    def test_vtt_shard(self):
+        pass # Not Yet Implemented
+        
+    def test_static_fname(self):
+        pass # Not Yet Implemented
 
-        """ @get('/vtt/export-game/<url>', apply=[asGm])
-    def export_game(url):
-        gm = engine.main_db.GM.loadFromSession(request)
-        # note: asGm guards this with a redirect
+    def test_token_fname(self):
+        pass # Not Yet Implemented
+
+    def test_game_login(self):
+        pass # Not Yet Implemented
+
+    def test_game_screen(self):
+        pass # Not Yet Implemented
         
-        # load GM from cache
-        gm_cache = engine.cache.get(gm)
-        if gm_cache is None:
-            engine.logging.warning('GM name="{0}" url="{1}" tried to export game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)))
-            abort(404)
-        
-        # load game from GM's database
-        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-        if game is None:
-            engine.logging.warning('GM name="{0}" url="{1}" tried to export game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)))
-            abort(404)
-        
-        # export game to zip-file
-        zip_file, zip_path = game.toZip()
-         
-        engine.logging.access('Game {0} exported by {1}'.format(game.getUrl(), engine.getClientIp(request)))
-        
-        # offer file for downloading
-        return static_file(zip_file, root=zip_path, download=zip_file, mimetype='application/zip')
-        """
-        
-    # @NOTE: next is /vtt/export-game
+    def test_websocket(self):
+        pass # Not Yet Implemented
+
+    def test_upload(self):
+        pass # Not Yet Implemented
+
+    # @TODO: test by triggering websocket communication

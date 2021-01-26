@@ -358,6 +358,7 @@ def setup_gm_routes(engine):
     @post('/vtt/delete-game/<url>')
     @view('games')
     def delete_game(url):
+        gm = engine.main_db.GM.loadFromSession(request)
         if gm is None:
             abort(404)
         
