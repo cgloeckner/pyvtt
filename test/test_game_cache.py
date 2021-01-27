@@ -64,8 +64,9 @@ class GameCacheTest(EngineBaseTest):
         # force carlos to be online
         self.cache.get('carlos').socket = SocketDummy()
         # cannot add player twice (if online)
-        with self.assertRaises(KeyError):
+        with self.assertRaises(KeyError) as e:
             self.cache.insert('carlos', 'black', True)
+            self.assertEqual(str(e), 'carlos')
             
         # can re-login player if offline
         self.cache.insert('bob', 'cyan', False)

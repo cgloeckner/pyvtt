@@ -224,7 +224,7 @@ class GameCache(object):
     def insert(self, name, color, is_gm):
         with self.lock:
             if name in self.players and self.players[name].isOnline():
-                raise KeyError
+                raise KeyError(name)
             self.players[name] = PlayerCache(self.engine, self, name, color, is_gm)
             self.rebuildIndices()
             return self.players[name]
@@ -845,7 +845,7 @@ class GmCache(object):
         url = game.url
         with self.lock:
             if url in self.games:
-                raise KeyError
+                raise KeyError(url)
             self.games[url] = GameCache(self.engine, self, game)
             return self.games[url]
         

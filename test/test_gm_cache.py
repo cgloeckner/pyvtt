@@ -35,8 +35,9 @@ class GmCacheTest(EngineBaseTest):
             game2.postSetup()
         
         # force 2nd insertion
-        with self.assertRaises(KeyError):
+        with self.assertRaises(KeyError) as e:
             self.cache.insert(game1)
+            self.assertEqual(str(e), 'bar')
         
     def test_get(self):  
         with db_session:
