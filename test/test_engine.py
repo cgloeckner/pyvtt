@@ -7,10 +7,11 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import os, json, tempfile, time, random
+import os, json, tempfile, time, random, requests
 
 from bottle import FileUpload 
 from pony.orm import db_session
+import gevent
 
 import engine
 
@@ -57,8 +58,21 @@ class EngineTest(EngineBaseTest):
         
         self.monkeyPatch()
         
-    def test_run(self):
-        print('\nEngine.run is not tested')
+    def test_run(self): 
+        # confirm server is offline
+        with self.assertRaises(requests.exceptions.ConnectionError):
+            requests.get('http://localhost:8080')
+        
+        # start and query server
+        greenlet = gevent.Greenlet(run=self.engine.run)
+        greenlet.start()
+        ret = requests.get('http://localhost:8080')
+        self.assertIsNotNone(ret)
+        
+        # confirm server is offline again
+        gevent.kill(greenlet)
+        with self.assertRaises(requests.exceptions.ConnectionError):
+            requests.get('http://localhost:8080')
         
     def test_getDomain(self):
         settings = EngineTest.defaultSettings()
@@ -121,13 +135,20 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(self.engine.getClientIp(dummy_request), '5.6.7.8')
         
     def test_getCountryFromIp(self):
-        print('\nEngine.getCountryFromIp() is not tested')
+        # only test that the external API is working
+        code = self.engine.getCountryFromIp('127.0.0.1')
+        self.assertIsInstance(code, str)
         
     def test_getPublicIp(self):
-        print('\nEngine.getPublicIp() is not tested')
+        # only test that the external API is working
+        ip = self.engine.getPublicIp()
+        self.assertIsInstance(ip, str)
         
     def test_getMd5(self):
-        print('\nEngine.getMd5() is not tested')
+        # NOTE: THIS file here is hashed
+        with open(__file__, 'rb') as h:
+            ret = self.engine.getMd5(h)
+            self.assertIsInstance(ret, str)
         
     def test_getSize(self):
         # create dummy file
