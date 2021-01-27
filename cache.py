@@ -914,6 +914,8 @@ class EngineCache(object):
         """ Handle new connection. """
         # read name and color
         raw = socket.receive()
+        if raw is None:
+            return
         data = json.loads(raw)
         name     = data['name']
         gm_url   = data['gm_url']
