@@ -136,12 +136,14 @@ class EngineTest(EngineBaseTest):
         
     def test_getCountryFromIp(self):
         # only test that the external API is working
-        code = self.engine.getCountryFromIp('127.0.0.1')
+        # @NOTE: method got monkeypatched
+        code = self.prev_getCountryFromIp('127.0.0.1')
         self.assertIsInstance(code, str)
         
     def test_getPublicIp(self):
-        # only test that the external API is working
-        ip = self.engine.getPublicIp()
+        # only test that the external API is working 
+        # @NOTE: method got monkeypatched
+        ip = self.prev_getPublicIp()
         self.assertIsInstance(ip, str)
         
     def test_getMd5(self):

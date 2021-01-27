@@ -439,7 +439,11 @@ def setup_gm_routes(engine):
             abort(404)
         
         # ask server
-        host = engine.shards[index]
+        try:
+            host = engine.shards[index]
+        except IndexError:
+            abort(404)
+        
         data = dict()   
         data['countryCode'] = None
         data['status']      = None

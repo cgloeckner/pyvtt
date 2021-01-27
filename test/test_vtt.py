@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import tempfile, json, os, zipfile, gevent
+import tempfile, json, os, zipfile, gevent, requests
 
 from PIL import Image
 
@@ -508,7 +508,7 @@ class VttTest(EngineBaseTest):
         gm_cache   = self.engine.cache.getFromUrl('arthur')
         game_cache = gm_cache.getFromUrl('test-game-1')
         self.assertEqual(len(game_cache.players), 3) 
-        """
+        
         # non-GM cannot kick any player
         for p in [player1, player2, player3]:
             ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(p.uuid), expect_errors=True)
@@ -521,7 +521,7 @@ class VttTest(EngineBaseTest):
             ret = self.app.post('/vtt/kick-player/test-weird-1/{0}'.format(p.uuid), expect_errors=True)
             self.assertEqual(ret.status_int, 404)
             self.assertEqual(len(game_cache.players), 3)
-        """
+        
         # GM can kick a single player from his game
         self.app.set_cookie('session', gm_sid)
         ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player2.uuid))
@@ -555,20 +555,142 @@ class VttTest(EngineBaseTest):
         self.assertEqual(len(game_cache.players), 0)
     
     def test_vtt_deletegame(self):
-        pass # Not Yet Implemented
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
         
+        # create a game 
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+
+        gm_cache = self.engine.cache.getFromUrl('arthur')
+        
+        # non-GM cannot delete the game
+        ret = self.app.post('/vtt/delete-game/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+        self.assertIsNotNone(gm_cache.getFromUrl('test-game-1'))
+        
+        # GM cannot delete an unknown game
+        self.app.set_cookie('session', gm_sid)
+        ret = self.app.post('/vtt/delete-game/test-weird-game', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+        self.assertIsNotNone(gm_cache.getFromUrl('test-game-1'))
+        
+        # GM can delete a game
+        ret = self.app.post('/vtt/delete-game/test-game-1')
+        self.assertEqual(ret.status_int, 200)
+        self.assertIsNone(gm_cache.getFromUrl('test-game-1'))
+        
+        # GM cannot delete a game twice
+        ret = self.app.post('/vtt/delete-game/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+    
     def test_vtt_queryscenes(self):
-        pass # Not Yet Implemented
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        
+        # create a game 
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+
+        # create some scenes
+        gm_player = self.joinPlayer('arthur', 'test-game-1', 'arthur', 'gold')
+        for i in range(3):
+            gm_player.socket.push_receive({'OPID': 'GM-CREATE'})
+        
+        # non-GM cannot query scenes
+        ret = self.app.post('/vtt/query-scenes/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+        
+        # GM cannot query scenes from unknown game
+        self.app.set_cookie('session', gm_sid)
+        ret = self.app.post('/vtt/query-scenes/test-weird-game', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        # GM can query scenes from a game
+        ret = self.app.post('/vtt/query-scenes/test-game-1')
+        self.assertEqual(ret.status_int, 200)
         
     def test_vtt_status(self):
-        pass # Not Yet Implemented
+        # cannot query if no shard was set up
+        ret = self.app.get('/vtt/status', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        # can query if shard was set up
+        self.engine.shards = ['http://localhost:80']
+        ret = self.app.get('/vtt/status')
+        self.assertEqual(ret.status_int, 200)
+        self.assertIn('cpu', ret.json)
+        self.assertIn('memory', ret.json)
+        self.assertIn('num_players', ret.json)
         
     def test_vtt_query(self):
-        pass # Not Yet Implemented
+        # cannot query if no shard was set up
+        ret = self.app.get('/vtt/query/0', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+        
+        # setup server shards
+        test_ports = [8081, 8000]
+        servers = [self]
+        self.engine.shards = ['http://localhost:{0}'.format(p) for p in test_ports]
+        self.engine.shards.append('http://localhost:80') # this server
+        greenlets = list()
+        for port in test_ports:
+            # confirm port to be free
+            with self.assertRaises(requests.exceptions.ConnectionError):
+                requests.get('http://localhost:{0}'.format(port))
+            # setup server instance
+            e = EngineBaseTest()
+            e.setUp()
+            e.engine.hosting['port'] = port
+            e.engine.shards = self.engine.shards
+            # run in thread
+            g = gevent.Greenlet(run=e.engine.run)
+            g.start()
+            greenlets.append(g)
+            # confirm server is online
+            requests.get('http://localhost:{0}'.format(port))
+
+        # can query all servers
+        for i, url in enumerate(self.engine.shards):
+            ret = self.app.get('/vtt/query/{0}'.format(i))
+            self.assertEqual(ret.status_int, 200)
+            self.assertIn('countryCode', ret.json)
+            self.assertIsNotNone(ret.json['status'])
+            # @NOTE: cannot test countryCode due to localhost
+        
+        # cannot query unknown server
+        ret = self.app.get('/vtt/query/245245', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        # stop server shard instances
+        for g in greenlets:
+            gevent.kill(g)
         
     def test_vtt_shard(self):
-        pass # Not Yet Implemented
+        # cannot show shards page if no shard was set up
+        ret = self.app.get('/vtt/shard', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        # can show shard page for single server
+        self.engine.shards = ['http://localhost:80']
+        ret = self.app.get('/vtt/shard')
+        self.assertEqual(ret.status_int, 200)
         
+        # can show shard page for many servers
+        self.engine.shards = ['https://{0}'.format(h) for h in ['example.com', 'foo.bar', 'test.org']]
+        ret = self.app.get('/vtt/shard')
+        self.assertEqual(ret.status_int, 200)
+    
     def test_static_fname(self):
         pass # Not Yet Implemented
 

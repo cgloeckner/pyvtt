@@ -36,7 +36,10 @@ class EngineBaseTest(unittest.TestCase):
         self.monkeyPatch()
         
     def monkeyPatch(self):
-        # monkey-patch engine
+        # save methods for later
+        self.prev_getPublicIp = self.engine.getPublicIp
+        self.prev_getCountryFromIp = self.engine.getCountryFromIp
+        # monkey-patch methods with stubs
         self.engine.getPublicIp = lambda: '?.?.?.?'
         self.engine.getCountryFromIp = lambda ip: 'unknown'
         
