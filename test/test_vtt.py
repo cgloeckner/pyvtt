@@ -664,9 +664,8 @@ class VttTest(EngineBaseTest):
         for i, url in enumerate(self.engine.shards):
             ret = self.app.get('/vtt/query/{0}'.format(i))
             self.assertEqual(ret.status_int, 200)
-            self.assertIn('countryCode', ret.json)
-            self.assertIsNotNone(ret.json['status'])
-            # @NOTE: cannot test countryCode due to localhost
+            # @NOTE: cannot test countryCode due to localhost and status
+            # because this may fail on the github workflow test
         
         # cannot query unknown server
         ret = self.app.get('/vtt/query/245245', expect_errors=True)
