@@ -824,6 +824,7 @@ class GmCache(object):
         self.lock   = lock.RLock()
         self.url    = gm.url
         self.games  = dict()
+        self.db     = None # needs connect_db to be run (but outside a db_session)
         
         self.engine.logging.info('GmCache {0} with {0} created'.format(self.url, self.db_path))
         
@@ -922,8 +923,12 @@ class EngineCache(object):
         game_url = data['game_url']
         
         # insert player
-        gm_cache     = self.getFromUrl(gm_url)
-        game_cache   = gm_cache.getFromUrl(game_url)
+        gm_cache = self.getFromUrl(gm_url)
+        if gm_cache is None:
+            return
+        game_cache = gm_cache.getFromUrl(game_url)
+        if game_cache is None:
+            return
         player_cache = game_cache.get(name)
         
         #with player_cache.lock: # note: atm deadlocking

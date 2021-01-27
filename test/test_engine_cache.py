@@ -9,7 +9,7 @@ License: MIT (see LICENSE for details)
 
 from pony.orm import db_session
 
-from test.utils import EngineBaseTest
+from test.utils import EngineBaseTest, SocketDummy
 
 class EngineCacheTest(EngineBaseTest):
         
@@ -91,4 +91,56 @@ class EngineCacheTest(EngineBaseTest):
         self.assertIsNotNone(gm_cache)
         
     def test_listen(self):
-        print('\nEngineCache.listen() is not tested')
+        cache = self.engine.cache
+
+        # create GM
+        with db_session:
+            gm = self.engine.main_db.GM(name='foo', url='foo', sid='123')
+            gm.postSetup()
+        gm_cache = cache.get(gm)
+        gm_cache.connect_db()
+
+        # create Game
+        with db_session:
+            game = gm_cache.db.Game(url='bar', gm_url='foo')
+            game.postSetup()
+        game_cache = gm_cache.get(game)
+        self.assertEqual(len(game_cache.players), 0)
+
+        # create Player
+        player_cache = game_cache.insert('arthur', 'red', is_gm=False)
+
+        # listening to a silent socket does not trigger handle
+        socket = SocketDummy()
+        socket.block = False
+        cache.listen(socket)
+        self.assertIsNone(player_cache.socket)
+        self.assertIsNone(player_cache.greenlet)
+
+        # listening for invalid GM's game does not trigger handle
+        socket.push_receive({'name': 'arthur', 'gm_url': 'weird', 'game_url': 'bar'})
+        cache.listen(socket)
+        self.assertIsNone(player_cache.socket)
+        self.assertIsNone(player_cache.greenlet)
+        
+        # listening for invalid game does not trigger handle
+        socket.push_receive({'name': 'arthur', 'gm_url': 'foo', 'game_url': 'weird'})
+        cache.listen(socket)
+        self.assertIsNone(player_cache.socket)
+        self.assertIsNone(player_cache.greenlet)
+
+        # listening adds a player triggers handle
+        socket.block = False
+        socket.push_receive({'name': 'arthur', 'gm_url': 'foo', 'game_url': 'bar'})
+        cache.listen(socket)
+        self.assertEqual(player_cache.socket, socket)
+        self.assertIsNotNone(player_cache.greenlet)
+        
+        # @NOTE: The async handle() will terminate, because the dummy
+        # socket yields None and hence mimics socket to be closed by
+        # the client .. wait for it!  
+        player_cache.greenlet.join()
+        
+        # expect player to be disconnected
+        player_cache = game_cache.get('arthur')
+        self.assertIsNone(player_cache)

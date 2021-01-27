@@ -122,33 +122,6 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(meta2['game'], 'bar')
         self.assertEqual(meta2['gm'], 'foo')
         
-    def test_listen(self):
-        # connect to existing game
-        socket = SocketDummy();
-        socket.block = False
-        socket.push_receive({
-            'name'     : 'arthur',
-            'gm_url'   : 'foo',
-            'game_url' : 'bar'
-        })
-        
-        # @NOTE: adding the player is previously done by an Ajax-POST
-        game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
-        player_cache = game_cache.insert('arthur', 'red', False)
-        
-        # @NOTE: this also tests login() on the relevant GameCache and
-        # an async handle() on the PlayerCache.
-        self.engine.cache.listen(socket)
-        
-        # @NOTE: The async handle() will terminate, because the dummy
-        # socket yields None and hence mimics socket to be closed by
-        # the client .. wait for it!    
-        player_cache.greenlet.join()
-        
-        # expect player to be disconnected
-        player_cache = game_cache.get('arthur')
-        self.assertIsNone(player_cache)
-        
     def test_login(self):
         old_socket = SocketDummy()
         new_socket = SocketDummy()
