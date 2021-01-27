@@ -79,8 +79,6 @@ function onSocketMessage(event) {
 }
 
 function onAccept(data) {
-    my_uuid = data['uuid'];
-    
     // show all players
     $.each(data.players, function(i, details) {
         var p = new Player(details.name, details.uuid, details.color, details.ip, details.country, details.index);
@@ -208,7 +206,7 @@ function onPing(data) {
 }
 
 /// Handles login and triggers the game
-function login(event, gmname, url, websocket_url, as_gm) {
+function login(event, gmname, url, websocket_url) {
     event.preventDefault();
     
     $('#popup').hide();
@@ -225,10 +223,12 @@ function login(event, gmname, url, websocket_url, as_gm) {
             'playercolor' : playercolor
         },
         success: function(response) {
-            // wait for sanizized input
+            // wait for sanitized input
             error       = response['error']
             playername  = response['playername']
             playercolor = response['playercolor']
+            is_gm       = response['is_gm']
+            my_uuid     = response['my_uuid']
             
             if (error != '') {
                 showError(error);
@@ -269,9 +269,7 @@ function login(event, gmname, url, websocket_url, as_gm) {
                 
                 socket.onmessage = onSocketMessage;
                 
-                socket.onopen = function() { 
-                    is_gm = as_gm;
-                    
+                socket.onopen = function() {
                     start(gmname, url, playername, playercolor);
                 };
                 
@@ -290,6 +288,7 @@ function login(event, gmname, url, websocket_url, as_gm) {
                     copy_tokens       = [];
                     select_ids        = [];
                     is_gm             = false;
+                    my_uuid           = '';
                     
                     last_dice_timeid  = 0;
                     last_dice_series  = null;

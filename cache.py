@@ -286,7 +286,6 @@ class GameCache(object):
         
         player.write({
             'OPID'    : 'ACCEPT',
-            'uuid'    : player.uuid,
             'players' : self.getData(),
             'rolls'   : rolls,
         }); 

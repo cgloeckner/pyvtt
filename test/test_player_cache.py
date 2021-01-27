@@ -139,7 +139,6 @@ class PlayerCacheTest(EngineBaseTest):
         # expect ACCEPT to joined player
         accept = new_socket.pop_send()
         self.assertEqual(accept['OPID'], 'ACCEPT')
-        self.assertIn('uuid', accept)
         self.assertIn('players', accept)
         self.assertIn('rolls', accept)
         

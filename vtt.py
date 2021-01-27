@@ -482,7 +482,10 @@ def setup_player_routes(engine):
         root = engine.paths.getStaticPath()
         if not os.path.isdir(root) or not os.path.exists(root / fname):
             root = './static'
-        
+
+        # @NOTE: no need to check file extension, this directory is
+        # meant to be accessable as a whole
+
         return static_file(fname, root=root)
 
     @get('/token/<gmurl>/<url>/<fname>')
@@ -491,23 +494,66 @@ def setup_player_routes(engine):
         gm_cache = engine.cache.getFromUrl(gmurl)
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
-            return None
+            abort(404)
         
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
         if game is None:
             # @NOTE: not logged because somebody may play around with this
-            return None
+            abort(404)
         
         # fetch image path
         path = engine.paths.getGamePath(gmurl, url)
+
+        # check file extension (just in case more files will be added there in future)
+        if not fname.endswith('.png'):
+            abort(404)
         
         return static_file(fname, root=path)
+    
+    @get('/<gmurl>/<url>')
+    @view('battlemap')
+    def get_player_battlemap(gmurl, url):
+        # try to load playername from cookie (or from GM name)
+        playername = request.get_cookie('playername', default='')
+        
+        # query whether user is the hosting GM
+        session_gm = engine.main_db.GM.loadFromSession(request)
+        gm_is_host = session_gm is not None and session_gm.url == gmurl
+        
+        # query gm of that game
+        gm = engine.main_db.GM.select(lambda gm: gm.url == gmurl).first()
+        if gm is None:
+            abort(404)
+        
+        # try to load playercolor from cookieplayercolor = request.get_cookie('playercolor')
+        playercolor = request.get_cookie('playercolor')
+        if playercolor is None:   
+            colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
+            playercolor = colors[random.randrange(len(colors))]
+              
+        # load GM from cache
+        gm_cache = engine.cache.getFromUrl(gmurl)
+        if gm_cache is None:
+            abort(404)
+        
+        # load game from GM's database
+        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        if game is None:
+            abort(404)
+        
+        user_agent = request.environ.get('HTTP_USER_AGENT')
+        protocol = 'wss' if engine.hasSsl() else 'ws'
+        websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.getPort())
+        
+        # show battlemap with login screen ontop
+        return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=gm, is_gm=gm_is_host)
 
     @post('/<gmurl>/<url>/login')
     def set_player_name(gmurl, url):
         result = {
             'uuid'        : '',
+            'is_gm'       : False,
             'playername'  : '',
             'playercolor' : '',
             'error'       : ''
@@ -563,7 +609,7 @@ def setup_player_routes(engine):
         gm_is_host = session_gm is not None and session_gm.url == gmurl
         
         try:
-            game_cache.insert(playername, playercolor, is_gm=gm_is_host)
+            player_cache = game_cache.insert(playername, playercolor, is_gm=gm_is_host)
         except KeyError:
             engine.logging.warning('Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.getUrl(), engine.getClientIp(request), playername))
             result['error'] = 'ALREADY IN USE'
@@ -576,48 +622,12 @@ def setup_player_routes(engine):
         
         engine.logging.access('Player logged in to {0} by {1}.'.format(game.getUrl(), engine.getClientIp(request)))
         
-        result['playername']  = playername
-        result['playercolor'] = playercolor
+        result['playername']  = player_cache.name
+        result['playercolor'] = player_cache.color
+        result['uuid']        = player_cache.uuid
+        result['is_gm']       = player_cache.is_gm
         result['file_limit']  = engine.file_limit
         return result
-
-    @get('/<gmurl>/<url>')
-    @view('battlemap')
-    def get_player_battlemap(gmurl, url):
-        # try to load playername from cookie (or from GM name)
-        playername = request.get_cookie('playername', default='')
-        
-        # query whether user is the hosting GM
-        session_gm = engine.main_db.GM.loadFromSession(request)
-        gm_is_host = session_gm is not None and session_gm.url == gmurl
-        
-        # query gm of that game
-        gm = engine.main_db.GM.select(lambda gm: gm.url == gmurl).first()
-        if gm is None:
-            abort(404)
-        
-        # try to load playercolor from cookieplayercolor = request.get_cookie('playercolor')
-        playercolor = request.get_cookie('playercolor')
-        if playercolor is None:   
-            colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
-            playercolor = colors[random.randrange(len(colors))]
-              
-        # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
-        if gm_cache is None:
-            abort(404)
-        
-        # load game from GM's database
-        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-        if game is None:
-            abort(404)
-        
-        user_agent = request.environ.get('HTTP_USER_AGENT')
-        protocol = 'wss' if engine.hasSsl() else 'ws'
-        websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.getPort())
-        
-        # show battlemap with login screen ontop
-        return dict(engine=engine, user_agent=user_agent, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=gm, is_gm=gm_is_host)
 
     @get('/websocket')
     def accept_websocket():

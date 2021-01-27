@@ -13,7 +13,7 @@
 		<img class="logo" src="/static/logo.png" />
 		
 		<div class="form">
-			<form onsubmit="login(event, '{{gm.url}}', '{{game.url}}', '{{websocket_url}}', {{'true' if is_gm else 'false'}});">
+			<form onsubmit="login(event, '{{gm.url}}', '{{game.url}}', '{{websocket_url}}');">
 				<p>PLAYER NAME</p>
 				<input type="text" name="playername" id="playername" autocomplete="off" value="{{playername}}" maxlength="30" />
 				
