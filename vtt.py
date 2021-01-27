@@ -620,8 +620,15 @@ def setup_player_routes(engine):
         socket = request.environ.get('wsgi.websocket')
         
         if socket is not None:
-            # note: this keeps the websocket open during the session
-            engine.cache.listen(socket)
+            player_cache = engine.cache.listen(socket)
+            # wait until greenlet is closed
+            # @NOTE: this keeps the websocket open
+            try:
+                player_cache.greenlet.get()  
+            except Exception as error:
+                error.metadata = self.getMetaData()
+                # reraise greenlet's exception to trigger proper error reporting
+                raise error
 
     @post('/<gmurl>/<url>/upload')
     def post_image_upload(gmurl, url):

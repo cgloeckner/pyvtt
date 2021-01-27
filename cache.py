@@ -145,12 +145,6 @@ class PlayerCache(object):
         """ Runs a greenlet to handle asyncronously. """
         self.greenlet = gevent.Greenlet(run=self.handle)
         self.greenlet.start()
-        try:
-            self.greenlet.get()
-        except Exception as error:
-            error.metadata = self.getMetaData()
-            # reraise greenlet's exception to trigger proper error reporting
-            raise error
         
     def handle(self):
         """ Thread-handle for dispatching player actions. """
@@ -336,7 +330,7 @@ class GameCache(object):
             pass
         
     def disconnect(self, uuid):
-        """ Close single socket. """
+        """ Close single socket. """ 
         with self.lock:
             for name in self.players:
                 p = self.players[name]
@@ -344,9 +338,10 @@ class GameCache(object):
                     # close socket (will stop thread as well)
                     #with p.lock:# note: atm deadlocking
                     p.socket.close()
-                del self.players[name]
-                return name
-            self.rebuildIndices()
+                    # remove player
+                    del self.players[name]
+                    self.rebuildIndices()
+                    return name
         
     def disconnectAll(self):
         """ Closes all sockets. """
@@ -940,4 +935,8 @@ class EngineCache(object):
         # because the route, which calls this listen() has its own
         # db_session due to the bottle configuration
         player_cache.handle_async()
+
+        return player_cache
+
+        
 

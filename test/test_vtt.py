@@ -7,13 +7,13 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import tempfile, json, os, zipfile
+import tempfile, json, os, zipfile, gevent
 
 from PIL import Image
 
 import vtt
 
-from test.utils import EngineBaseTest
+from test.utils import EngineBaseTest, SocketDummy
 
 
 
@@ -43,9 +43,9 @@ def makeZip(fname, data, n):
                 zh.write(img_path, '{0}.bmp'.format(i))
         with open(zip_path, 'rb') as rh:
             return rh.read()
-        
 
 
+# ---------------------------------------------------------------------
 
 class VttTest(EngineBaseTest):
 
@@ -75,6 +75,24 @@ class VttTest(EngineBaseTest):
         ret = self.app.get('/')
         self.assertEqual(ret.status_int, 302)
         self.assertEqual(self.app.cookies['session'], '""')
+
+    
+    # -----------------------------------------------------------------
+    
+    def joinPlayer(self, gm_url, game_url, playername, playercolor):
+        # post login
+        ret = self.app.post('/{0}/{1}/login'.format(gm_url, game_url),
+            {'playername': playername, 'playercolor': playercolor})
+        self.assertEqual(ret.status_int, 200)
+        # open fake socket
+        s = SocketDummy()
+        s.block = True       
+        s.push_receive({'name': playername, 'gm_url': gm_url, 'game_url': game_url})
+        # listen to the faked websocket
+        return self.engine.cache.listen(s)
+    
+
+    # -----------------------------------------------------------------
 
     def test_get_vtt_patreon_callback(self):
         # expect 404 because engine is loaded without patreon support
@@ -376,7 +394,7 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.json['error'], '')
         self.assertEqual(ret.json['url'], 'arthur/test-exportgame-1')
 
-        # register arthur
+        # register bob
         ret = self.app.post('/vtt/join', {'gmname': 'bob'}, xhr=True)
         self.assertEqual(ret.status_int, 200)
         bob_sid = self.app.cookies['session']
@@ -421,11 +439,121 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.status_int, 404)
 
     def test_vtt_kickplayers(self):
-        pass # Not Yet Implemented
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
         
+        # create a game 
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+
+        # let players join and start (faked) websocket
+        player1 = self.joinPlayer('arthur', 'test-game-1', 'arthur', 'gold')
+        player2 = self.joinPlayer('arthur', 'test-game-1', 'bob', 'red')
+        player3 = self.joinPlayer('arthur', 'test-game-1', 'carlos', 'blue')
+
+        gm_cache   = self.engine.cache.getFromUrl('arthur')
+        game_cache = gm_cache.getFromUrl('test-game-1')
+        self.assertEqual(len(game_cache.players), 3)
+
+        # non-GM cannot kick players
+        ret = self.app.post('/vtt/kick-players/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+        self.assertEqual(len(game_cache.players), 3)
+        
+        # GM cannot kick players for unknown game
+        self.app.set_cookie('session', gm_sid)
+        ret = self.app.post('/vtt/kick-players/test-weird', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+        
+        # GM can kick all players from his game
+        self.app.set_cookie('session', gm_sid)
+        ret = self.app.post('/vtt/kick-players/test-game-1')
+        self.assertEqual(ret.status_int, 200) 
+        self.assertEqual(len(game_cache.players), 0)
+
+        # wait for greenlets to quit
+        player1.greenlet.get()
+        player2.greenlet.get()
+        player3.greenlet.get()
+
+        # GM can even kick if nobody is online (including himself)
+        self.app.set_cookie('session', gm_sid)
+        ret = self.app.post('/vtt/kick-players/test-game-1')
+        self.assertEqual(ret.status_int, 200) 
+        self.assertEqual(len(game_cache.players), 0)
+
     def test_vtt_kickplayer(self):
-        pass # Not Yet Implemented
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
         
+        # create a game 
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+
+        # let players join and start (faked) websocket
+        player1 = self.joinPlayer('arthur', 'test-game-1', 'arthur', 'gold')
+        player2 = self.joinPlayer('arthur', 'test-game-1', 'bob', 'red')
+        player3 = self.joinPlayer('arthur', 'test-game-1', 'carlos', 'blue')
+
+        gm_cache   = self.engine.cache.getFromUrl('arthur')
+        game_cache = gm_cache.getFromUrl('test-game-1')
+        self.assertEqual(len(game_cache.players), 3) 
+        """
+        # non-GM cannot kick any player
+        for p in [player1, player2, player3]:
+            ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(p.uuid), expect_errors=True)
+            self.assertEqual(ret.status_int, 404)
+            self.assertEqual(len(game_cache.players), 3)
+        
+        # GM cannot kick players from unknown game
+        self.app.set_cookie('session', gm_sid)
+        for p in [player1, player2, player3]:
+            ret = self.app.post('/vtt/kick-player/test-weird-1/{0}'.format(p.uuid), expect_errors=True)
+            self.assertEqual(ret.status_int, 404)
+            self.assertEqual(len(game_cache.players), 3)
+        """
+        # GM can kick a single player from his game
+        self.app.set_cookie('session', gm_sid)
+        ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player2.uuid))
+        self.assertEqual(ret.status_int, 200)
+        self.assertEqual(len(game_cache.players), 2)
+        self.assertIn('arthur', game_cache.players) 
+        self.assertNotIn('bob', game_cache.players)
+        self.assertIn('carlos', game_cache.players)
+        gevent.kill(player2.greenlet)
+        
+        # GM can himself from his game
+        self.app.set_cookie('session', gm_sid)
+        ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player1.uuid))
+        self.assertEqual(ret.status_int, 200) 
+        self.assertEqual(len(game_cache.players), 1)
+        self.assertNotIn('arthur', game_cache.players)
+        self.assertIn('carlos', game_cache.players) 
+        gevent.kill(player1.greenlet)
+
+        # GM can even kick a player if when offline
+        self.app.set_cookie('session', gm_sid)
+        ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player3.uuid))
+        self.assertEqual(ret.status_int, 200) 
+        self.assertEqual(len(game_cache.players), 0) 
+        gevent.kill(player3.greenlet)
+        
+        # GM cannot kick player twice (but nothing happens)
+        self.app.set_cookie('session', gm_sid)
+        ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player3.uuid))
+        self.assertEqual(ret.status_int, 200) 
+        self.assertEqual(len(game_cache.players), 0)
+    
     def test_vtt_deletegame(self):
         pass # Not Yet Implemented
         
