@@ -674,7 +674,7 @@ def setup_player_routes(engine):
             # check filesize       
             if size > max_filesize * 1024 * 1024:
                 engine.logging.warning('Player tried to an image to a game by {0} but tried to cheat on the filesize'.format(engine.getClientIp(request), url))
-                abort(404)
+                abort(403) # Forbidden
         
         # upload images
         for handle in files:

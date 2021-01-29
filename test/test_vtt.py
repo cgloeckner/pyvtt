@@ -922,10 +922,211 @@ class VttTest(EngineBaseTest):
         self.assertFalse(ret4.json['is_gm'])   
 
     def test_websocket(self):
-        pass # Not Yet Implemented
+        # @NOTE establishing a websocket is not tested atm
+        # instead the method dispatching is tested
+        
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        
+        # create a game
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+        
+        # First, the handles are monkey patched to add to a list instead
+        log = list()
+        gm_cache   = self.engine.cache.getFromUrl('arthur')
+        game_cache = gm_cache.getFromUrl('test-game-1')
+        game_cache.onPing   = lambda p, d: log.append(('onPing', p, d))
+        game_cache.onRoll   = lambda p, d: log.append(('onRoll', p, d))
+        game_cache.onSelect = lambda p, d: log.append(('onSelect', p, d))
+        game_cache.onRange  = lambda p, d: log.append(('onRange', p, d))
+        game_cache.onOrder  = lambda p, d: log.append(('onOrder', p, d))
+        game_cache.onUpdateToken   = lambda p, d: log.append(('onUpdateToken', p, d))
+        game_cache.onCreateToken   = lambda p, d: log.append(('onCreateToken', p, d))
+        game_cache.onCloneToken    = lambda p, d: log.append(('onCloneToken', p, d))
+        game_cache.onDeleteToken   = lambda p, d: log.append(('onDeleteToken', p, d))
+        game_cache.onCreateScene   = lambda p, d: log.append(('onCreateScene', p, d))
+        game_cache.onActivateScene = lambda p, d: log.append(('onActivateScene', p, d))
+        game_cache.onCloneScene    = lambda p, d: log.append(('onCloneScene', p, d))
+        game_cache.onDeleteScene   = lambda p, d: log.append(('onDeleteScene', p, d))
 
-    def test_upload(self):
-        pass # Not Yet Implemented
+        # let player trigger actions
+        ret, player_cache = self.joinPlayer('arthur', 'test-game-1', 'merlin', '#FF00FF')
+        s = player_cache.socket
+        s.block = False
+        opids = ['PING', 'ROLL', 'SELECT', 'RANGE', 'ORDER', 'UPDATE', 'CREATE', 'CLONE', 'DELETE', 'GM-CREATE', 'GM-ACTIVATE', 'GM-CLONE', 'GM-DELETE']
+        for opid in opids:
+            s.push_receive({'OPID': opid, 'data': opid.lower()})
+        player_cache.greenlet.join()
+        
+        # expect actions
+        self.assertEqual(len(log), 13)
+        self.assertEqual(log[ 0][0], 'onPing')
+        self.assertEqual(log[ 1][0], 'onRoll')
+        self.assertEqual(log[ 2][0], 'onSelect')
+        self.assertEqual(log[ 3][0], 'onRange')
+        self.assertEqual(log[ 4][0], 'onOrder')
+        self.assertEqual(log[ 5][0], 'onUpdateToken')
+        self.assertEqual(log[ 6][0], 'onCreateToken')
+        self.assertEqual(log[ 7][0], 'onCloneToken')
+        self.assertEqual(log[ 8][0], 'onDeleteToken')
+        self.assertEqual(log[ 9][0], 'onCreateScene')
+        self.assertEqual(log[10][0], 'onActivateScene')
+        self.assertEqual(log[11][0], 'onCloneScene')
+        self.assertEqual(log[12][0], 'onDeleteScene')
+        for i, opid in enumerate(opids):
+            self.assertEqual(log[i][1], player_cache)
+            self.assertEqual(log[i][2], {'OPID': opid, 'data': opid.lower()})
+        
+        # cannot trigger unknown operation
+        log.clear()
+        ret, player_cache = self.joinPlayer('arthur', 'test-game-1', 'merlin', '#FF00FF')
+        s = player_cache.socket
+        s.block = False
+        s.push_receive({'OPID': 'fantasy', 'data': None})
+        # expect exception killing the greenlet (= closing player session)
+        with self.assertRaises(KeyError):
+            player_cache.greenlet.get()
+        self.assertEqual(len(log), 0)
 
+        # cannot trigger operation with too few arguments 
+        log.clear()
+        game_cache.onRoll = lambda p, d: log.append(('onRoll', p, d['sides']))
+        ret, player_cache = self.joinPlayer('arthur', 'test-game-1', 'merlin', '#FF00FF')
+        s = player_cache.socket
+        s.block = False
+        s.push_receive({'OPID': 'ROLL'}) # not providing number of sides etc.
+        # expect exception killing the greenlet (= closing player session)
+        with self.assertRaises(KeyError):
+            player_cache.greenlet.get()
+        self.assertEqual(len(log), 0)
     
-    # @TODO: test by triggering websocket communication
+    def test_upload(self):
+        # create some images
+        img_small  = makeImage(512, 512)   # as token
+        img_small2 = makeImage(256, 256)
+        img_small3 = makeImage(633, 250)
+        img_small4 = makeImage(233, 240)
+        img_large  = makeImage(1500, 1500) # as background
+        img_huge   = makeImage(2000, 2000) # too large
+        mib = 2**20
+        self.assertLess(len(img_small), mib)       
+        self.assertLess(len(img_large), 11 * mib)
+        self.assertGreater(len(img_large), 5 * mib)  
+        self.assertGreater(len(img_huge), 10 * mib)
+        
+        id_from_url = lambda s: int(s.split('/')[-1].split('.png')[0])
+        
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        
+        # create a game
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+        
+        # players can upload tokens to an existing game
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'test.png', img_small2),
+                ('file[]', 'another.png', img_small3)
+            ], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        # @NOTE: non-json response but with json-dumped data
+        # I need to find a way to answer with a json-response to an
+        # upload post (from jQuery)
+        data = json.loads(ret.body)
+        self.assertEqual(len(data), 2)
+        self.assertEqual(id_from_url(data[0]), 1) # since 0 is background
+        self.assertEqual(id_from_url(data[1]), 2)
+
+        # re-uploading image will return existing URLs instead of new ones
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'test.png', img_small2),
+                ('file[]', 'another.bmp', img_small3),
+                ('file[]', 'foo.png', img_small3),
+                ('file[]', 'random.tiff', img_small3),
+                ('file[]', 'something.stuff', img_small2),
+                ('file[]', 'weird.jpg', img_small3)
+            ], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        data = json.loads(ret.body)
+        self.assertEqual(len(data), 6)
+        self.assertEqual(id_from_url(data[0]), 1)
+        self.assertEqual(id_from_url(data[1]), 2)
+        self.assertEqual(id_from_url(data[2]), 2)
+        self.assertEqual(id_from_url(data[3]), 2)
+        self.assertEqual(id_from_url(data[4]), 1)
+        self.assertEqual(id_from_url(data[5]), 2)
+
+        # cannot upload another background image (other uploads are ignored during this request)
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'another.jpg', img_small4),
+                ('file[]', 'test.png', img_large),
+                ('file[]', 'another.jpg', img_small4)
+            ], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 403)
+        # expect no new images in directory
+        images = os.listdir(self.engine.paths.getGamePath('arthur', 'test-game-1'))
+        self.assertEqual(len(images), 3)
+        self.assertIn('0.png', images)
+        self.assertIn('1.png', images)
+        self.assertIn('2.png', images)
+        self.assertNotIn('3.png', images)
+
+        # can upload background and tokens in new scene
+        gm_cache   = self.engine.cache.getFromUrl('arthur')
+        game_cache = gm_cache.getFromUrl('test-game-1')
+        gm_player  = game_cache.insert('GM Arthur', 'red', True)
+        game_cache.onCreateScene(gm_player, {})
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'test.png', img_large),
+                ('file[]', 'another.jpg', img_small2),
+                ('file[]', 'another.jpg', img_small3)
+            ], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 200)
+        data = json.loads(ret.body)
+        self.assertEqual(len(data), 3)
+        self.assertEqual(id_from_url(data[0]), 3)
+        self.assertEqual(id_from_url(data[1]), 1)
+        self.assertEqual(id_from_url(data[2]), 2)
+        
+        # cannot upload huge image as background
+        gm_cache   = self.engine.cache.getFromUrl('arthur')
+        game_cache = gm_cache.getFromUrl('test-game-1')
+        gm_player  = game_cache.insert('GM Arthur', 'red', True)
+        game_cache.onCreateScene(gm_player, {})
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'test.png', img_huge)
+            ], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 403)
+
+        # cannot upload image to unknown game
+        ret = self.app.post('/arthur/test-game-1456/upload',
+            upload_files=[
+                ('file[]', 'test.png', img_small2),
+                ('file[]', 'another.png', img_small3)
+            ], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+        
+        # cannot upload image to unknown GM
+        ret = self.app.post('/bob/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'test.png', img_small2),
+                ('file[]', 'another.png', img_small3)
+            ], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+        
