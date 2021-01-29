@@ -94,3 +94,38 @@ class SocketDummy(object):
         if self.closed:
             raise WebSocketError('SocketDummy is closed')
         self.closed = True
+
+
+# ---------------------------------------------------------------------
+
+def presetup_unittest(argv):
+    argv.append('--quiet')
+    argv.append('--debug')
+    argv.append('--localhost')
+    return argv
+
+
+def setup_unittest_routes(engine):
+    @bottle.get('/vtt/unittest/game')
+    @bottle.view('unittest_game')
+    def unittest_demo_game():
+        gm = engine.main_db.GM.select(lambda gm: gm.url == 'arthur').first()
+        gm_cache = engine.cache.getFromUrl('arthur')
+        game = gm_cache.db.Game.select(lambda g: g.url == 'test-game-1').first()
+            
+        protocol = 'wss' if engine.hasSsl() else 'ws'
+        websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.getPort())
+            
+        return dict(engine=engine, user_agent='UNITTEST', websocket_url=websocket_url, game=game, playername='arthur',playercolor='#FF0000', gm=gm, is_gm=True)
+
+    # setup demo game
+    # @TODO register GM arthur
+    # @TODO create game test-game-1 with background "/static/background.jpg"
+    
+    server_uri = 'http://{0}:{1}'.format(engine.getDomain(), engine.getPort())
+    print('=' * 80)
+    print('URLs for Unittest scenarios:')
+    for route in ['/vtt/unittest/game']:
+        print('\t{0}{1}'.format(server_uri, route))
+    print('=' * 80)
+

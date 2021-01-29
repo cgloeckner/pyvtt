@@ -712,10 +712,20 @@ def setup_error_routes(engine):
 
 if __name__ == '__main__':
     try:
-        engine = Engine(sys.argv)
+        argv = sys.argv
+        if '--unittest' in argv:
+            from test.utils import presetup_unittest, setup_unittest_routes
+            
+            argv = presetup_unittest(argv)
+        
+        engine = Engine(argv)
         setup_gm_routes(engine)
         setup_player_routes(engine)
         setup_error_routes(engine)
+        
+        if '--unittest' in argv:
+            setup_unittest_routes(engine)
+            
         engine.run()
     except KeyboardInterrupt:
         pass

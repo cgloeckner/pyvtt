@@ -1129,4 +1129,4 @@ class VttTest(EngineBaseTest):
                 ('file[]', 'another.png', img_small3)
             ], xhr=True, expect_errors=True)
         self.assertEqual(ret.status_int, 404)
-        
+
