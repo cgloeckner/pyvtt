@@ -622,6 +622,9 @@ function onGrab(event) {
     closeGmDropdown();
     
     pickCanvasPos(event);
+
+    drag_dice    = null;
+    drag_players = false;
     
     if (event.buttons == 1) {
         // Left Click: select token
