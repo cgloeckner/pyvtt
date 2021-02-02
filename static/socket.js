@@ -228,7 +228,7 @@ function login(event, gmname, url, websocket_url) {
             playername  = response['playername']
             playercolor = response['playercolor']
             is_gm       = response['is_gm']
-            my_uuid     = response['my_uuid']
+            my_uuid     = response['uuid']
             
             if (error != '') {
                 showError(error);
