@@ -19,16 +19,15 @@
 		<p><input type="submit" value="CREATE GM ACCOUNT" /></p>
 %end  
 	</form>  
-	
-	<div id="error"></div>
 </div>
-
 
 Are you a player? Ask your GM for the game link.
 
 <hr />
 
 </div>
+
+<div id="popup"></div> 
 
 %include("footer")
 
