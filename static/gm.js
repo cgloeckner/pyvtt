@@ -99,7 +99,11 @@ function GmUploadDrop(event, url_regex, gm_url, max_zip, max_background) {
     
     // fetch upload data
     var f = new FormData($('#uploadform')[0]);
-    
+
+    tryGameCreation(f, url_regex);
+}
+
+function tryGameCreation(f, url_regex) {
     // test target game url
     var url = $('#url').val();
     if (url != '') {
@@ -156,6 +160,22 @@ function GmUploadDrop(event, url_regex, gm_url, max_zip, max_background) {
         }
     });
 }
+
+function GmQuickStart(url_regex) {
+    showInfo('LOADING');
+
+    // load transparent image from URL
+    var img = new Image()
+    img.src = '/static/transparent.png';
+    img.onload = function() {
+        var blob = getImageBlob(img);
+        var f = new FormData();
+        f.append('file', blob, 'transparent.png');
+
+        tryGameCreation(f);
+    };
+}
+
 
 // --- GM ingame tokenbar handles -------------------------------------
 

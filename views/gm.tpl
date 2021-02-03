@@ -23,7 +23,7 @@
 		<p></p>
 		
 		<div class="dropzone" id="dropzone">                                           
-			<p>DRAG AN IMAGE AS BACKGROUND</p>
+			<p id="draghint">DRAG AN IMAGE AS BACKGROUND<br /><br /><span onClick="GmQuickStart('{{!engine.url_regex.replace('\\', '\\\\')}}');">OR CLICK TO START WITHOUT</span></p>
 			<form id="uploadform" method="post" enctype="multipart/form-data">
 				<input id="uploadqueue" name="file" type="file" />
 			</form>

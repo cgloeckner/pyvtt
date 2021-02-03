@@ -626,7 +626,7 @@ div.battlemap > div#draghint {
         1px 1px 0 #000;
 }
 
-div.battlemap > div#draghint > span {
+#draghint > span {
     cursor: pointer;
 }
 
