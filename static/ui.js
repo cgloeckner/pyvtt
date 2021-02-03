@@ -1548,3 +1548,68 @@ function savePlayersPos(pos) {
     pos[1] /= window.innerHeight;
     localStorage.setItem('players', JSON.stringify(pos));
 }
+
+function getImageBlob(img) {
+    var tmp_canvas = document.createElement("canvas");
+    tmp_canvas.width  = img.width;
+    tmp_canvas.height = img.height;
+    var ctx = tmp_canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    url = tmp_canvas.toDataURL("image/png");
+    
+    var arr  = url.split(',');
+    var mime = arr[0].match(/:(.*?);/)[1];
+    var bstr = atob(arr[1]);
+    var n = bstr.length;
+    var u8arr = new Uint8Array(n);
+    while (n--) {
+         u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type: mime});
+}
+
+function ignoreBackground() {
+    showInfo('LOADING');
+
+    // load transparent image from URL
+    var img = new Image()
+    img.src = '/static/transparent.png';
+    img.onload = function() {
+        var blob = getImageBlob(img);
+        var f = new FormData();
+        f.append('file[]', blob, 'transparent.png');
+
+        // upload as background (assuming nobody else is faster :D )
+        $.ajax({
+            url: '/' + gm_name + '/' + game_url + '/upload',
+            type: 'POST',
+            data: f,
+            contentType: false,
+            cache: false,
+            processData: false,
+            success: function(response) {
+                // reset uploadqueue
+                $('#uploadqueue').val("");
+                
+                // load images if necessary
+                var urls = JSON.parse(response);
+                $.each(urls, function(index, url) {
+                    loadImage(url);
+                });
+                
+                // trigger token creation via websocket
+                writeSocket({
+                    'OPID' : 'CREATE',
+                    'posx' : 0,
+                    'posy' : 0,
+                    'size' : -1,
+                    'urls' : urls
+                });
+                
+                $('#popup').hide();
+            }, error: function(response, msg) {
+                handleError(response);
+            }
+        });
+    };
+}

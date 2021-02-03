@@ -615,14 +615,19 @@ div.battlemap > div#draghint {
     transform: translate(-50%, -50%);
     
     z-index: 9000;
-    
+
     font-size: large;
+    text-align: center;
     color: white;
     text-shadow:
         -1px -1px 0 #000,
         1px -1px 0 #000,
         -1px 1px 0 #000,
         1px 1px 0 #000;
+}
+
+div.battlemap > div#draghint > span {
+    cursor: pointer;
 }
 
 div.battlemap > canvas#battlemap {
