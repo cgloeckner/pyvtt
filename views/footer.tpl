@@ -3,7 +3,7 @@
 
 <span class="links">
 %for data in engine.links:
-	<a href="{{!data['url']}}" target="_blank" draggable="false">{{data['label']}}</a>
+    <a href="{{!data['url']}}" target="_blank" draggable="false">{{data['label']}}</a>
 %end
 </span>
 
