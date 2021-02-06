@@ -635,12 +635,15 @@ def setup_player_routes(engine):
         
         if socket is not None:
             player_cache = engine.cache.listen(socket)
+            if player_cache is None:
+                return
             # wait until greenlet is closed
             # @NOTE: this keeps the websocket open
+            greenlet = player_cache.greenlet
             try:
-                player_cache.greenlet.get()  
+                greenlet.get()
             except Exception as error:
-                error.metadata = self.getMetaData()
+                error.metadata = player_cache.getMetaData()
                 # reraise greenlet's exception to trigger proper error reporting
                 raise error
 
