@@ -6,7 +6,7 @@
 	%include("games")
 	</div>
 	<div class="gmhint">
-		<img id="gmhint" src="/static/bottom.png" draggable="false" />
+		<img id="gmhint" src="/static/bottom.png" draggable="false" onMouseEnter="showHint(event, 'SHOW MY GAMES');" onMouseLeave="hideHint();"  />
 	</div>
 </div>
 %end
@@ -19,7 +19,7 @@
 
 	<div class="form">
 		<p>ENTER GAME NAME (optional)</p>
-		<p><input type="text" id="url" value="" maxlength="30" autocomplete="off" /> <img src="/static/rotate.png" class="icon" onClick="fancyUrl();" title="PICK NONSENSE" draggable="false" /></p>
+		<p><input type="text" id="url" value="" maxlength="30" autocomplete="off" /> <img src="/static/rotate.png" class="icon" onClick="fancyUrl();" onMouseEnter="showHint(event, 'PICK RANDOM NAME');" onMouseLeave="hideHint();" draggable="false" /></p>
 		<p></p>
 		
 		<div class="dropzone" id="dropzone">                                           
@@ -31,11 +31,13 @@
 		
 		<br />  
 	</div>
-	
-	<div id="popup"></div>
+    
 <hr />
 
 </div>
+
+<div id="popup"></div>
+<div id="hint"></div>
 
 <script>
 	$('#drophint').fadeIn(1000, 0.0);

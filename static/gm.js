@@ -51,12 +51,15 @@ function kickPlayer(url, uuid) {
 }
 
 function deleteGame(url) {
-    $.post(
-        url='/vtt/delete-game/' + url,
-        success=function(data) {
-            $('#gmdrop')[0].innerHTML = data;
-        }
-    );
+    var remove = confirm("DELETE THIS GAME?");
+    if (remove) {
+        $.post(
+            url='/vtt/delete-game/' + url,
+            success=function(data) {
+                $('#gmdrop')[0].innerHTML = data;
+            }
+        );
+    }
 }
 
 function fancyUrl() {

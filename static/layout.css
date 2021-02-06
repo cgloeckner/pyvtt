@@ -30,7 +30,7 @@ div#popup {
     text-align: center;
     
     position: absolute;
-    top: 450px;
+    top: 50%;
     left: 50%;
     
     color: red;
@@ -49,8 +49,29 @@ div#popup {
     z-index: 500;
 }
 
-div.menu > div#popup {
-    top: 300px;
+div#hint {
+    display: none;
+    
+    text-align: center;
+    
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    
+    color: white;
+    
+    font-size: medium;
+    transform: translate(-50%, 0%);
+    
+    height: 15px;
+    width: 400px;
+    background-color: rgba(0, 0, 0, 0.55);
+    padding: 15px;
+    
+    border: 1px solid white;
+    border-radius: 10px;
+    
+    z-index: 500;
 }
 
 hr {

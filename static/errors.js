@@ -5,6 +5,8 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 */
 
+var show_hints = false;
+
 function showPopup(msg, color, timeout, fadeout) {
     var popup = $('#popup');
     popup[0].innerHTML = msg;
@@ -22,6 +24,25 @@ function showError(msg) {
 
 function showInfo(msg) {
     showPopup(msg, 'white', null, null);
+}
+
+function showHint(event, msg) {
+    if (!show_hints) {
+        return;
+    }
+    
+    var hint = $('#hint');
+    hint[0].innerHTML = msg;
+    /*
+    hint.css('left', event.clientX);
+    hint.css('top', event.clientY + 45);
+    */
+    hint.fadeIn(100, 0.0);
+}
+
+function hideHint() {
+    var hint = $('#hint');
+    hint.fadeOut(10, 0.0);
 }
 
 function handleError(response) {
