@@ -26,9 +26,6 @@ var full_update = true;
 var scene_id = 0;
 var is_gm = false;
 
-var max_token_size = null;
-var max_background_size = null;
-
 var my_uuid = '';
 
 /// Handle function for interaction via socket
@@ -261,9 +258,6 @@ function login(event, gmname, url, websocket_url) {
                 
                 resetViewport();
                 
-                max_background_size = response['file_limit']['background'];
-                max_token_size      = response['file_limit']['token'];
-                
                 // start socket communication
                 socket = new WebSocket(websocket_url)
                 
@@ -292,9 +286,6 @@ function login(event, gmname, url, websocket_url) {
                     
                     last_dice_timeid  = 0;
                     last_dice_series  = null;
-                    
-                    max_background_size = null;
-                    max_token_size      = null;
                     
                     $.each(dice_sides, function(index, sides) {
                         var d = $('#d' + sides + 'rolls');

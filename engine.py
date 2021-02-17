@@ -92,6 +92,10 @@ class Engine(object):
         
         # load fancy url generator api ... lol
         self.url_generator = utils.FancyUrlApi(self.paths)
+
+        # export server constants to javascript-file
+        self.constants = utils.ConstantExport()
+        self.constants(self)
         
         # handle settings
         settings_path = self.paths.getSettingsPath()

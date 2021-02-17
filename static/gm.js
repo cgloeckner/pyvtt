@@ -76,7 +76,7 @@ function GmUploadDrag(event) {
     event.preventDefault();
 }
 
-function GmUploadDrop(event, url_regex, gm_url, max_zip, max_background) {
+function GmUploadDrop(event, url_regex, gm_url) {
     event.preventDefault();
     
     showInfo('LOADING');
@@ -89,10 +89,10 @@ function GmUploadDrop(event, url_regex, gm_url, max_zip, max_background) {
         showError('USE A SINGLE FILE');
         return;
     }
-    var max_filesize = max_background;
+    var max_filesize = MAX_BACKGROUND_FILESIZE;
     var file_type    = 'BACKGROUND';
     if (queue.files[0].name.endsWith('.zip')) {
-        max_filesize = max_zip;
+        max_filesize = MAX_GAME_FILESIZE;
         file_type    = 'GAME';
     }
     if (queue.files[0].size > max_filesize * 1024 * 1024) {

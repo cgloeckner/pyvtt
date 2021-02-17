@@ -180,7 +180,7 @@ def setup_gm_routes(engine):
         all_games = gm_cache.db.Game.select()
         
         # show GM's games
-        return dict(engine=engine, gm=gm, all_games=all_games, server=server, file_limit=engine.file_limit)
+        return dict(engine=engine, gm=gm, all_games=all_games, server=server)
 
     @get('/vtt/fancy-url')
     def call_fancy_url():
@@ -625,7 +625,6 @@ def setup_player_routes(engine):
         result['playercolor'] = player_cache.color
         result['uuid']        = player_cache.uuid
         result['is_gm']       = player_cache.is_gm
-        result['file_limit']  = engine.file_limit
         return result
 
     @get('/websocket')

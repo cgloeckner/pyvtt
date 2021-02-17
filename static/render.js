@@ -11,8 +11,8 @@ var viewport = null;
 
 function resetViewport() {
     viewport = {
-        'x'    : base_width / 2, // left in [0, 1000]
-        'y'    : base_width * canvas_ratio / 2,
+        'x'    : MAX_SCENE_WIDTH / 2, // left in [0, 1000]
+        'y'    : MAX_SCENE_WIDTH * canvas_ratio / 2,
         'zoom' : 1.0
     };
     
@@ -28,7 +28,6 @@ function displayZoom() {
 
 var interpolation_speed = 25; // speed for interpolating between two positions
 
-var base_width = null; // initial width of canvas element
 var canvas_ratio = null;  // aspect ratio
 
 // --- image handling implementation ----------------------------------
@@ -37,10 +36,8 @@ var images = [];
 var canvas_scale = 1.0; // saved scaling
 
 function resizeCanvas() {
-    if (base_width == null) {
-        // fetch initial battlemap width
-        base_width = $('#battlemap').width();
-        canvas_ratio = $('#battlemap').height() / base_width;
+    if (canvas_ratio == null) {
+        canvas_ratio = MAX_SCENE_HEIGHT / MAX_SCENE_WIDTH;
     }
     
     var canvas = $('#battlemap');
@@ -63,7 +60,7 @@ function resizeCanvas() {
     mem_canvas.height = h;
     
     // calculate scaling
-    canvas_scale = w / base_width;
+    canvas_scale = w / MAX_SCENE_WIDTH;
 }
 
 /// Will clear the canvas
@@ -398,8 +395,8 @@ function drawScene() {
     context.translate(sizes[0] * rel_x, sizes[1] * rel_y);
     context.scale(viewport.zoom, viewport.zoom);
     context.translate(
-        (base_width / 2                - viewport.x) * canvas_scale,
-        (base_width * canvas_ratio / 2 - viewport.y) * canvas_scale
+        (MAX_SCENE_WIDTH / 2                - viewport.x) * canvas_scale,
+        (MAX_SCENE_WIDTH * canvas_ratio / 2 - viewport.y) * canvas_scale
     );
     context.translate(-sizes[0] * rel_x, -sizes[1] * rel_y);
     

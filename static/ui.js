@@ -410,16 +410,16 @@ function onDrop(event) {
     queue.files = event.dataTransfer.files;
     var sizes_ok = true;
     
-    var max_filesize = max_token_size;
+    var max_filesize = MAX_TOKEN_FILESIZE;
     var file_type = 'TOKEN';
     $.each(queue.files, function(index, file) {
-        max_filesize = max_token_size;
+        max_filesize = MAX_TOKEN_FILESIZE;
         if (index == 0 && !background_set) {
             // no background set, first image is used as background
-            max_filesize = max_background_size;
+            max_filesize = MAX_BACKGROUND_FILESIZE;
         }
         if (file.size > max_filesize * 1024 * 1024) {
-            if (max_filesize == max_background_size) {
+            if (max_filesize == MAX_BACKGROUND_FILESIZE) {
                 file_type = 'BACKGROUND';
             }
             sizes_ok = false;
@@ -514,16 +514,16 @@ function updateTokenbar() {
         // consider viewport position
         x -= viewport.x;
         y -= viewport.y;
-        x += base_width / 2;
-        y += base_width * canvas_ratio / 2;
+        x += MAX_SCENE_WIDTH / 2;
+        y += MAX_SCENE_WIDTH * canvas_ratio / 2;
         
         // consider viewport zooming (centered)
-        x -= base_width / 2;
-        y -= base_width / 2 * canvas_ratio;
+        x -= MAX_SCENE_WIDTH / 2;
+        y -= MAX_SCENE_WIDTH / 2 * canvas_ratio;
         x *= viewport.zoom;
         y *= viewport.zoom;    
-        x += base_width / 2;
-        y += base_width / 2 * canvas_ratio;
+        x += MAX_SCENE_WIDTH / 2;
+        y += MAX_SCENE_WIDTH / 2 * canvas_ratio;
         
         // consider canvas scale (by windows size)  
         x *= canvas_scale;
@@ -600,18 +600,18 @@ function pickCanvasPos(event) {
     mouse_y /= canvas_scale;
     
     // consider viewport zooming (centered)
-    mouse_x -= base_width / 2;
-    mouse_y -= base_width * canvas_ratio / 2;
+    mouse_x -= MAX_SCENE_WIDTH / 2;
+    mouse_y -= MAX_SCENE_WIDTH * canvas_ratio / 2;
     mouse_x /= viewport.zoom;
     mouse_y /= viewport.zoom;     
-    mouse_x += base_width / 2;
-    mouse_y += base_width * canvas_ratio / 2;
+    mouse_x += MAX_SCENE_WIDTH / 2;
+    mouse_y += MAX_SCENE_WIDTH * canvas_ratio / 2;
     
     // consider (centered) viewport position
     mouse_x += viewport.x;
     mouse_y += viewport.y;
-    mouse_x -= base_width / 2;
-    mouse_y -= base_width * canvas_ratio / 2;
+    mouse_x -= MAX_SCENE_WIDTH / 2;
+    mouse_y -= MAX_SCENE_WIDTH * canvas_ratio / 2;
     
     mouse_x = parseInt(mouse_x);
     mouse_y = parseInt(mouse_y);
@@ -800,8 +800,8 @@ function onRelease() {
 /// Limit viewport's position
 function limitViewportPosition() {
     var canvas = $('#battlemap')[0];
-    var width  = base_width;
-    var height = base_width * canvas_ratio;
+    var width  = MAX_SCENE_WIDTH;
+    var height = MAX_SCENE_WIDTH * canvas_ratio;
     
     // calculate visible area
     var visible_w = width  / viewport.zoom;
@@ -862,8 +862,8 @@ function onMove(event) {
                         */
                         var padding_x = 0;
                         var padding_y = 0;
-                        tx = Math.max(padding_x, Math.min(tx, base_width                - padding_x));
-                        ty = Math.max(padding_y, Math.min(ty, base_width * canvas_ratio - padding_y));
+                        tx = Math.max(padding_x, Math.min(tx, MAX_SCENE_WIDTH                - padding_x));
+                        ty = Math.max(padding_y, Math.min(ty, MAX_SCENE_WIDTH * canvas_ratio - padding_y));
                         
                         if (client_side_prediction) {
                             // client-side predict (immediately place it there)
@@ -952,10 +952,10 @@ function onWheel(event) {
         }
         
         // calculate view's position
-        var rel_x = reference_x / base_width;
-        var rel_y = reference_y / (base_width * canvas_ratio);
-        var x = base_width * rel_x;
-        var y = base_width * canvas_ratio * rel_y;
+        var rel_x = reference_x / MAX_SCENE_WIDTH;
+        var rel_y = reference_y / (MAX_SCENE_WIDTH * canvas_ratio);
+        var x = MAX_SCENE_WIDTH * rel_x;
+        var y = MAX_SCENE_WIDTH * canvas_ratio * rel_y;
         
         // shift viewport position slightly towards desired direction
         if (x > viewport.x) {
