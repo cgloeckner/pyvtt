@@ -23,17 +23,6 @@ __licence__ = 'MIT'
 
 
 
-class ProtocolError(Exception):
-    """ Used if the communication between server and client behaves
-    unexpected.
-    """
-    
-    def __init__(self, msg):
-        super().__init__(msg)
-
-
-# ---------------------------------------------------------------------
-
 class PlayerCache(object):
     """Holds a single player.
     """
@@ -106,34 +95,39 @@ class PlayerCache(object):
             raw = self.socket.receive()
             if raw is None:
                 return None
-            return json.loads(raw)
         except Exception as e:
-            # send error msg back to client
-            self.socket.send(str(e)) 
             # close socket
-            self.socket.close()
-            raise ProtocolError('Broken JSON message: {0}'.format(raw))
+            self.socket = None  
+            # reraise since it's unexpected
+            raise
+        # parse data
+        return json.loads(raw)
         
     def write(self, data):
         """ Write JSON object to socket. """
+        # dump data
         raw = json.dumps(data)
+        # send data
         #with self.lock: # note: atm deadlocking
         try:
             if self.isOnline():
                 self.socket.send(raw)
-        except WebSocketError:
+        except Exception as e:
+            # log warning
+            self.engine.logging.warning(e)
             # close socket
             self.socket = None
+            # reraise since it's unexpected
+            raise
         
     def fetch(self, data, key):
         """ Try to fetch key from data or raise ProtocolError. """
         try:
             return data[key]
         except KeyError as e:
-            # send error msg back to client
-            self.socket.send(str(e))
-            self.socket.close()
-            raise ProtocolError('Key "{0}" not provided by client'.format(key))
+            self.socket = None
+            # reraise since it's unexpected
+            raise
         
     def handle_async(self):
         """ Runs a greenlet to handle asyncronously. """
@@ -156,7 +150,7 @@ class PlayerCache(object):
                 func(self, data)
             
         except WebSocketError as e:
-            # player quit
+            # player quit (expected error)
             self.engine.logging.access('Player closed WebSocket by {0}'.format(self.ip))
             return
             
@@ -164,6 +158,7 @@ class PlayerCache(object):
             error.metadata = self.getMetaData()
             # any other exception - make sure player is logged out
             self.parent.logout(self)
+            # reraise since it's unexpected
             raise error
         
         # regular logout player
@@ -913,11 +908,16 @@ class EngineCache(object):
         # insert player
         gm_cache = self.getFromUrl(gm_url)
         if gm_cache is None:
+            self.engine.logging.warning('Cannot listen to websocket for GM {0}'.format(gm_url))
             return
         game_cache = gm_cache.getFromUrl(game_url)
-        if game_cache is None:
+        if game_cache is None:       
+            self.engine.logging.warning('Cannot listen to websocket for game {0}'.format(game_url))
             return
         player_cache = game_cache.get(name)
+        if player_cache is None:        
+            self.engine.logging.warning('Cannot listen to websocket as player {0}'.format(name))
+            return
         
         #with player_cache.lock: # note: atm deadlocking
         player_cache.socket = socket

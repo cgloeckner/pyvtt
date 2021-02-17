@@ -107,6 +107,20 @@ class EngineCacheTest(EngineBaseTest):
         game_cache = gm_cache.get(game)
         self.assertEqual(len(game_cache.players), 0)
 
+        # cannot listen to empty socket
+        socket = SocketDummy()
+        socket.block = False   
+        ret = cache.listen(socket)
+        self.assertIsNone(ret)
+
+        # cannot listen if not logged in
+        socket = SocketDummy()
+        socket.block = False   
+        socket.push_receive({'name': 'arthur', 'gm_url': 'foo', 'game_url': 'bar'})
+        cache.listen(socket)   
+        ret = cache.listen(socket)
+        self.assertIsNone(ret)
+
         # create Player
         player_cache = game_cache.insert('arthur', 'red', is_gm=False)
 
