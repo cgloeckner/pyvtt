@@ -21,8 +21,6 @@ var dice_shake = 750; // ms for shaking animation
 
 var zooming = true; // DEBUG switch for enabling the experimental feature
 
-var drag_dice    = null;    // indicates which dice is dragged around (by number of sides)
-var drag_players = null;    // indicates if players are dragged around
 var over_player  = null;    // indicates over which player the mouse is located (by name)
 
 var default_dice_pos = {};  // default dice positions
@@ -245,14 +243,20 @@ function addRoll(sides, result, name, color, recent) {
 
 // --- ui event handles -----------------------------------------------
 
+var drag_img = new Image(); // Replacement for default drag image
+drag_img.src = '/static/transparent.png'
+
+
 function onDrag(event) {
     event.preventDefault();
     pickCanvasPos(event);
-    
+
     if (primary_id != 0) {
-        if (drag_action == 'resize') {
+        var action = event.dataTransfer.getData('text/plain');
+        
+        if (action == 'resize') {
             onTokenResize();
-        } else if (drag_action == 'rotate') {
+        } else if (action == 'rotate') {
             onRotate();
         }
     }
@@ -397,9 +401,9 @@ function onRotate(event) {
 function onDrop(event) {
     event.preventDefault();
     pickCanvasPos(event);
-    
-    if (drag_dice != null || drag_action != '' || drag_players) {
-        // prevent dragging dice or players be seen as image upload
+
+    if (event.dataTransfer.getData('text/plain') != '') {
+        // ignore
         return;
     }
     
@@ -623,9 +627,6 @@ function onGrab(event) {
     
     pickCanvasPos(event);
 
-    drag_dice    = null;
-    drag_players = false;
-    
     if (event.buttons == 1) {
         // Left Click: select token
         var token = selectToken(mouse_x, mouse_y);
@@ -1134,19 +1135,14 @@ function onLock() {
 
 /// Event handle for resize a token
 function onStartResize() {
-    drag_dice = null;
-    drag_players = false;
-    
-    drag_action = 'resize';
+    event.dataTransfer.setDragImage(drag_img, 0, 0);
+    event.dataTransfer.setData('text/plain', 'resize');
 }
 
 /// Event handle for rotating a token
-function onStartRotate() {      
-    drag_dice = null;
-    drag_players = false;
-    
-    drag_action      = 'rotate'; 
-    token_last_angle = null;
+function onStartRotate() {            
+    event.dataTransfer.setDragImage(drag_img, 0, 0);
+    event.dataTransfer.setData('text/plain', 'rotate');
 }
 
 /// Event handle for ending token resize
@@ -1255,29 +1251,33 @@ function onTop() {
 }
 
 /// Event handle for start dragging a single dice container
-function onStartDragDice(sides) {
-    drag_players = false;
-    if (event.buttons == 1) {
-        // select for dragging
-        drag_dice = sides;
-        
-    } else if (event.buttons == 2) {
+function onStartDragDice(event, sides) {     
+    event.dataTransfer.setDragImage(drag_img, 0, 0);
+    event.dataTransfer.setData('text/plain', sides);
+}
+
+/// Event handle for clicking a single dice container
+function onResetDice(event, sides) {
+    if (event.buttons == 2) {
         // reset dice position
         resetDicePos(sides);
     }
 }
    
 /// Event handle for stop dragging a single dice container
-function onEndDragDice() {
-    drag_dice = null;
+function onEndDragDice(event) {      
+    console.log(event.dataTransfer.getData('text/plain'))
 }
 
-/// Event handle for start dragging a players container
-function onStartDragPlayers(event) {
-    if (event.buttons == 1) {
-        drag_dice    = null;
-        drag_players = true;
-    } else if (event.buttons == 2) {
+/// Event handle for start dragging the players container
+function onStartDragPlayers(event) {         
+    event.dataTransfer.setDragImage(drag_img, 0, 0);
+    event.dataTransfer.setData('text/plain', 'players');
+}
+
+/// Event handle for clicking the players container
+function onResetPlayers(event) {
+    if (event.buttons == 2) {
         // reset players position
         var target = $('#players');
         var pos = [window.innerWidth * 0.5, window.innerHeight - target.height()];
@@ -1288,9 +1288,9 @@ function onStartDragPlayers(event) {
     }
 }
    
-/// Event handle for stop dragging a single players container
-function onEndDragPlayers() {
-    drag_players = false;
+/// Event handle for stop dragging the players container
+function onEndDragPlayers(event) {
+    console.log(event.dataTransfer.getData('text/plain'));
 }
 
 /// Snaps dice container to the closest edge (from x, y)
@@ -1393,8 +1393,10 @@ function movePlayersTo(pos) {
 
 /// Drag dice container to position specified by the event
 function onDragDice(event) {
+    var sides = event.dataTransfer.getData('text/plain');
+    
     // drag dice box
-    var target = $('#d' + drag_dice + 'icon');
+    var target = $('#d' + sides + 'icon');
      
     // limit position to the screen
     var w = target.width();
@@ -1405,8 +1407,8 @@ function onDragDice(event) {
     data = snapDice(data[0], data[1], target, '');
     
     // apply position
-    moveDiceTo(data, drag_dice);
-    saveDicePos(drag_dice, data);
+    moveDiceTo(data, sides);
+    saveDicePos(sides, data);
 }
 
 /// Drag players container to position specified by the event
@@ -1426,12 +1428,13 @@ function onDragPlayers(event) {
 
 /// Event handle for dragging a single dice container
 function onDragStuff(event) {
+    var drag_data = event.dataTransfer.getData('text/plain');
+    
     if (event.buttons == 1) {
-        if (drag_dice != null) { 
-            onDragDice(event);
-        }
-        if (drag_players) {
+        if (drag_data == 'players') {
             onDragPlayers(event);
+        } else if (drag_data != '') { 
+            onDragDice(event);
         }
     }
 }

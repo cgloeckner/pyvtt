@@ -23,7 +23,7 @@
 %for d in [20, 12, 10, 8, 6, 4, 2]:
         <div class="dice" id="d{{d}}icon">
             <div>
-                <img src="/static/d{{d}}.png" title="Roll 1D{{d}}" onMouseDown="onStartDragDice({{d}});" onMouseUp="onEndDragDice();" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});" />
+                <img src="/static/d{{d}}.png" title="Roll 1D{{d}}" onDragStart="onStartDragDice(event, {{d}});" onMouseDown="onResetDice(event, {{d}});" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});" />
                 <div class="proofani" id="d{{d}}poofani"></div>
             </div>
         </div>
@@ -45,7 +45,7 @@
         </div>
     </div>
 
-    <div id="players" onMouseDown="onStartDragPlayers(event);" onDragEnd="onEndDragPlayers();" onWheel="onWheelPlayers();"></div>
+    <div id="players" onDragStart="onStartDragPlayers(event);" onMouseDown="onResetPlayers(event);" onDragEnd="onEndDragPlayers(event);" onWheel="onWheelPlayers();"></div>
     
     <div class="mapfooter" id="mapfooter">
         <div id="ping">Ping: &infin;</div>
