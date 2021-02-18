@@ -580,8 +580,6 @@ function updateTokenbar() {
 
 // ----------------------------------------------------------------------------
 
-var drag_action = ''; // used to identify dragging for resize or rotate
-
 /// Select mouse/touch position relative to the canvas
 function pickCanvasPos(event) {
     if (event.changedTouches) {
@@ -1180,14 +1178,13 @@ function onQuitRotate() {
 }
 
 /// Event handle for quitting rotation/resize dragging
-function onQuitAction() {
-    if (drag_action == 'rotate') {
+function onQuitAction(event) {           
+    var action = event.dataTransfer.getData('text/plain');
+    if (action == 'rotate') {
         onQuitRotate();
-    } else if (drag_action == 'resize') {
+    } else if (action == 'resize') {
         onQuitResize();
     }
-    
-    drag_action = '';    
 }
 
 /// Event handle for moving token to lowest z-order

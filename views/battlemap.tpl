@@ -40,8 +40,8 @@
             <img src="/static/locked.png" id="tokenLock" draggable="false" onClick="onLock();" onMouseEnter="showHint(event, 'LOCK/UNLOCK');" onMouseLeave="hideHint();" />
             <img src="/static/top.png" id="tokenTop" draggable="false" onClick="onTop();" onMouseEnter="showHint(event, 'MOVE TO TOP');" onMouseLeave="hideHint();" />
             <img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="onBottom();" onMouseEnter="showHint(event, 'MOVE TO BOTTOM');" onMouseLeave="hideHint();" />
-            <img src="/static/resize.png" id="tokenResize" onMouseDown="onResizeClick(event);" onDragStart="onStartResize();" onDragEnd="onQuitAction();" onMouseEnter="showHint(event, 'DRAG TO RESIZE');" onMouseLeave="hideHint();" />
-            <img src="/static/rotate.png" id="tokenRotate" onMouseDown="onRotateClick(event);" onDragStart="onStartRotate();" onDragEnd="onQuitAction();" onMouseEnter="showHint(event, 'DRAG TO ROTATE');" onMouseLeave="hideHint();" />
+            <img src="/static/resize.png" id="tokenResize" onMouseDown="onResizeClick(event);" onDragStart="onStartResize();" onDragEnd="onQuitAction(event);" onMouseEnter="showHint(event, 'DRAG TO RESIZE');" onMouseLeave="hideHint();" />
+            <img src="/static/rotate.png" id="tokenRotate" onMouseDown="onRotateClick(event);" onDragStart="onStartRotate();" onDragEnd="onQuitAction(event);" onMouseEnter="showHint(event, 'DRAG TO ROTATE');" onMouseLeave="hideHint();" />
         </div>
     </div>
 
