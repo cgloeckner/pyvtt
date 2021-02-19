@@ -409,7 +409,7 @@ function onDrop(event) {
     event.preventDefault();
     pickCanvasPos(event);
 
-    if (localStorage.getItem('drag_data') != '') {
+    if (localStorage.getItem('drag_data') != null) {
         // ignore
         return;
     }
