@@ -257,12 +257,12 @@ function onDrag(event) {
         if (action == 'resize') {
             onTokenResize();
         } else if (action == 'rotate') {
-            onRotate();
+            onTokenRotate();
         }
     }
 }
 
-function onResizeClick(event) {
+function onResizeReset(event) {
     if (event.buttons == 2) {
         var changes = [];
         $.each(select_ids, function(index, id) {
@@ -288,7 +288,7 @@ function onResizeClick(event) {
     }
 }
 
-function onRotateClick(event) {
+function onRotateReset(event) {
     if (event.buttons == 2) {
         var changes = [];
         $.each(select_ids, function(index, id) {
@@ -341,7 +341,7 @@ function onTokenResize() {
     });
 }
 
-function onRotate(event) { 
+function onTokenRotate(event) { 
     var first_token = tokens[primary_id] 
     
     // calculate vectors between origin/icon and origni/mouse
@@ -389,13 +389,14 @@ function onRotate(event) {
         if (token_last_angle != null) {
             token.rotate -= token_last_angle;
         }
-        token_last_angle = angle;
         
         // apply rotation
         // @NOTE: rotation is updated after completion, meanwhile
         // clide-side prediction kicks in
         token.rotate += angle;
     });
+    
+    token_last_angle = angle;
 }
 
 function onDrop(event) {
@@ -1168,7 +1169,7 @@ function onQuitRotate() {
             'rotate' : tokens[id].rotate
         });
     });
-    
+
     writeSocket({
         'OPID'    : 'UPDATE',
         'changes' : changes
