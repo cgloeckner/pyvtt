@@ -7,7 +7,7 @@
 
 %include("login")
 
-<div id="game" onDragOver="onDragStuff(event);">
+<div id="game">
 %if is_gm:
     <div class="horizdropdown" onClick="openGmDropdown();">
         <div id="gmdrop">

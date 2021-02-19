@@ -248,17 +248,23 @@ drag_img.src = '/static/transparent.png'
 
 
 function onDrag(event) {
+    var drag_data = localStorage.getItem('drag_data');
+    console.log('onDrag = ', drag_data, '!')
+    
     event.preventDefault();
     pickCanvasPos(event);
-
-    if (primary_id != 0) {
-        var action = event.dataTransfer.getData('text/plain');
+    
+    if (drag_data == 'players') {
+        onDragPlayers(event);
         
-        if (action == 'resize') {
+    } else if (primary_id != 0) {        
+        if (drag_data == 'resize') {
             onTokenResize();
-        } else if (action == 'rotate') {
+        } else if (drag_data == 'rotate') {
             onTokenRotate();
         }
+    } else { 
+        onDragDice(event);
     }
 }
 
@@ -403,7 +409,7 @@ function onDrop(event) {
     event.preventDefault();
     pickCanvasPos(event);
 
-    if (event.dataTransfer.getData('text/plain') != '') {
+    if (localStorage.getItem('drag_data') != '') {
         // ignore
         return;
     }
@@ -1135,13 +1141,14 @@ function onLock() {
 /// Event handle for resize a token
 function onStartResize() {
     event.dataTransfer.setDragImage(drag_img, 0, 0);
-    event.dataTransfer.setData('text/plain', 'resize');
+    localStorage.setItem('drag_data', 'resize');
 }
 
 /// Event handle for rotating a token
 function onStartRotate() {            
     event.dataTransfer.setDragImage(drag_img, 0, 0);
-    event.dataTransfer.setData('text/plain', 'rotate');
+    
+    localStorage.setItem('drag_data', 'rotate');
 }
 
 /// Event handle for ending token resize
@@ -1180,12 +1187,14 @@ function onQuitRotate() {
 
 /// Event handle for quitting rotation/resize dragging
 function onQuitAction(event) {           
-    var action = event.dataTransfer.getData('text/plain');
+    var action = localStorage.getItem('drag_data');
     if (action == 'rotate') {
         onQuitRotate();
     } else if (action == 'resize') {
         onQuitResize();
     }
+
+    localStorage.removeItem('drag_data');
 }
 
 /// Event handle for moving token to lowest z-order
@@ -1249,9 +1258,9 @@ function onTop() {
 }
 
 /// Event handle for start dragging a single dice container
-function onStartDragDice(event, sides) {     
+function onStartDragDice(event, sides) {
     event.dataTransfer.setDragImage(drag_img, 0, 0);
-    event.dataTransfer.setData('text/plain', sides);
+    localStorage.setItem('drag_data',  sides);
 }
 
 /// Event handle for clicking a single dice container
@@ -1263,14 +1272,14 @@ function onResetDice(event, sides) {
 }
    
 /// Event handle for stop dragging a single dice container
-function onEndDragDice(event) {      
-    console.log(event.dataTransfer.getData('text/plain'))
+function onEndDragDice(event) {
+    localStorage.removeItem('drag_data');
 }
 
 /// Event handle for start dragging the players container
 function onStartDragPlayers(event) {         
     event.dataTransfer.setDragImage(drag_img, 0, 0);
-    event.dataTransfer.setData('text/plain', 'players');
+    localStorage.setItem('drag_data', 'players');
 }
 
 /// Event handle for clicking the players container
@@ -1288,7 +1297,7 @@ function onResetPlayers(event) {
    
 /// Event handle for stop dragging the players container
 function onEndDragPlayers(event) {
-    console.log(event.dataTransfer.getData('text/plain'));
+    localStorage.removeItem('drag_data');
 }
 
 /// Snaps dice container to the closest edge (from x, y)
@@ -1391,7 +1400,7 @@ function movePlayersTo(pos) {
 
 /// Drag dice container to position specified by the event
 function onDragDice(event) {
-    var sides = event.dataTransfer.getData('text/plain');
+    var sides = localStorage.getItem('drag_data');
     
     // drag dice box
     var target = $('#d' + sides + 'icon');
@@ -1424,19 +1433,11 @@ function onDragPlayers(event) {
     savePlayersPos(pos);
 }
 
+/*
 /// Event handle for dragging a single dice container
 function onDragStuff(event) {
-    var drag_data = event.dataTransfer.getData('text/plain');
-    
-    if (event.buttons == 1) {
-        if (drag_data == 'players') {
-            onDragPlayers(event);
-        } else if (drag_data != '') { 
-            onDragDice(event);
-        }
-    }
 }
-
+*/
 /// Event handle for entering a player container with the mouse
 function onMouseOverPlayer(uuid) {
     over_player = uuid;
