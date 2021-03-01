@@ -325,7 +325,8 @@ class GameCache(object):
                 if p.uuid == uuid:
                     # close socket (will stop thread as well)
                     #with p.lock:# note: atm deadlocking
-                    p.socket.close()
+                    if p.socket != None:
+                        p.socket.close()
                     # remove player
                     del self.players[name]
                     self.rebuildIndices()
