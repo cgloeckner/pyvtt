@@ -618,7 +618,7 @@ class GameCache(object):
         with db_session:
             for tid in tokens:
                 t = self.parent.db.Token.select(lambda t: t.id == tid).first()
-                if t is not None:
+                if t is not None and not t.locked:
                     ids.append(tid)
                     t.delete()
 

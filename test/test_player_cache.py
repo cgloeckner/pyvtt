@@ -1125,6 +1125,33 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1, answer3)
         self.assertIsNone(answer1)
 
+        # cannot delete locked token
+        with db_session:
+            scene = self.active_scene()
+            self.purge_scene(scene)
+            t1 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+            t2 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+            t3 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+            t3.locked = True
+            t4 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+        ids = [t1.id, t3.id, t4.id]
+        game_cache.onDeleteToken(player_cache1, {'tokens': ids})
+        # expect DELETE broadcast for 2 of 3 tokens
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'DELETE')          
+        self.assertEqual(len(answer1['tokens']), 2)
+        self.assertIn(t1.id, answer1['tokens'])
+        self.assertIn(t4.id, answer1['tokens'])
+        self.assertNotIn(t2.id, answer1['tokens'])
+        # can query locked token
+        with db_session:
+            t = gm_cache.db.Token.select(lambda tkn: tkn.id == t3.id).first()
+        self.assertIsNotNone(t)
+
     def test_onCloneToken(self):
         socket1 = SocketDummy()
         socket2 = SocketDummy()
