@@ -116,8 +116,10 @@ function onDelete(data) {
         // overwrite new position with current
         // (this will prevent from fading out at (0|0)
         var copy = tokens[id];
-        copy.newx = token.posx;
-        copy.newy = token.posy;
+        copy.newx = copy.posx;
+        copy.newy = copy.posy;
+
+        console.log(copy);
         
         delete tokens[id];
         
