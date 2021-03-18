@@ -349,11 +349,15 @@ function drawToken(token, color, is_background) {
         }
         
         // draw token image
-        context.drawImage(
-            images[token.url],                    // url
-            -sizes[0] / 2, -sizes[1] / 2,        // position
-            sizes[0], sizes[1]                    // size
-        );
+        try {
+            context.drawImage(
+                images[token.url],                    // url
+                -sizes[0] / 2, -sizes[1] / 2,        // position
+                sizes[0], sizes[1]                    // size
+            );
+        } catch (err) {
+            // required to avoid Chrome choking from missing images
+        }
     }
     
     context.restore();
