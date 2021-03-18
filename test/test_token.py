@@ -177,9 +177,9 @@ class TokenTest(unittest.TestCase):
         p.append(self.db.Token.getPosByDegree(origin, 1, 3))
         p.append(self.db.Token.getPosByDegree(origin, 2, 3))
         
-        self.assertIn(( 951, 532), p) # top left
-        self.assertIn((1000, 560), p) # right (limited to scene)
-        self.assertIn((1000, 532), p) # bottom left (limited to scene)
+        self.assertIn((959, 539), p) # top left
+        self.assertIn((orm.MAX_SCENE_WIDTH, orm.MAX_SCENE_HEIGHT), p) # right (limited to scene)
+        self.assertIn((orm.MAX_SCENE_WIDTH, 539), p) # bottom left (limited to scene)
         
         # single token is placed at origin
         origin = (456, 123)

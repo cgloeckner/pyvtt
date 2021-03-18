@@ -19,9 +19,9 @@ __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 
-
-MAX_SCENE_WIDTH  = 1000
-MAX_SCENE_HEIGHT = 560
+# NOTE: screen is exactly 16:9
+MAX_SCENE_WIDTH  = 1008
+MAX_SCENE_HEIGHT = 567
 
 MIN_TOKEN_SIZE   = 30
 MAX_TOKEN_SIZE   = 1000
