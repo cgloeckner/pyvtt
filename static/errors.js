@@ -22,6 +22,11 @@ function showError(msg) {
     showPopup(msg, 'red', 7000, 3000);
 }
 
+function showTip(msg) {
+    console.warn(msg);
+    showPopup(msg, 'white', 500, 500);
+}
+
 function showInfo(msg) {
     showPopup(msg, 'white', null, null);
 }
@@ -33,10 +38,6 @@ function showHint(event, msg) {
     
     var hint = $('#hint');
     hint[0].innerHTML = msg;
-    /*
-    hint.css('left', event.clientX);
-    hint.css('top', event.clientY + 45);
-    */
     hint.fadeIn(100, 0.0);
 }
 

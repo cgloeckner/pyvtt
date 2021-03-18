@@ -680,10 +680,24 @@ div.battlemap > div#tokenbar > img {
 
 div.battlemap > div#tokenbar > img#tokenBottom {
     top: 6px;
+    cursor: s-resize;
 }
 
 div.battlemap > div#tokenbar > img#tokenTop {
     bottom: 6px;
+    cursor: n-resize;
+}
+    
+div.battlemap > div#tokenbar > img#tokenClone {
+    cursor: copy;
+}
+
+div.battlemap > div#tokenbar > img#tokenRotate {
+    cursor: col-resize;
+}
+  
+div.battlemap > div#tokenbar > img#tokenResize {
+    cursor: row-resize;
 }
 
 div.battlemap > div#tokenbar > img:hover {

@@ -249,7 +249,6 @@ drag_img.src = '/static/transparent.png'
 
 function onDrag(event) {
     var drag_data = localStorage.getItem('drag_data');
-    console.log('onDrag = ', drag_data, '!')
     
     event.preventDefault();
     pickCanvasPos(event);
@@ -578,13 +577,17 @@ function updateTokenbar() {
             $('#tokenBottom').css('visibility', 'hidden');
             $('#tokenResize').css('visibility', 'hidden');
             $('#tokenRotate').css('visibility', 'hidden');
+            $('#tokenClone').css('visibility', 'hidden');
+            $('#tokenDelete').css('visibility', 'hidden');
         } else {
             $('#tokenFlipX').css('visibility', '');
             $('#tokenLock')[0].src = '/static/unlocked.png';
             $('#tokenTop').css('visibility', '');
             $('#tokenBottom').css('visibility', '');
             $('#tokenResize').css('visibility', '');    
-            $('#tokenRotate').css('visibility', '');
+            $('#tokenRotate').css('visibility', ''); 
+            $('#tokenClone').css('visibility', '');
+            $('#tokenDelete').css('visibility', '');
         }
     }
 }
@@ -839,13 +842,15 @@ function onMove(event) {
         
         if (primary_id != 0 && grabbed) {
             var token = tokens[primary_id];
-             
+
             // transform cursor
             if (token == null) {
                 battlemap.css('cursor', 'default');
             } else if (token.locked) {
                 battlemap.css('cursor', 'not-allowed');
-            } else {                                         
+            } else if (grabbed) {
+                battlemap.css('cursor', 'move');
+            } else {
                 battlemap.css('cursor', 'grab');
             }
             
@@ -1151,7 +1156,6 @@ function onStartResize() {
 /// Event handle for rotating a token
 function onStartRotate() {            
     event.dataTransfer.setDragImage(drag_img, 0, 0);
-    
     localStorage.setItem('drag_data', 'rotate');
 }
 
