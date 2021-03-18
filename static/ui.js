@@ -365,7 +365,7 @@ function onTokenRotate(event) {
     norm_mouse = Math.sqrt(mouse_dx * mouse_dx + mouse_dy * mouse_dy);
     radians    = Math.acos(dotp / (norm_icon * norm_mouse));
     angle      = radians * 180 / 3.14;
-    
+
     // try to lock token to multiples of 90 degree
     if (Math.abs(angle) < token_rotate_lock_threshold) {
         angle = 0;
@@ -374,10 +374,10 @@ function onTokenRotate(event) {
         angle = 90;
     }
     if (Math.abs(angle-180) < token_rotate_lock_threshold) {
-        angle = 180;
+        angle = 180; 
     }
     if (Math.abs(angle-270) < token_rotate_lock_threshold) {
-        angle = 270;
+        angle = 270; 
     }
     
     if (mouse_dx < 0) {
@@ -395,7 +395,7 @@ function onTokenRotate(event) {
         if (token_last_angle != null) {
             token.rotate -= token_last_angle;
         }
-        
+            
         // apply rotation
         // @NOTE: rotation is updated after completion, meanwhile
         // clide-side prediction kicks in
@@ -485,7 +485,7 @@ function showTokenbar(token_id) {
     }
 }
 
-var token_icons = ['Rotate', 'Top', 'Bottom', 'Resize', 'FlipX', 'Lock'];
+var token_icons = ['Rotate', 'Top', 'Delete', 'Bottom', 'Resize', 'FlipX', 'Clone', 'Lock'];
 
 function updateTokenbar() {
     $('#tokenbar').css('visibility', 'hidden');
@@ -1258,6 +1258,28 @@ function onTop() {
     writeSocket({
         'OPID'    : 'UPDATE',
         'changes' : changes
+    });
+}
+
+/// Event handle for cloning the selected tokens
+function onClone() {
+    // pick random position next to mouse
+    var x = mouse_x + Math.floor(Math.random()*100) - 50;
+    var y = mouse_y + Math.floor(Math.random()*100) - 50;
+    
+    writeSocket({
+        'OPID' : 'CLONE',
+        'ids'  : select_ids,
+        'posx' : x,
+        'posy' : y
+    });
+}
+ 
+/// Event handle for deleting the selected tokens
+function onTokenDelete() {
+    writeSocket({
+        'OPID'   : 'DELETE',
+        'tokens' : select_ids
     });
 }
 
