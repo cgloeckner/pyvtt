@@ -267,58 +267,6 @@ function onDrag(event) {
     }
 }
 
-function onResizeReset(event) {
-    if (event.buttons == 2) {
-        var changes = [];
-        $.each(select_ids, function(index, id) {
-            var token = tokens[id];
-            
-            if (token.locked) {
-                // ignore if locked
-                return;
-            }
-            
-            token.size   = default_token_size;
-            
-            changes.push({
-                'id'     : id,
-                'size'   : token.size
-            });
-        });
-        
-        writeSocket({
-            'OPID'    : 'UPDATE',
-            'changes' : changes
-        });
-    }
-}
-
-function onRotateReset(event) {
-    if (event.buttons == 2) {
-        var changes = [];
-        $.each(select_ids, function(index, id) {
-            var token = tokens[id];
-            
-            if (token.locked) {
-                // ignore if locked
-                return;
-            }
-            
-            token.rotate = 0.0;
-            
-            changes.push({
-                'id'     : id,
-                'rotate' : token.rotate
-            });
-        });
-        
-        writeSocket({
-            'OPID'    : 'UPDATE',
-            'changes' : changes
-        });
-    }
-}
-
 function onTokenResize() {
     var first_token = tokens[primary_id] 
     
@@ -553,7 +501,7 @@ function updateTokenbar() {
             var s = Math.sin((-index * degree) * 3.14 / 180);
             var c = Math.cos((-index * degree) * 3.14 / 180);
             
-            var radius = size * 0.8 * canvas_scale;
+            var radius = size * 0.6 * canvas_scale;
             var icon_x = x - radius * s;
             var icon_y = y - radius * c;
             
@@ -716,7 +664,7 @@ function onGrab(event) {
         }
         
     } else if (event.buttons == 2) {
-        // Right click: reset token scale & rotation
+        // Right click: reset token scale, flip-x & rotation
         var changes = [];
         $.each(select_ids, function(index, id) {
             var token = tokens[id];
@@ -732,7 +680,8 @@ function onGrab(event) {
             changes.push({
                 'id'     : id,
                 'size'   : token.size,
-                'rotate' : token.rotate
+                'rotate' : token.rotate,
+                'flipx'  : false
             });
         });
         

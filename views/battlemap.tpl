@@ -42,8 +42,8 @@
             <img src="/static/copy.png" id="tokenClone" draggable="false" onClick="onClone();" onMouseEnter="showHint(event, 'CLONE TOKEN');" onMouseLeave="hideHint();" />
             <img src="/static/delete.png" id="tokenDelete" draggable="false" onClick="onTokenDelete();" onMouseEnter="showHint(event, 'DELETE TOKEN');" onMouseLeave="hideHint();" />
             <img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="onBottom();" onMouseEnter="showHint(event, 'MOVE TO BOTTOM');" onMouseLeave="hideHint();" />
-            <img src="/static/resize.png" id="tokenResize" onMouseDown="onResizeReset(event);" onDragStart="onStartResize();" onDragEnd="onQuitAction(event);" onMouseEnter="showHint(event, 'DRAG TO RESIZE');" onMouseLeave="hideHint();" onClick="showTip('DRAG TO RESIZE');" />
-            <img src="/static/rotate.png" id="tokenRotate" onMouseDown="onRotateReset(event);" onDragStart="onStartRotate();" onDragEnd="onQuitAction(event);" onMouseEnter="showHint(event, 'DRAG TO ROTATE');" onMouseLeave="hideHint();"  onClick="showTip('DRAG TO ROTATE');" />
+            <img src="/static/resize.png" id="tokenResize" onDragStart="onStartResize();" onDragEnd="onQuitAction(event);" onMouseEnter="showHint(event, 'DRAG TO RESIZE');" onMouseLeave="hideHint();" onClick="showTip('DRAG TO RESIZE');" />
+            <img src="/static/rotate.png" id="tokenRotate" onDragStart="onStartRotate();" onDragEnd="onQuitAction(event);" onMouseEnter="showHint(event, 'DRAG TO ROTATE');" onMouseLeave="hideHint();" onClick="showTip('DRAG TO ROTATE');" />
         </div>
     </div>
 
