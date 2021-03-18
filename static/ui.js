@@ -543,6 +543,10 @@ function updateTokenbar() {
         $('#tokenbar').css('left', canvas_pos.left + 'px');
         $('#tokenbar').css('top',  canvas_pos.top  + 'px');
         $('#tokenbar').css('visibility', 'visible');
+
+        // padding avoids icons out of clickable range (especially
+        // at the top, versus the GM's dropdown)
+        var padding = 20;
         
         $.each(token_icons, function(index, name) { 
             // calculate position based on angle
@@ -555,8 +559,8 @@ function updateTokenbar() {
             var icon_y = y - radius * c;
             
             // force position to be on the screen
-            icon_x = Math.max(0, Math.min(canvas.width(), icon_x));
-            icon_y = Math.max(0, Math.min(canvas.height(), icon_y));
+            icon_x = Math.max(padding, Math.min(canvas.width()  - padding, icon_x));
+            icon_y = Math.max(padding, Math.min(canvas.height() - padding, icon_y));
             
             // place icon
             var icon = $('#token' + name);
