@@ -55,7 +55,7 @@ div#hint {
     text-align: center;
     
     position: absolute;
-    bottom: 10px;
+    bottom: 60px;
     left: 50%;
     
     color: white;
@@ -65,7 +65,7 @@ div#hint {
     
     height: 15px;
     width: 400px;
-    background-color: rgba(0, 0, 0, 0.55);
+    background-color: rgba(0, 0, 0, 0.85);
     padding: 15px;
     
     border: 1px solid white;
@@ -686,6 +686,10 @@ div.battlemap > div#tokenbar > img#tokenBottom {
 div.battlemap > div#tokenbar > img#tokenTop {
     bottom: 6px;
     cursor: n-resize;
+}
+
+div.battlemap > div#tokenbar > img#tokenLock {
+    cursor: not-allowed;
 }
     
 div.battlemap > div#tokenbar > img#tokenClone {

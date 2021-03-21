@@ -5,7 +5,12 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 */
 
-var show_hints = false;
+var show_hints = true;
+
+var last_target_hint = null;
+var target_hint_delay = 1000;
+var last_hint_time = null;
+
 
 function showPopup(msg, color, timeout, fadeout) {
     var popup = $('#popup');
@@ -32,16 +37,26 @@ function showInfo(msg) {
 }
 
 function showHint(event, msg) {
-    if (!show_hints) {
+    last_hint_target = event.target;
+
+    setTimeout(function() {
+        showHintNow(event, msg);
+    }, target_hint_delay);
+}
+
+function showHintNow(event, msg) {
+    if (last_hint_target == null || !show_hints) {
         return;
     }
     
     var hint = $('#hint');
     hint[0].innerHTML = msg;
-    hint.fadeIn(100, 0.0);
+    hint.fadeIn(250, 0.0);
 }
 
 function hideHint() {
+    last_hint_target = null;
+    
     var hint = $('#hint');
     hint.fadeOut(10, 0.0);
 }

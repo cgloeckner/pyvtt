@@ -155,13 +155,13 @@ function showPlayer(p, force=false) {
     // create player menu for this player
     var menu = '<div class="playermenu" id="playermenu_' + p.uuid + '">'
     if (p.index > 0) {
-        menu += '<img src="/static/left.png" draggable="false" class="left" onClick="onPlayerOrder(-1);" />'
+        menu += '<img src="/static/left.png" draggable="false" class="left" onMouseEnter="showHint(event, \'MOVE TO LEFT\');" onMouseLeave="hideHint();" onClick="onPlayerOrder(-1);" />'
     }
     if (is_gm && p.uuid != my_uuid) {
-        menu += '<img src="/static/kick.gif" draggable="false" class="center" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
+        menu += '<img src="/static/kick.gif" draggable="false" class="center" onMouseEnter="showHint(event, \'KICK PLAYER\');" onMouseLeave="hideHint();" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
     }
     if (!p.is_last) {
-        menu += '<img src="/static/right.png" draggable="false" class="right" onClick="onPlayerOrder(1);" />';
+        menu += '<img src="/static/right.png" draggable="false" class="right" onMouseEnter="showHint(event, \'MOVE TO RIGHT\');" onMouseLeave="hideHint();" onClick="onPlayerOrder(1);" />';
     }
     menu += '</div>';
     
@@ -1420,7 +1420,7 @@ function onDragStuff(event) {
 /// Event handle for entering a player container with the mouse
 function onMouseOverPlayer(uuid) {
     over_player = uuid;
-    
+
     // show player menu
     var menu = $('#playermenu_' + uuid).fadeIn(1500, 0);
 }
@@ -1428,9 +1428,9 @@ function onMouseOverPlayer(uuid) {
 /// Event handle for leaving a player container with the mouse
 function onMouseLeavePlayer(uuid) {
     over_player = null;
-    
+
     // hide player menu
-    var menu = $('#playermenu_' + uuid).fadeOut(250, 0);
+    var menu = $('#playermenu_' + uuid).adeOut(250, 0);
 }
 
 /// Event handle for using the mouse wheel over a player container
