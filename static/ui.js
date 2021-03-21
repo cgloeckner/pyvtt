@@ -620,6 +620,8 @@ function onGrab(event) {
             });
             
         } else if (token != null) {
+            $('#battlemap').css('cursor', 'move');
+            
             var before = select_ids;
             
             if (event.ctrlKey) {
@@ -698,7 +700,7 @@ function onRelease() {
     if (select_ids.length > 0) {
         grabbed = false;
     }
-    
+
     $('#battlemap').css('cursor', 'grab');
     
     if (primary_id != 0 && was_grabbed) {
