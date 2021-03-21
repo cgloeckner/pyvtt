@@ -571,6 +571,12 @@ div#players > span > div.playermenu > img:hover {
         drop-shadow(1px 1px 10px white) 
         drop-shadow(-1px -1px 10px white);
 }
+           
+/* --- Beacon container---------------------------------------------- */
+
+div#beacons > div.beacon {
+    position: absolute;
+}
 
 /* --- Map Footer --------------------------------------------------- */
 

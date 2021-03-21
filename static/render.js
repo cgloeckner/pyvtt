@@ -109,6 +109,66 @@ function getPixelData(token, x, y) {
 }
 
 
+// --- beacon implementation ------------------------------------------
+
+var beacons = {}; // contains beacons keyed by players' uuid
+
+/// Beacon constructor
+function Beacon(color) {
+    this.cycles = 0;
+    this.color  = color;
+}
+
+/// Add beacon
+function addBeacon(color, uuid) {
+    beacons[uuid] = new Beacon(color);
+}
+
+function startBeacon(beacon, x, y) {
+    beacon.x = x;
+    beacon.y = y;
+
+    beacon.width  = 5.0;
+    beacon.radius = 0;
+    beacon.alpha  = 1.0;
+    beacon.cycles = 1;
+}
+
+function animateBeacon(beacon) {
+    beacon.radius += 1.0;
+    if (beacon.radius > 75.0) {
+        beacon.radius = 1.5;
+        beacon.cycles -= 1;
+    }
+    beacon.alpha = 1.0 - beacon.radius / 75.0;
+
+    return beacon.cycles > 0;
+}
+
+function drawBeacon(beacon) { 
+    if (!animateBeacon(beacon)) {
+        return;
+    }
+    
+    var canvas = $('#battlemap');
+    var context = canvas[0].getContext("2d");
+
+    context.save();
+    
+    // handle token position and canvas scale 
+    context.translate(beacon.x * canvas_scale, beacon.y * canvas_scale);
+
+    context.beginPath()
+    context.globalAlpha = beacon.alpha;
+    context.arc(0, 0, beacon.radius, 0, 2 * Math.PI, false);
+    context.lineWidth = beacon.width;
+    context.strokeStyle = beacon.color;
+    context.stroke();
+    context.closePath();
+    
+    context.restore();
+}
+
 // --- token implementation -------------------------------------------
 
 var tokens         = []; // holds all tokens, updated by the server
@@ -427,6 +487,11 @@ function drawScene() {
             drawToken(tokens_removed[index][0], null, false);
         }
     });
+
+    // draw beacons
+    $.each(beacons, function(index, beacon) {
+        drawBeacon(beacon);
+    });
     
     // reverse culling for top-to-bottom token searching
     culling.reverse();
@@ -472,7 +537,7 @@ function drawScene() {
     }
     
     // schedule next drawing
-    setTimeout("drawScene()", 1000.0 / fps);
+    setTimeout("drawScene()", 1000.0 / target_fps);
 }
 
 

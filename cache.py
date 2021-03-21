@@ -63,6 +63,7 @@ class PlayerCache(object):
             'CREATE' : self.parent.onCreateToken,
             'CLONE'  : self.parent.onCloneToken,
             'DELETE' : self.parent.onDeleteToken,
+            'BEACON' : self.parent.onBeacon,
             'GM-CREATE'   : self.parent.onCreateScene,
             'GM-ACTIVATE' : self.parent.onActivateScene,
             'GM-CLONE'    : self.parent.onCloneScene,
@@ -613,25 +614,6 @@ class GameCache(object):
             'tokens' : tokens
         })
         
-    def onDeleteToken(self, player, data):
-        """ Handle player deleting tokens. """
-        # delete tokens
-        tokens = data['tokens']
-        ids    = list()
-        with db_session:
-            for tid in tokens:
-                t = self.parent.db.Token.select(lambda t: t.id == tid).first()
-                if t is not None and not t.locked:
-                    ids.append(tid)
-                    t.delete()
-
-        if len(ids) > 0:
-            # broadcast delete
-            self.broadcast({
-                'OPID'   : 'DELETE',
-                'tokens' : ids
-            })
-        
     def onCloneToken(self, player, data):
         """ Handle player cloning tokens. """
         # fetch clone data
@@ -674,6 +656,33 @@ class GameCache(object):
             'OPID'   : 'CREATE',
             'tokens' : tokens
         })
+    
+    def onDeleteToken(self, player, data):
+        """ Handle player deleting tokens. """
+        # delete tokens
+        tokens = data['tokens']
+        ids    = list()
+        with db_session:
+            for tid in tokens:
+                t = self.parent.db.Token.select(lambda t: t.id == tid).first()
+                if t is not None and not t.locked:
+                    ids.append(tid)
+                    t.delete()
+
+        if len(ids) > 0:
+            # broadcast delete
+            self.broadcast({
+                'OPID'   : 'DELETE',
+                'tokens' : ids
+            })
+    
+    def onBeacon(self, player, data):
+        """ Handle player pinging with the mouse. """
+        # add player identification
+        data['color'] = player.color
+        data['uuid']  = player.uuid
+        # broadcast beacon
+        self.broadcast(data)
         
     def onCreateScene(self, player, data):
         """ GM: Create new scene. """

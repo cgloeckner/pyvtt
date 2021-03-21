@@ -70,6 +70,9 @@ function onSocketMessage(event) {
         case 'ORDER':
             onOrder(data);
             break;
+        case 'BEACON':
+            onBeacon(data);
+            break;
         default:
             console.error('Invalid OpID "' + opid + '"');
     };
@@ -160,6 +163,20 @@ function onOrder(data) {
     });
     
     rebuildPlayers();
+}
+
+function onBeacon(data) {
+    // grab beacon
+    var beacon = beacons[data['uuid']];
+    if (beacon == null) {
+        addBeacon(data['color'], data['uuid']);
+        beacon = beacons[data['uuid']];
+    }
+
+    console.log(beacons, data);
+
+    // update beacon
+    startBeacon(beacon, data['x'], data['y']);
 }
 
 function onRefresh(data) {

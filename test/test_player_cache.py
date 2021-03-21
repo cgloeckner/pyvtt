@@ -1153,6 +1153,50 @@ class PlayerCacheTest(EngineBaseTest):
             t = gm_cache.db.Token.select(lambda tkn: tkn.id == t3.id).first()
         self.assertIsNotNone(t)
 
+    def test_onBeacon(self):
+        socket1 = SocketDummy()
+        socket2 = SocketDummy()
+        socket3 = SocketDummy()
+        
+        # insert players
+        gm_cache   = self.engine.cache.getFromUrl('foo')
+        game_cache = gm_cache.getFromUrl('bar')
+        player_cache1 = game_cache.insert('arthur', 'red', False)
+        player_cache1.socket = socket1
+        player_cache2 = game_cache.insert('bob', 'yellow', False)
+        player_cache2.socket = socket2
+        player_cache3 = game_cache.insert('carlos', 'green', False)
+        player_cache3.socket = socket3
+
+        beacon_data = {'OPID': 'BEACON', 'x': 5, 'y': 10}
+        game_cache.onBeacon(player_cache1, beacon_data)
+        # expect BEACON broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'BEACON')
+        self.assertEqual(answer1['x'], 5)
+        self.assertEqual(answer1['y'], 10)
+        self.assertEqual(answer1['color'], player_cache1.color)
+        self.assertEqual(answer1['uuid'], player_cache1.uuid)
+
+        # check that specific player's color and uuid are used
+        beacon_data = {'OPID': 'BEACON', 'x': 5, 'y': 10}
+        game_cache.onBeacon(player_cache3, beacon_data)
+        # expect BEACON broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'BEACON')
+        self.assertEqual(answer1['x'], 5)
+        self.assertEqual(answer1['y'], 10)
+        self.assertEqual(answer1['color'], player_cache3.color)
+        self.assertEqual(answer1['uuid'], player_cache3.uuid)
+
     def test_onCloneToken(self):
         socket1 = SocketDummy()
         socket2 = SocketDummy()

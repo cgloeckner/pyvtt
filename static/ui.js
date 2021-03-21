@@ -36,6 +36,11 @@ var fade_dice = true;
 
 var dice_sides = [2, 4, 6, 8, 10, 12, 20];
 
+// implementation of a double left click
+var initial_click = 0;
+var double_click_limit = 200;
+
+
 function enableZooming() {
     zooming = $('#zooming').prop('checked');
 }
@@ -581,6 +586,15 @@ function pickCanvasPos(event) {
     mouse_y = parseInt(mouse_y);
 }
 
+/// Event handle for pinging with the mouse (left click held)
+function onDoubleClick() {
+    writeSocket({
+        'OPID' : 'BEACON',
+        'x'    : mouse_x,
+        'y'    : mouse_y
+    });
+}
+
 /// Event handle for start grabbing a token
 function onGrab(event) {
     closeGmDropdown();
@@ -588,6 +602,14 @@ function onGrab(event) {
     pickCanvasPos(event);
 
     if (event.buttons == 1) {
+        // trigger check for holding the click
+        now = Date.now();
+        var time_delta = now - initial_click;
+        initial_click = now;
+        if (time_delta <= double_click_limit) {
+            onDoubleClick();
+        }
+        
         // Left Click: select token
         var token = selectToken(mouse_x, mouse_y);
         
@@ -697,11 +719,11 @@ function onGrab(event) {
 /// Event handle for releasing a grabbed token
 function onRelease() {
     var was_grabbed = grabbed;
+
     if (select_ids.length > 0) {
         grabbed = false;
+        $('#battlemap').css('cursor', 'grab');
     }
-
-    $('#battlemap').css('cursor', 'grab');
     
     if (primary_id != 0 && was_grabbed) {
         var changes = []

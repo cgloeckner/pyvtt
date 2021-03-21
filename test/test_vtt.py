@@ -938,6 +938,7 @@ class VttTest(EngineBaseTest):
         game_cache.onCreateToken   = lambda p, d: log.append(('onCreateToken', p, d))
         game_cache.onCloneToken    = lambda p, d: log.append(('onCloneToken', p, d))
         game_cache.onDeleteToken   = lambda p, d: log.append(('onDeleteToken', p, d))
+        game_cache.onBeacon        = lambda p, d: log.append(('onBeacon', p, d))
         game_cache.onCreateScene   = lambda p, d: log.append(('onCreateScene', p, d))
         game_cache.onActivateScene = lambda p, d: log.append(('onActivateScene', p, d))
         game_cache.onCloneScene    = lambda p, d: log.append(('onCloneScene', p, d))
@@ -947,13 +948,13 @@ class VttTest(EngineBaseTest):
         ret, player_cache = self.joinPlayer('arthur', 'test-game-1', 'merlin', '#FF00FF')
         s = player_cache.socket
         s.block = False
-        opids = ['PING', 'ROLL', 'SELECT', 'RANGE', 'ORDER', 'UPDATE', 'CREATE', 'CLONE', 'DELETE', 'GM-CREATE', 'GM-ACTIVATE', 'GM-CLONE', 'GM-DELETE']
+        opids = ['PING', 'ROLL', 'SELECT', 'RANGE', 'ORDER', 'UPDATE', 'CREATE', 'CLONE', 'DELETE', 'BEACON', 'GM-CREATE', 'GM-ACTIVATE', 'GM-CLONE', 'GM-DELETE']
         for opid in opids:
             s.push_receive({'OPID': opid, 'data': opid.lower()})
         player_cache.greenlet.join()
         
         # expect actions
-        self.assertEqual(len(log), 13)
+        self.assertEqual(len(log), 14)
         self.assertEqual(log[ 0][0], 'onPing')
         self.assertEqual(log[ 1][0], 'onRoll')
         self.assertEqual(log[ 2][0], 'onSelect')
@@ -963,10 +964,11 @@ class VttTest(EngineBaseTest):
         self.assertEqual(log[ 6][0], 'onCreateToken')
         self.assertEqual(log[ 7][0], 'onCloneToken')
         self.assertEqual(log[ 8][0], 'onDeleteToken')
-        self.assertEqual(log[ 9][0], 'onCreateScene')
-        self.assertEqual(log[10][0], 'onActivateScene')
-        self.assertEqual(log[11][0], 'onCloneScene')
-        self.assertEqual(log[12][0], 'onDeleteScene')
+        self.assertEqual(log[ 9][0], 'onBeacon')
+        self.assertEqual(log[10][0], 'onCreateScene')
+        self.assertEqual(log[11][0], 'onActivateScene')
+        self.assertEqual(log[12][0], 'onCloneScene')
+        self.assertEqual(log[13][0], 'onDeleteScene')
         for i, opid in enumerate(opids):
             self.assertEqual(log[i][1], player_cache)
             self.assertEqual(log[i][2], {'OPID': opid, 'data': opid.lower()})
