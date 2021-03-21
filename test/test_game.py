@@ -267,6 +267,30 @@ class GameTest(EngineBaseTest):
         self.assertNotIn(str(p2), abandoned)
         self.assertIn(str(p3), abandoned)
         self.assertNotIn(str(p4), abandoned)
+
+    @db_session
+    def test_getBrokenTokens(self):
+        game = self.db.Game(url='foo', gm_url='url456')
+        game.postSetup()
+        
+        # create empty file (to mimic uploaded image)
+        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        id1 = game.getNextId()
+        p1 = img_path / '{0}.png'.format(id1)
+        p1.touch()
+        
+        # create tokens with and without valid image
+        demo_scene = self.db.Scene(game=game)
+        url = game.getImageUrl(id1)
+        fine   = self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
+        broken = self.db.Token(scene=demo_scene, url='bullshit.png', posx=200, posy=150, size=20)
+        self.db.commit()
+        
+        # expect broken token to be identified
+        all_broken = game.getBrokenTokens()
+        self.assertEqual(len(all_broken), 1)
+        self.assertIn(broken, all_broken)
+        self.assertNotIn(fine, all_broken)
         
     @db_session
     def test_cleanup(self):

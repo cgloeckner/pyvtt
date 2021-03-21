@@ -36,11 +36,8 @@ function registerGm(event) {
     });
 }
 
-function kickPlayers(url) {
-    var kick = confirm("KICK ALL PLAYERS?");
-    if (kick) {
-        $.post(url='/vtt/kick-players/' + url);
-    }
+function cleanUp(url) {
+    $.post(url='/vtt/clean-up/' + url);
 }
 
 function kickPlayer(url, uuid) {

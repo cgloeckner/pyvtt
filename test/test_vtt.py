@@ -452,32 +452,20 @@ class VttTest(EngineBaseTest):
         game_cache = gm_cache.getFromUrl('test-game-1')
         self.assertEqual(len(game_cache.players), 3)
 
-        # non-GM cannot kick players
-        ret = self.app.post('/vtt/kick-players/test-game-1', expect_errors=True)
+        # non-GM cannot cleanup
+        ret = self.app.post('/vtt/clean-up/test-game-1', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
         self.assertEqual(len(game_cache.players), 3)
         
-        # GM cannot kick players for unknown game
+        # GM cannot cleanup for unknown game
         self.app.set_cookie('session', gm_sid)
-        ret = self.app.post('/vtt/kick-players/test-weird', expect_errors=True)
+        ret = self.app.post('/vtt/kick-clean-up/test-weird', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
         
-        # GM can kick all players from his game
+        # GM can cleanup his game
         self.app.set_cookie('session', gm_sid)
-        ret = self.app.post('/vtt/kick-players/test-game-1')
-        self.assertEqual(ret.status_int, 200) 
-        self.assertEqual(len(game_cache.players), 0)
-
-        # wait for greenlets to quit
-        player1.greenlet.get()
-        player2.greenlet.get()
-        player3.greenlet.get()
-
-        # GM can even kick if nobody is online (including himself)
-        self.app.set_cookie('session', gm_sid)
-        ret = self.app.post('/vtt/kick-players/test-game-1')
-        self.assertEqual(ret.status_int, 200) 
-        self.assertEqual(len(game_cache.players), 0)
+        ret = self.app.post('/vtt/clean-up/test-game-1')
+        self.assertEqual(ret.status_int, 200)
 
     def test_vtt_kickplayer(self):
         # register arthur

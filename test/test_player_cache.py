@@ -216,27 +216,28 @@ class PlayerCacheTest(EngineBaseTest):
         # ... and can re-login
         game_cache.insert('arthur', 'red', False)
         
-    def test_disconnectAll(self):
+    def test_cleanup(self):
         # insert players
         game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = SocketDummy()
         player_cache2 = game_cache.insert('gabriel', 'blue', False)
         player_cache2.socket = SocketDummy()
+        player_cache2.socket.close()
         player_cache3 = game_cache.insert('bob', 'yellow', False)
         player_cache3.socket = SocketDummy()
         
         # disconnect him
-        game_cache.disconnectAll()
+        game_cache.cleanup()
         
-        # make sure nobody is online
+        # make player2 is disconnected
         data = game_cache.getData()
-        self.assertEqual(len(data), 0)
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['name'], 'arthur')
+        self.assertEqual(data[1]['name'], 'bob')
         
         # ... and can re-login
-        game_cache.insert('arthur', 'red', False)
         game_cache.insert('gabriel', 'red', False)
-        game_cache.insert('bob', 'red', False)
         
     def test_broadcast(self):
         socket1 = SocketDummy()

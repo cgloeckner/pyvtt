@@ -252,9 +252,23 @@ def createGmDatabase(engine, filename):
                     abandoned.append(os.path.join(game_root, image_id))
                 
             return abandoned
+
+        def getBrokenTokens(self):
+            # query all images
+            all_images = list()
+            with engine.locks[self.gm_url]: # make IO access safe
+                all_images = self.getAllImages()
+
+            # query all tokens without valid image
+            broken = list()
+            for s in self.scenes:
+                for t in s.tokens:
+                    if t.url.split('/')[-1] not in all_images:
+                        broken.append(t)
+            return broken
             
         def cleanup(self):
-            """ Cleanup game's unused image data. """   
+            """ Cleanup game's unused image and token data. """   
             engine.logging.info('|--> Cleaning {0}'.format(self.url))
             
             # query and remove all images that are not used as tokens
@@ -263,6 +277,11 @@ def createGmDatabase(engine, filename):
                 for fname in relevant:
                     engine.logging.info('     |--x Removing {0}'.format(fname))
                     os.remove(fname)
+
+            # query and remove all tokens that have no image
+            relevant = self.getBrokenTokens()
+            for t in relevant:
+                t.delete()
             
         def preDelete(self):
             """ Remove this game from disk before removing it from

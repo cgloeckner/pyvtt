@@ -303,8 +303,8 @@ def setup_gm_routes(engine):
         # offer file for downloading
         return static_file(zip_file, root=zip_path, download=zip_file, mimetype='application/zip')
 
-    @post('/vtt/kick-players/<url>')
-    def kick_players(url):
+    @post('/vtt/clean-up/<url>')
+    def clean_up(url):
         gm = engine.main_db.GM.loadFromSession(request)
         if gm is None:
             abort(404)
@@ -321,9 +321,10 @@ def setup_gm_routes(engine):
             engine.logging.warning('GM name="{0}" url="{1}" tried to kick all players at {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)))
             abort(404)
         
-        # load game from cache and close sockets
+        # load game from cache and clean it up
         game_cache = gm_cache.get(game)
-        game_cache.disconnectAll()
+        game.cleanup() # cleanup old images and tokens
+        game_cache.cleanup() # close old sockets
         
         engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 

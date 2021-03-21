@@ -332,16 +332,19 @@ class GameCache(object):
                     self.rebuildIndices()
                     return name
         
-    def disconnectAll(self):
-        """ Closes all sockets. """
+    def cleanup(self):
+        """ Cleanup game and closes unused sockets. """
         with self.lock:
+            removing = set()
             for name in self.players:
-                p = self.players[name]
+                p = self.players[name]    
                 #with p.lock: # note: atm deadlocking
-                if self.players[name].isOnline():
-                    # close socket (will stop thread as well)
-                    p.socket.close()
-            self.players = dict()
+                if not p.isOnline():
+                    p.socket = None
+                    removing.add(name)
+            for name in removing:
+                del self.players[name]
+            self.rebuildIndices()
         
     def broadcast(self, data):
         """ Broadcast given data to all clients. """

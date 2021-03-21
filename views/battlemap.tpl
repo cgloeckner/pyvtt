@@ -14,7 +14,7 @@
     %include("scenes")
         </div>
         <div class="gmhint">
-            <img id="gmhint" src="/static/bottom.png" draggable="false" onMouseEnter="showHint(event, 'SHOW SCENES');" onMouseLeave="hideHint();" />
+            <img id="gmhint" src="/static/bottom.png" draggable="false" title="SHOW SCENES" />
         </div>
     </div>
 %end
@@ -52,7 +52,7 @@
     <div class="mapfooter" id="mapfooter">
         <div id="ping">Ping: &infin;</div>
         <div id="fps">0 FPS</div>
-        <div id="zoom" onClick="resetViewport();">Zoom: 100%</div>
+        <div id="zoom" title="CLICK TO RESET" onClick="resetViewport();">Zoom: 100%</div>
         <div id="version">unknown version</div>
         <form id="uploadform" method="post" enctype="multipart/form-data">
             <input id="uploadqueue" name="file[]" type="file" multiple />

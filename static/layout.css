@@ -538,6 +538,12 @@ div#players > span.player {
     text-align: center;
     color: black;
     min-width: 80px;
+
+    cursor: grab;
+}
+
+div#players > span.player:active {
+    cursor: grabbing;
 }
 
 div#players > span > div.playermenu {
@@ -696,7 +702,8 @@ div.battlemap > div#tokenbar > img#tokenClone {
     cursor: copy;
 }
 
-div.battlemap > div#tokenbar > img#tokenRotate {
+div.battlemap > div#tokenbar > img#tokenRotate,
+div.battlemap > div#tokenbar > img#tokenRotate:active {
     cursor: col-resize;
 }
   
@@ -722,6 +729,9 @@ div#version {
     position: absolute;
     color: grey;
     bottom: 0px;
+
+    user-select: none;
+    cursor: default;
 }
 
 div#ping {

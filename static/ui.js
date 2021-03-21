@@ -699,7 +699,7 @@ function onRelease() {
         grabbed = false;
     }
     
-    $('#battlemap').css('cursor', 'default');
+    $('#battlemap').css('cursor', 'grab');
     
     if (primary_id != 0 && was_grabbed) {
         var changes = []
