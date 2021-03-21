@@ -5,7 +5,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 */
 
-var show_hints = true;
+var show_hints = false;
 
 var last_target_hint = null;
 var target_hint_delay = 1000;

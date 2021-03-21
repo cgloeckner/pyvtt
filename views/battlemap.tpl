@@ -36,14 +36,14 @@
         <canvas id="battlemap" width="{{MAX_SCENE_WIDTH}}" height="{{MAX_SCENE_HEIGHT}}"></canvas>
             
         <div id="tokenbar">
-            <img src="/static/flipx.png" id="tokenFlipX" draggable="false" onClick="onFlipX();" onMouseEnter="showHint(event, 'VERTICAL FLIP');" onMouseLeave="hideHint();" />
-            <img src="/static/locked.png" id="tokenLock" draggable="false" onClick="onLock();" onMouseEnter="showHint(event, 'LOCK/UNLOCK');" onMouseLeave="hideHint();" />
-            <img src="/static/top.png" id="tokenTop" draggable="false" onClick="onTop();" onMouseEnter="showHint(event, 'MOVE TO TOP');" onMouseLeave="hideHint();" />
-            <img src="/static/copy.png" id="tokenClone" draggable="false" onClick="onClone();" onMouseEnter="showHint(event, 'CLONE TOKEN');" onMouseLeave="hideHint();" />
-            <img src="/static/delete.png" id="tokenDelete" draggable="false" onClick="onTokenDelete();" onMouseEnter="showHint(event, 'DELETE TOKEN');" onMouseLeave="hideHint();" />
-            <img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="onBottom();" onMouseEnter="showHint(event, 'MOVE TO BOTTOM');" onMouseLeave="hideHint();" />
-            <img src="/static/resize.png" id="tokenResize" onDragStart="onStartResize();" onDragEnd="onQuitAction(event);" onMouseEnter="showHint(event, 'DRAG TO RESIZE');" onMouseLeave="hideHint();" onClick="showTip('DRAG TO RESIZE');" />
-            <img src="/static/rotate.png" id="tokenRotate" onDragStart="onStartRotate();" onDragEnd="onQuitAction(event);" onMouseEnter="showHint(event, 'DRAG TO ROTATE');" onMouseLeave="hideHint();" onClick="showTip('DRAG TO ROTATE');" />
+            <img src="/static/flipx.png" id="tokenFlipX" draggable="false" onClick="onFlipX();" title="VERTICAL FLIP" />
+            <img src="/static/locked.png" id="tokenLock" draggable="false" onClick="onLock();" title="LOCK/UNLOCK" />
+            <img src="/static/top.png" id="tokenTop" draggable="false" onClick="onTop();" title="MOVE TO TOP" />
+            <img src="/static/copy.png" id="tokenClone" draggable="false" onClick="onClone();" title="CLONE TOKEN" />
+            <img src="/static/delete.png" id="tokenDelete" draggable="false" onClick="onTokenDelete();" title="DELETE TOKEN" />
+            <img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="onBottom();" title="MOVE TO BOTTOM" />
+            <img src="/static/resize.png" id="tokenResize" onDragStart="onStartResize();" onDragEnd="onQuitAction(event);" title="DRAG TO RESIZE" onClick="showTip('DRAG TO RESIZE');" />
+            <img src="/static/rotate.png" id="tokenRotate" onDragStart="onStartRotate();" onDragEnd="onQuitAction(event);" title="DRAG TO ROTATE" onClick="showTip('DRAG TO ROTATE');" />
         </div>
     </div>
 

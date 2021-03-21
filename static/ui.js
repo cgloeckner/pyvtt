@@ -155,13 +155,13 @@ function showPlayer(p, force=false) {
     // create player menu for this player
     var menu = '<div class="playermenu" id="playermenu_' + p.uuid + '">'
     if (p.index > 0) {
-        menu += '<img src="/static/left.png" draggable="false" class="left" onMouseEnter="showHint(event, \'MOVE TO LEFT\');" onMouseLeave="hideHint();" onClick="onPlayerOrder(-1);" />'
+        menu += '<img src="/static/left.png" draggable="false" class="left" title="MOVE TO LEFT" onClick="onPlayerOrder(-1);" />'
     }
     if (is_gm && p.uuid != my_uuid) {
-        menu += '<img src="/static/kick.gif" draggable="false" class="center" onMouseEnter="showHint(event, \'KICK PLAYER\');" onMouseLeave="hideHint();" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
+        menu += '<img src="/static/kick.gif" draggable="false" class="center" title="KICK PLAYER" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
     }
     if (!p.is_last) {
-        menu += '<img src="/static/right.png" draggable="false" class="right" onMouseEnter="showHint(event, \'MOVE TO RIGHT\');" onMouseLeave="hideHint();" onClick="onPlayerOrder(1);" />';
+        menu += '<img src="/static/right.png" draggable="false" class="right" title="MOVE TO RIGHT" onMouseLeave="hideHint();" onClick="onPlayerOrder(1);" />';
     }
     menu += '</div>';
     
