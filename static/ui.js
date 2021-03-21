@@ -1023,20 +1023,22 @@ function deleteSelectedTokens() {
 
 /// Event handle shortcuts on (first) selected token
 function onShortcut(event) {
-    space_bar = event.keyCode == 32;
-    
-    if (event.ctrlKey) {
-        if (event.keyCode == 65) { // CTRL+A
+    space_bar = event.key == " ";
+
+    // metaKey for Mac's Command Key
+    if (event.ctrlKey || event.metaKey) {
+        if (event.key.toLowerCase() == 'a') {
             selectAllTokens();
             
-        } else if (event.keyCode == 67) { // CTRL+C
+        } else if (event.key.toLowerCase() == 'c') {
             copySelectedTokens();
             
-        } else if (event.keyCode == 86) { // CTRL+V
+        } else if (event.key.toLowerCase() == 'v') {
             pasteCopiedTokens();
         }
     } else {
-        if (event.keyCode == 46) { // DEL
+        // Backspace for MacBook's delete key
+        if (event.key == 'Delete' || event.key == 'Backspace') {
             deleteSelectedTokens();
         }
     }
