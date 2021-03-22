@@ -293,6 +293,8 @@ function login(event, gmname, url, websocket_url) {
                 };
                 
                 socket.onclose = function(event) {
+                    onStopMusic();
+                    
                     $('#game').fadeOut(1000, 0.0);
                     
                     // forget everything about the old session

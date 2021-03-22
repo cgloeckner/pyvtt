@@ -9,7 +9,7 @@ function showMusicVolume() {
     var player = $('#audioplayer')[0];
     var v = parseInt(player.volume * 100) + '%'
     if (player.paused) {
-        v = '<span class="muted">' + v + '</span>';
+        v = 'PAUSED';
     }
     $('#volume')[0].innerHTML = v;
 }
@@ -56,6 +56,12 @@ function onLouderMusic() {
         v = 1.0;
     }
     setMusicVolume(v);
+}
+
+function onStopMusic() { 
+    var player = $('#audioplayer')[0];
+    player.pause();
+    showMusicVolume();
 }
 
 function onToggleMusic() { 

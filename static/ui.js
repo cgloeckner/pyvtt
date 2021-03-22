@@ -1484,7 +1484,7 @@ function onMouseLeavePlayer(uuid) {
     over_player = null;
 
     // hide player menu
-    var menu = $('#playermenu_' + uuid).adeOut(250, 0);
+    var menu = $('#playermenu_' + uuid).fadeOut(250, 0);
 }
 
 /// Event handle for using the mouse wheel over a player container

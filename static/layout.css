@@ -735,6 +735,10 @@ div.audioplayer {
     cursor: default;
 }
 
+span.links {
+    user-select: none;
+}
+
 div#ping {
     left: 0px;
     padding-left: 5px;
@@ -756,10 +760,15 @@ div#version {
 
 div.audioplayer {
     left: 400px;           
-    width: 100px;
+    width: 130px;
 }
 
 div.audioplayer > div.volume > span {
     cursor: pointer;
-    
+}
+
+div.audioplayer > div.volume > span#volume {
+    display: inline-block;
+    width: 80px;
+    text-align: center;
 }
