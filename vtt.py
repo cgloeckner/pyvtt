@@ -482,16 +482,17 @@ def setup_player_routes(engine):
     def static_files(fname):
         root = engine.paths.getStaticPath()
         if not os.path.isdir(root) or not os.path.exists(root / fname):
-            root = './static'
+            root = './static' 
 
         # @NOTE: no need to check file extension, this directory is
         # meant to be accessable as a whole
 
         return static_file(fname, root=root)
 
-    @get('/music/<gmurl>/<url>')
-    def game_music(gmurl, url):
-        response.set_header('Cache-Control', 'no-cache')
+    @get('/music/<gmurl>/<url>/<timestamp>')
+    def game_music(gmurl, url, timestamp):
+        # NOTE: timestamp ignored but helps to prevent caching in chrome
+        #response.set_header('Cache-Control', 'no-store') # not working for chrome
          
         # load GM from cache
         gm_cache = engine.cache.getFromUrl(gmurl)

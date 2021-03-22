@@ -764,7 +764,8 @@ div.audioplayer {
 }
 
 div.audioplayer > div.volume > span {
-    cursor: pointer;
+    cursor: pointer;      
+    user-select: none;
 }
 
 div.audioplayer > div.volume > span#volume {

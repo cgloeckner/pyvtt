@@ -56,10 +56,10 @@
         <div id="version">unknown version</div>
 
         <div class="audioplayer">
-            <audio id="audioplayer" src="/music/{{game.gm_url}}/{{game.url}}" loop></audio>
+            <audio id="audioplayer" loop></audio>
             <div class="volume">
                 <span class="button" onClick="onQuieterMusic();">&#x1f507;</span>
-                <span id="volume" onClick="onToggleMusic();">PAUSED</span>
+                <span id="volume" onClick="onToggleMusic();">OFF</span>
                 <span class="button" style="float: right;" onClick="onLouderMusic();">&#128266;</span>
             </div>
         </div>
