@@ -89,6 +89,9 @@ class PathApi(object):
     def getGamePath(self, gm, game):
         return self.getGmsPath(gm) / game
 
+    def getMusicFileName(self):
+        return 'music.mp3'
+
 
 # ---------------------------------------------------------------------
 

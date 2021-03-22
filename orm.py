@@ -148,10 +148,9 @@ def createGmDatabase(engine, filename):
             data = dict()
             root = engine.paths.getGamePath(self.gm_url, self.url)
             all_images = self.getAllImages()
+
             for fname in all_images:
-                if fname == 'music.mp3':
-                    # skip music file
-                    continue
+                # create md5 of file (assumed to be images)
                 with open(root / fname, "rb") as handle:
                     md5 = engine.getMd5(handle)
                     data[md5] = int(fname.split('.')[0])
@@ -174,7 +173,8 @@ def createGmDatabase(engine, filename):
         
         def getAllImages(self):
             """Note: needs to be called from a threadsafe context."""
-            return os.listdir(engine.paths.getGamePath(self.gm_url, self.url))
+            root   = engine.paths.getGamePath(self.gm_url, self.url)
+            return [f for f in os.listdir(root) if f.endswith('.png')]
         
         def getNextId(self):
             """Note: needs to be called from a threadsafe context."""
@@ -285,6 +285,12 @@ def createGmDatabase(engine, filename):
             relevant = self.getBrokenTokens()
             for t in relevant:
                 t.delete()
+
+            # remove music file
+            fname = engine.paths.getGamePath(self.gm_url, self.url) / engine.paths.getMusicFileName()
+            with engine.locks[self.gm_url]: # make IO access safe
+                if os.path.exists(fname):
+                    os.remove(fname)
             
         def preDelete(self):
             """ Remove this game from disk before removing it from

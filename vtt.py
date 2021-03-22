@@ -490,7 +490,9 @@ def setup_player_routes(engine):
         return static_file(fname, root=root)
 
     @get('/music/<gmurl>/<url>')
-    def game_music(gmurl, url): 
+    def game_music(gmurl, url):
+        response.set_header('Cache-Control', 'no-cache')
+         
         # load GM from cache
         gm_cache = engine.cache.getFromUrl(gmurl)
         if gm_cache is None:
@@ -504,7 +506,9 @@ def setup_player_routes(engine):
             abort(404)
         
         # try to load music from disk
-        return static_file('music.mp3', engine.paths.getGamePath(gmurl, url))
+        fname = engine.paths.getMusicFileName()
+        root  = engine.paths.getGamePath(gmurl, url)
+        return static_file(fname, root)
 
     @get('/token/<gmurl>/<url>/<fname>')
     def static_token(gmurl, url, fname):

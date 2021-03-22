@@ -107,6 +107,10 @@ class GameTest(EngineBaseTest):
         id4 = game.getNextId()
         p4 = img_path / '{0}.png'.format(id4)
         p4.touch()
+
+        # create music file (not expected to be picked up)
+        p5 = img_path / 'music.mp3'
+        p5.touch()
         
         # test files being detected
         files = set(game.getAllImages())

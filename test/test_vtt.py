@@ -430,7 +430,7 @@ class VttTest(EngineBaseTest):
         ret = self.app.get('/vtt/export-game/test-anything-else', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
-    def test_vtt_kickplayers(self):
+    def test_vtt_cleanup(self):
         # register arthur
         ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
         self.assertEqual(ret.status_int, 200)
@@ -461,6 +461,10 @@ class VttTest(EngineBaseTest):
         self.app.set_cookie('session', gm_sid)
         ret = self.app.post('/vtt/kick-clean-up/test-weird', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
+
+        # upload some music
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[('file[]', 'sample.mp3', b'')], xhr=True)
         
         # GM can cleanup his game
         self.app.set_cookie('session', gm_sid)
