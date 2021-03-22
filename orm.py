@@ -149,6 +149,9 @@ def createGmDatabase(engine, filename):
             root = engine.paths.getGamePath(self.gm_url, self.url)
             all_images = self.getAllImages()
             for fname in all_images:
+                if fname == 'music.mp3':
+                    # skip music file
+                    continue
                 with open(root / fname, "rb") as handle:
                     md5 = engine.getMd5(handle)
                     data[md5] = int(fname.split('.')[0])

@@ -18,6 +18,7 @@ License: MIT (see LICENSE for details)
     <script src="/static/ui.js"></script>
     <script src="/static/socket.js"></script>
     <script src="/static/gm.js"></script>
+    <script src="/static/music.js"></script>
     <script src="/static/constants.js"></script>
     <link rel="stylesheet" type="text/css" href="/static/normalize.css">
     <link rel="stylesheet" type="text/css" href="/static/layout.css">

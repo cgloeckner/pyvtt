@@ -88,7 +88,6 @@ class PathApi(object):
         
     def getGamePath(self, gm, game):
         return self.getGmsPath(gm) / game
-        
 
 
 # ---------------------------------------------------------------------
@@ -460,6 +459,7 @@ class ConstantExport(object):
         self['MAX_TOKEN_FILESIZE']      = engine.file_limit['token']
         self['MAX_BACKGROUND_FILESIZE'] = engine.file_limit['background']
         self['MAX_GAME_FILESIZE']       = engine.file_limit['game']
+        self['MAX_MUSIC_FILESIZE']      = engine.file_limit['music']
         
         self.saveToFile(engine.paths.getConstantsPath())
 

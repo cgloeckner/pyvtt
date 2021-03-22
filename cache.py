@@ -64,6 +64,7 @@ class PlayerCache(object):
             'CLONE'  : self.parent.onCloneToken,
             'DELETE' : self.parent.onDeleteToken,
             'BEACON' : self.parent.onBeacon,
+            'MUSIC'  : self.parent.onMusic,
             'GM-CREATE'   : self.parent.onCreateScene,
             'GM-ACTIVATE' : self.parent.onActivateScene,
             'GM-CLONE'    : self.parent.onCloneScene,
@@ -682,6 +683,11 @@ class GameCache(object):
         data['color'] = player.color
         data['uuid']  = player.uuid
         # broadcast beacon
+        self.broadcast(data)
+
+    def onMusic(self, player, data):
+        """ Handle player uploaded music. """
+        # broadcast notification
         self.broadcast(data)
         
     def onCreateScene(self, player, data):

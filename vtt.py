@@ -489,6 +489,23 @@ def setup_player_routes(engine):
 
         return static_file(fname, root=root)
 
+    @get('/music/<gmurl>/<url>')
+    def game_music(gmurl, url): 
+        # load GM from cache
+        gm_cache = engine.cache.getFromUrl(gmurl)
+        if gm_cache is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+        
+        # load game from GM's database
+        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        if game is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+        
+        # try to load music from disk
+        return static_file('music.mp3', engine.paths.getGamePath(gmurl, url))
+
     @get('/token/<gmurl>/<url>/<fname>')
     def static_token(gmurl, url, fname):
         # load GM from cache
@@ -654,7 +671,7 @@ def setup_player_routes(engine):
             abort(404)
         
         # load game from GM's database to upload files
-        urls  = list()
+        answer = {'urls': list(), 'music': False};
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
         if game is None:
             abort(404)
@@ -668,28 +685,61 @@ def setup_player_routes(engine):
         # query file sizes
         files = request.files.getall('file[]')
         for i, handle in enumerate(files):
-            max_filesize = engine.file_limit['token']
-            if i == 0 and not background_set:
-                max_filesize = engine.file_limit['background']
-            # determine file size
-            size = engine.getSize(handle)
-            # check filesize       
-            if size > max_filesize * 1024 * 1024:
-                engine.logging.warning('Player tried to an image to a game by {0} but tried to cheat on the filesize'.format(engine.getClientIp(request), url))
+            content = handle.content_type.split('/')[0]
+
+            # check image size
+            if content == 'image':
+                max_filesize = engine.file_limit['token']
+                if i == 0 and not background_set:
+                    max_filesize = engine.file_limit['background']
+                # determine file size
+                size = engine.getSize(handle)
+                # check filesize       
+                if size > max_filesize * 1024 * 1024:
+                    engine.logging.warning('Player tried to upload an image to a game by {0} but tried to cheat on the filesize'.format(engine.getClientIp(request), url))
+                    abort(403) # Forbidden
+
+            # check audio size
+            elif content == 'audio':
+                max_filesize = engine.file_limit['music'] 
+                # determine file size
+                size = engine.getSize(handle)
+                # check filesize       
+                if size > max_filesize * 1024 * 1024:
+                    engine.logging.warning('Player tried to upload music to a game by {0} but tried to cheat on the filesize'.format(engine.getClientIp(request), url))
+                    abort(403) # Forbidden
+
+            # unsupported filetype
+            else:      
+                engine.logging.warning('Player tried to "{1}" to a game by {0} which is unsupported'.format(engine.getClientIp(request), handle.content_type))
                 abort(403) # Forbidden
         
-        # upload images
+        # upload files
         for handle in files:
-            url = game.upload(handle)
-            if url is not None:
-                urls.append(url)
-                engine.logging.access('Image upload {0} by {1}'.format(url, engine.getClientIp(request)))
-            else:
-                engine.logging.access('Image failed to upload by {0}'.format(engine.getClientIp(request)))
+            content = handle.content_type.split('/')[0]
+
+            # check image size
+            if content == 'image':
+                url = game.upload(handle)
+                if url is not None:
+                    answer['urls'].append(url)
+                    engine.logging.access('Image upload {0} by {1}'.format(url, engine.getClientIp(request)))
+                else:
+                    engine.logging.access('Image failed to upload by {0}'.format(engine.getClientIp(request)))
+
+            # upload music
+            elif content == 'audio':
+                if answer['music']:
+                    # ignore multiple music files
+                    continue
+                fname = engine.paths.getGamePath(gmurl, url) / 'music.mp3'
+                handle.save(destination=str(fname), overwrite=True)
+                answer['music'] = True
         
         # return urls
         # @NOTE: request was non-JSON to allow upload, so urls need to be encoded
-        return json.dumps(urls)
+        return json.dumps(answer)
+
 
 # ---------------------------------------------------------------------   
 

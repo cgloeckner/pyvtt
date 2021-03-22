@@ -719,7 +719,7 @@ class VttTest(EngineBaseTest):
         ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
         self.assertEqual(ret.status_int, 200)
         
-        # create two game
+        # create two games
         img_small = makeImage(512, 512)
         ret = self.app.post('/vtt/import-game/test-game-1',
             upload_files=[('file', 'test.png', img_small)], xhr=True) 
@@ -774,6 +774,32 @@ class VttTest(EngineBaseTest):
             h.write('hello world') 
         ret = self.app.get('/token/arthur/test-game-1/test.txt', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
+
+    def test_game_music(self):
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        
+        # create two games
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True) 
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+
+        # cannot load music if not uploaded yet
+        ret = self.app.get('/music/arthur/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        # upload music (fake file)
+        ret = self.app.post('/arthur/test-game-1/set-music',
+            upload_files=[('file', 'test.mp3', b'')], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+
+        # can load music of specific game 
+        ret = self.app.get('/music/arthur/test-game-1')
+        self.assertEqual(ret.status_int, 200)
          
     def test_game_screen(self):
         # register arthur

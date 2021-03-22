@@ -73,6 +73,9 @@ function onSocketMessage(event) {
         case 'BEACON':
             onBeacon(data);
             break;
+        case 'MUSIC':
+            onMusic(data);
+            break;
         default:
             console.error('Invalid OpID "' + opid + '"');
     };
@@ -122,8 +125,6 @@ function onDelete(data) {
         copy.newx = copy.posx;
         copy.newy = copy.posy;
 
-        console.log(copy);
-        
         delete tokens[id];
         
         tokens_removed[id] = [copy, 1.0];
@@ -177,6 +178,11 @@ function onBeacon(data) {
 
     // update beacon
     startBeacon(beacon, data['x'], data['y']);
+}
+
+function onMusic(data) {
+    // trigger music player to update
+    onUpdateMusic();
 }
 
 function onRefresh(data) {
@@ -330,6 +336,8 @@ function login(event, gmname, url, websocket_url) {
 
 /// Sets up the game and triggers the update loop
 function start(gmname, url, playername, color) {
+    onInitMusicPlayer();
+    
     writeSocket({
         'name'     : playername,
         'gm_url'   : gmname,

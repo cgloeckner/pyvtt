@@ -357,6 +357,10 @@ function onTokenRotate(event) {
     token_last_angle = angle;
 }
 
+function isSingleAudio(queue) {
+    return queue.files.length == 1 && queue.files[0].type == 'audio/mpeg';
+}
+
 function onDrop(event) {
     event.preventDefault();
     pickCanvasPos(event);
@@ -371,31 +375,46 @@ function onDrop(event) {
     // test upload data sizes
     var queue = $('#uploadqueue')[0];
     queue.files = event.dataTransfer.files;
-    var sizes_ok = true;
-    
-    var max_filesize = MAX_TOKEN_FILESIZE;
-    var file_type = 'TOKEN';
+
+    var error_msg = '';
     $.each(queue.files, function(index, file) {
-        max_filesize = MAX_TOKEN_FILESIZE;
-        if (index == 0 && !background_set) {
-            // no background set, first image is used as background
-            max_filesize = MAX_BACKGROUND_FILESIZE;
+        if (error_msg != '') {
+            return;
         }
-        if (file.size > max_filesize * 1024 * 1024) {
-            if (max_filesize == MAX_BACKGROUND_FILESIZE) {
+        
+        content = file.type.split('/')[0];
+        
+        var max_filesize = 0;
+        var file_type    = '';
+        // check image filesize
+        if (content == 'image') {
+            max_filesize = MAX_TOKEN_FILESIZE;
+            file_type    = 'TOKEN';
+            if (index == 0 && !background_set) {
+                // first file is assumed as background image
+                max_filesize = MAX_BACKGROUND_FILESIZE
                 file_type = 'BACKGROUND';
             }
-            sizes_ok = false;
+
+        // check music filesize
+        } else if (content == 'audio') {
+            max_filesize = MAX_MUSIC_FILESIZE;
+            file_type    = 'MUSIC';
+        }
+
+        if (file.size > max_filesize * 1024 * 1024) {
+            error_msg = 'TOO LARGE ' + file_type + ' (MAX ' + max_filesize + ' MiB)';
         }
     });
-    if (!sizes_ok) {
-        showError('TOO LARGE ' + file_type + ' (MAX ' + max_filesize + ' MiB)');
+
+    if (error_msg != '') {
+        showError(error_msg);
         return;
     }
-    
-    // fetch upload data
+
+    // upload files
     var f = new FormData($('#uploadform')[0]);
-    
+        
     $.ajax({
         url: '/' + gm_name + '/' + game_url + '/upload',
         type: 'POST',
@@ -406,21 +425,30 @@ function onDrop(event) {
         success: function(response) {
             // reset uploadqueue
             $('#uploadqueue').val("");
-            
+
+            response = JSON.parse(response);
+
             // load images if necessary
-            var urls = JSON.parse(response);
-            $.each(urls, function(index, url) {
-                loadImage(url);
-            });
-            
-            // trigger token creation via websocket
-            writeSocket({
-                'OPID' : 'CREATE',
-                'posx' : mouse_x,
-                'posy' : mouse_y,
-                'size' : default_token_size,
-                'urls' : urls
-            });
+            if (response['urls'].length > 0) {
+                $.each(response['urls'], function(index, url) {
+                    loadImage(url);
+                });
+                
+                // trigger token creation via websocket
+                writeSocket({
+                    'OPID' : 'CREATE',
+                    'posx' : mouse_x,
+                    'posy' : mouse_y,
+                    'size' : default_token_size,
+                    'urls' : response['urls']
+                });
+            }
+
+            if (response['music']) {
+                writeSocket({
+                    'OPID': 'MUSIC'
+                });
+            }
             
             $('#popup').hide();
         }, error: function(response, msg) {

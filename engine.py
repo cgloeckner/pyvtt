@@ -46,14 +46,15 @@ class Engine(object):
         self.main_db = None
         
         # blacklist for GM names and game URLs
-        self.gm_blacklist = ['', 'static', 'token', 'vtt', 'websocket']
+        self.gm_blacklist = ['', 'static', 'token', 'music', 'vtt', 'websocket']
         self.url_regex    = '^[A-Za-z0-9_\-.]+$'
         
         # maximum file sizes for uploads (in MB)
         self.file_limit = {
             "token"      : 2,
             "background" : 10,
-            "game"       : 15
+            "game"       : 15,
+            "music"      : 10
         }
         
         self.local_gm       = False
@@ -93,10 +94,6 @@ class Engine(object):
         # load fancy url generator api ... lol
         self.url_generator = utils.FancyUrlApi(self.paths)
 
-        # export server constants to javascript-file
-        self.constants = utils.ConstantExport()
-        self.constants(self)
-        
         # handle settings
         settings_path = self.paths.getSettingsPath()
         if not os.path.exists(settings_path):
@@ -127,6 +124,10 @@ class Engine(object):
                 self.login      = settings['login']
                 self.notify     = settings['notify']
             self.logging.info('Settings loaded')
+        
+        # export server constants to javascript-file
+        self.constants = utils.ConstantExport()
+        self.constants(self)
         
         # show argv help
         if '--help' in argv:

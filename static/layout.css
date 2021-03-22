@@ -725,7 +725,8 @@ div.battlemap > div#tokenbar > img.dummy:hover {
 div#ping,
 div#fps,
 div#zoom,
-div#version {
+div#version,
+div.audioplayer {
     position: absolute;
     color: grey;
     bottom: 0px;
@@ -751,4 +752,14 @@ div#zoom {
 
 div#version {
     left: 320px;
+}
+
+div.audioplayer {
+    left: 400px;           
+    width: 100px;
+}
+
+div.audioplayer > div.volume > span {
+    cursor: pointer;
+    
 }

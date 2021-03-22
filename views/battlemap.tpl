@@ -54,6 +54,16 @@
         <div id="fps">0 FPS</div>
         <div id="zoom" title="CLICK TO RESET" onClick="resetViewport();">Zoom: 100%</div>
         <div id="version">unknown version</div>
+
+        <div class="audioplayer">
+            <audio id="audioplayer" src="/music/{{game.gm_url}}/{{game.url}}" loop></audio>
+            <div class="volume">
+                <span class="button" onClick="onQuieterMusic();">&#x1f507;</span>
+                <span id="volume" onClick="onToggleMusic();">PAUSED</span>
+                <span class="button" style="float: right;" onClick="onLouderMusic();">&#128266;</span>
+            </div>
+        </div>
+        
         <form id="uploadform" method="post" enctype="multipart/form-data">
             <input id="uploadqueue" name="file[]" type="file" multiple />
         </form>
