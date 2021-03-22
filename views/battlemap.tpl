@@ -58,9 +58,9 @@
         <div class="audioplayer">
             <audio id="audioplayer" loop></audio>
             <div class="volume">
-                <span class="button" onClick="onQuieterMusic();">&#x1f507;</span>
-                <span id="volume" onClick="onToggleMusic();">OFF</span>
-                <span class="button" style="float: right;" onClick="onLouderMusic();">&#128266;</span>
+                <span class="button" onClick="onQuieterMusic();" title="MAKE QUIETER">&#x1f507;</span>
+                <span id="volume" onClick="onToggleMusic();" title="PLAY/PAUSE">OFF</span>
+                <span class="button" style="float: right;" onClick="onLouderMusic();" title="MAKE LOUDER">&#128266;</span>
             </div>
         </div>
         
