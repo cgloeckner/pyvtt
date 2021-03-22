@@ -109,7 +109,7 @@ class GameTest(EngineBaseTest):
         p4.touch()
 
         # create music file (not expected to be picked up)
-        p5 = img_path / 'music.mp3'
+        p5 = img_path / self.engine.paths.getMusicFileName()
         p5.touch()
         
         # test files being detected
@@ -320,6 +320,12 @@ class GameTest(EngineBaseTest):
         game.cleanup()                      
         self.assertFalse(os.path.exists(p1))
         self.assertTrue(os.path.exists(p2))
+
+        # expect music to be deleted on cleanup
+        p3 = img_path / self.engine.paths.getMusicFileName()
+        p3.touch()
+        game.cleanup()
+        self.assertFalse(os.path.exists(p3))
         
     @db_session
     def test_preDelete(self):
