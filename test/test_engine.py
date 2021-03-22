@@ -31,7 +31,12 @@ class EngineTest(EngineBaseTest):
         return {
             'title'      : 'unittest',
             'links'      : list(),
-            'file_limit' : list(),
+            'file_limit' : {
+                'token'      : 2,
+                'background' : 10,
+                'game'       : 15,
+                'music'      : 10
+            },
             'shards'     : list(),
             'expire'     : 3600,
             'hosting'    : {

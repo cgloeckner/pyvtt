@@ -1196,7 +1196,32 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['y'], 10)
         self.assertEqual(answer1['color'], player_cache3.color)
         self.assertEqual(answer1['uuid'], player_cache3.uuid)
+    
+    def test_onMusic(self):
+        socket1 = SocketDummy()
+        socket2 = SocketDummy()
+        socket3 = SocketDummy()
+        
+        # insert players
+        gm_cache   = self.engine.cache.getFromUrl('foo')
+        game_cache = gm_cache.getFromUrl('bar')
+        player_cache1 = game_cache.insert('arthur', 'red', False)
+        player_cache1.socket = socket1
+        player_cache2 = game_cache.insert('bob', 'yellow', False)
+        player_cache2.socket = socket2
+        player_cache3 = game_cache.insert('carlos', 'green', False)
+        player_cache3.socket = socket3
 
+        beacon_data = {'OPID': 'MUSIC'}
+        game_cache.onBeacon(player_cache3, beacon_data)
+        # expect MUSIC broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'MUSIC')
+        
     def test_onCloneToken(self):
         socket1 = SocketDummy()
         socket2 = SocketDummy()

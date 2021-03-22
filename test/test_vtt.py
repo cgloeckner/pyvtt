@@ -774,33 +774,7 @@ class VttTest(EngineBaseTest):
             h.write('hello world') 
         ret = self.app.get('/token/arthur/test-game-1/test.txt', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
-
-    def test_game_music(self):
-        # register arthur
-        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
-        self.assertEqual(ret.status_int, 200)
-        
-        # create two games
-        img_small = makeImage(512, 512)
-        ret = self.app.post('/vtt/import-game/test-game-1',
-            upload_files=[('file', 'test.png', img_small)], xhr=True) 
-        self.assertEqual(ret.status_int, 200)
-        gm_sid = self.app.cookies['session']
-        self.app.reset()
-
-        # cannot load music if not uploaded yet
-        ret = self.app.get('/music/arthur/test-game-1', expect_errors=True)
-        self.assertEqual(ret.status_int, 404)
-
-        # upload music (fake file)
-        ret = self.app.post('/arthur/test-game-1/set-music',
-            upload_files=[('file', 'test.mp3', b'')], xhr=True)
-        self.assertEqual(ret.status_int, 200)
-
-        # can load music of specific game 
-        ret = self.app.get('/music/arthur/test-game-1')
-        self.assertEqual(ret.status_int, 200)
-         
+    
     def test_game_screen(self):
         # register arthur
         ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
@@ -965,6 +939,7 @@ class VttTest(EngineBaseTest):
         game_cache.onCloneToken    = lambda p, d: log.append(('onCloneToken', p, d))
         game_cache.onDeleteToken   = lambda p, d: log.append(('onDeleteToken', p, d))
         game_cache.onBeacon        = lambda p, d: log.append(('onBeacon', p, d))
+        game_cache.onMusic         = lambda p, d: log.append(('onMusic', p, d))
         game_cache.onCreateScene   = lambda p, d: log.append(('onCreateScene', p, d))
         game_cache.onActivateScene = lambda p, d: log.append(('onActivateScene', p, d))
         game_cache.onCloneScene    = lambda p, d: log.append(('onCloneScene', p, d))
@@ -974,13 +949,13 @@ class VttTest(EngineBaseTest):
         ret, player_cache = self.joinPlayer('arthur', 'test-game-1', 'merlin', '#FF00FF')
         s = player_cache.socket
         s.block = False
-        opids = ['PING', 'ROLL', 'SELECT', 'RANGE', 'ORDER', 'UPDATE', 'CREATE', 'CLONE', 'DELETE', 'BEACON', 'GM-CREATE', 'GM-ACTIVATE', 'GM-CLONE', 'GM-DELETE']
+        opids = ['PING', 'ROLL', 'SELECT', 'RANGE', 'ORDER', 'UPDATE', 'CREATE', 'CLONE', 'DELETE', 'BEACON', 'MUSIC', 'GM-CREATE', 'GM-ACTIVATE', 'GM-CLONE', 'GM-DELETE']
         for opid in opids:
             s.push_receive({'OPID': opid, 'data': opid.lower()})
         player_cache.greenlet.join()
         
         # expect actions
-        self.assertEqual(len(log), 14)
+        self.assertEqual(len(log), 15)
         self.assertEqual(log[ 0][0], 'onPing')
         self.assertEqual(log[ 1][0], 'onRoll')
         self.assertEqual(log[ 2][0], 'onSelect')
@@ -991,10 +966,11 @@ class VttTest(EngineBaseTest):
         self.assertEqual(log[ 7][0], 'onCloneToken')
         self.assertEqual(log[ 8][0], 'onDeleteToken')
         self.assertEqual(log[ 9][0], 'onBeacon')
-        self.assertEqual(log[10][0], 'onCreateScene')
-        self.assertEqual(log[11][0], 'onActivateScene')
-        self.assertEqual(log[12][0], 'onCloneScene')
-        self.assertEqual(log[13][0], 'onDeleteScene')
+        self.assertEqual(log[10][0], 'onMusic')
+        self.assertEqual(log[11][0], 'onCreateScene')
+        self.assertEqual(log[12][0], 'onActivateScene')
+        self.assertEqual(log[13][0], 'onCloneScene')
+        self.assertEqual(log[14][0], 'onDeleteScene')
         for i, opid in enumerate(opids):
             self.assertEqual(log[i][1], player_cache)
             self.assertEqual(log[i][2], {'OPID': opid, 'data': opid.lower()})
@@ -1061,9 +1037,10 @@ class VttTest(EngineBaseTest):
         # I need to find a way to answer with a json-response to an
         # upload post (from jQuery)
         data = json.loads(ret.body)
-        self.assertEqual(len(data), 2)
-        self.assertEqual(id_from_url(data[0]), 1) # since 0 is background
-        self.assertEqual(id_from_url(data[1]), 2)
+        self.assertEqual(len(data['urls']), 2)
+        self.assertFalse(data['music'])
+        self.assertEqual(id_from_url(data['urls'][0]), 1) # since 0 is background
+        self.assertEqual(id_from_url(data['urls'][1]), 2)
 
         # re-uploading image will return existing URLs instead of new ones
         ret = self.app.post('/arthur/test-game-1/upload',
@@ -1072,18 +1049,19 @@ class VttTest(EngineBaseTest):
                 ('file[]', 'another.bmp', img_small3),
                 ('file[]', 'foo.png', img_small3),
                 ('file[]', 'random.tiff', img_small3),
-                ('file[]', 'something.stuff', img_small2),
+                ('file[]', 'something.gif', img_small2),
                 ('file[]', 'weird.jpg', img_small3)
             ], xhr=True)
         self.assertEqual(ret.status_int, 200)
         data = json.loads(ret.body)
-        self.assertEqual(len(data), 6)
-        self.assertEqual(id_from_url(data[0]), 1)
-        self.assertEqual(id_from_url(data[1]), 2)
-        self.assertEqual(id_from_url(data[2]), 2)
-        self.assertEqual(id_from_url(data[3]), 2)
-        self.assertEqual(id_from_url(data[4]), 1)
-        self.assertEqual(id_from_url(data[5]), 2)
+        self.assertEqual(len(data['urls']), 6)
+        self.assertFalse(data['music'])
+        self.assertEqual(id_from_url(data['urls'][0]), 1)
+        self.assertEqual(id_from_url(data['urls'][1]), 2)
+        self.assertEqual(id_from_url(data['urls'][2]), 2)
+        self.assertEqual(id_from_url(data['urls'][3]), 2)
+        self.assertEqual(id_from_url(data['urls'][4]), 1)
+        self.assertEqual(id_from_url(data['urls'][5]), 2)
 
         # cannot upload another background image (other uploads are ignored during this request)
         ret = self.app.post('/arthur/test-game-1/upload',
@@ -1114,10 +1092,11 @@ class VttTest(EngineBaseTest):
             ], xhr=True, expect_errors=True)
         self.assertEqual(ret.status_int, 200)
         data = json.loads(ret.body)
-        self.assertEqual(len(data), 3)
-        self.assertEqual(id_from_url(data[0]), 3)
-        self.assertEqual(id_from_url(data[1]), 1)
-        self.assertEqual(id_from_url(data[2]), 2)
+        self.assertEqual(len(data['urls']), 3)
+        self.assertFalse(data['music'])
+        self.assertEqual(id_from_url(data['urls'][0]), 3)
+        self.assertEqual(id_from_url(data['urls'][1]), 1)
+        self.assertEqual(id_from_url(data['urls'][2]), 2)
         
         # cannot upload huge image as background
         gm_cache   = self.engine.cache.getFromUrl('arthur')
@@ -1146,3 +1125,64 @@ class VttTest(EngineBaseTest):
             ], xhr=True, expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
+        # cannot upload unsupported mime type 
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'test.png', img_small2),
+                ('file[]', 'foo.exe', b''),
+                ('file[]', 'another.png', img_small3)
+            ], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 403)
+
+        # can upload music     
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'sample.mp3', b'')
+            ], xhr=True)
+        self.assertEqual(ret.status_int, 200) 
+        data = json.loads(ret.body)
+        self.assertEqual(len(data['urls']), 0)
+        self.assertTrue(data['music'])
+        
+        # can upload music and images   
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[                
+                ('file[]', 'test.png', img_small2),
+                ('file[]', 'sample.mp3', b''),
+                ('file[]', 'another.png', img_small3)
+            ], xhr=True)
+        self.assertEqual(ret.status_int, 200) 
+        data = json.loads(ret.body)
+        self.assertEqual(len(data['urls']), 2) 
+        self.assertEqual(id_from_url(data['urls'][0]), 1)
+        self.assertEqual(id_from_url(data['urls'][1]), 2)
+        self.assertTrue(data['music'])
+
+
+        """
+        def test_game_music(self):
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        
+        # create two games
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True) 
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+
+        # cannot load music if not uploaded yet
+        ret = self.app.get('/music/arthur/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        # upload music (fake file)
+        ret = self.app.post('/arthur/test-game-1/set-music',
+            upload_files=[('file', 'test.mp3', b'')], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+
+        # can load music of specific game 
+        ret = self.app.get('/music/arthur/test-game-1')
+        self.assertEqual(ret.status_int, 200)
+        """

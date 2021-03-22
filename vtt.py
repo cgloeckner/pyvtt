@@ -720,9 +720,9 @@ def setup_player_routes(engine):
 
             # check image size
             if content == 'image':
-                url = game.upload(handle)
-                if url is not None:
-                    answer['urls'].append(url)
+                img_url = game.upload(handle)
+                if img_url is not None:
+                    answer['urls'].append(img_url)
                     engine.logging.access('Image upload {0} by {1}'.format(url, engine.getClientIp(request)))
                 else:
                     engine.logging.access('Image failed to upload by {0}'.format(engine.getClientIp(request)))
