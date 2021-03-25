@@ -18,6 +18,9 @@ __licence__ = 'MIT'
 
 
 def rename_backup(fname):
+    if not os.path.exists(fname):
+        return
+    
     i = 1
     while True:
         target = str(fname) + '.{0}'.format(i)
