@@ -45,8 +45,10 @@ def createGmDatabase(engine, filename):
         locked  = Required(bool, default=False)
         timeid  = Required(float, default=0.0) # dirty flag
         back    = Optional("Scene") # link to same scene as above but may be None
+        text    = Optional(str) # text
+        color   = Optional(str) # used for label
         
-        def update(self, timeid, pos=None, zorder=None, size=None, rotate=None, flipx=None, locked=None):
+        def update(self, timeid, pos=None, zorder=None, size=None, rotate=None, flipx=None, locked=None, label=None):
             """Handle update of several data fields. The timeid is set if anything
             has actually changed.
             """
@@ -78,6 +80,11 @@ def createGmDatabase(engine, filename):
         
             if flipx != None:
                 self.flipx  = flipx
+                self.timeid = timeid
+
+            if label != None:
+                self.text   = label[0][:15]
+                self.color  = label[1]
                 self.timeid = timeid
         
         @staticmethod
@@ -129,7 +136,6 @@ def createGmDatabase(engine, filename):
         result = Required(int)
         timeid = Required(float, default=0.0)
 
-
     # -----------------------------------------------------------------------------
 
     class Game(db.Entity):
@@ -140,6 +146,7 @@ def createGmDatabase(engine, filename):
         active = Optional(int)
         rolls  = Set(Roll)
         gm_url = Required(str) # used for internal things
+        order  = Optional(IntArray) # scene ordering by their ids
         
         def getUrl(self):
             return '{0}/{1}'.format(self.gm_url, self.url)
@@ -168,6 +175,10 @@ def createGmDatabase(engine, filename):
             # add to the engine's cache
             gm_cache = engine.cache.getFromUrl(self.gm_url)
             gm_cache.insert(self)
+
+            # NOTE that order == None if database was freshly migrated
+            # since order is optional, but should be provided
+            self.order = list()
             
             self.makeMd5s()
         

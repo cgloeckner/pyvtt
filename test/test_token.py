@@ -25,7 +25,7 @@ class TokenTest(unittest.TestCase):
     def test_update(self):
         demo_game  = self.db.Game(url='test', gm_url='foo')
         demo_scene = self.db.Scene(game=demo_game)
-        t = self.db.Token(scene=demo_scene, url='dummy', posx=200, posy=150, size=20, zorder=5, rotate=33.4, flipx=True)
+        t = self.db.Token(scene=demo_scene, url='dummy', posx=200, posy=150, size=20, zorder=5, rotate=33.4, flipx=True, text='test', color='red')
         
         # moving token
         t.update(timeid=100, pos=(90, 123))
@@ -37,6 +37,8 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.rotate, 33.4)
         self.assertTrue(t.flipx)
         self.assertFalse(t.locked)
+        self.assertEqual(t.text, 'test')
+        self.assertEqual(t.color, 'red')
         
         # cannot move outside canvas bounds
         t.update(timeid=110, pos=(-1, -1))
@@ -57,7 +59,9 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.zorder, 5)
         self.assertEqual(t.rotate, 33.4)
         self.assertTrue(t.flipx)
-        self.assertFalse(t.locked)
+        self.assertFalse(t.locked)   
+        self.assertEqual(t.text, 'test')
+        self.assertEqual(t.color, 'red')
         
         # cannot resize token with too small or too large value
         t.update(timeid=114, size=orm.MIN_TOKEN_SIZE-1)
@@ -78,7 +82,9 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.zorder, 10)
         self.assertEqual(t.rotate, 33.4)
         self.assertTrue(t.flipx)
-        self.assertFalse(t.locked)
+        self.assertFalse(t.locked)  
+        self.assertEqual(t.text, 'test')
+        self.assertEqual(t.color, 'red')
         
         # rotating token
         t.update(timeid=127, rotate=90.0)
@@ -100,7 +106,9 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.zorder, 10)
         self.assertEqual(t.rotate, 90.0)
         self.assertFalse(t.flipx)
-        self.assertFalse(t.locked)
+        self.assertFalse(t.locked)  
+        self.assertEqual(t.text, 'test')
+        self.assertEqual(t.color, 'red')
         
         # locking token
         t.update(timeid=129, locked=True)
@@ -111,10 +119,12 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.zorder, 10)
         self.assertEqual(t.rotate, 90.0)
         self.assertFalse(t.flipx)
-        self.assertTrue(t.locked)
+        self.assertTrue(t.locked) 
+        self.assertEqual(t.text, 'test')
+        self.assertEqual(t.color, 'red')
         
         # cannot update locked token 
-        t.update(timeid=130, pos=(0, 0), size=10, zorder=3, rotate=22.5, flipx=True)
+        t.update(timeid=130, pos=(0, 0), size=10, zorder=3, rotate=22.5, flipx=True, label=('foobar', 'green'))
         self.assertEqual(t.timeid, 129)
         self.assertEqual(t.posx, 90)
         self.assertEqual(t.posy, 123)
@@ -122,7 +132,9 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.zorder, 10)
         self.assertEqual(t.rotate, 90.0)
         self.assertFalse(t.flipx)
-        self.assertTrue(t.locked)
+        self.assertTrue(t.locked) 
+        self.assertEqual(t.text, 'test')
+        self.assertEqual(t.color, 'red')
         
         # can unlock token update locked token 
         t.update(timeid=131, locked=False)
@@ -133,7 +145,22 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.zorder, 10)
         self.assertEqual(t.rotate, 90.0)
         self.assertFalse(t.flipx)
-        self.assertFalse(t.locked)
+        self.assertFalse(t.locked)  
+        self.assertEqual(t.text, 'test')
+        self.assertEqual(t.color, 'red')
+
+        # can change label with color
+        t.update(timeid=132, label=('foobar', 'green'))
+        self.assertEqual(t.timeid, 132)
+        self.assertEqual(t.posx, 90)
+        self.assertEqual(t.posy, 123)
+        self.assertEqual(t.size, 39)
+        self.assertEqual(t.zorder, 10)
+        self.assertEqual(t.rotate, 90.0)
+        self.assertFalse(t.flipx)
+        self.assertFalse(t.locked)  
+        self.assertEqual(t.text, 'foobar')
+        self.assertEqual(t.color, 'green')
         
     def test_getPosByDegree(self):
         # calc position of three tokens in "circle"

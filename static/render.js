@@ -5,7 +5,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 */
 
-var target_fps = 60;
+var target_fps = 90;
 
 var viewport = null;
 
@@ -199,6 +199,9 @@ function Token(id, url) {
     this.rotate = 0.0;
     this.flipx = false;
     this.locked = false;
+    this.text = null;
+    this.color = null;
+    this.label_canvas = null;
 }
 
 /// Add token with id and url to the scene
@@ -278,6 +281,12 @@ function updateToken(data, force=false) {
     tokens[data.id].rotate   = data.rotate;
     tokens[data.id].flipx    = data.flipx;
     tokens[data.id].locked   = data.locked;
+    if (tokens[data.id].text != data.text || tokens[data.id].color != data.color) {
+        // reset canvas for pre-drawn text
+        tokens[data.id].label_canvas = null;
+    }
+    tokens[data.id].text     = data.text;
+    tokens[data.id].color    = data.color;
     
     if (data.zorder < min_z) {
         min_z = data.zorder;
@@ -417,6 +426,41 @@ function drawToken(token, color, is_background) {
             );
         } catch (err) {
             // required to avoid Chrome choking from missing images
+        }
+
+        // draw token label
+        if (token.text != null) {
+            // reverse flip and rotation to keep text unaffected
+            if (token.flipx) {
+                context.scale(-1, 1);
+                context.rotate(-token.rotate * -3.14/180.0);
+            } else {
+                context.rotate(-token.rotate * 3.14/180.0);
+            }
+
+            if (token.label_canvas == null) {
+                token.label_canvas = document.createElement('canvas');
+                token.label_canvas.width = 1600;
+                token.label_canvas.height = 300;
+                ctx = token.label_canvas.getContext('2d')
+                ctx.font = "100px sans";
+                ctx.textAlign = "center";
+
+                // use black or white outline based in color's brightness
+                if (brightnessByColor(token.color) > 80) {
+                    ctx.strokeStyle = 'black';
+                } else {
+                    ctx.strokeStyle = 'white';
+                }                             
+                ctx.lineWidth = 25;
+                ctx.strokeText(token.text, 800, 150);
+                
+                ctx.fillStyle = token.color;
+                ctx.fillText(token.text, 800, 150);
+            }
+
+            context.scale(0.2, 0.2); // since text is pre-rendered in higher res
+            context.drawImage(token.label_canvas, -800, -150 + 5 * token.size / 2);
         }
     }
     

@@ -990,6 +990,42 @@ class PlayerCacheTest(EngineBaseTest):
         token = query_token()
         self.assertFalse(token.locked)
         
+        # trigger token's label set
+        update_data = copy.deepcopy(default_update)
+        update_data['changes'][0]['label'] = 'foobar'
+        game_cache.onUpdateToken(player_cache1, update_data) 
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'UPDATE')
+        self.assertEqual(len(answer1['tokens']), 1) 
+        token = query_token()
+        self.assertEqual(token.label, 'foobar')
+        
+        socket1.clearAll()
+        socket2.clearAll()
+        socket3.clearAll()
+        
+        # trigger token's label reset
+        update_data = copy.deepcopy(default_update)
+        update_data['changes'][0]['label'] = ''
+        game_cache.onUpdateToken(player_cache1, update_data) 
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'UPDATE')
+        self.assertEqual(len(answer1['tokens']), 1) 
+        token = query_token()
+        self.assertEqual(token.label, '')
+        
+        socket1.clearAll()
+        socket2.clearAll()
+        socket3.clearAll()
+        
     def test_onCreateToken(self):
         socket1 = SocketDummy()
         socket2 = SocketDummy()
@@ -1269,6 +1305,8 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(clone.rotate, t3.rotate)
         self.assertEqual(clone.flipx, t3.flipx)
         self.assertFalse(clone.locked) # cloned tokens are not locked by default
+        self.assertEqual(clone.text, t3.text)
+        self.assertEqual(clone.color, t3.color)
 
         # can clone multiple tokens
         with db_session:

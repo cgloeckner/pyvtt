@@ -371,7 +371,7 @@ class GameCache(object):
                 tmp = t.to_dict()
                 tmp['uuid'] = player.uuid
                 all_data.append(tmp)
-        
+
         # broadcast update
         self.broadcast({
             'OPID'    : 'UPDATE',
@@ -565,8 +565,11 @@ class GameCache(object):
                 rotate = data.get('rotate')
                 flipx  = data.get('flipx')
                 locked = data.get('locked')
+                text   = data.get('text')
+                color  = data.get('color')
+                label  = None if text is None or color is None else (text, color)
                 t.update(timeid=now, pos=pos, zorder=zorder, size=size,
-                    rotate=rotate, flipx=flipx, locked=locked)
+                    rotate=rotate, flipx=flipx, locked=locked, label=label)
         
         self.broadcastTokenUpdate(player, now)  
         
@@ -646,8 +649,8 @@ class GameCache(object):
                 # clone token
                 pos = self.parent.db.Token.getPosByDegree((posx, posy), k, len(ids))
                 t = self.parent.db.Token(scene=s, url=t.url, posx=pos[0], posy=pos[1],
-                    zorder=t.zorder, size=t.size, rotate=t.rotate,
-                    flipx=t.flipx, timeid=now)
+                    zorder=t.zorder, size=t.size, rotate=t.rotate, flipx=t.flipx,
+                    timeid=now, text=t.text, color=t.color)
                 
                 self.parent.db.commit()
                 tokens.append(t.to_dict())

@@ -87,6 +87,9 @@ class GameTest(EngineBaseTest):
         self.assertFalse(os.path.isdir(game_path))
         game.postSetup()
         self.assertTrue(os.path.isdir(game_path))
+
+        # test scene ordering
+        self.assertEqual(game.order, list())
         
     @db_session
     def test_getAllImages(self):

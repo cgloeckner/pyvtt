@@ -465,7 +465,7 @@ function showTokenbar(token_id) {
     }
 }
 
-var token_icons = ['Rotate', 'Top', 'Delete', 'Bottom', 'Resize', 'FlipX', 'Clone', 'Lock'];
+var token_icons = ['Rotate', 'Top', 'Delete', 'Bottom', 'Label', 'Resize', 'FlipX', 'Clone', 'Lock'];
 
 function updateTokenbar() {
     $('#tokenbar').css('visibility', 'hidden');
@@ -1229,6 +1229,48 @@ function onBottom() {
         changes.push({
             'id'     : id,
             'zorder' : token.zorder
+        });
+    });
+    
+    writeSocket({
+        'OPID'    : 'UPDATE',
+        'changes' : changes
+    });
+}
+
+/// Event handle for entering a token label
+function onLabel() {
+    if (select_ids.length == 0) {
+        return;
+    }
+    
+    var primary = tokens[select_ids[0]];
+    var text = window.prompt('TOKEN LABEL (MAX LENGTH 15)', primary.text);
+    if (text == null) {
+        return;
+    }
+
+    // apply text
+    text = text.substr(0, 15);
+    var color = getCookie('playercolor');
+    var changes = [];
+
+    $.each(select_ids, function(index, id) {
+        var token = tokens[id];
+        
+        if (token.locked) {
+            // ignore if locked
+            return;
+        }
+        // move beneath lowest known z-order
+        token.text  = text;
+        token.color = color;
+        token.label_canvas = null;
+        
+        changes.push({
+            'id'    : id,
+            'text'  : text,
+            'color' : color
         });
     });
     
