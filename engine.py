@@ -309,3 +309,53 @@ class Engine(object):
             self.paths.ensure(export_path)
             self.logging.info('Removed {0} game ZIPs'.format(num_files))
 
+    def saveToDict(self):
+        """ Export all GMs and their games (including scenes and tokens)
+        to a single dict. Images and music are NOT included.
+        This method's purpose is to allow database schema migration:
+        export the database, purge and rebuild, import data.
+        """
+        gms = list()
+
+        # dump GM data (name, session id etc.)
+        with db_session:
+            for gm in self.main_db.GM.select():
+                gms.append(gm.to_dict())
+        
+        # dump each GM's games
+        for gm in gms:         
+            gm_cache = self.cache.getFromUrl(gm['url'])
+            gm['games'] = dict()
+            with db_session:
+                for game in gm_cache.db.Game.select():
+                    # fetch all(!) data
+                    gm['games'][game.url] = game.toDict()
+
+        return gms
+
+    def loadFromDict(self, gms):
+        """ Import all GMs and their games (including scenes and tokens)
+        from a single dict. Images and music are NOT included.
+        This method's purpose is to allow database schema migration.
+        ONLY CALL THIS WITH EMPTY DATABASES.
+        """
+        # create GM data (name, session id etc.)
+        with db_session:
+            for gm_data in gms:
+                gm = self.main_db.GM(name=gm_data['name'], url=gm_data['url'],
+                                     sid=gm_data['sid'])
+                gm.postSetup() # NOTE: timeid is overwritten here
+                self.cache.insert(gm)
+
+        # create Games
+        for gm_data in gms:
+            gm_cache = self.cache.getFromUrl(gm_data['url'])
+            gm_cache.connect_db()
+            with db_session:
+                for url in gm_data['games']:
+                    game = gm_cache.db.Game(url=url, gm_url=gm_data['url'])
+                    game.postSetup()
+                    gm_cache.db.commit()
+                    game.fromDict(gm_data['games'][url])
+                    gm_cache.db.commit()
+                    

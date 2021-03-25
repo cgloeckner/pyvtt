@@ -310,11 +310,8 @@ def createGmDatabase(engine, filename):
             for s in self.scenes:
                 s.preDelete()
                 s.delete()
-            
-        def toZip(self):
-            # remove abandoned images
-            self.cleanup()
-            
+
+        def toDict(self):
             # collect all tokens in this game
             tokens = list()
             id_translation = dict() # required because the current token ids will not persist
@@ -354,10 +351,16 @@ def createGmDatabase(engine, filename):
                 if self.active == s.id:
                     active = len(scenes) - 1
             
-            data = {
+            return {
                 "tokens" : tokens,
                 "scenes" : scenes
             }
+            
+        def toZip(self):
+            # remove abandoned images
+            self.cleanup()
+            
+            data = self.toDict()
             
             # build zip file
             zip_path = engine.paths.getExportPath()
@@ -404,7 +407,33 @@ def createGmDatabase(engine, filename):
             db.commit() 
             
             return game
-        
+
+        def fromDict(self, data):
+            # create scenes
+            for sid, s in enumerate(data["scenes"]):
+                scene = db.Scene(game=self)
+                
+                # create tokens for that scene
+                for token_id in s["tokens"]:
+                    token_data = data["tokens"][token_id]
+                    url = token_data['url']
+                    if isinstance(url, str): # backwards compatibility
+                        url = url.split('.png')[0]
+                    t = db.Token(                                
+                        scene=scene, url=self.getImageUrl(url),
+                        posx=token_data['posx'], posy=token_data['posy'],
+                        zorder=token_data['zorder'], size=token_data['size'],
+                        rotate=token_data['rotate'], flipx=token_data['flipx'],
+                        locked=token_data['locked']
+                    )
+                    if s["backing"] == token_id:
+                        db.commit()
+                        scene.backing = t
+                    
+                if self.active is None:
+                    # select first scene as active
+                    self.active = scene.id
+
         @staticmethod
         def fromZip(gm, url, handle):
             # unzip uploaded file to temp dir
@@ -445,29 +474,7 @@ def createGmDatabase(engine, filename):
                 
                 # create scenes
                 try:
-                    for sid, s in enumerate(data["scenes"]):
-                        scene = db.Scene(game=game)
-                        
-                        # create tokens for that scene
-                        for token_id in s["tokens"]:
-                            token_data = data["tokens"][token_id]
-                            url = token_data['url']
-                            if isinstance(url, str): # backwards compatibility
-                                url = url.split('.png')[0]
-                            t = db.Token(                                
-                                scene=scene, url=game.getImageUrl(url),
-                                posx=token_data['posx'], posy=token_data['posy'],
-                                zorder=token_data['zorder'], size=token_data['size'],
-                                rotate=token_data['rotate'], flipx=token_data['flipx'],
-                                locked=token_data['locked']
-                            )
-                            if s["backing"] == token_id:
-                                db.commit()
-                                scene.backing = t
-                        
-                        if game.active is None:
-                            # select first scene as active
-                            game.active = scene.id
+                    game.fromDict(data)
                 except KeyError as e:
                     # delete game
                     game.delete()
@@ -514,7 +521,7 @@ def createMainDatabase(engine):
             
             # add to engine's GM cache
             engine.cache.insert(self)
-            
+
         def cleanup(self, gm_db, now):
             """ Cleanup GM's games' outdated rolls, unused images or
             event remove expired games (see engine.expire). """

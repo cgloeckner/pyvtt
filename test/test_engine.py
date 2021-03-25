@@ -244,4 +244,78 @@ class EngineTest(EngineBaseTest):
             # expect all ZIPs being removed
             num_files = len(os.listdir(export_path))
             self.assertEqual(num_files, 0)
-            
+
+    def test_saveToDict(self):
+        with db_session:
+            # create GMs
+            gm1 = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+            gm1.postSetup()
+            gm2 = self.engine.main_db.GM(name='nobody', url='second', sid='5673')
+            gm2.postSetup()
+        
+        gm1_cache = self.engine.cache.get(gm1)
+        gm1_cache.connect_db()
+        gm2_cache = self.engine.cache.get(gm2)
+        gm2_cache.connect_db()
+        
+        with db_session:
+            # create some games
+            g1 = gm1_cache.db.Game(url='foo', gm_url='second')
+            g1.postSetup()
+            g2 = gm1_cache.db.Game(url='bar', gm_url='second')
+            g2.timeid = time.time() - self.engine.expire - 10
+            g2.postSetup()
+            g3 = gm2_cache.db.Game(url='bar', gm_url='url456')
+            g3.timeid = time.time() - self.engine.expire - 10
+            g3.postSetup()
+
+        export = self.engine.saveToDict()
+
+        # check GM data
+        self.assertEqual(len(export), 2)
+        self.assertEqual(export[0]['name'], gm1.name)
+        self.assertEqual(export[0]['url'],  gm1.url)
+        self.assertEqual(export[0]['sid'],  gm1.sid)
+        self.assertEqual(export[1]['name'], gm2.name)
+        self.assertEqual(export[1]['url'],  gm2.url)
+        self.assertEqual(export[1]['sid'],  gm2.sid)
+
+        # check Games Data
+        self.assertEqual(len(export[0]['games']), 2)
+        self.assertIn('bar', export[0]['games'])  
+        self.assertIn('foo', export[0]['games']) 
+        
+        self.assertEqual(len(export[1]['games']), 1)   
+        self.assertIn('bar', export[1]['games'])
+         
+    def test_loadFromDict(self):
+        data = [{
+            'name': 'otto',
+            'url' : '12345',
+            'sid' : 'foobar1234',
+            'games': {
+                'test': {
+                    'tokens': [{'url': 5, 'posx': 12, 'posy': 34, 'zorder': 56, 'size': 120, 'rotate': 22.5, 'flipx': True, 'locked': True}],
+                    'scenes': [{'tokens': [0], 'backing': None}]
+                }
+            }
+        }]
+
+        self.engine.loadFromDict(data)
+
+        # check GM data
+        with db_session:
+            all_gms = list(self.engine.main_db.GM.select())
+        self.assertEqual(len(all_gms), 1)
+        self.assertEqual(all_gms[0].name, 'otto')
+        self.assertEqual(all_gms[0].url,  '12345')
+        self.assertEqual(all_gms[0].sid,  'foobar1234')
+
+        # check Games Data
+        gm_cache = self.engine.cache.getFromUrl('12345')
+        with db_session:
+            all_games = list(gm_cache.db.Game.select())
+        self.assertEqual(len(all_games), 1)
+
+
+

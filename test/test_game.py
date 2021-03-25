@@ -358,6 +358,52 @@ class GameTest(EngineBaseTest):
         # delete game
         game.delete()
         self.db.commit() 
+
+    @db_session
+    def test_toDict(self):
+        game = self.db.Game(url='foo', gm_url='url456')
+        game.postSetup()
+        
+        # create two demo scenes with tokens
+        url = game.getImageUrl('123')
+        scene1 = self.db.Scene(game=game)
+        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1) # background
+        for i in range(7):
+            self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
+        scene2 = self.db.Scene(game=game)
+        for i in range(4):
+            self.db.Token(scene=scene2, url=url, posx=200, posy=150, size=20)
+        self.db.commit()
+
+        # build dict from game, scenes and tokens
+        data = game.toDict()
+
+        # check all token data in each scene
+        for scene in data["scenes"]:
+            for i in scene["tokens"]:
+                token = data["tokens"][i]
+                # test keys
+                self.assertIn('url', token)
+                self.assertIn('posx', token)
+                self.assertIn('posy', token)
+                self.assertIn('zorder', token)
+                self.assertIn('size', token)
+                self.assertIn('rotate', token)
+                self.assertIn('flipx', token)
+                self.assertIn('locked', token)
+                # test values
+                self.assertIsInstance(token['url'], int)
+                self.assertIsInstance(token['posx'], int)
+                self.assertIsInstance(token['posy'], int)
+                self.assertIsInstance(token['zorder'], int)
+                self.assertIsInstance(token['size'], int)
+                self.assertIsInstance(token['rotate'], float)
+                self.assertIsInstance(token['flipx'], bool)
+                self.assertIsInstance(token['locked'], bool)
+            # check scene background
+            background_id = scene["backing"]
+            if background_id is not None:
+                self.assertIn(background_id, scene["tokens"])
         
     @db_session
     def test_toZip(self):
@@ -462,6 +508,49 @@ class GameTest(EngineBaseTest):
                 img_id = tokens.first().url.split('/')[-1]
                 img_fname = img_path / img_id
                 self.assertTrue(os.path.exists(img_fname))
+    
+    @db_session
+    def test_fromDict(self):
+        game = self.db.Game(url='foo', gm_url='url456')
+        game.postSetup()
+        
+        # create an empty file (to make sure it isn't blocking removing the directory)
+        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        id1 = game.getNextId()
+        p1 = img_path / '{0}.png'.format(id1)
+        p1.touch()
+        url = game.getImageUrl(id1)
+        
+        # create two demo scenes with tokens
+        scene1 = self.db.Scene(game=game)
+        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1) # background
+        for i in range(7):
+            self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
+        scene2 = self.db.Scene(game=game)
+        for i in range(4):
+            self.db.Token(scene=scene2, url=url, posx=200, posy=150, size=20)
+        self.db.commit()
+        
+        # create dict
+        data = game.toDict()
+
+        # create copy of original game by loading dict
+        game2 = self.db.Game(url='bar', gm_url='url456')
+        game2.postSetup()
+        self.db.commit()
+        game2.fromDict(data)
+        self.db.commit()
+        
+        # assert both games having the same scenes
+        self.assertEqual(len(game2.scenes), len(game.scenes))
+        game2_scene1 = list(game2.scenes)[0]
+        game2_scene2 = list(game2.scenes)[1]
+        query1 = self.db.Token.select(lambda t: t.scene == game2_scene1)
+        query2 = self.db.Token.select(lambda t: t.scene == game2_scene2)
+        # order isn't important here
+        self.assertEqual(set([4, 8]), set([len(query1), len(query2)]))
+        
+        # @NOTE: exact token data (position etc.) isn't tested here
         
     @db_session
     def test_fromZip(self):

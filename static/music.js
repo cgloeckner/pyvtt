@@ -109,8 +109,6 @@ function onUpdateMusic() {
     if (!was_paused) {
         player.play();
     }
-
-    console.log('updated');
 }
 
 function onInitMusicPlayer(gmurl, url) {
