@@ -66,6 +66,7 @@ class PlayerCache(object):
             'BEACON' : self.parent.onBeacon,
             'MUSIC'  : self.parent.onMusic,
             'GM-CREATE'   : self.parent.onCreateScene,
+            'GM-MOVE'     : self.parent.onMoveScene,
             'GM-ACTIVATE' : self.parent.onActivateScene,
             'GM-CLONE'    : self.parent.onCloneScene,
             'GM-DELETE'   : self.parent.onDeleteScene
@@ -182,7 +183,7 @@ class GameCache(object):
         self.url     = game.url
         self.players = dict() # name => player
         self.next_id = 0 # used for player indexing in UI
-        
+
         self.engine.logging.info('GameCache {0} for GM {1} created'.format(self.url, self.parent.url))
         
     def getNextId(self):
@@ -706,13 +707,62 @@ class GameCache(object):
                 self.engine.logging.warning('GM tried to create a scene but game not found {0}'.format(player.ip))
                 return;
             g.timeid = now
-            # create new, active scene
+            
+            # create new, active scene at the end of the scene list
             scene = self.parent.db.Scene(game=g)
             self.parent.db.commit()
             g.active = scene.id
+            g.order.append(scene.id)
+            
             # broadcast scene switch
             self.broadcastSceneSwitch(g) 
+
+    def onMoveScene(self, player, data):
+        """ GM: Move a given scene one step (either left or right). """ 
+        if not player.is_gm:
+            self.engine.logging.warning('Player tried to move a scene but was not the GM by {0}'.format(player.ip))
+            return
         
+        scene_id = data['scene']
+        step     = data['step']
+        if step not in [-1, 1]:
+            self.engine.logging.warning('GM tried to move a scene but with invalid stepping, access by {0}'.format(player.ip))
+            return
+         
+        # query game 
+        now = time.time()
+        with db_session:
+            g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+            if g is None:
+                self.engine.logging.warning('GM tried to move a scene but game not found {0}'.format(player.ip))
+                return
+            # test scene id
+            scene = self.parent.db.Scene.select(lambda s: s.id == scene_id).first()
+            if scene is None: 
+                self.engine.logging.warning('GM tried to move a scene but scene not found {0}'.format(player.ip))
+                return
+            
+            # build initial order if not created yet
+            if len(g.order) == 0:
+                g.reorderScenes()
+                
+            # query index within that list
+            try:
+                old = g.order.index(scene_id)
+            except ValueError:
+                self.engine.logging.warning('GM tried to move a scene but scene not found {0}'.format(player.ip))
+                return
+
+            # determine indices of scenes to swap
+            new = old + step
+            if new < 0 or new >= len(g.order):
+                # ignore edge case
+                return
+
+            # swap!
+            g.order[old], g.order[new] = g.order[new], g.order[old] 
+            g.timeid = now
+    
     def onActivateScene(self, player, data):
         """ GM: Activate a given scene. """
         if not player.is_gm:
@@ -772,6 +822,7 @@ class GameCache(object):
                     )
             self.parent.db.commit()
             g.active = clone.id
+            g.order.append(clone.id)
             # broadcast scene switch
             self.broadcastSceneSwitch(g)
         
@@ -799,6 +850,15 @@ class GameCache(object):
             s.preDelete()
             s.delete()
             self.parent.db.commit()
+
+            # rebuild order list
+            new_order = list()
+            for sid in g.order:
+                if sid != scene_id:
+                    # place that scene
+                    new_order.append(sid)
+            g.order = new_order
+            
             # set new active scene if necessary
             if g.active == s.id:
                 remain = self.parent.db.Scene.select(lambda s: s.game == g).first()
@@ -807,6 +867,7 @@ class GameCache(object):
                     remain = self.parent.db.Scene(game=g)
                     self.parent.db.commit()
                 g.active = remain.id
+                g.reorderScenes()
                 self.parent.db.commit()
                 # broadcast scene switch
                 self.broadcastSceneSwitch(g) 
@@ -840,6 +901,9 @@ class GmCache(object):
         with db_session:
             for game in self.db.Game.select():
                 self.insert(game)
+                # reorder scenes by ID if necessary
+                if game.order == list():
+                    game.reorderScenes()
         
         self.engine.logging.info('GmCache {0} with {0} loaded'.format(self.url, self.db_path))
         

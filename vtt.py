@@ -489,6 +489,26 @@ def setup_player_routes(engine):
 
         return static_file(fname, root=root)
 
+    @get('/thumbnail/<gmurl>/<url>/<scene_id:int>')
+    def get_scene_thumbnail(gmurl, url, scene_id):
+        # load GM from cache
+        gm_cache = engine.cache.getFromUrl(gmurl)
+        if gm_cache is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+        
+        # load scene from GM's database
+        scene = gm_cache.db.Scene.select(lambda s: s.id == scene_id and s.game.url == url).first()
+        if scene is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+
+        engine.paths.getGamePath(gmurl, url)
+        if scene.backing != None:
+            redirect(scene.backing.url)
+        else:
+            redirect('/static/empty.jpg')
+
     @get('/music/<gmurl>/<url>/<timestamp>')
     def game_music(gmurl, url, timestamp):
         # NOTE: timestamp ignored but helps to prevent caching in chrome

@@ -198,6 +198,15 @@ function addScene() {
     reloadScenesDropdown();
 }
 
+function moveScene(scene_id, step) {
+    writeSocket({
+        'OPID'  : 'GM-MOVE',
+        'scene' : scene_id,
+        'step'  : step
+    });     
+    reloadScenesDropdown();
+}
+
 function activateScene(scene_id) {
     writeSocket({
         'OPID'  : 'GM-ACTIVATE',

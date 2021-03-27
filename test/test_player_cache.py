@@ -80,11 +80,16 @@ class PlayerCacheTest(EngineBaseTest):
                     posy=30, size=40)
                 gm_cache.db.Token(scene=scene2, url='/foo', posx=20+i ,
                     posy=30, size=40)
-        
+
+    def get_game(self, gm='foo', game='bar'):
+        """ Helper to query a game. """
+        gm_cache = self.engine.cache.getFromUrl(gm)
+        return gm_cache.db.Game.select(lambda g: g.url == game).first()
+
     def active_scene(self, gm='foo', game='bar'):
         """ Helper to query active scene of a game. """
-        gm_cache = self.engine.cache.getFromUrl(gm)
-        game = gm_cache.db.Game.select(lambda g: g.url == game).first()
+        gm_cache = self.engine.cache.getFromUrl(gm) 
+        game = self.get_game(gm, game)
         return gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
         
     def purge_scene(self, scene):
@@ -99,6 +104,7 @@ class PlayerCacheTest(EngineBaseTest):
         for s in game.scenes:
             s.preDelete()
             s.delete()
+        game.order = list()
     
     def get_token(self, tid, gm='foo'):
         """ Helper to query a token from a game by its id. """  
@@ -1373,6 +1379,37 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             new_scene = self.active_scene()
         self.assertNotEqual(last_scene.id, new_scene.id)
+        # expect scene at end of the order list
+        with db_session:
+            game = self.get_game()
+            expect = [new_scene.id]
+            self.assertEqual(game.order, expect)
+        
+        # GM can create another scene at the end
+        game_cache.onCreateScene(player_cache2, {}) 
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()               
+        with db_session:
+            new_scene = self.active_scene()
+        # expect scene at end of the order list
+        with db_session:
+            game = self.get_game()
+            expect.append(new_scene.id)
+            self.assertEqual(game.order, expect)
+
+        # GM can create yet another scene at the end
+        game_cache.onCreateScene(player_cache2, {})
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()                
+        with db_session:
+            new_scene = self.active_scene()
+        # expect scene at end of the order list
+        with db_session:
+            game = self.get_game()
+            expect.append(new_scene.id)
+            self.assertEqual(game.order, expect)
 
         # non-GM cannot create a scene
         last_scene = new_scene    
@@ -1389,6 +1426,93 @@ class PlayerCacheTest(EngineBaseTest):
             new_scene = self.active_scene()  
         self.assertEqual(last_scene.id, new_scene.id)
     
+    def test_onMoveScene(self):
+        socket1 = SocketDummy()
+        socket2 = SocketDummy()
+        socket3 = SocketDummy()
+        
+        # insert players
+        gm_cache   = self.engine.cache.getFromUrl('foo')
+        game_cache = gm_cache.getFromUrl('bar')
+        player_cache1 = game_cache.insert('arthur', 'red', False)
+        player_cache1.socket = socket1
+        player_cache2 = game_cache.insert('bob', 'yellow', True)
+        player_cache2.socket = socket2
+        player_cache3 = game_cache.insert('carlos', 'green', False)
+        player_cache3.socket = socket3
+
+        with db_session:
+            self.purge_game()
+        game_cache.onCreateScene(player_cache2, {})
+        game_cache.onCreateScene(player_cache2, {})
+        game_cache.onCreateScene(player_cache2, {})
+        game_cache.onCreateScene(player_cache2, {})
+        socket1.clearAll()
+        socket2.clearAll()
+        socket3.clearAll()
+
+        # query all scenes in that game
+        with db_session:
+            all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
+            game = self.get_game()
+        self.assertEqual(len(all_scene_ids), 4)
+        all_scene_ids.sort()
+        s1 = all_scene_ids[0]
+        s2 = all_scene_ids[1]
+        s3 = all_scene_ids[2]
+        s4 = all_scene_ids[3]
+
+        with db_session:
+            game = self.get_game()
+            game.reorderScenes()
+        self.assertEqual(game.order, [s1, s2, s3, s4]) # explicit order
+        
+        # GM can move a scene left
+        game_cache.onMoveScene(player_cache2, {'scene': s3, 'step': -1})
+        with db_session:
+            game = self.get_game()
+        self.assertEqual(game.order, [s1, s3, s2, s4])
+
+        # GM can move last scene left
+        game_cache.onMoveScene(player_cache2, {'scene': s4, 'step': -1})  
+        with db_session:
+            game = self.get_game()
+        self.assertEqual(game.order, [s1, s3, s4, s2])
+
+        # GM can move a scene right
+        game_cache.onMoveScene(player_cache2, {'scene': s3, 'step': 1})  
+        with db_session:
+            game = self.get_game()
+        self.assertEqual(game.order, [s1, s4, s3, s2])
+        
+        # GM can move first scene right
+        game_cache.onMoveScene(player_cache2, {'scene': s1, 'step': 1})  
+        with db_session:
+            game = self.get_game()
+        self.assertEqual(game.order, [s4, s1, s3, s2])
+        
+        # GM cannot move first scene too far left
+        game_cache.onMoveScene(player_cache2, {'scene': s4, 'step': -1}) 
+        with db_session:
+            game = self.get_game()
+        self.assertEqual(game.order, [s4, s1, s3, s2])
+        
+        # GM cannot move last scene too far right
+        game_cache.onMoveScene(player_cache2, {'scene': s2, 'step': 1})  
+        with db_session:
+            game = self.get_game()
+        self.assertEqual(game.order, [s4, s1, s3, s2])
+
+        # a non-GM cannot move any scene
+        game_cache.onMoveScene(player_cache3, {'scene': s3, 'step': -1}) 
+        with db_session:
+            game = self.get_game()
+        self.assertEqual(game.order, [s4, s1, s3, s2])
+        game_cache.onMoveScene(player_cache3, {'scene': s3, 'step': 1})  
+        with db_session:
+            game = self.get_game()
+        self.assertEqual(game.order, [s4, s1, s3, s2])
+        
     def test_onActivateScene(self):
         socket1 = SocketDummy()
         socket2 = SocketDummy()
@@ -1528,6 +1652,12 @@ class PlayerCacheTest(EngineBaseTest):
                 self.assertTrue(t.locked)
         # ... but no background
         self.assertIsNone(active.backing)
+        # expect scene at end of the order list
+        with db_session:
+            game = self.get_game()
+            expect = game.order
+            expect.append(active.id)
+            self.assertEqual(game.order, expect)
         
         # non-GM cannot clone a scene
         last_active = active
@@ -1581,6 +1711,8 @@ class PlayerCacheTest(EngineBaseTest):
                 self.purge_game()
             game_cache.onCreateScene(player_cache2, {})
             game_cache.onCreateScene(player_cache2, {})
+            game_cache.onCreateScene(player_cache2, {})
+            game_cache.onCreateScene(player_cache2, {})
             socket1.clearAll()
             socket2.clearAll()
             socket3.clearAll()
@@ -1589,8 +1721,8 @@ class PlayerCacheTest(EngineBaseTest):
             with db_session:
                 all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
                 active = self.active_scene()
-                self.assertEqual(len(all_scene_ids), 2)
-                self.assertEqual(all_scene_ids[1], active.id)
+                self.assertEqual(len(all_scene_ids), 4)
+                self.assertEqual(all_scene_ids[3], active.id)
 
             return all_scene_ids, active
         
@@ -1598,7 +1730,7 @@ class PlayerCacheTest(EngineBaseTest):
         all_scene_ids, active = reset()
             
         # GM can delete an inactive scene
-        game_cache.onDeleteScene(player_cache2, {'scene': all_scene_ids[0]}) 
+        game_cache.onDeleteScene(player_cache2, {'scene': all_scene_ids[1]}) 
         # expect no broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1608,7 +1740,12 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertIsNone(answer1)
         # except first id to be missing now
         with db_session:
-            self.assertIsNone(gm_cache.db.Scene.select(lambda s: s.id == all_scene_ids[0]).first())
+            self.assertIsNone(gm_cache.db.Scene.select(lambda s: s.id == all_scene_ids[1]).first())
+        # expect scene order with remaining scenes
+        with db_session:
+            game = self.get_game()
+            expected = [all_scene_ids[0], all_scene_ids[2], all_scene_ids[3]]
+            self.assertEqual(game.order, expected)
         
         # clear game
         all_scene_ids, active = reset()
@@ -1651,9 +1788,11 @@ class PlayerCacheTest(EngineBaseTest):
         socket1.clearAll()
         socket2.clearAll()
         socket3.clearAll()
-        
+        # expect scene order with remaining scene
         with db_session:
+            game = self.get_game()
             active = self.active_scene()
+            self.assertEqual(game.order, [active.id])
         
         # GM can delete the last remaining scene
         game_cache.onDeleteScene(player_cache2, {'scene': active.id}) 
@@ -1672,3 +1811,8 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             now_active = self.active_scene()
         self.assertNotEqual(active.id, now_active.id)
+        # expect scene order with freshly created scene
+        with db_session:
+            game = self.get_game()
+            active = self.active_scene()
+            self.assertEqual(game.order, [active.id])

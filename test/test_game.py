@@ -90,7 +90,23 @@ class GameTest(EngineBaseTest):
 
         # test scene ordering
         self.assertEqual(game.order, list())
+
+    @db_session
+    def test_reorderScenes(self):
+        game = self.db.Game(url='foo', gm_url='url456')
+        for i in range(4):
+            last_scene = self.db.Scene(game=game)
+        self.db.commit()
+
+        # expect no order list yet
+        self.assertEqual(game.order, list())
+
+        game.reorderScenes()
         
+        # expect ordered by IDs
+        last_id = last_scene.id
+        self.assertEqual(game.order, [last_id-3, last_id-2, last_id-1, last_id])
+    
     @db_session
     def test_getAllImages(self):
         game = self.db.Game(url='foo', gm_url='url456')

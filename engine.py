@@ -46,7 +46,7 @@ class Engine(object):
         self.main_db = None
         
         # blacklist for GM names and game URLs
-        self.gm_blacklist = ['', 'static', 'token', 'music', 'vtt', 'websocket']
+        self.gm_blacklist = ['', 'static', 'token', 'music', 'vtt', 'websocket', 'thumbnail']
         self.url_regex    = '^[A-Za-z0-9_\-.]+$'
         
         # maximum file sizes for uploads (in MB)

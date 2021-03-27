@@ -181,6 +181,11 @@ def createGmDatabase(engine, filename):
             self.order = list()
             
             self.makeMd5s()
+
+        def reorderScenes(self):
+            """ Reorder scenes based on their IDs. """
+            self.order = [s.id for s in self.scenes]
+            self.order.sort()
         
         def getAllImages(self):
             """Note: needs to be called from a threadsafe context."""

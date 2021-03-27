@@ -560,6 +560,7 @@ function updateTokenbar() {
             $('#tokenRotate').css('visibility', 'hidden');
             $('#tokenClone').css('visibility', 'hidden');
             $('#tokenDelete').css('visibility', 'hidden');
+            $('#tokenLabel').css('visibility', 'hidden');
         } else {
             $('#tokenFlipX').css('visibility', '');
             $('#tokenLock')[0].src = '/static/unlocked.png';
@@ -569,6 +570,7 @@ function updateTokenbar() {
             $('#tokenRotate').css('visibility', ''); 
             $('#tokenClone').css('visibility', '');
             $('#tokenDelete').css('visibility', '');
+            $('#tokenLabel').css('visibility', '');
         }
     }
 }
@@ -1666,9 +1668,9 @@ function ignoreBackground() {
                 $('#uploadqueue').val("");
                 
                 // load images if necessary
-                var urls = JSON.parse(response);
-                $.each(urls, function(index, url) {
-                    loadImage(url);
+                var data = JSON.parse(response);
+                $.each(data.urls, function(index, url) {
+                    loadImage(data);
                 });
                 
                 // trigger token creation via websocket
@@ -1677,7 +1679,7 @@ function ignoreBackground() {
                     'posx' : 0,
                     'posy' : 0,
                     'size' : -1,
-                    'urls' : urls
+                    'urls' : data.urls
                 });
                 
                 $('#popup').hide();
