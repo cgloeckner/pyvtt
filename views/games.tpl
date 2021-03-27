@@ -1,9 +1,5 @@
 %for g in all_games.order_by(lambda g: g.id):
-    %url = "/static/empty.jpg"   
-    %active = g.scenes.select(lambda s: s.id == g.active).first()
-    %if active.backing is not None:
-        %url = active.backing.url
-    %end
+    %url = "/thumbnail/" + '/'.join([g.gm_url, g.url])
     <div>
         <a href="{{server}}/{{gm.url}}/{{g.url}}" draggable="false" target="_blank"><img class="thumbnail" draggable="false" src="{{url}}" title="{{g.url.upper()}}" /></a>
         <div class="controls">

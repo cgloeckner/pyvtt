@@ -509,6 +509,22 @@ def setup_player_routes(engine):
         else:
             redirect('/static/empty.jpg')
 
+    @get('/thumbnail/<gmurl>/<url>')
+    def get_game_thumbnail(gmurl, url):
+        # load GM from cache
+        gm_cache = engine.cache.getFromUrl(gmurl)
+        if gm_cache is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+        
+        # load game from GM's database
+        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        if game is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+
+        redirect('/thumbnail/{0}/{1}/{2}'.format(gmurl, url, game.active))
+
     @get('/music/<gmurl>/<url>/<timestamp>')
     def game_music(gmurl, url, timestamp):
         # NOTE: timestamp ignored but helps to prevent caching in chrome
