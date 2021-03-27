@@ -328,6 +328,10 @@ class GameTest(EngineBaseTest):
         id2 = game.getNextId()
         p2 = img_path / '{0}.png'.format(id2)
         p2.touch()
+
+        for i in range(120):
+            self.db.Roll(game=game, name='foo', color='red', sides=4, result=3)
+            self.db.Roll(game=game, name='foo', color='red', sides=4, result=3, timeid=15)
         
         # assoign second file to token
         demo_scene = self.db.Scene(game=game)
@@ -335,15 +339,21 @@ class GameTest(EngineBaseTest):
         self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
         self.db.commit()
         
+        # expect outdated rolls to be deleted
+        now = self.engine.latest_rolls + 1
+        game.cleanup(now)
+        rolls_left = self.db.Roll.select(game=game)
+        self.assertEqual(len(rolls_left), 120)
+        
         # expect unused files to be deleted
-        game.cleanup()                      
+        game.cleanup(now)
         self.assertFalse(os.path.exists(p1))
         self.assertTrue(os.path.exists(p2))
 
         # expect music to be deleted on cleanup
         p3 = img_path / self.engine.paths.getMusicFileName()
         p3.touch()
-        game.cleanup()
+        game.cleanup(now)
         self.assertFalse(os.path.exists(p3))
         
     @db_session

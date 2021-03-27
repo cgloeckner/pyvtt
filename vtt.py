@@ -322,8 +322,9 @@ def setup_gm_routes(engine):
             abort(404)
         
         # load game from cache and clean it up
+        now = time.time()
         game_cache = gm_cache.get(game)
-        game.cleanup() # cleanup old images and tokens
+        game.cleanup(now) # cleanup old images and tokens
         game_cache.cleanup() # close old sockets
         
         engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))

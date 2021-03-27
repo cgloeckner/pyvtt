@@ -286,7 +286,7 @@ def createGmDatabase(engine, filename):
                         broken.append(t)
             return broken
             
-        def cleanup(self):
+        def cleanup(self, now):
             """ Cleanup game's unused image and token data. """   
             engine.logging.info('|--> Cleaning {0}'.format(self.url))
             
@@ -296,6 +296,11 @@ def createGmDatabase(engine, filename):
                 for fname in relevant:
                     engine.logging.info('     |--x Removing {0}'.format(fname))
                     os.remove(fname)
+
+            # delete all outdated rolls
+            rolls = db.Roll.select(lambda r: r.game == self and r.timeid < now - engine.latest_rolls)
+            engine.logging.info('     |--> {0} outdated rolls'.format(len(rolls)))
+            rolls.delete()
 
             # query and remove all tokens that have no image
             relevant = self.getBrokenTokens()
@@ -374,7 +379,7 @@ def createGmDatabase(engine, filename):
             
         def toZip(self):
             # remove abandoned images
-            self.cleanup()
+            self.cleanup(time.time())
             
             data = self.toDict()
             
@@ -542,12 +547,7 @@ def createMainDatabase(engine):
             """ Cleanup GM's games' outdated rolls, unused images or
             event remove expired games (see engine.expire). """
             engine.logging.info('Cleaning GM {0} <{1}>'.format(self.name, self.url))
-            
-            # delete all outdated rolls
-            rolls = gm_db.Roll.select(lambda r: r.timeid < now - engine.latest_rolls)
-            engine.logging.info('|--> {0} outdated rolls'.format(len(rolls)))
-            rolls.delete()
-            
+
             for g in gm_db.Game.select():
                 if g.timeid > 0 and g.timeid + engine.expire < now:
                     # remove this game
@@ -556,7 +556,7 @@ def createMainDatabase(engine):
                     
                 else:
                     # cleanup this game
-                    g.cleanup()
+                    g.cleanup(now)
             
         def preDelete(self):
             """ Remove this GM from disk to allow removing him from
