@@ -440,27 +440,29 @@ function drawToken(token, color, is_background) {
 
             if (token.label_canvas == null) {
                 token.label_canvas = document.createElement('canvas');
-                token.label_canvas.width = 1600;
-                token.label_canvas.height = 300;
+                token.label_canvas.width = 500;
+                token.label_canvas.height = 100;
                 ctx = token.label_canvas.getContext('2d')
-                ctx.font = "100px sans";
+                ctx.font = "30px sans";
                 ctx.textAlign = "center";
 
                 // use black or white outline based in color's brightness
-                if (brightnessByColor(token.color) > 80) {
+                if (brightnessByColor(token.color) > 50) {
                     ctx.strokeStyle = 'black';
                 } else {
                     ctx.strokeStyle = 'white';
-                }                             
-                ctx.lineWidth = 25;
-                ctx.strokeText(token.text, 800, 150);
+                }
+                ctx.lineWidth = 7;
+                ctx.lineJoin = "round";
+                ctx.miterLimit = 2;
+                ctx.strokeText(token.text, 250, 50);
                 
                 ctx.fillStyle = token.color;
-                ctx.fillText(token.text, 800, 150);
+                ctx.fillText(token.text, 250, 50);
             }
 
-            context.scale(0.2, 0.2); // since text is pre-rendered in higher res
-            context.drawImage(token.label_canvas, -800, -150 + 5 * token.size / 2);
+            context.scale(0.5, 0.5); // since text is pre-rendered in higher res
+            context.drawImage(token.label_canvas, -250, -35 + token.size);
         }
     }
     

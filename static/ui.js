@@ -163,7 +163,7 @@ function showPlayer(p, force=false) {
         menu += '<img src="/static/left.png" draggable="false" class="left" title="MOVE TO LEFT" onClick="onPlayerOrder(-1);" />'
     }
     if (is_gm && p.uuid != my_uuid) {
-        menu += '<img src="/static/kick.gif" draggable="false" class="center" title="KICK PLAYER" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
+        menu += '<img src="/static/delete.png" draggable="false" class="center" title="KICK PLAYER" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
     }
     if (!p.is_last) {
         menu += '<img src="/static/right.png" draggable="false" class="right" title="MOVE TO RIGHT" onMouseLeave="hideHint();" onClick="onPlayerOrder(1);" />';
@@ -1252,7 +1252,6 @@ function onLabel() {
 
     // apply text
     text = text.substr(0, 15);
-    var color = getCookie('playercolor');
     var changes = [];
 
     $.each(select_ids, function(index, id) {
@@ -1264,13 +1263,11 @@ function onLabel() {
         }
         // move beneath lowest known z-order
         token.text  = text;
-        token.color = color;
         token.label_canvas = null;
         
         changes.push({
             'id'    : id,
-            'text'  : text,
-            'color' : color
+            'text'  : text
         });
     });
     

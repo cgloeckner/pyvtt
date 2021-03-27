@@ -990,9 +990,9 @@ class PlayerCacheTest(EngineBaseTest):
         token = query_token()
         self.assertFalse(token.locked)
         
-        # trigger token's label set
+        # trigger token's label set, but color is set automatically
         update_data = copy.deepcopy(default_update)
-        update_data['changes'][0]['label'] = 'foobar'
+        update_data['changes'][0]['text'] = 'foobar'
         game_cache.onUpdateToken(player_cache1, update_data) 
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1002,7 +1002,8 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['OPID'], 'UPDATE')
         self.assertEqual(len(answer1['tokens']), 1) 
         token = query_token()
-        self.assertEqual(token.label, 'foobar')
+        self.assertEqual(token.text, 'foobar')
+        self.assertEqual(token.color, 'red')
         
         socket1.clearAll()
         socket2.clearAll()
@@ -1010,7 +1011,7 @@ class PlayerCacheTest(EngineBaseTest):
         
         # trigger token's label reset
         update_data = copy.deepcopy(default_update)
-        update_data['changes'][0]['label'] = ''
+        update_data['changes'][0]['text'] = ''
         game_cache.onUpdateToken(player_cache1, update_data) 
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1020,7 +1021,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['OPID'], 'UPDATE')
         self.assertEqual(len(answer1['tokens']), 1) 
         token = query_token()
-        self.assertEqual(token.label, '')
+        self.assertEqual(token.text, '')
         
         socket1.clearAll()
         socket2.clearAll()

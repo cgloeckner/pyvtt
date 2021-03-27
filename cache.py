@@ -566,8 +566,7 @@ class GameCache(object):
                 flipx  = data.get('flipx')
                 locked = data.get('locked')
                 text   = data.get('text')
-                color  = data.get('color')
-                label  = None if text is None or color is None else (text, color)
+                label  = None if text is None else (text, player.color)
                 t.update(timeid=now, pos=pos, zorder=zorder, size=size,
                     rotate=rotate, flipx=flipx, locked=locked, label=label)
         
