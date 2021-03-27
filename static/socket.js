@@ -339,7 +339,7 @@ function login(event, gmname, url, websocket_url) {
 /// Sets up the game and triggers the update loop
 function start(gmname, url, playername, color) {
     onInitMusicPlayer(gmname, url);
-    
+
     writeSocket({
         'name'     : playername,
         'gm_url'   : gmname,
@@ -360,8 +360,14 @@ function start(gmname, url, playername, color) {
     
     // desktop controls
     battlemap.addEventListener('mousedown',    onGrab);
+    battlemap.addEventListener('touchstart',   onGrab);
+    
     document.addEventListener('mousemove',    onMove);
+    document.addEventListener('touchmove',    onMove);
+    
     document.addEventListener('mouseup',    onRelease);
+    document.addEventListener('touchend',    onRelease);
+    
     battlemap.addEventListener('wheel',        onWheel);
     //battlemap.addEventListener('mouseout',    onRelease);
     document.addEventListener('keydown',    onShortcut);

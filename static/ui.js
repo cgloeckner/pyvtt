@@ -579,8 +579,8 @@ function updateTokenbar() {
 
 /// Select mouse/touch position relative to the canvas
 function pickCanvasPos(event) {
-    if (event.changedTouches) {
-        var touchobj = event.changedTouches[0];
+    if (event.touches.length == 1) {
+        var touchobj = event.touches[0];
         mouse_x = touchobj.clientX;
         mouse_y = touchobj.clientY;
     } else {
@@ -631,7 +631,7 @@ function onGrab(event) {
     
     pickCanvasPos(event);
 
-    if (event.buttons == 1) {
+    if (event.buttons == 1 || event.touches.length == 1) {
         // trigger check for holding the click
         now = Date.now();
         var time_delta = now - initial_click;
@@ -840,7 +840,7 @@ function onMove(event) {
     var w = battlemap.width();
     var h = battlemap.height();
     
-    if (event.buttons == 1 && !space_bar) {
+    if ((event.buttons == 1 || event.touches.length == 1) && !space_bar) {
         // left button clicked
         
         if (primary_id != 0 && grabbed) {
