@@ -275,6 +275,10 @@ def setup_gm_routes(engine):
             engine.logging.access('Game {0} created from "{1}" by {2}'.format(game.getUrl(), fname, engine.getClientIp(request)))
         
         status['url'] = game.getUrl();
+
+        # setup scenes' order (for initial scene)
+        game.reorderScenes()
+        
         return status
 
     @get('/vtt/export-game/<url>')
