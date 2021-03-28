@@ -369,10 +369,9 @@ function start(gmname, url, playername, color) {
     document.addEventListener('touchend',    onRelease);
     
     battlemap.addEventListener('wheel',        onWheel);
-    //battlemap.addEventListener('mouseout',    onRelease);
     document.addEventListener('keydown',    onShortcut);
     document.addEventListener('keyup',        onKeyRelease);
-    
+
     $(window).resize(onWindowResize);
     
     // setup game  

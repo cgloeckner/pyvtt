@@ -267,9 +267,21 @@ function onDrag(event) {
         } else if (drag_data == 'rotate') {
             onTokenRotate();
         }
-    } else { 
+    } else {
         onDragDice(event);
     }
+}
+
+/// Event handle to perform dice dragging by touch
+function onMobileDragDice(event, d) {
+    localStorage.setItem('drag_data', d);
+    onDragDice(event);
+    localStorage.removeItem('drag_data');
+}
+
+/// Event handle to perform players dragging by touch
+function onMobileDragPlayers(event) {
+    onDragPlayers(event);
 }
 
 function onTokenResize() {
@@ -577,16 +589,25 @@ function updateTokenbar() {
 
 // ----------------------------------------------------------------------------
 
+/// Select mouse/touch position relative to the screen
+function pickScreenPos(event) {
+    if ((event.type == "touchstart" || event.type == "touchmove") && event.touches.length == 1) {
+        var touchobj = event.touches[0];
+        var x = touchobj.clientX;
+        var y = touchobj.clientY;
+    } else {
+        var x = event.clientX;
+        var y = event.clientY;
+    }
+
+    return [x, y]
+}
+
 /// Select mouse/touch position relative to the canvas
 function pickCanvasPos(event) {
-    if (event.touches.length == 1) {
-        var touchobj = event.touches[0];
-        mouse_x = touchobj.clientX;
-        mouse_y = touchobj.clientY;
-    } else {
-        mouse_x = event.clientX;
-        mouse_y = event.clientY;
-    }
+    var p = pickScreenPos(event);
+    mouse_x = p[0];
+    mouse_y = p[1];
     
     // make pos relative to canvas
     var canvas = $('#battlemap')[0];
@@ -627,11 +648,12 @@ function onDoubleClick() {
 
 /// Event handle for start grabbing a token
 function onGrab(event) {
+    event.preventDefault();
     closeGmDropdown();
     
     pickCanvasPos(event);
 
-    if (event.buttons == 1 || event.touches.length == 1) {
+    if (event.buttons == 1 || (event.type == "touchstart" && event.touches.length == 1)) {
         // trigger check for holding the click
         now = Date.now();
         var time_delta = now - initial_click;
@@ -750,6 +772,11 @@ function onGrab(event) {
 function onRelease() {
     var was_grabbed = grabbed;
 
+    if (isNaN(mouse_x) || isNaN(mouse_y)) {
+        // WORKAROUND: prevent mobile from crashing on pinch-zoom
+        return;
+    }
+
     if (select_ids.length > 0) {
         grabbed = false;
         $('#battlemap').css('cursor', 'grab');
@@ -798,7 +825,7 @@ function onRelease() {
         if (event.ctrlKey) {
             adding = true;
         }
-        
+
         writeSocket({
             'OPID'   : 'RANGE',
             'adding' : adding,
@@ -834,13 +861,18 @@ function limitViewportPosition() {
 
 /// Event handle for moving a grabbed token (if not locked)
 function onMove(event) {
-    pickCanvasPos(event);
+    if (event.type == "touchmove") {
+        // prevent scrolling
+        event.preventDefault();
+    }
     
+    pickCanvasPos(event);
+
     var battlemap = $('#battlemap');
     var w = battlemap.width();
     var h = battlemap.height();
     
-    if ((event.buttons == 1 || event.touches.length == 1) && !space_bar) {
+    if ((event.buttons == 1 || (event.type == "touchmove" && event.touches.length == 1)) && !space_bar) {
         // left button clicked
         
         if (primary_id != 0 && grabbed) {
@@ -1462,8 +1494,6 @@ function moveDiceTo(data, sides) {
             rolls.css('flex-direction', 'column-reverse');
             break;
     }
-    
-    // change dice history position
 }
 
 function movePlayersTo(pos) {
@@ -1474,19 +1504,20 @@ function movePlayersTo(pos) {
 
 /// Drag dice container to position specified by the event
 function onDragDice(event) {
+    var p = pickScreenPos(event);
     var sides = localStorage.getItem('drag_data');
     
     // drag dice box
     var target = $('#d' + sides + 'icon');
-     
+
     // limit position to the screen
     var w = target.width();
     var h = target.height();
-    var x = Math.max(0, Math.min(window.innerWidth - w,  event.clientX - w / 2));
-    var y = Math.max(0, Math.min(window.innerHeight - h, event.clientY - h / 2));
+    var x = Math.max(0, Math.min(window.innerWidth - w,  p[0] - w / 2));
+    var y = Math.max(0, Math.min(window.innerHeight - h, p[1] - h / 2));
     var data = [x, y];
     data = snapDice(data[0], data[1], target, '');
-    
+
     // apply position
     moveDiceTo(data, sides);
     saveDicePos(sides, data);
@@ -1494,13 +1525,14 @@ function onDragDice(event) {
 
 /// Drag players container to position specified by the event
 function onDragPlayers(event) {
+    var p = pickScreenPos(event);
     var target = $('#players');
     
     // limit position to the screen
     var w = target.width();
     var h = target.height();
-    var x = Math.max(w / 2, Math.min(window.innerWidth - w/2, event.clientX));
-    var y = Math.max(0,     Math.min(window.innerHeight - h,  event.clientY));
+    var x = Math.max(w / 2, Math.min(window.innerWidth - w/2, p[0]));
+    var y = Math.max(0,     Math.min(window.innerHeight - h,  p[1]));
     var pos = [x, y];
     
     movePlayersTo(pos);

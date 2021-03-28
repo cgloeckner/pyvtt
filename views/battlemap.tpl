@@ -23,7 +23,7 @@
 %for d in [20, 12, 10, 8, 6, 4, 2]:
         <div class="dice" id="d{{d}}icon">
             <div>
-                <img src="/static/d{{d}}.png" title="Roll 1D{{d}}" onDragStart="onStartDragDice(event, {{d}});" onMouseDown="onResetDice(event, {{d}});" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});" />
+                <img src="/static/d{{d}}.png" title="Roll 1D{{d}}" id="d{{d}}drag" onDragStart="onStartDragDice(event, {{d}});" onMouseDown="onResetDice(event, {{d}});" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});"ontouchmove="onMobileDragDice(event, {{d}});" />
                 <div class="proofani" id="d{{d}}poofani"></div>
             </div>
         </div>
@@ -48,7 +48,7 @@
         </div>
     </div>
 
-    <div id="players" onDragStart="onStartDragPlayers(event);" onMouseDown="onResetPlayers(event);" onDragEnd="onEndDragPlayers(event);" onWheel="onWheelPlayers();"></div>
+    <div id="players" onDragStart="onStartDragPlayers(event);" onMouseDown="onResetPlayers(event);" onDragEnd="onEndDragPlayers(event);" onWheel="onWheelPlayers();" ontouchmove="onMobileDragPlayers(event);"></div>
     
     <div class="mapfooter" id="mapfooter">
         <div id="ping">Ping: &infin;</div>
@@ -70,7 +70,7 @@
         </form>
     </div>
 
-    <!--<div id="debuglog" style="position: absolute; z-index: 100; width: 150px; height: 400px; right: 0px; background-color: white; overflow-y: scroll">-->
+    <div id="debuglog" style="position: absolute; z-index: 100; width: 150px; height: 400px; right: 0px; background-color: white; overflow-y: scroll">
     </div>
 </div>
 

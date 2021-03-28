@@ -8,7 +8,8 @@ License: MIT (see LICENSE for details)
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8"> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon"> 
     <script src="/static/jquery-3.3.1.min.js"></script>
     <script src="/static/version.js"></script>   
