@@ -525,6 +525,9 @@ class GameTest(EngineBaseTest):
                     handle=fupload
                 )
                 
+                # expect proper scenes' order
+                self.assertEqual(len(game.order), 1)
+                
                 # assert one scene with only one token, which the background
                 self.assertEqual(len(game.scenes), 1)
                 scene = list(game.scenes)[0]
@@ -570,6 +573,9 @@ class GameTest(EngineBaseTest):
         game2.fromDict(data)
         self.db.commit()
         
+        # expect proper scenes' order
+        self.assertEqual(len(game2.order), 2)
+        
         # assert both games having the same scenes
         self.assertEqual(len(game2.scenes), len(game.scenes))
         game2_scene1 = list(game2.scenes)[0]
@@ -579,7 +585,7 @@ class GameTest(EngineBaseTest):
         # order isn't important here
         self.assertEqual(set([4, 8]), set([len(query1), len(query2)]))
         
-        # @NOTE: exact token data (position etc.) isn't tested here
+        # @NOTE: exact token data (position etc.) isn't tested her
         
     @db_session
     def test_fromZip(self):
@@ -616,6 +622,9 @@ class GameTest(EngineBaseTest):
                 url='bar',
                 handle=fupload
             )
+            
+            # expect proper scenes' order
+            self.assertEqual(len(game2.order), 2)
             
             # assert both games having the same scenes
             self.assertEqual(len(game2.scenes), len(game.scenes))

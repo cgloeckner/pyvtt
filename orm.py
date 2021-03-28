@@ -425,7 +425,10 @@ def createGmDatabase(engine, filename):
             db.commit()
             
             scene.backing = t
-            db.commit() 
+            db.commit()
+            
+            # setup scenes' order (for initial scene)
+            game.reorderScenes()
             
             return game
 
@@ -454,6 +457,10 @@ def createGmDatabase(engine, filename):
                 if self.active is None:
                     # select first scene as active
                     self.active = scene.id
+
+            db.commit()
+            # setup scenes' order (for initial scene)
+            self.reorderScenes()
 
         @staticmethod
         def fromZip(gm, url, handle):
@@ -502,7 +509,7 @@ def createGmDatabase(engine, filename):
                     return None
                     
                 db.commit()
-                
+            
                 return game
      
     # -----------------------------------------------------------------------------
