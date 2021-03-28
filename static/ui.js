@@ -541,7 +541,11 @@ function updateTokenbar() {
             var s = Math.sin((-index * degree) * 3.14 / 180);
             var c = Math.cos((-index * degree) * 3.14 / 180);
             
-            var radius = size * 0.6 * canvas_scale;
+            var radius = size * 0.7 * canvas_scale;
+            if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                // make tokenbar radius larger on mobile
+                radius *= 1.1;
+            }
             var icon_x = x - radius * s;
             var icon_y = y - radius * c;
             
@@ -648,9 +652,9 @@ function onGrab(event) {
     
     pickCanvasPos(event);
 
-    var is_touch_action = event.type == "touchstart" && event.touches.length == 1;
+    var is_single_touch = event.type == "touchstart" && event.touches.length == 1;
 
-    if (event.buttons == 1 || is_touch_action) {
+    if (event.buttons == 1 || is_single_touch) {
         // trigger check for holding the click
         now = Date.now();
         var time_delta = now - initial_click;
@@ -736,7 +740,7 @@ function onGrab(event) {
             select_from_y = mouse_y;
         }
         
-    } else if (event.buttons == 2 && !is_touch_action) {
+    } else if (event.buttons == 2 && !is_single_touch) {
         // Right click: reset token scale, flip-x & rotation
         var changes = [];
         $.each(select_ids, function(index, id) {

@@ -41,6 +41,10 @@
 
 <script>
     $('#drophint').fadeIn(1000, 0.0);
-</script>
+
+    if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        showError('MOBILE DEVICES NOT RECOMMENDED FOR GMs');
+    }
+</script>    
 
 %include("footer")

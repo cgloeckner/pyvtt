@@ -1,11 +1,4 @@
 <div id="login">
-
-    <script>
-    if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        showError('MOBILE DEVICES NOT SUPPORTED');
-    }
-    </script>
-    
     <div class="menu">
         <hr />
         <h1>{{game.url.upper()}} by {{gm.name}}</h1>
