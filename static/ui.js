@@ -279,11 +279,6 @@ function onMobileDragDice(event, d) {
     localStorage.removeItem('drag_data');
 }
 
-/// Event handle to perform players dragging by touch
-function onMobileDragPlayers(event) {
-    onDragPlayers(event);
-}
-
 function onTokenResize() {
     var first_token = tokens[primary_id] 
     
@@ -653,7 +648,9 @@ function onGrab(event) {
     
     pickCanvasPos(event);
 
-    if (event.buttons == 1 || (event.type == "touchstart" && event.touches.length == 1)) {
+    var is_touch_action = event.type == "touchstart" && event.touches.length == 1;
+
+    if (event.buttons == 1 || is_touch_action) {
         // trigger check for holding the click
         now = Date.now();
         var time_delta = now - initial_click;
@@ -739,7 +736,7 @@ function onGrab(event) {
             select_from_y = mouse_y;
         }
         
-    } else if (event.buttons == 2) {
+    } else if (event.buttons == 2 && !is_touch_action) {
         // Right click: reset token scale, flip-x & rotation
         var changes = [];
         $.each(select_ids, function(index, id) {
