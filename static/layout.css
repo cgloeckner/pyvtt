@@ -726,7 +726,7 @@ div#ping,
 div#fps,
 div#zoom,
 div#version,
-div.audioplayer {
+div#status {
     position: absolute;
     color: grey;
     bottom: 0px;
@@ -758,18 +758,32 @@ div#version {
     left: 320px;
 }
 
-div.audioplayer {
-    left: 400px;           
-    width: 130px;
+div#status {
+    left: 400px;
 }
 
-div.audioplayer > div.volume > span {
+div.audioplayer {
+    z-index: 100;
+    background-color: rgba(100, 100, 100, 0.25);
+    border-radius: 10px;
+    padding: 10px;
+
+    position: absolute;
+    top: 50%;
+    right: 0px;
+    transform: translate(0, -50%);
+    width: 25px;
+
+    cursor: grab;
+}
+
+div.audioplayer:active {
+    cursor: grabbing;
+}
+
+div.audioplayer > img {
+    display: block;
+    width: 25px;
     cursor: pointer;      
     user-select: none;
-}
-
-div.audioplayer > div.volume > span#volume {
-    display: inline-block;
-    width: 80px;
-    text-align: center;
 }

@@ -55,16 +55,16 @@ class PlayerCache(object):
         
         self.dispatch_map = {
             'PING'   : self.parent.onPing,
-            'ROLL'   : self.parent.onRoll,
-            'SELECT' : self.parent.onSelect,
-            'RANGE'  : self.parent.onRange,
-            'ORDER'  : self.parent.onOrder,     
-            'UPDATE' : self.parent.onUpdateToken,
-            'CREATE' : self.parent.onCreateToken,
-            'CLONE'  : self.parent.onCloneToken,
-            'DELETE' : self.parent.onDeleteToken,
-            'BEACON' : self.parent.onBeacon,
-            'MUSIC'  : self.parent.onMusic,
+            'ROLL'    : self.parent.onRoll,
+            'SELECT'  : self.parent.onSelect,
+            'RANGE'   : self.parent.onRange,
+            'ORDER'   : self.parent.onOrder,     
+            'UPDATE'  : self.parent.onUpdateToken,
+            'CREATE'  : self.parent.onCreateToken,
+            'CLONE'   : self.parent.onCloneToken,
+            'DELETE'  : self.parent.onDeleteToken,
+            'BEACON'  : self.parent.onBeacon,
+            'MUSIC'   : self.parent.onMusic,
             'GM-CREATE'   : self.parent.onCreateScene,
             'GM-MOVE'     : self.parent.onMoveScene,
             'GM-ACTIVATE' : self.parent.onActivateScene,
@@ -252,7 +252,7 @@ class GameCache(object):
             self.rebuildIndices()
         
     # --- websocket implementation ------------------------------------
-        
+
     def login(self, player):
         """ Handle player login. """
         # notify player about all players and  latest rolls
@@ -334,7 +334,7 @@ class GameCache(object):
                     del self.players[name]
                     self.rebuildIndices()
                     return name
-        
+    
     def cleanup(self):
         """ Cleanup game and closes unused sockets. """
         with self.lock:
@@ -348,7 +348,11 @@ class GameCache(object):
             for name in removing:
                 del self.players[name]
             self.rebuildIndices()
-        
+
+    def notifyMusic(self):
+        """ notify all players about cleared music """
+        self.broadcast({'OPID': 'MUSIC'})
+    
     def broadcast(self, data):
         """ Broadcast given data to all clients. """
         with self.lock:
@@ -690,6 +694,11 @@ class GameCache(object):
 
     def onMusic(self, player, data):
         """ Handle player uploaded music. """
+        if data['action'] == 'reset':
+            with db_session: 
+                g = self.parent.db.Game.select(lambda g: g.url == self.url).first() 
+                g.removeMusic()
+            
         # broadcast notification
         self.broadcast(data)
         

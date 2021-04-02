@@ -257,9 +257,12 @@ function onDrag(event) {
     
     event.preventDefault();
     pickCanvasPos(event);
-    
+
     if (drag_data == 'players') {
         onDragPlayers(event);
+
+    } else if (drag_data == 'music') {
+        onDragMusic(event);
         
     } else if (primary_id != 0) {        
         if (drag_data == 'resize') {
@@ -453,7 +456,8 @@ function onDrop(event) {
 
             if (response['music']) {
                 writeSocket({
-                    'OPID': 'MUSIC'
+                    'OPID'   : 'MUSIC',
+                    'action' : 'refresh'
                 });
             }
             
@@ -1407,8 +1411,35 @@ function onEndDragPlayers(event) {
     localStorage.removeItem('drag_data');
 }
 
+/// Event handle for start dragging the music tools container
+function onStartDragMusic(event) {             
+    console.log('start');
+    event.dataTransfer.setDragImage(drag_img, 0, 0);
+    localStorage.setItem('drag_data', 'music');
+}
+
+/// Event handle for clicking the music tools container
+function onResetMusic(event) {
+    if (event.buttons == 2) {
+        // reset music tools position
+        var target = $('#musiccontrols');
+        var x = window.innerWidth - target.width() * 1.75;
+        var y = window.innerHeight * 0.5;
+        
+        // apply position
+        moveMusicTo([x, y]);
+        
+        localStorage.removeItem('music');
+    }
+}
+   
+/// Event handle for stop dragging the players container
+function onEndDragMusic(event) {
+    localStorage.removeItem('drag_data');
+}
+
 /// Snaps dice container to the closest edge (from x, y)
-function snapDice(x, y, container, default_snap) {
+function snapContainer(x, y, container, default_snap) {
     var w = container.width();
     var h = container.height();
     
@@ -1498,7 +1529,13 @@ function moveDiceTo(data, sides) {
 }
 
 function movePlayersTo(pos) {
-    var target = $('#players')
+    var target = $('#players'); 
+    target.css('left', pos[0]);
+    target.css('top',  pos[1]);
+}
+
+function moveMusicTo(pos) {
+    var target = $('#musiccontrols');
     target.css('left', pos[0]);
     target.css('top',  pos[1]);
 }
@@ -1517,7 +1554,7 @@ function onDragDice(event) {
     var x = Math.max(0, Math.min(window.innerWidth - w,  p[0] - w / 2));
     var y = Math.max(0, Math.min(window.innerHeight - h, p[1] - h / 2));
     var data = [x, y];
-    data = snapDice(data[0], data[1], target, '');
+    data = snapContainer(data[0], data[1], target, '');
 
     // apply position
     moveDiceTo(data, sides);
@@ -1540,11 +1577,22 @@ function onDragPlayers(event) {
     savePlayersPos(pos);
 }
 
-/*
-/// Event handle for dragging a single dice container
-function onDragStuff(event) {
+/// Drag music tools container to position specified by the event
+function onDragMusic(event) {
+    var p = pickScreenPos(event);
+    var target = $('#musiccontrols');
+
+    // limit position to the screen
+    var w = target.width();
+    var h = target.height();
+    var x = Math.max(0, Math.min(window.innerWidth - 2 * w, p[0]));
+    var y = Math.max(h/2, Math.min(window.innerHeight - h/2,  p[1]));
+    var pos = [x, y];
+    
+    moveMusicTo(pos);
+    saveMusicPos(pos);
 }
-*/
+
 /// Event handle for entering a player container with the mouse
 function onMouseOverPlayer(uuid) {
     over_player = uuid;
@@ -1623,7 +1671,7 @@ function loadDicePos(sides) {
     data[1] *= window.innerHeight;
     
     // handle snap
-    data = snapDice(data[0], data[1], $('#d' + sides + 'icon'), data[2]);
+    data = snapContainer(data[0], data[1], $('#d' + sides + 'icon'), data[2]);
     
     return data;
 }
@@ -1656,6 +1704,13 @@ function savePlayersPos(pos) {
     pos[0] /= window.innerWidth;
     pos[1] /= window.innerHeight;
     localStorage.setItem('players', JSON.stringify(pos));
+}
+
+/// Save music tools position to local storage using percentage values
+function saveMusicPos(pos) {
+    pos[0] /= window.innerWidth;
+    pos[1] /= window.innerHeight;
+    localStorage.setItem('music', JSON.stringify(pos));
 }
 
 function getImageBlob(img) {

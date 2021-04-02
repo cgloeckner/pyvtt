@@ -314,7 +314,19 @@ class GameTest(EngineBaseTest):
         self.assertEqual(len(all_broken), 1)
         self.assertIn(broken, all_broken)
         self.assertNotIn(fine, all_broken)
+
+    @db_session
+    def test_removeMusic(self):
+        game = self.db.Game(url='foo', gm_url='url456')
+        game.postSetup()
         
+        # expect music to be deleted on cleanup
+        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        p3 = img_path / self.engine.paths.getMusicFileName()
+        p3.touch()
+        game.removeMusic()
+        self.assertFalse(os.path.exists(p3))
+    
     @db_session
     def test_cleanup(self):
         game = self.db.Game(url='foo', gm_url='url456')

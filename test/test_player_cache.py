@@ -1255,15 +1255,27 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache3 = game_cache.insert('carlos', 'green', False)
         player_cache3.socket = socket3
 
-        beacon_data = {'OPID': 'MUSIC'}
+        beacon_data = {'OPID': 'MUSIC', 'action': 'refresh'}
         game_cache.onBeacon(player_cache3, beacon_data)
-        # expect MUSIC broadcast
+        # expect MUSIC refresh broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
         self.assertEqual(answer1, answer2)
         self.assertEqual(answer1, answer3)
         self.assertEqual(answer1['OPID'], 'MUSIC')
+        self.assertEqual(answer1['action'], 'refresh')
+        
+        beacon_data = {'OPID': 'MUSIC', 'action': 'reset'}
+        game_cache.onBeacon(player_cache3, beacon_data)
+        # expect MUSIC reset broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'MUSIC')  
+        self.assertEqual(answer1['action'], 'reset')
         
     def test_onCloneToken(self):
         socket1 = SocketDummy()

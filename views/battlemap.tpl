@@ -50,21 +50,21 @@
 
     <div id="players" onDragStart="onStartDragPlayers(event);" onMouseDown="onResetPlayers(event);" onDragEnd="onEndDragPlayers(event);" onWheel="onWheelPlayers();" ontouchmove="onDragPlayers(event);"></div>
     
+    <div class="audioplayer" draggable="true" id="musiccontrols" onDragStart="console.log('test'); onStartDragMusic(event);" onMouseDown="onResetMusic(event);" onDragEnd="onEndDragMusic(event);" ontouchmove="onDragMusic(event);">
+        <audio id="audioplayer" loop></audio>
+        <img src="/static/louder.png" draggable="false" onClick="onLouderMusic();" title="MAKE LOUDER" />
+        <img src="/static/muted.png" id="toggleMusic" draggable="false" onClick="onToggleMusic();" title="TOGGLE MUSIC" />
+        <img src="/static/quieter.png" draggable="false" onClick="onQuieterMusic();" title="MAKE QUIETER" />
+        <img src="/static/delete.png" draggable="false" onClick="onClearMusic();" title="CLEAR MUSIC" />
+    </div>
+        
     <div class="mapfooter" id="mapfooter">
         <div id="ping">Ping: &infin;</div>
         <div id="fps">0 FPS</div>
         <div id="zoom" title="CLICK TO RESET" onClick="resetViewport();">Zoom: 100%</div>
         <div id="version">unknown version</div>
+        <div id="status">Music muted</div>
 
-        <div class="audioplayer">
-            <audio id="audioplayer" loop></audio>
-            <div class="volume">
-                <span class="button" onClick="onQuieterMusic();" title="MAKE QUIETER">&#x1f507;</span>
-                <span id="volume" onClick="onToggleMusic();" title="PLAY/PAUSE">OFF</span>
-                <span class="button" style="float: right;" onClick="onLouderMusic();" title="MAKE LOUDER">&#128266;</span>
-            </div>
-        </div>
-        
         <form id="uploadform" method="post" enctype="multipart/form-data">
             <input id="uploadqueue" name="file[]" type="file" multiple />
         </form>

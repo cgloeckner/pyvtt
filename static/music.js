@@ -31,11 +31,15 @@ function setMusicVolume(v) {
 /// Display music volume or 'OFF'
 function showMusicVolume() {
     var player = $('#audioplayer')[0];
-    var v = parseInt(player.volume * 100) + '%'
+    var v = 'Music: ' + parseInt(player.volume * 100) + '%'
     if (player.paused || player.volume == 0.0) {
-        v = 'OFF';
+        src = '/static/muted.png';
+        v = 'Music muted';
+    } else {
+        src = '/static/speaker.png';
     }
-    $('#volume')[0].innerHTML = v;
+    $('#toggleMusic')[0].src = src;
+    $('#status')[0].innerHTML = v;
 }
 
 /// Make music one step quieter (may turn it off)
@@ -95,9 +99,23 @@ function onToggleMusic() {
     }
 }
 
+/// Event handle to clear music
+function onClearMusic() {
+    if (confirm('REMOVE MUSIC FOR EVERYBODY?')) {
+        writeSocket({
+            'OPID'   : 'MUSIC',
+            'action' : 'reset'
+        });
+    }
+}
+
 function refreshStream() { 
     var player = $('#audioplayer')[0];
-    
+
+    $('#musiccontrols').hide();
+    player.oncanplay = function(event) {   
+        $('#musiccontrols').show();
+    };
     player.src = '/music/' + gm + '/' + game + '/' + Date.now();
 }
 

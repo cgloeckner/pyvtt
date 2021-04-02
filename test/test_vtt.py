@@ -470,6 +470,7 @@ class VttTest(EngineBaseTest):
         self.app.set_cookie('session', gm_sid)
         ret = self.app.post('/vtt/clean-up/test-game-1')
         self.assertEqual(ret.status_int, 200)
+        # expect music websockets to contain music refresh action
 
     def test_vtt_kickplayer(self):
         # register arthur

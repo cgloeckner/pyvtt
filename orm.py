@@ -285,7 +285,14 @@ def createGmDatabase(engine, filename):
                     if t.url.split('/')[-1] not in all_images:
                         broken.append(t)
             return broken
-            
+
+        def removeMusic(self):
+            """ Remove music. """
+            fname = engine.paths.getGamePath(self.gm_url, self.url) / engine.paths.getMusicFileName()
+            with engine.locks[self.gm_url]: # make IO access safe
+                if os.path.exists(fname):
+                    os.remove(fname)
+        
         def cleanup(self, now):
             """ Cleanup game's unused image and token data. """   
             engine.logging.info('|--> Cleaning {0}'.format(self.url))
@@ -307,11 +314,7 @@ def createGmDatabase(engine, filename):
             for t in relevant:
                 t.delete()
 
-            # remove music file
-            fname = engine.paths.getGamePath(self.gm_url, self.url) / engine.paths.getMusicFileName()
-            with engine.locks[self.gm_url]: # make IO access safe
-                if os.path.exists(fname):
-                    os.remove(fname)
+            self.removeMusic()
             
         def preDelete(self):
             """ Remove this game from disk before removing it from

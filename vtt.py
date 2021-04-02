@@ -330,6 +330,9 @@ def setup_gm_routes(engine):
         
         engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 
+        # notify all players about cleared music
+        game_cache.notifyMusic();
+
     @post('/vtt/kick-player/<url>/<uuid>')
     def kick_player(url, uuid):
         gm = engine.main_db.GM.loadFromSession(request)
