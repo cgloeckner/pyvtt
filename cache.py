@@ -827,7 +827,8 @@ class GameCache(object):
                    self.parent.db.Token(
                         scene=clone, url=t.url, posx=t.posx, posy=t.posy,
                         zorder=t.zorder, size=t.size, rotate=t.rotate,
-                        flipx=t.flipx, locked=t.locked
+                        flipx=t.flipx, locked=t.locked, text=t.text,
+                        color=t.color
                     )
             self.parent.db.commit()
             g.active = clone.id

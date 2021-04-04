@@ -1632,7 +1632,7 @@ class PlayerCacheTest(EngineBaseTest):
                 gm_cache.db.Token(scene=active, url='wallpaper', posx=1, posy=2, size=-1)
                 for t in range(3):
                     gm_cache.db.Token(scene=active, url='test', posx=20, posy=21, size=3,
-                        rotate=22.5, flipx=True, locked=True)
+                        rotate=22.5, flipx=True, locked=True, text='foo', color='#FF0000')
                 return all_scene_ids, active
         
         # clear game
@@ -1661,7 +1661,9 @@ class PlayerCacheTest(EngineBaseTest):
                 self.assertEqual(t.size, 3)
                 self.assertAlmostEqual(t.rotate, 22.5)
                 self.assertTrue(t.flipx)
-                self.assertTrue(t.locked)
+                self.assertTrue(t.locked) 
+                self.assertEqual(t.text, 'foo')
+                self.assertEqual(t.color, '#FF0000')
         # ... but no background
         self.assertIsNone(active.backing)
         # expect scene at end of the order list
