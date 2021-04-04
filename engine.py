@@ -56,6 +56,7 @@ class Engine(object):
             "game"       : 15,
             "music"      : 10
         }
+        self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF']
         
         self.local_gm       = False
         self.localhost      = False
@@ -99,14 +100,15 @@ class Engine(object):
         if not os.path.exists(settings_path):
             # create default settings
             settings = {
-                'title'      : self.title,
-                'links'      : self.links,
-                'file_limit' : self.file_limit,
-                'shards'     : self.shards,
-                'expire'     : self.expire,
-                'hosting'    : self.hosting,
-                'login'      : self.login,
-                'notify'     : self.notify
+                'title'        : self.title,
+                'links'        : self.links,
+                'file_limit'   : self.file_limit,
+                'playercolors' : self.playercolors,
+                'shards'       : self.shards,
+                'expire'       : self.expire,
+                'hosting'      : self.hosting,
+                'login'        : self.login,
+                'notify'       : self.notify
             }
             with open(settings_path, 'w') as h:
                 json.dump(settings, h, indent=4)
@@ -115,14 +117,15 @@ class Engine(object):
             # load settings
             with open(settings_path, 'r') as h:
                 settings = json.load(h)
-                self.title      = settings['title']
-                self.links      = settings['links']
-                self.file_limit = settings['file_limit']
-                self.shards     = settings['shards']
-                self.expire     = settings['expire']
-                self.hosting    = settings['hosting']
-                self.login      = settings['login']
-                self.notify     = settings['notify']
+                self.title        = settings['title']
+                self.links        = settings['links']
+                self.file_limit   = settings['file_limit']
+                self.playercolors = settings['playercolors']
+                self.shards       = settings['shards']
+                self.expire       = settings['expire']
+                self.hosting      = settings['hosting']
+                self.login        = settings['login']
+                self.notify       = settings['notify']
             self.logging.info('Settings loaded')
         
         # export server constants to javascript-file

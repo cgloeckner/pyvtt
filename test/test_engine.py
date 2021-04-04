@@ -37,6 +37,7 @@ class EngineTest(EngineBaseTest):
                 'game'       : 15,
                 'music'      : 10
             },
+            'playercolors' : ['#FF0000', '#00FF00'],
             'shards'     : list(),
             'expire'     : 3600,
             'hosting'    : {

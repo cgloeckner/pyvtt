@@ -593,7 +593,7 @@ def setup_player_routes(engine):
         # try to load playercolor from cookieplayercolor = request.get_cookie('playercolor')
         playercolor = request.get_cookie('playercolor')
         if playercolor is None:   
-            colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff']
+            colors = engine.playercolors
             playercolor = colors[random.randrange(len(colors))]
               
         # load GM from cache
