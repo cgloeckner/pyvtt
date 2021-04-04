@@ -447,10 +447,10 @@ function drawToken(token, color, is_background) {
                 ctx.textAlign = "center";
 
                 // use black or white outline based in color's brightness
-                if (brightnessByColor(token.color) > 50) {
-                    ctx.strokeStyle = 'black';
+                if (brightnessByColor(token.color) > 60) {
+                    ctx.strokeStyle = '#000000';
                 } else {
-                    ctx.strokeStyle = 'white';
+                    ctx.strokeStyle = '#FFFFFF';
                 }
                 ctx.lineWidth = 7;
                 ctx.lineJoin = "round";
