@@ -310,10 +310,11 @@ def printPlayersByHour(doc, data):
     for col, day in enumerate(data):
         row = 2
         for hour in range(24):
-            total[day] += data[day][hour]
             sheet.write(row, 0, formatHour(hour))
             sheet.write(row, col+1, data[day][hour])
             row += 1
+
+
 # ---------------------------------------------------------------------
 
 
