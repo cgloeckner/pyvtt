@@ -184,7 +184,7 @@ def fetchPlayersByHour(logins):
     delta = datetime.timedelta(days=1)
     dt    = datetime.datetime.fromtimestamp(since)
     now   = datetime.datetime.fromtimestamp(now)
-    while dt < now:
+    while dt <= now:
         date_str = formatter(dt)
         data[date_str] = dict()
         for hr in range(24):
@@ -202,7 +202,8 @@ def fetchPlayersByHour(logins):
     # count maximum number of players per hour 
     for date_str in data:
         for hour in data[date_str]:
-            data[date_str][hour] = len(data[date_str][hour])
+            tmp = data[date_str][hour]
+            data[date_str][hour] = max(tmp) if len(tmp) > 0 else 0
 
     return data
 
