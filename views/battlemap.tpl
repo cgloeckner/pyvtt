@@ -42,7 +42,9 @@
             <img src="/static/copy.png" id="tokenClone" draggable="false" onClick="onClone();" title="CLONE TOKEN" />
             <img src="/static/delete.png" id="tokenDelete" draggable="false" onClick="onTokenDelete();" title="DELETE TOKEN" />
             <img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="onBottom();" title="MOVE TO BOTTOM" />
+            <img src="/static/louder.png" id="tokenLabelInc" draggable="false" onClick="onLabelStep(1);" title="INCREASE NUMBER" />
             <img src="/static/label.png" id="tokenLabel" draggable="false" onClick="onLabel();" title="ENTER LABEL" />
+            <img src="/static/quieter.png" id="tokenLabelDec" draggable="false" onClick="onLabelStep(-1);" title="DECREASE LABEL" />
             <img src="/static/resize.png" id="tokenResize" onDragStart="onStartResize();" onDragEnd="onQuitAction(event);" ontouchmove="onTokenResize(event);" ontouchend="onQuitResize(event);" title="DRAG TO RESIZE" onClick="showTip('DRAG TO RESIZE');" />
             <img src="/static/rotate.png" id="tokenRotate" onDragStart="onStartRotate();" onDragEnd="onQuitAction(event);" ontouchmove="onTokenRotate(event);" ontouchend="onQuitRotate(event);" title="DRAG TO ROTATE" onClick="showTip('DRAG TO ROTATE');" />
         </div>

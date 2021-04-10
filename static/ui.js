@@ -477,6 +477,7 @@ function showTokenbar(token_id) {
 }
 
 var token_icons = ['Rotate', 'Top', 'Delete', 'Bottom', 'Label', 'Resize', 'FlipX', 'Clone', 'Lock'];
+var full_icons =  ['Rotate', 'Top', 'Delete', 'Bottom', 'LabelDec', 'Label', 'LabelInc', 'Resize', 'FlipX', 'Clone', 'Lock'];
 
 function updateTokenbar() {
     $('#tokenbar').css('visibility', 'hidden');
@@ -538,10 +539,15 @@ function updateTokenbar() {
         // padding avoids icons out of clickable range (especially
         // at the top, versus the GM's dropdown)
         var padding = 20;
+
+        var use_icons = token_icons;
+        if (token.text.startsWith('#')) {
+            use_icons = full_icons;
+        }
         
-        $.each(token_icons, function(index, name) { 
+        $.each(use_icons, function(index, name) { 
             // calculate position based on angle
-            var degree = 360.0 / token_icons.length;
+            var degree = 360.0 / use_icons.length;
             var s = Math.sin((-index * degree) * 3.14 / 180);
             var c = Math.cos((-index * degree) * 3.14 / 180);
             
@@ -576,6 +582,8 @@ function updateTokenbar() {
             $('#tokenClone').css('visibility', 'hidden');
             $('#tokenDelete').css('visibility', 'hidden');
             $('#tokenLabel').css('visibility', 'hidden');
+            $('#tokenLabelDec').css('visibility', 'hidden');
+            $('#tokenLabelInc').css('visibility', 'hidden');
         } else {
             $('#tokenFlipX').css('visibility', '');
             $('#tokenLock')[0].src = '/static/unlocked.png';
@@ -586,6 +594,13 @@ function updateTokenbar() {
             $('#tokenClone').css('visibility', '');
             $('#tokenDelete').css('visibility', '');
             $('#tokenLabel').css('visibility', '');
+            if (token.text.startsWith('#')) {
+                $('#tokenLabelDec').css('visibility', '');
+                $('#tokenLabelInc').css('visibility', '');
+            } else {
+                $('#tokenLabelDec').css('visibility', 'hidden');
+                $('#tokenLabelInc').css('visibility', 'hidden');
+            }
         }
     }
 }
@@ -1271,6 +1286,40 @@ function onBottom() {
         changes.push({
             'id'     : id,
             'zorder' : token.zorder
+        });
+    });
+    
+    writeSocket({
+        'OPID'    : 'UPDATE',
+        'changes' : changes
+    });
+}
+
+/// Event handle for changing a numeric token label
+function onLabelStep(delta) {
+    var changes = [];
+
+    $.each(select_ids, function(index, id) {
+        var token = tokens[id];
+        
+        if (token.locked || !token.text.startsWith('#')) {
+            // ignore if locked
+            return;
+        }
+        // click token's number
+        var number = parseInt(token.text.substr(1));
+        number += delta;
+        if (number < 0) {
+            number = 0;
+        } else if (number > 40) {
+            number = 40;
+        }
+        token.text = '#' + number
+        token.label_canvas = null; // trigger redrawing
+        
+        changes.push({
+            'id'    : id,
+            'text'  : token.text
         });
     });
     
