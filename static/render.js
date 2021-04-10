@@ -445,16 +445,6 @@ function drawToken(token, color, is_background) {
                 ctx = token.label_canvas.getContext('2d')
                 ctx.textAlign = "center";
                 ctx.fillStyle = token.color;
-
-                if (token.locked) {
-                    // large white font for locked labels
-                    ctx.font = "60px sans"; 
-                    ctx.lineWidth = 9;
-                } else {
-                    // regular font for regular labels
-                    ctx.font = "30px sans"; 
-                    ctx.lineWidth = 7;
-                }
                 
                 // use black or white outline based in color's brightness
                 if (brightnessByColor(token.color) > 60) {
@@ -463,20 +453,37 @@ function drawToken(token, color, is_background) {
                     ctx.strokeStyle = '#FFFFFF';
                 }
                 
+                if (token.text.startsWith('#')) {
+                    // large white font for locked labels
+                    ctx.font = "60px sans"; 
+                    ctx.lineWidth = 8;   
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.strokeStyle = '#FFFFFF';
+                } else {
+                    // regular font for regular labels
+                    ctx.font = "30px sans"; 
+                    ctx.lineWidth = 7;
+                }
+                
                 ctx.lineJoin = "round";
                 ctx.miterLimit = 2;
-                ctx.strokeText(token.text, 250, 50);
+
+                let tmp_text = token.text;
+                if (token.text.startsWith('#')) {
+                    tmp_text = token.text.substr(1);
+                }
                 
-                ctx.fillText(token.text, 250, 50);
+                ctx.strokeText(tmp_text, 250, 50);
+                ctx.fillText(tmp_text, 250, 50);
             }
 
             context.scale(0.5, 0.5); // since text is pre-rendered in higher res
-            if (!token.locked) {
-                // place label at the bottom
-                context.translate(-250, -35 + token.size);
-            } else {
+            if (token.text.startsWith('#')) {  
                 // place label at the center
                 context.translate(-250, -50 + 20);
+            } else {
+                // place label at the bottom
+                context.translate(-250, -35 + token.size);
             }
             context.drawImage(token.label_canvas, 0, 0);
         }
