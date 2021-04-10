@@ -443,26 +443,42 @@ function drawToken(token, color, is_background) {
                 token.label_canvas.width = 500;
                 token.label_canvas.height = 100;
                 ctx = token.label_canvas.getContext('2d')
-                ctx.font = "30px sans";
                 ctx.textAlign = "center";
+                ctx.fillStyle = token.color;
 
+                if (token.locked) {
+                    // large white font for locked labels
+                    ctx.font = "60px sans"; 
+                    ctx.lineWidth = 9;
+                } else {
+                    // regular font for regular labels
+                    ctx.font = "30px sans"; 
+                    ctx.lineWidth = 7;
+                }
+                
                 // use black or white outline based in color's brightness
                 if (brightnessByColor(token.color) > 60) {
                     ctx.strokeStyle = '#000000';
                 } else {
                     ctx.strokeStyle = '#FFFFFF';
                 }
-                ctx.lineWidth = 7;
+                
                 ctx.lineJoin = "round";
                 ctx.miterLimit = 2;
                 ctx.strokeText(token.text, 250, 50);
                 
-                ctx.fillStyle = token.color;
                 ctx.fillText(token.text, 250, 50);
             }
 
             context.scale(0.5, 0.5); // since text is pre-rendered in higher res
-            context.drawImage(token.label_canvas, -250, -35 + token.size);
+            if (!token.locked) {
+                // place label at the bottom
+                context.translate(-250, -35 + token.size);
+            } else {
+                // place label at the center
+                context.translate(-250, -50 + 20);
+            }
+            context.drawImage(token.label_canvas, 0, 0);
         }
     }
     

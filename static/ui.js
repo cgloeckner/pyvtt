@@ -1176,6 +1176,9 @@ function onLock() {
     $.each(select_ids, function(index, id) {
         var token = tokens[id];
         token.locked = !primary_lock;
+
+        // force label to be redrawn
+        token.label_canvas = null;
         
         changes.push({
             'id'     : id,
