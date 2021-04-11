@@ -1307,6 +1307,7 @@ function onBottom() {
 /// Event handle for changing a numeric token label
 function onLabelStep(delta) {
     var changes = [];
+    var deleted = [];
 
     $.each(select_ids, function(index, id) {
         var token = tokens[id];
@@ -1318,24 +1319,35 @@ function onLabelStep(delta) {
         // click token's number
         var number = parseInt(token.text.substr(1));
         number += delta;
-        if (number < 0) {
+        if (number <= 0) {
             number = 0;
         } else if (number > 40) {
             number = 40;
         }
         token.text = '#' + number
         token.label_canvas = null; // trigger redrawing
-        
-        changes.push({
-            'id'    : id,
-            'text'  : token.text
-        });
+
+        if (number == 0) {
+            deleted.push(id);
+        } else {
+            changes.push({
+                'id'    : id,
+                'text'  : token.text
+            });
+        }
     });
     
     writeSocket({
         'OPID'    : 'UPDATE',
         'changes' : changes
     });
+
+    if (deleted.length > 0) {
+        writeSocket({
+            'OPID'   : 'DELETE',
+            'tokens' : deleted
+        });
+    }
 }
 
 /// Event handle for entering a token label
@@ -1433,6 +1445,7 @@ function onTokenDelete() {
 function onStartDragDice(event, sides) {
     event.dataTransfer.setDragImage(drag_img, 0, 0);
     localStorage.setItem('drag_data',  sides);
+    localStorage.setItem('drag_ctrl', event.ctrlKey);
 }
 
 /// Event handle for clicking a single dice container
@@ -1445,7 +1458,8 @@ function onResetDice(event, sides) {
    
 /// Event handle for stop dragging a single dice container
 function onEndDragDice(event) {
-    if (event.ctrlKey) {
+    // NOTE: event.ctrlKey is designed to yield 'true' if ctrl is fired WHEN the DragEnd happens
+    if (localStorage.getItem('drag_ctrl')) {
         // query last recent roll of that die by the current player
         var sides = localStorage.getItem('drag_data');
         if (sides == 2) {
@@ -1453,11 +1467,10 @@ function onEndDragDice(event) {
             return;
         }
         var key = sides + '_' + my_name;
-        if (!(key in roll_history)) {
-            // ignore action
-            return;
+        var r = sides; // fallback
+        if (key in roll_history) {
+            var r = roll_history[key];
         }
-        var r = roll_history[key];
         
         // create a dope timer token \m/
          writeSocket({
@@ -1471,6 +1484,7 @@ function onEndDragDice(event) {
     }
     
     localStorage.removeItem('drag_data');
+    localStorage.removeItem('drag_ctrl');
 }
 
 /// Event handle for start dragging the players container
