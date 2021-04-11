@@ -416,7 +416,11 @@ function drawToken(token, color, is_background) {
             context.shadowColor = color;
             context.shadowBlur = 25;
         }
-        
+
+        // rotate token's hue if used as timer-token
+        if (token.text != null && token.text.startsWith('#')) {
+            context.filter = "hue-rotate(" + getHue(token.color) + "turn)";
+        }
         // draw token image
         try {
             context.drawImage(
@@ -426,6 +430,11 @@ function drawToken(token, color, is_background) {
             );
         } catch (err) {
             // required to avoid Chrome choking from missing images
+        }
+
+        // unrotate hue
+        if (token.text != null && token.text.startsWith('#')) {
+            context.filter = "hue-rotate(0.0turn)";
         }
 
         // draw token label
@@ -458,7 +467,7 @@ function drawToken(token, color, is_background) {
                     ctx.font = "60px sans"; 
                     ctx.lineWidth = 8;   
                     ctx.fillStyle = '#FFFFFF';
-                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.strokeStyle = token.color;
                 } else {
                     // regular font for regular labels
                     ctx.font = "30px sans"; 

@@ -477,7 +477,6 @@ function showTokenbar(token_id) {
 }
 
 var token_icons = ['Rotate', 'Top', 'Delete', 'Bottom', 'Label', 'Resize', 'FlipX', 'Clone', 'Lock'];
-var full_icons =  ['Rotate', 'Top', 'Delete', 'Bottom', 'LabelDec', 'Label', 'LabelInc', 'Resize', 'FlipX', 'Clone', 'Lock'];
 
 function updateTokenbar() {
     $('#tokenbar').css('visibility', 'hidden');
@@ -540,35 +539,41 @@ function updateTokenbar() {
         // at the top, versus the GM's dropdown)
         var padding = 20;
 
-        var use_icons = token_icons;
+        var icons = [token_icons];
         if (token.text.startsWith('#')) {
-            use_icons = full_icons;
+            icons.push(['LabelInc', 'LabelDec']);
         }
         
-        $.each(use_icons, function(index, name) { 
-            // calculate position based on angle
-            var degree = 360.0 / use_icons.length;
-            var s = Math.sin((-index * degree) * 3.14 / 180);
-            var c = Math.cos((-index * degree) * 3.14 / 180);
-            
-            var radius = size * 0.7 * canvas_scale;
-            if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                // make tokenbar radius larger on mobile
-                radius *= 1.1;
-            }
-            var icon_x = x - radius * s;
-            var icon_y = y - radius * c;
-            
-            // force position to be on the screen
-            icon_x = Math.max(padding, Math.min(canvas.width()  - padding, icon_x));
-            icon_y = Math.max(padding, Math.min(canvas.height() - padding, icon_y));
-            
-            // place icon
-            var icon = $('#token' + name);
-            var w = icon.width();
-            var h = icon.height();
-            icon.css('left', icon_x - w / 2 + 'px');
-            icon.css('top',  icon_y - h / 2 + 'px');
+        $.each(icons, function(i, use_icons) {
+            $.each(use_icons, function(index, name) { 
+                // calculate position based on angle
+                var degree = 360.0 / use_icons.length;
+                var s = Math.sin((-index * degree) * 3.14 / 180);
+                var c = Math.cos((-index * degree) * 3.14 / 180);
+                
+                var radius = size * 0.7 * canvas_scale;
+                if (i == 1) {
+                    // shrink radius for inner icons
+                    radius *= 0.5;
+                }
+                if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    // make tokenbar radius larger on mobile
+                    radius *= 1.1;
+                }
+                var icon_x = x - radius * s;
+                var icon_y = y - radius * c;
+                
+                // force position to be on the screen
+                icon_x = Math.max(padding, Math.min(canvas.width()  - padding, icon_x));
+                icon_y = Math.max(padding, Math.min(canvas.height() - padding, icon_y));
+                
+                // place icon
+                var icon = $('#token' + name);
+                var w = icon.width();
+                var h = icon.height();
+                icon.css('left', icon_x - w / 2 + 'px');
+                icon.css('top',  icon_y - h / 2 + 'px');
+            });
         });
         
         // handle locked mode
