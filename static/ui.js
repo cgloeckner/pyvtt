@@ -287,7 +287,7 @@ function onMobileDragDice(event, d) {
 }
 
 function onTokenResize() {
-    var first_token = tokens[primary_id] 
+    var first_token = tokens[primary_id];
     
     // calculate distance between mouse and token   
     var dx = first_token.posx - mouse_x;
@@ -301,7 +301,7 @@ function onTokenResize() {
     // resize all selected tokens
     $.each(select_ids, function(index, id) {
         var token = tokens[id];
-        if (token.locked) {
+        if (token == null || token.locked) {
             return;
         }
         var size = Math.round(token.size * ratio * 2);
@@ -317,7 +317,7 @@ function onTokenResize() {
 }
 
 function onTokenRotate(event) { 
-    var first_token = tokens[primary_id] 
+    var first_token = tokens[primary_id];
     
     // calculate vectors between origin/icon and origni/mouse
     // note: assuming the rotation icon is at top
@@ -356,7 +356,7 @@ function onTokenRotate(event) {
     // rotate all selected tokens
     $.each(select_ids, function(index, id) {
         var token = tokens[id];
-        if (token.locked) {
+        if (token == null || token.locked) {
             return;
         }
         
@@ -1177,7 +1177,7 @@ function onFlipX() {
     $.each(select_ids, function(index, id) {
         var token = tokens[id];
         
-        if (token.locked) {
+        if (token == null || token.locked) {
             // ignore if locked
             return; 
         }
@@ -1319,7 +1319,7 @@ function onLabelStep(delta) {
     $.each(select_ids, function(index, id) {
         var token = tokens[id];
         
-        if (token.locked || !token.text.startsWith('#')) {
+        if (token == null || token.locked || !token.text.startsWith('#')) {
             // ignore if locked
             return;
         }
@@ -1334,7 +1334,7 @@ function onLabelStep(delta) {
         if (number > 0) {
             token.text = '#' + number
         } else {
-            token.text = '';
+            token.text = '#';
         }
         token.label_canvas = null; // trigger redrawing
 
