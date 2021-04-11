@@ -28,6 +28,7 @@ var is_gm = false;
 
 var my_uuid = '';
 var my_name = '';
+var my_color = '';
 
 /// Handle function for interaction via socket
 function onSocketMessage(event) {
@@ -149,7 +150,7 @@ function onSelect(data) {
     player_selections[data.color] = data.selected;
     
     // update player's primary selection
-    if (data.color == getCookie('playercolor') && data.selected.length > 0) {
+    if (data.color == my_color && data.selected.length > 0) {
         select_ids = data.selected;
         if (!select_ids.includes(primary_id)) {
             // reselect primary item (previous one does not belong to new selection)
@@ -349,6 +350,7 @@ function start(gmname, url, playername, color) {
     });
 
     my_name = playername;
+    my_color = color;
     
     // setup in-memory canvas (for transparency checking)
     mem_canvas = document.createElement('canvas');

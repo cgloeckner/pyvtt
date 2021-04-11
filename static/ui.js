@@ -310,6 +310,9 @@ function onTokenResize() {
         // @NOTE: resizing is updated after completion, meanwhile
         // clide-side prediction kicks in
         token.size = size;
+
+        // force label to be redrawn
+        token.label_canvas = null;
     });
 }
 
@@ -709,7 +712,7 @@ function onGrab(event) {
             }
             
             var adding = false; // default: not adding to the selection
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 adding = true;
             }
             
@@ -727,7 +730,7 @@ function onGrab(event) {
             
             var before = select_ids;
             
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 // toggle token in/out selection group
                 var index = select_ids.indexOf(token.id);
                 if (index != -1) {
@@ -737,6 +740,7 @@ function onGrab(event) {
                     // add to selection
                     select_ids.push(token.id);
                 }
+                primary_id = select_ids[0];
                 
             } else {
                 // reselect only if token wasn't selected before
@@ -782,6 +786,9 @@ function onGrab(event) {
             token.rotate = 0;
             token.size   = default_token_size;
             
+            // force label to be redrawn
+            token.label_canvas = null;
+            
             changes.push({
                 'id'     : id,
                 'size'   : token.size,
@@ -811,8 +818,8 @@ function onRelease() {
         $('#battlemap').css('cursor', 'grab');
     }
     
-    if (primary_id != 0 && was_grabbed) {
-        var changes = []
+    if (primary_id > 0 && was_grabbed) {
+        var changes = [];
         
         $.each(select_ids, function(index, id) {
             var t = tokens[id];
@@ -851,7 +858,7 @@ function onRelease() {
         primary_id = 0;
         
         var adding = false; // default: not adding to the selection
-        if (event.ctrlKey) {
+        if (event.ctrlKey || event.metaKey) {
             adding = true;
         }
 
@@ -1324,7 +1331,11 @@ function onLabelStep(delta) {
         } else if (number > 40) {
             number = 40;
         }
-        token.text = '#' + number
+        if (number > 0) {
+            token.text = '#' + number
+        } else {
+            token.text = '';
+        }
         token.label_canvas = null; // trigger redrawing
 
         if (number == 0) {
@@ -1445,7 +1456,6 @@ function onTokenDelete() {
 function onStartDragDice(event, sides) {
     event.dataTransfer.setDragImage(drag_img, 0, 0);
     localStorage.setItem('drag_data',  sides);
-    localStorage.setItem('drag_ctrl', event.ctrlKey);
 }
 
 /// Event handle for clicking a single dice container
@@ -1458,8 +1468,7 @@ function onResetDice(event, sides) {
    
 /// Event handle for stop dragging a single dice container
 function onEndDragDice(event) {
-    // NOTE: event.ctrlKey is designed to yield 'true' if ctrl is fired WHEN the DragEnd happens
-    if (localStorage.getItem('drag_ctrl')) {
+    if (localStorage.getItem('drag_mod')) {
         // query last recent roll of that die by the current player
         var sides = localStorage.getItem('drag_data');
         if (sides == 2) {
@@ -1473,7 +1482,7 @@ function onEndDragDice(event) {
         }
         
         // create a dope timer token \m/
-         writeSocket({
+        writeSocket({
             'OPID' : 'CREATE',
             'posx' : mouse_x,
             'posy' : mouse_y,
@@ -1484,13 +1493,15 @@ function onEndDragDice(event) {
     }
     
     localStorage.removeItem('drag_data');
-    localStorage.removeItem('drag_ctrl');
+    localStorage.removeItem('drag_mod');
 }
 
 /// Event handle for start dragging the players container
 function onStartDragPlayers(event) {         
     event.dataTransfer.setDragImage(drag_img, 0, 0);
     localStorage.setItem('drag_data', 'players');
+    
+    localStorage.setItem('drag_mod', event.ctrlKey || event.metaKey || event.shiftKey);
 }
 
 /// Event handle for clicking the players container
@@ -1641,25 +1652,28 @@ function moveMusicTo(pos) {
 
 /// Drag dice container to position specified by the event
 function onDragDice(event) {
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+        localStorage.setItem('drag_mod', true);
+        return;
+    }
+    
     var p = pickScreenPos(event);
     var sides = localStorage.getItem('drag_data');
 
-    if (!event.ctrlKey) {
-        // drag dice box
-        var target = $('#d' + sides + 'icon');
+    // drag dice box
+    var target = $('#d' + sides + 'icon');
 
-        // limit position to the screen
-        var w = target.width();
-        var h = target.height();
-        var x = Math.max(0, Math.min(window.innerWidth - w,  p[0] - w / 2));
-        var y = Math.max(0, Math.min(window.innerHeight - h, p[1] - h / 2));
-        var data = [x, y];
-        data = snapContainer(data[0], data[1], target, '');
+    // limit position to the screen
+    var w = target.width();
+    var h = target.height();
+    var x = Math.max(0, Math.min(window.innerWidth - w,  p[0] - w / 2));
+    var y = Math.max(0, Math.min(window.innerHeight - h, p[1] - h / 2));
+    var data = [x, y];
+    data = snapContainer(data[0], data[1], target, '');
 
-        // apply position
-        moveDiceTo(data, sides);
-        saveDicePos(sides, data);
-    }
+    // apply position
+    moveDiceTo(data, sides);
+    saveDicePos(sides, data);
 }
 
 /// Drag players container to position specified by the event
