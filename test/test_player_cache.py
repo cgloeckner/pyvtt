@@ -1107,6 +1107,23 @@ class PlayerCacheTest(EngineBaseTest):
             self.assertIsNotNone(scene.backing)
             token = self.get_token(scene.backing.id)
             self.assertEqual(token.back, scene)
+        
+        # can create token with optional label (colored by the player)
+        with db_session:
+            self.purge_scene(self.active_scene())
+        create_data = copy.deepcopy(default_data) 
+        create_data['urls'] = ['/static/token_d4.png']
+        create_data['labels'] = ['#3']
+        game_cache.onCreateToken(player_cache1, create_data)
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'CREATE')          
+        self.assertEqual(len(answer1['tokens']), 1)
+        self.assertEqual(answer1['tokens'][0]['text'],  '#3')
+        self.assertEqual(answer1['tokens'][0]['color'], 'red')
     
     def test_onDeleteToken(self):
         socket1 = SocketDummy()

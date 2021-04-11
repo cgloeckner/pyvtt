@@ -188,7 +188,11 @@ function hidePlayer(uuid) {
 
 var roll_timeout = 10000.0; // ms until roll will START to disappear
 
+var roll_history = {}; // save each player's last dice roll per die
+
 function addRoll(sides, result, name, color, recent) {
+    roll_history[sides + '_' + name] = result;
+    
     // handling min-/max-rolls
     var ani_css = '';
     var lbl_css = '';
@@ -1441,6 +1445,31 @@ function onResetDice(event, sides) {
    
 /// Event handle for stop dragging a single dice container
 function onEndDragDice(event) {
+    if (event.ctrlKey) {
+        // query last recent roll of that die by the current player
+        var sides = localStorage.getItem('drag_data');
+        if (sides == 2) {
+            // ignore binary die
+            return;
+        }
+        var key = sides + '_' + my_name;
+        if (!(key in roll_history)) {
+            // ignore action
+            return;
+        }
+        var r = roll_history[key];
+        
+        // create a dope timer token \m/
+         writeSocket({
+            'OPID' : 'CREATE',
+            'posx' : mouse_x,
+            'posy' : mouse_y,
+            'size' : default_token_size,
+            'urls' : ['/static/token_d' + sides + '.png'],
+            'labels' : ['#' + r]
+        });
+    }
+    
     localStorage.removeItem('drag_data');
 }
 
@@ -1469,8 +1498,7 @@ function onEndDragPlayers(event) {
 }
 
 /// Event handle for start dragging the music tools container
-function onStartDragMusic(event) {             
-    console.log('start');
+function onStartDragMusic(event) {
     event.dataTransfer.setDragImage(drag_img, 0, 0);
     localStorage.setItem('drag_data', 'music');
 }
@@ -1601,21 +1629,23 @@ function moveMusicTo(pos) {
 function onDragDice(event) {
     var p = pickScreenPos(event);
     var sides = localStorage.getItem('drag_data');
-    
-    // drag dice box
-    var target = $('#d' + sides + 'icon');
 
-    // limit position to the screen
-    var w = target.width();
-    var h = target.height();
-    var x = Math.max(0, Math.min(window.innerWidth - w,  p[0] - w / 2));
-    var y = Math.max(0, Math.min(window.innerHeight - h, p[1] - h / 2));
-    var data = [x, y];
-    data = snapContainer(data[0], data[1], target, '');
+    if (!event.ctrlKey) {
+        // drag dice box
+        var target = $('#d' + sides + 'icon');
 
-    // apply position
-    moveDiceTo(data, sides);
-    saveDicePos(sides, data);
+        // limit position to the screen
+        var w = target.width();
+        var h = target.height();
+        var x = Math.max(0, Math.min(window.innerWidth - w,  p[0] - w / 2));
+        var y = Math.max(0, Math.min(window.innerHeight - h, p[1] - h / 2));
+        var data = [x, y];
+        data = snapContainer(data[0], data[1], target, '');
+
+        // apply position
+        moveDiceTo(data, sides);
+        saveDicePos(sides, data);
+    }
 }
 
 /// Drag players container to position specified by the event

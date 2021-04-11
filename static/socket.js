@@ -27,6 +27,7 @@ var scene_id = 0;
 var is_gm = false;
 
 var my_uuid = '';
+var my_name = '';
 
 /// Handle function for interaction via socket
 function onSocketMessage(event) {
@@ -346,6 +347,8 @@ function start(gmname, url, playername, color) {
         'gm_url'   : gmname,
         'game_url' : url
     });
+
+    my_name = playername;
     
     // setup in-memory canvas (for transparency checking)
     mem_canvas = document.createElement('canvas');

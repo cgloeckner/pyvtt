@@ -467,7 +467,8 @@ function drawToken(token, color, is_background) {
                     ctx.font = "60px sans"; 
                     ctx.lineWidth = 8;   
                     ctx.fillStyle = '#FFFFFF';
-                    ctx.strokeStyle = token.color;
+                    //ctx.strokeStyle = token.color;
+                    ctx.strokeStyle = '#FFFFFF';
                 } else {
                     // regular font for regular labels
                     ctx.font = "30px sans"; 

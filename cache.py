@@ -584,6 +584,11 @@ class GameCache(object):
         posy = data['posy']
         size = data['size']
         urls = data['urls']
+        labels = ['' for u in urls]
+        color  = ''
+        if 'labels' in data:
+            labels = data['labels']
+            color = player.color
         
         # create tokens
         now = time.time()
@@ -605,7 +610,7 @@ class GameCache(object):
                 # create tokens in circle
                 x, y = self.parent.db.Token.getPosByDegree((posx, posy), k, n)
                 t = self.parent.db.Token(scene=s.id, timeid=now, url=url,
-                    size=size, posx=x, posy=y)
+                    size=size, posx=x, posy=y, text=labels[k], color=color)
                 
                 self.parent.db.commit()
                 
