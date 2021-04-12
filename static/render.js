@@ -447,11 +447,12 @@ function drawToken(token, color, is_background) {
                 context.rotate(-token.rotate * 3.14/180.0);
             }
 
-            w = parseInt(2 * token.size * 1.25);
-            h = 5 * w;                    
+            w = parseInt(2 * token.size * 1.25); // label size
+            w2 = w * token.text.length; // label canvas
+            h = 5 * w;
             if (token.label_canvas == null) {
                 token.label_canvas = document.createElement('canvas');
-                token.label_canvas.width  = w;
+                token.label_canvas.width  = w2;
                 token.label_canvas.height = h;
                 ctx = token.label_canvas.getContext('2d')
                 ctx.textAlign = "center";
@@ -485,17 +486,17 @@ function drawToken(token, color, is_background) {
                     tmp_text = token.text.substr(1);
                 }
                 
-                ctx.strokeText(tmp_text, w/2, h/2);
-                ctx.fillText(tmp_text, w/2, h/2);
+                ctx.strokeText(tmp_text, w2/2, h/2);
+                ctx.fillText(tmp_text, w2/2, h/2);
             }
 
             context.scale(0.5, 0.5); // since text is pre-rendered in higher res
             if (token.text.startsWith('#')) {  
                 // place label at the center
-                context.translate(-w/2, -h/2 + token.size/2);
+                context.translate(-w2/2, -h/2 + token.size/2);
             } else {
                 // place label at the bottom
-                context.translate(-w/2, -h * 0.475 + token.size);
+                context.translate(-w2/2, -h * 0.475 + token.size);
             }
             context.drawImage(token.label_canvas, 0, 0);
         }
