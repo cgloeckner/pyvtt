@@ -1480,16 +1480,52 @@ function onEndDragDice(event) {
         if (key in roll_history) {
             var r = roll_history[key];
         }
-        
-        // create a dope timer token \m/
-        writeSocket({
-            'OPID' : 'CREATE',
-            'posx' : mouse_x,
-            'posy' : mouse_y,
-            'size' : default_token_size,
-            'urls' : ['/static/token_d' + sides + '.png'],
-            'labels' : ['#' + r]
-        });
+
+        // upload timer token to the game
+        showInfo('LOADING');
+
+        // load transparent image from URL
+        var img = new Image()
+        img.src = '/static/token_d' + sides + '.png';
+        img.onload = function() {
+            var blob = getImageBlob(img);
+            var f = new FormData();
+            f.append('file[]', blob, 'transparent.png');
+
+            // upload as background (assuming nobody else is faster :D )
+            $.ajax({
+                url: '/' + gm_name + '/' + game_url + '/upload',
+                type: 'POST',
+                data: f,
+                contentType: false,
+                cache: false,
+                processData: false,
+                success: function(response) {
+                    // reset uploadqueue
+                    $('#uploadqueue').val("");
+                    
+                    // load images if necessary
+                    var data = JSON.parse(response);
+                    $.each(data.urls, function(index, url) {
+                        loadImage(data);
+                    });
+                    
+                    // trigger token creation via websocket
+                    writeSocket({
+                        'OPID' : 'CREATE',
+                        'posx' : mouse_x,  
+                        'posy' : mouse_y,
+                        'size' : default_token_size,
+                        'urls' : data.urls,
+                        'labels' : ['#' + r]
+                    });
+                    
+                    $('#popup').hide();
+                }, error: function(response, msg) {
+                    handleError(response);
+                }
+            });
+        };
     }
     
     localStorage.removeItem('drag_data');
