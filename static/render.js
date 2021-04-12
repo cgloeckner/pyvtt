@@ -498,7 +498,11 @@ function drawToken(token, color, is_background) {
                 // place label at the bottom
                 context.translate(-w2/2, -h * 0.475 + token.size);
             }
-            context.drawImage(token.label_canvas, 0, 0);
+
+            try {
+                context.drawImage(token.label_canvas, 0, 0);
+            } catch (error) {
+            }
         }
     }
     
