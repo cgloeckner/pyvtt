@@ -419,7 +419,7 @@ function drawToken(token, color, is_background) {
 
         // rotate token's hue if used as timer-token
         if (token.text != null && token.text.startsWith('#')) {
-            context.filter = "hue-rotate(" + getHue(token.color) + "turn)";
+            context.filter = "hue-rotate(" + getHue(token.color) + "turn) brightness(" + (1+getBrightness(token.color)) + ")";
         }
         // draw token image
         try {

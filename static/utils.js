@@ -40,3 +40,11 @@ function getHue(color) {
     var b = parseInt(color.substr(5, 2), 16);
     return rgbToHsl(r, g, b)[0];
 }
+
+/// Get hue from hexcolor (e.g. '#FF05DE')
+function getBrightness(color) {
+    var r = parseInt(color.substr(1, 2), 16);
+    var g = parseInt(color.substr(3, 2), 16);
+    var b = parseInt(color.substr(5, 2), 16);
+    return rgbToHsl(r, g, b)[2];
+}
