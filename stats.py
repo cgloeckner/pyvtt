@@ -291,14 +291,17 @@ def printGameTimeids(doc, timeids):
     # header
     for col, caption in enumerate(['<5min', '<10min', '<15min', '<30min', '<1h', '<2h', '<12h', '<1d', '<1w', 'outdated']):
         sheet.write(0, col, caption, title)
-    sheet.set_column(0, len(grouped), 20, align)
+    sheet.set_column(0, len(grouped), 10, align)
 
     for i, threshold in enumerate(grouped):
         row = 1
+        sheet.write(row, i, len(grouped[threshold]))
+        """
         for url in grouped[threshold]:
             sheet.write(row, i, url)
             row += 1
         row += 1
+        """
     
     row = 1
     for url in outdated:

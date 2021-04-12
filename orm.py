@@ -353,7 +353,9 @@ def createGmDatabase(engine, filename):
                     "size"   : t.size,
                     "rotate" : t.rotate,
                     "flipx"  : t.flipx,
-                    "locked" : t.locked
+                    "locked" : t.locked,
+                    "text"   : t.text,
+                    "color"  : t.color
                 })
                 id_translation[t.id] = len(tokens) - 1
             
@@ -448,10 +450,15 @@ def createGmDatabase(engine, filename):
                         url = url.split('.png')[0]
                     t = db.Token(                                
                         scene=scene, url=self.getImageUrl(url),
-                        posx=token_data['posx'], posy=token_data['posy'],
-                        zorder=token_data['zorder'], size=token_data['size'],
-                        rotate=token_data['rotate'], flipx=token_data['flipx'],
-                        locked=token_data['locked']
+                        posx   = token_data['posx'],
+                        posy   = token_data['posy'],
+                        zorder = token_data.get('zorder', 0),
+                        size   = token_data['size'],
+                        rotate = token_data.get('rotate', 0.0),
+                        flipx  = token_data.get('flipx', False),
+                        locked = token_data.get('locked', False),
+                        text   = token_data.get('text', ''),
+                        color  = token_data.get('color', '')
                     )
                     if s["backing"] == token_id:
                         db.commit()

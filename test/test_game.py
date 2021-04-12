@@ -432,6 +432,8 @@ class GameTest(EngineBaseTest):
                 self.assertIn('rotate', token)
                 self.assertIn('flipx', token)
                 self.assertIn('locked', token)
+                self.assertIn('text', token)
+                self.assertIn('color', token)
                 # test values
                 self.assertIsInstance(token['url'], int)
                 self.assertIsInstance(token['posx'], int)
@@ -441,6 +443,8 @@ class GameTest(EngineBaseTest):
                 self.assertIsInstance(token['rotate'], float)
                 self.assertIsInstance(token['flipx'], bool)
                 self.assertIsInstance(token['locked'], bool)
+                self.assertIsInstance(token['text'], str)
+                self.assertIsInstance(token['color'], str)
             # check scene background
             background_id = scene["backing"]
             if background_id is not None:
@@ -572,7 +576,7 @@ class GameTest(EngineBaseTest):
             self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
         scene2 = self.db.Scene(game=game)
         for i in range(4):
-            self.db.Token(scene=scene2, url=url, posx=200, posy=150, size=20)
+            self.db.Token(scene=scene2, url=url, posx=123, posy=456, size=78, text='foo', color='#00FF00')
         self.db.commit()
         
         # create dict
@@ -595,9 +599,44 @@ class GameTest(EngineBaseTest):
         query1 = self.db.Token.select(lambda t: t.scene == game2_scene1)
         query2 = self.db.Token.select(lambda t: t.scene == game2_scene2)
         # order isn't important here
-        self.assertEqual(set([4, 8]), set([len(query1), len(query2)]))
-        
-        # @NOTE: exact token data (position etc.) isn't tested her
+        if len(query1) == 4:
+            query1, query2 = query2, query1
+        # test data
+        self.assertEqual(len(query1), 8)
+        self.assertEqual(len(query2), 4)
+        for t in query1:
+            if t.posx == 0:
+                # background
+                self.assertEqual(t.url, url.replace('foo', 'bar'))
+                self.assertEqual(t.posy, 0)
+                self.assertEqual(t.size, -1)
+            else:
+                # tokens
+                self.assertEqual(t.url, url.replace('foo', 'bar'))
+                self.assertEqual(t.posx, 200)
+                self.assertEqual(t.posy, 150)
+                self.assertEqual(t.size, 20)
+        for t in query2:
+            self.assertEqual(t.url, url.replace('foo', 'bar'))
+            self.assertEqual(t.posx, 123)
+            self.assertEqual(t.posy, 456)
+            self.assertEqual(t.size, 78)
+            self.assertEqual(t.text, 'foo')
+            self.assertEqual(t.color, '#00FF00')
+
+        # fromDict is backwards compatible
+        for raw in data['tokens']:
+            del raw['rotate']
+            del raw['flipx']
+            del raw['locked']
+            del raw['text']
+            del raw['color']
+        # create another copy of that game
+        game3 = self.db.Game(url='bar2', gm_url='url456')
+        game3.postSetup()
+        self.db.commit()
+        game3.fromDict(data)
+        self.db.commit() 
         
     @db_session
     def test_fromZip(self):
