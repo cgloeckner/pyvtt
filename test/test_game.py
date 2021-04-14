@@ -43,12 +43,33 @@ class GameTest(EngineBaseTest):
     def test_makeMd5s(self):
         game = self.db.Game(url='foo', gm_url='url456')
         game.postSetup()
-        
+
         # create empty files (to mimic uploaded images)
         img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
+
+        # assume md5 file to be empty 
+        md5_path = self.engine.paths.getMd5Path(game.gm_url)
+        with open(md5_path, 'r') as handle:
+            data = json.load(handle)
+            self.assertEqual(len(data), 0)
+        
+        # assume empty cache
+        cache_instance = self.engine.checksums[game.getUrl()]
+        self.assertEqual(len(cache_instance), 0)
+        
+        # create md5s
+        game.makeMd5s()
+
+        # expect md5 file with single hash
+        self.assertTrue(os.path.exists(md5_path))
+        with open(md5_path, 'r') as handle:
+            data = json.load(handle)
+            self.assertEqual(len(data), 1)
+
+        # create more files
         id2 = game.getNextId()
         p2 = img_path / '{0}.png'.format(id2)
         with open(p2, 'w') as h: # write different content because of hashing
@@ -61,12 +82,15 @@ class GameTest(EngineBaseTest):
         p4 = img_path / '{0}.png'.format(id4)
         with open(p4, 'w') as h: # write different content because of hashing
             h.write('4')
-        
-        # assume empty cache
-        cache_instance = self.engine.checksums[game.getUrl()]
-        self.assertEqual(len(cache_instance), 0)
-        
+
+        # update md5s
         game.makeMd5s()
+
+        # expect md5 file with multiple hashs
+        self.assertTrue(os.path.exists(md5_path))
+        with open(md5_path, 'r') as handle:
+            data = json.load(handle)
+            self.assertEqual(len(data), 4)
         
         # test image IDs in cache
         cache_instance = self.engine.checksums[game.getUrl()]
@@ -122,6 +146,10 @@ class GameTest(EngineBaseTest):
         game = self.db.Game(url='foo', gm_url='url456')
         
         game_path = self.engine.paths.getGamePath(gm=game.gm_url, game=game.url)
+
+        # assume no md5 file yet
+        md5_path = self.engine.paths.getMd5Path(game.gm_url)
+        self.assertFalse(os.path.exists(md5_path))
         
         # test game setup
         self.assertFalse(os.path.isdir(game_path))
@@ -130,6 +158,9 @@ class GameTest(EngineBaseTest):
 
         # test scene ordering
         self.assertEqual(game.order, list())
+
+        # assume existing md5 file yet
+        self.assertTrue(os.path.exists(md5_path))
 
     @db_session
     def test_reorderScenes(self):

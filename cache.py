@@ -175,7 +175,7 @@ class GameCache(object):
     
     def __init__(self, engine, parent, game):
         # prepare MD5 hashes for all images
-        game.makeMd5s()
+        num_generated = game.makeMd5s()
         
         self.engine  = engine
         self.parent  = parent
@@ -184,7 +184,9 @@ class GameCache(object):
         self.players = dict() # name => player
         self.next_id = 0 # used for player indexing in UI
 
-        self.engine.logging.info('GameCache {0} for GM {1} created'.format(self.url, self.parent.url))
+        #self.engine.logging.info('GameCache {0} for GM {1} created'.format(self.url, self.parent.url))
+        if num_generated > 0:
+            self.engine.logging.info('{0} MD5 hashes generated'.format(num_generated))
         
     def getNextId(self):
         with self.lock:
@@ -915,7 +917,7 @@ class GmCache(object):
         self.games  = dict()
         self.db     = None # needs connect_db to be run (but outside a db_session)
         
-        self.engine.logging.info('GmCache {0} with {0} created'.format(self.url, self.db_path))
+        #self.engine.logging.info('GmCache {0} with {0} created'.format(self.url, self.db_path))
         
     def connect_db(self):
         # connect to GM's database 
@@ -929,7 +931,7 @@ class GmCache(object):
                 if game.order == list():
                     game.reorderScenes()
         
-        self.engine.logging.info('GmCache {0} with {0} loaded'.format(self.url, self.db_path))
+        #self.engine.logging.info('GmCache {0} with {0} loaded'.format(self.url, self.db_path))
         
     # --- cache implementation ----------------------------------------
         
@@ -968,12 +970,15 @@ class EngineCache(object):
         
         # add all GMs from database
         with db_session:
-            for gm in self.engine.main_db.GM.select():
+            gms = self.engine.main_db.GM.select()
+            for i, gm in enumerate(gms):
+                self.engine.logging.info('Creating GM {0}/{1} #{2}'.format(i+1, len(gms), gm.url))
                 self.insert(gm)
         
         # initialize GMs databases
-        for gm in self.gms:
+        for i, gm in enumerate(self.gms):
             self.gms[gm].connect_db()
+            self.engine.logging.info('Loaded GM {0}/{1} #{2}'.format(i+1, len(self.gms), gm))
         
         self.engine.logging.info('EngineCache created')
         

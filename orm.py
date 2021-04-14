@@ -151,17 +151,37 @@ def createGmDatabase(engine, filename):
         def getUrl(self):
             return '{0}/{1}'.format(self.gm_url, self.url)
         
-        def makeMd5s(self):
-            data = dict()
+        def makeMd5s(self):                 
+            md5_path = engine.paths.getMd5Path(self.gm_url)
             root = engine.paths.getGamePath(self.gm_url, self.url)
             all_images = self.getAllImages()
-
+            
+            # load md5 hashes from json-file
+            data = dict()
+            if os.path.exists(md5_path):
+                with open(md5_path, 'r') as handle:
+                    data = json.load(handle)
+            
+            # check for images without md5
+            missing = list()
             for fname in all_images:
+                fname_id = int(fname.split('.')[0])
+                if fname_id not in data.values():
+                    missing.append(fname)
+
+            # create missing md5s
+            for fname in missing:
                 # create md5 of file (assumed to be images)
                 with open(root / fname, "rb") as handle:
                     md5 = engine.getMd5(handle)
                     data[md5] = int(fname.split('.')[0])
             engine.checksums[self.getUrl()] = data
+
+            # save md5 hashes to json-file
+            with open(md5_path, 'w') as handle:
+                json.dump(data, handle)
+
+            return len(missing)
 
         def getIdByMd5(self, md5):
             return engine.checksums[self.getUrl()].get(md5, None) 

@@ -85,6 +85,9 @@ class PathApi(object):
         
     def getDatabasePath(self, gm):
         return self.getGmsPath(gm) / 'gm.db'
+
+    def getMd5Path(self, gm):
+        return self.getGmsPath(gm) / 'gm.md5'
         
     def getGamePath(self, gm, game):
         return self.getGmsPath(gm) / game
