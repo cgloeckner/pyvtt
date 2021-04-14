@@ -66,9 +66,10 @@ class PathApiTest(unittest.TestCase):
         self.assertEqual(db_path.parts[-1], 'gm.db')
 
         # test md5 json paths
-        md5_path = self.paths.getMd5Path('foo') 
-        self.assertEqual(db_path.parts[-2], 'foo')
-        self.assertEqual(db_path.parts[-1], 'gm.md5')
+        md5_path = self.paths.getMd5Path('foo', 'bar') 
+        self.assertEqual(md5_path.parts[-3], 'foo')
+        self.assertEqual(md5_path.parts[-2], 'bar')
+        self.assertEqual(md5_path.parts[-1], 'gm.md5')
         
         # test game paths
         game_path = self.paths.getGamePath('foo', 'bar')

@@ -152,7 +152,7 @@ def createGmDatabase(engine, filename):
             return '{0}/{1}'.format(self.gm_url, self.url)
         
         def makeMd5s(self):                 
-            md5_path = engine.paths.getMd5Path(self.gm_url)
+            md5_path = engine.paths.getMd5Path(self.gm_url, self.url)
             root = engine.paths.getGamePath(self.gm_url, self.url)
             all_images = self.getAllImages()
             
