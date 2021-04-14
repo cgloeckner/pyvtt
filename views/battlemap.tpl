@@ -21,7 +21,7 @@
     <div id="camerapreview">
         <img class="close" src="/static/delete.png" onClick="closeWebcam();" draggable="false" title="CLOSE CAMERA" />
         <span>
-            <p>WEBCAM</p>
+            <p>LIVESTREAM</p>
             <video id="video" playsinline autoplay></video><br />
             <input type="button" id="snapshotWebcam" onClick="onTakeSnapshot();" value="TAKE SNAPSHOT" />
         </span>

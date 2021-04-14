@@ -1,21 +1,39 @@
 /// Settings for webcam usage
-const constraints = {
+const webcam_constraints = {
     audio: false,
     video: {
         width: 1600, height: 900
     }
 };
 
+const screenshare_constraints = {
+    video: {
+        cursor: "never",
+        logicalSurface: true
+    },
+    audio: false
+}
+
+
 function initWebcam() {
-    navigator.mediaDevices.getUserMedia(constraints)
-    .then(function(stream) { onWebcamReady(stream); })
+    navigator.mediaDevices.getUserMedia(webcam_constraints)
+    .then(function(stream) { onStreamReady(stream); })
     .catch(function(err) {
         console.error(err.toString());
         showError('NO WEBCAM FOUND');
     });
 }
 
-function onWebcamReady(stream) {
+function initScreenShare() {
+    navigator.mediaDevices.getDisplayMedia(screenshare_constraints)
+    .then(function(stream) { onStreamReady(stream); })
+    .catch(function(err) {
+        console.error(err.toString());
+        showError('SCREENSHARE NO AVAILABLE');
+    });
+}
+
+function onStreamReady(stream) {
     window.stream = stream;
     $('#video')[0].srcObject = stream;
     $('#camerapreview').fadeIn(500);

@@ -10,10 +10,10 @@ function openGmDropdown(force=false) {
     var hint   = $('#gmhint');
     if (force || !gm_dropdown) {
         scenes.animate({
-            top: "+=122"
+            top: "+=132"
         }, 500);
         hint.animate({
-            top: "+=122"
+            top: "+=132"
         }, 500);
     }
     gm_dropdown = true;
@@ -26,10 +26,10 @@ function closeGmDropdown(force=false) {
     if (scenes != null) {
         if (force || gm_dropdown) {
             scenes.animate({
-                top: "-=122"
+                top: "-=132"
             }, 500); 
             hint.animate({
-                top: "-=122"
+                top: "-=132"
             }, 500);
         }
         gm_dropdown = false;
