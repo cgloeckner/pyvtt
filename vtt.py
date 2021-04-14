@@ -395,6 +395,28 @@ def setup_gm_routes(engine):
         
         return dict(gm=gm, server=server, all_games=all_games)
 
+    # NOTE: THIS IS NOT USED YET SINCE THE CLIENT IS NOT USING MD5 HASHS YET
+    @get('/vtt/query-url/<gmurl>/<url>/<md5>')
+    def query_url_by_md5(gmurl, url, md5):
+        # load GM from cache
+        gm_cache = engine.cache.getFromUrl(gmurl)
+        if gm_cache is None:
+            engine.logging.warning('GM url="{0}" tried to query image url by md5 at the game {1} by {2} but he was not inside the cache'.format(gmurl, url, engine.getClientIp(request)))
+            abort(404)
+        
+        # load game from GM's database
+        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        if game is None:           
+            engine.logging.warning('GM url="{0}" tried to query image url by md5 at the game {1} by {2} but game was not found'.format(gmurl, url, engine.getClientIp(request)))
+            abort(404)
+
+        # query id by md5
+        queried_id = game.getIdByMd5(md5)
+        if queried_id is not None:
+            return game.getImageUrl(queried_id)
+
+        return None
+
     @post('/vtt/upload-background/<gmurl>/<url>')
     def post_set_background(gmurl, url):
         gm = engine.main_db.GM.loadFromSession(request)

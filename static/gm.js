@@ -267,6 +267,9 @@ function onDropNewBackground(scene_id) {
 */
 
 function uploadBackground(gm_name, game_url, f) {
+    // try to query url based on md5
+    //md5 = 
+    
     // upload background
     $.ajax({
         url: '/vtt/upload-background/' + gm_name + '/' + game_url,

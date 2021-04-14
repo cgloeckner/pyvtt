@@ -394,7 +394,7 @@ function onDrop(event) {
     queue.files = event.dataTransfer.files;
 
     var error_msg = '';
-    $.each(queue.files, function(index, file) {
+    $.each(event.dataTransfer.files, function(index, file) {
         if (error_msg != '') {
             return;
         }
@@ -431,7 +431,7 @@ function onDrop(event) {
 
     // upload files
     var f = new FormData($('#uploadform')[0]);
-        
+
     $.ajax({
         url: '/' + gm_name + '/' + game_url + '/upload',
         type: 'POST',

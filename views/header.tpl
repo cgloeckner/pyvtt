@@ -12,6 +12,7 @@ License: MIT (see LICENSE for details)
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon"> 
     <script src="/static/jquery-3.3.1.min.js"></script>
+    <script src="/static/md5.js"></script>
     <script src="/static/version.js"></script>   
     <script src="/static/errors.js"></script>   
     <script src="/static/dropdown.js"></script>   

@@ -76,7 +76,47 @@ class GameTest(EngineBaseTest):
             img_id = cache_instance[md5]
             ids.add(img_id)
         self.assertEqual(ids, {0, 1, 2, 3}) # compare sets
+
+    @db_session
+    def test_getUrlByMd5(self):
+        game = self.db.Game(url='foo', gm_url='url456')
+        game.postSetup()
         
+        # create empty files (to mimic uploaded images)
+        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        id1 = game.getNextId()
+        p1 = img_path / '{0}.png'.format(id1)
+        p1.touch()
+        id2 = game.getNextId()
+        p2 = img_path / '{0}.png'.format(id2)
+        with open(p2, 'w') as h: # write different content because of hashing
+            h.write('2')
+        id3 = game.getNextId()
+        p3 = img_path / '{0}.png'.format(id3)
+        with open(p3, 'w') as h: # write different content because of hashing
+            h.write('3')
+        id4 = game.getNextId()
+        p4 = img_path / '{0}.png'.format(id4)
+        with open(p4, 'w') as h: # write different content because of hashing
+            h.write('4')
+        
+        # assume empty cache
+        cache_instance = self.engine.checksums[game.getUrl()]
+        self.assertEqual(len(cache_instance), 0)
+        
+        game.makeMd5s()
+
+        # query 3rd image via checksum
+        with open(p3, 'rb') as h:
+            md5 = self.engine.getMd5(h)
+        queried_id = game.getIdByMd5(md5)
+        self.assertEqual(queried_id, id3)
+
+        # query non-existing image  
+        queried_id = game.getIdByMd5('foobar')
+        self.assertIsNone(queried_id)
+        
+    
     @db_session
     def test_postSetup(self):
         game = self.db.Game(url='foo', gm_url='url456')

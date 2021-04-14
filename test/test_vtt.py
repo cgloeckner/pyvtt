@@ -604,7 +604,30 @@ class VttTest(EngineBaseTest):
         # GM can query scenes from a game
         ret = self.app.post('/vtt/query-scenes/test-game-1')
         self.assertEqual(ret.status_int, 200)
+
+    def test_vtt_queryurl(self):
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
         
+        # create a game 
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+
+        # create some scenes
+        gm_ret, gm_player = self.joinPlayer('arthur', 'test-game-1', 'arthur', 'gold')
+        for i in range(3):
+            gm_player.socket.push_receive({'OPID': 'GM-CREATE'})
+        
+        # non-GM can query for missing url
+        ret = self.app.get('/vtt/query-url/arthur/test-game-1/foobar', expect_errors=True)
+        self.assertEqual(ret.status_int, 200)
+        self.assertEqual(ret.body, b'')
+    
     def test_vtt_status(self):
         # cannot query if no shard was set up
         ret = self.app.get('/vtt/status', expect_errors=True)

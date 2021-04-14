@@ -162,7 +162,10 @@ def createGmDatabase(engine, filename):
                     md5 = engine.getMd5(handle)
                     data[md5] = int(fname.split('.')[0])
             engine.checksums[self.getUrl()] = data
-        
+
+        def getIdByMd5(self, md5):
+            return engine.checksums[self.getUrl()].get(md5, None) 
+
         def postSetup(self):
             """ Adds the game's directory and prepare the md5 cache.
             """
