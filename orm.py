@@ -329,7 +329,8 @@ def createGmDatabase(engine, filename):
 
             # delete all outdated rolls
             rolls = db.Roll.select(lambda r: r.game == self and r.timeid < now - engine.latest_rolls)
-            engine.logging.info('     |--> {0} outdated rolls'.format(len(rolls)))
+            if len(rolls) > 0:
+                engine.logging.info('     |--> {0} outdated rolls'.format(len(rolls)))
             rolls.delete()
 
             # query and remove all tokens that have no image

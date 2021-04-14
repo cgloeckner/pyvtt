@@ -147,7 +147,8 @@ class Engine(object):
             print('')
             print('See {0} for custom settings.'.format(settings_path))
             sys.exit(0)
-        
+
+        self.logging.info('Loading domain...')
         if self.localhost:
             # overwrite domain and host to localhost
             self.host   = '127.0.0.1'
@@ -157,7 +158,9 @@ class Engine(object):
             # overwrite domain with public ip
             self.hosting['domain'] = self.getPublicIp()
             self.logging.info('Overwriting Domain by Public IP: {0}'.format(self.hosting['domain']))
+
         
+        self.logging.info('Loading login API...')
         if self.local_gm:
             self.login['type'] = ''
             self.logging.info('Defaulting to dev-login for local-gm')
@@ -177,7 +180,8 @@ class Engine(object):
         if self.notify['type'] == 'email':
             # create email notify API
             self.notify_api = utils.EmailApi(self, **self.notify)
-        
+
+        self.logging.info('Loading main database...')
         # create main database
         self.main_db = createMainDatabase(self)
         
