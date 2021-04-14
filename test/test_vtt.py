@@ -1092,6 +1092,8 @@ class VttTest(EngineBaseTest):
         self.assertEqual(id_from_url(data['urls'][5]), 2)
 
         # cannot upload another background image (other uploads are ignored during this request)
+        images = os.listdir(self.engine.paths.getGamePath('arthur', 'test-game-1'))
+        self.assertEqual(len(images), 4) # 3 + md5-file
         ret = self.app.post('/arthur/test-game-1/upload',
             upload_files=[
                 ('file[]', 'another.jpg', img_small4),
@@ -1101,7 +1103,7 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.status_int, 403)
         # expect no new images in directory
         images = os.listdir(self.engine.paths.getGamePath('arthur', 'test-game-1'))
-        self.assertEqual(len(images), 3)
+        self.assertEqual(len(images), 4) # 3 + md5-file
         self.assertIn('0.png', images)
         self.assertIn('1.png', images)
         self.assertIn('2.png', images)

@@ -51,7 +51,7 @@ class GameTest(EngineBaseTest):
         p1.touch()
 
         # assume md5 file to be empty 
-        md5_path = self.engine.paths.getMd5Path(game.gm_url)
+        md5_path = self.engine.paths.getMd5Path(game.gm_url, game.url)
         with open(md5_path, 'r') as handle:
             data = json.load(handle)
             self.assertEqual(len(data), 0)
@@ -148,7 +148,7 @@ class GameTest(EngineBaseTest):
         game_path = self.engine.paths.getGamePath(gm=game.gm_url, game=game.url)
 
         # assume no md5 file yet
-        md5_path = self.engine.paths.getMd5Path(game.gm_url)
+        md5_path = self.engine.paths.getMd5Path(game.gm_url, game.url)
         self.assertFalse(os.path.exists(md5_path))
         
         # test game setup
