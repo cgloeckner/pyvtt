@@ -789,8 +789,8 @@ div#ping,
 div#fps,
 div#zoom,
 div#version,
-div#status,
-div#assets {
+div#musicStatus,
+div#assetsLoading {
     position: absolute;
     color: grey;
     bottom: 0px;
@@ -822,11 +822,11 @@ div#version {
     left: 320px;
 }
 
-div#status {
+div#musicStatus {
     left: 400px;
 }
 
-div#assets {
+div#assetsLoading {
     left: 525px;
 }
 

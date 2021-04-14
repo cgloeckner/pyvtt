@@ -280,6 +280,7 @@ function login(event, gmname, url, websocket_url) {
                     $('#dicebox').animate({ opacity: '+=1.0' }, 500);
                     
                     $('#version')[0].innerHTML = 'v' + version;
+                    $('#musicStatus').hide();
                     
                     onWindowResize();
                 });

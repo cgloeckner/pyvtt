@@ -39,7 +39,7 @@ function showMusicVolume() {
         src = '/static/speaker.png';
     }
     $('#toggleMusic')[0].src = src;
-    $('#status')[0].innerHTML = v;
+    $('#musicStatus')[0].innerHTML = v;
 }
 
 /// Make music one step quieter (may turn it off)
@@ -113,8 +113,10 @@ function refreshStream() {
     var player = $('#audioplayer')[0];
 
     $('#musiccontrols').hide();
+    $('#musicStatus').hide();
     player.oncanplay = function(event) {   
         $('#musiccontrols').show();
+        $('#musicStatus').show();
     };
     player.src = '/music/' + gm + '/' + game + '/' + Date.now();
 }

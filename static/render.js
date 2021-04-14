@@ -315,13 +315,13 @@ var num_loading = 0;
 /// Handle loading notifcation
 function notifyUpload(url) {
     if (num_loading == 0) {
-        $('#assets')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> LOADING ASSETS...';
+        $('#assetsLoading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> LOADING ASSETS...';
     }
     num_loading += 1;
     images[url].onload = function() {
         num_loading -= 1;
         if (num_loading == 0) {
-            $('#assets')[0].innerHTML = '';
+            $('#assetsLoading')[0].innerHTML = '';
         }
     }
 }
