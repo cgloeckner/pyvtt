@@ -1,6 +1,6 @@
 %for g in all_games.order_by(lambda g: g.id):
     %url = "/thumbnail/" + '/'.join([g.gm_url, g.url])
-    <div>
+    <div class="element">
         <a href="{{server}}/{{gm.url}}/{{g.url}}" draggable="false" target="_blank"><img class="thumbnail" draggable="false" src="{{url}}" title="{{g.url.upper()}}" /></a>
         <div class="controls">
             <img class="icon" src="/static/cleanup.png" onClick="cleanUp('{{g.url}}');" draggable="false" title="CLEAN UP" />

@@ -316,9 +316,9 @@ div#gmdrop > div {
 }
 
 
-div#gmdrop > div.scene > a > img.thumbnail,
-div#gmdrop > div.scene > img.thumbnail,
-div#gmdrop > div.scene > img.active {
+div#gmdrop > div.element > a > img.thumbnail,
+div#gmdrop > div.element > img.thumbnail,
+div#gmdrop > div.element > img.active {
     width: 100px;
     max-height: 56px;
     border-radius: 10px;
@@ -326,21 +326,21 @@ div#gmdrop > div.scene > img.active {
     padding: 5px;
 }
 
-div#gmdrop > div.scene > img.active { 
+div#gmdrop > div.element > img.active { 
     border: 3px groove white;
 }
 
 img.icon:hover,
 div#gmdrop > div.tools > img.largeicon:hover,
-div#gmdrop > div.scene > img.thumbnail:hover,
-div#gmdrop > div.scene > a > img.thumbnail:hover {
+div#gmdrop > div.element > img.thumbnail:hover,
+div#gmdrop > div.element > a > img.thumbnail:hover {
     cursor: pointer;
     
     filter: drop-shadow(0px 0px 10px white) 
           drop-shadow(0px 0px 0 white);
 }
 
-div#gmdrop > div.scene > div.controls {
+div#gmdrop > div.element > div.controls {
     padding-top: 10px;
     width: 100px;
     text-align: center;

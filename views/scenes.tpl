@@ -18,7 +18,7 @@
                 %css  = "active"
                 %hint = "ACTIVE SCENE"
             %end
-    <div class="scene">
+    <div class="element">
         <img class="{{css}}" src="{{url}}" onClick="activateScene({{s.id}})" draggable="false" title="{{hint}}" />
         <div class="controls">
             %if i > 0:
