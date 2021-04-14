@@ -231,10 +231,45 @@ function deleteScene(scene_id) {
     reloadScenesDropdown();
 }
 
+/*
+/// Drag & Drop Replace Scene's Background
+/// FIXME: isn't working well, so it's disabled
+function onDropNewBackground(scene_id) {
+    event.preventDefault();
+
+    var queue = $('#uploadqueue')[0];
+    queue.files = event.dataTransfer.files;
+
+    // only accept a single file
+    if (queue.files.length != 1) {
+        showError('USE A SINGLE IMAGE');
+        return;
+    }
+    var file = queue.files[0];
+
+    // only accept image file
+    content = file.type.split('/')[0];
+    if (content != 'image') {
+        showError('USE A SINGLE IMAGE');
+        return;
+    }
+
+    // check image size
+    if (file.size > MAX_BACKGROUND_FILESIZE * 1024 * 1024) {
+        showError('TOO LARGE BACKGROUND (MAX ' + MAX_BACKGROUND_FILESIZE + ' MiB');
+        return;
+    }
+
+    // upload background
+    var f = new FormData($('#uploadform')[0]);
+    uploadBackground(gm_name, game_url, f, scene_id);
+}
+*/
+
 function uploadBackground(gm_name, game_url, f) {
     // upload background
     $.ajax({
-        url: '/vtt/upload-background/' + gm_name + '/' + game_url + '',
+        url: '/vtt/upload-background/' + gm_name + '/' + game_url,
         type: 'POST',
         data: f,
         contentType: false,
@@ -249,11 +284,11 @@ function uploadBackground(gm_name, game_url, f) {
             
             // trigger token creation via websocket
             writeSocket({
-                'OPID' : 'CREATE',
-                'posx' : 0,
-                'posy' : 0,
-                'size' : -1,
-                'urls' : [response]
+                'OPID'  : 'CREATE',
+                'posx'  : 0,
+                'posy'  : 0,
+                'size'  : -1,
+                'urls'  : [response]
             });
             
             $('#popup').hide();

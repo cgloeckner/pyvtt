@@ -147,6 +147,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(accept['OPID'], 'ACCEPT')
         self.assertIn('players', accept)
         self.assertIn('rolls', accept)
+        self.assertIn('urls', accept)
         
         # expect latest rolls were received
         self.assertEqual(len(accept['rolls']), 32)

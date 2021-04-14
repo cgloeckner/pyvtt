@@ -10,7 +10,8 @@ function initWebcam() {
     navigator.mediaDevices.getUserMedia(constraints)
     .then(function(stream) { onWebcamReady(stream); })
     .catch(function(err) {
-        showError('CANNOT ACCESS WEBCAM');
+        console.error(err.toString());
+        showError('NO WEBCAM FOUND');
     });
 }
 
@@ -43,6 +44,7 @@ function onApplyBackground() {
     var f = new FormData();
     f.append('file[]', blob, 'snapshot.jpg');
 
+    // upload for current scene
     uploadBackground(gm_name, game_url, f);
 }
 

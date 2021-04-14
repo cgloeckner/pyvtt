@@ -789,7 +789,8 @@ div#ping,
 div#fps,
 div#zoom,
 div#version,
-div#status {
+div#status,
+div#assets {
     position: absolute;
     color: grey;
     bottom: 0px;
@@ -823,6 +824,10 @@ div#version {
 
 div#status {
     left: 400px;
+}
+
+div#assets {
+    left: 525px;
 }
 
 div.audioplayer {

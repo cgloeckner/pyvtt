@@ -81,6 +81,7 @@
         <div id="zoom" title="CLICK TO RESET" onClick="resetViewport();">Zoom: 100%</div>
         <div id="version">unknown version</div>
         <div id="status">Music muted</div>
+        <div id="assets"></div>
 
         <form id="uploadform" method="post" enctype="multipart/form-data">
             <input id="uploadqueue" name="file[]" type="file" multiple />

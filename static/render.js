@@ -310,6 +310,22 @@ function updateToken(data, force=false) {
     }
 }
 
+var num_loading = 0;
+
+/// Handle loading notifcation
+function notifyUpload(url) {
+    if (num_loading == 0) {
+        $('#assets')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> LOADING ASSETS...';
+    }
+    num_loading += 1;
+    images[url].onload = function() {
+        num_loading -= 1;
+        if (num_loading == 0) {
+            $('#assets')[0].innerHTML = '';
+        }
+    }
+}
+
 /// Start loading image into cache
 function loadImage(url) {
     if (images[url] == null) {
@@ -317,6 +333,7 @@ function loadImage(url) {
             console.info('Loading image ' + url);
         }
         images[url] = new Image();
+        notifyUpload(url);
         images[url].src = url;
     }
 }

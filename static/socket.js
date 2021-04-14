@@ -95,6 +95,11 @@ function onAccept(data) {
     $.each(data.rolls, function(item, obj) {
         addRoll(obj.sides, obj.result, obj.name, obj.color, obj.recent);
     });
+
+    // cache all required assets
+    $.each(data.urls, function(i, url) {
+        loadImage(url);
+    });
     
     onRefresh(data);
 }

@@ -275,11 +275,15 @@ class GameCache(object):
                     'recent' : r.timeid >= recent,
                     'name'   : r.name
                 })
+
+            # query all urls that are currently used by tokens of that game
+            urls = [t.url for t in self.parent.db.Token.select(lambda t: t.scene.game == g)] 
         
         player.write({
             'OPID'    : 'ACCEPT',
             'players' : self.getData(),
             'rolls'   : rolls,
+            'urls'    : list(set(urls)) # drop duplicates
         }); 
         
         player.write(self.fetchRefresh(g.active))

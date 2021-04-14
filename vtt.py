@@ -414,7 +414,7 @@ def setup_gm_routes(engine):
             engine.logging.warning('GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)))
             abort(404)
 
-        # load active scene
+        # load scene
         scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
         if scene is None:
             abort(404)

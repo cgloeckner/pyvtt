@@ -1898,6 +1898,7 @@ function ignoreBackground() {
         var f = new FormData();
         f.append('file[]', blob, 'transparent.png');
 
+        // upload for current scene
         uploadBackground(gm_name, game_url, f);
     };
 }
