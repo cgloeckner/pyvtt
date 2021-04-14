@@ -230,3 +230,35 @@ function deleteScene(scene_id) {
     });  
     reloadScenesDropdown();
 }
+
+function uploadBackground(gm_name, game_url, f) {
+    // upload background
+    $.ajax({
+        url: '/vtt/upload-background/' + gm_name + '/' + game_url + '',
+        type: 'POST',
+        data: f,
+        contentType: false,
+        cache: false,
+        processData: false,
+        success: function(response) {
+            // reset uploadqueue
+            $('#uploadqueue').val("");
+            
+            // load images if necessary
+            loadImage(response);
+            
+            // trigger token creation via websocket
+            writeSocket({
+                'OPID' : 'CREATE',
+                'posx' : 0,
+                'posy' : 0,
+                'size' : -1,
+                'urls' : [response]
+            });
+            
+            $('#popup').hide();
+        }, error: function(response, msg) {
+            handleError(response);
+        }
+    });
+}

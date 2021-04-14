@@ -302,10 +302,13 @@ img.icon {
     width: 16px;
 }
 
-div#gmdrop > img.largeicon {
+div#gmdrop > div.tools {
+}
+
+div#gmdrop > div.tools > img.largeicon {
     width: 32px;
     padding: 5px;
-    padding-bottom: 45px;
+    display: block;
 }
 
 div#gmdrop > div {
@@ -313,9 +316,9 @@ div#gmdrop > div {
 }
 
 
-div#gmdrop > div > a > img.thumbnail,
-div#gmdrop > div > img.thumbnail,
-div#gmdrop > div > img.active {
+div#gmdrop > div.scene > a > img.thumbnail,
+div#gmdrop > div.scene > img.thumbnail,
+div#gmdrop > div.scene > img.active {
     width: 100px;
     max-height: 56px;
     border-radius: 10px;
@@ -323,23 +326,73 @@ div#gmdrop > div > img.active {
     padding: 5px;
 }
 
-div#gmdrop > div > img.active { 
+div#gmdrop > div.scene > img.active { 
     border: 3px groove white;
 }
 
 img.icon:hover,
-div#gmdrop > img.largeicon:hover,
-div#gmdrop > div > img.thumbnail:hover,
-div#gmdrop > div > a > img.thumbnail:hover {
+div#gmdrop > div.tools > img.largeicon:hover,
+div#gmdrop > div.scene > img.thumbnail:hover,
+div#gmdrop > div.scene > a > img.thumbnail:hover {
     cursor: pointer;
     
     filter: drop-shadow(0px 0px 10px white) 
           drop-shadow(0px 0px 0 white);
 }
 
-div#gmdrop > div > div.controls {
+div#gmdrop > div.scene > div.controls {
     padding-top: 10px;
     width: 100px;
+    text-align: center;
+}
+
+/* --- Webcam Controls ---------------------------------------------- */
+
+div#camerapreview {
+    width: 700px;
+    height: 300px;
+
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    background-color: rgba(0, 0, 0, 0.80);
+    padding: 15px;
+    border-radius: 10px;
+    
+    z-index: 9999;
+
+    display: none;
+}
+
+div#camerapreview > span {
+    padding: 7px;
+    float: left;
+}
+
+div#camerapreview > img.close {
+    width: 32px;
+    float: right;
+    right: 15px;
+    position: absolute;
+
+    cursor: pointer;
+}
+
+div#camerapreview > span > video,
+div#camerapreview > span > canvas {
+    padding: 7px;
+    width: 320px;
+    height: 180px;
+}
+
+div#camerapreview > span > p {    
+    color: white;
+    user-select: none;
+}
+
+div#camerapreview > span {
     text-align: center;
 }
 

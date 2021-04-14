@@ -1055,7 +1055,6 @@ class PlayerCacheTest(EngineBaseTest):
             'urls' : list()
         }
         
-        
         with db_session:
             scene = self.active_scene()
             old_timeid = max(list(scene.tokens), key=lambda t: t.timeid).timeid
@@ -1073,15 +1072,16 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1, answer3)
         self.assertEqual(answer1['OPID'], 'CREATE')          
         self.assertEqual(len(answer1['tokens']), 3)
-        distances = list()
+        distances = list()          
+        with db_session:
+            scene = self.active_scene()
         for i, d in enumerate(answer1['tokens']):
             with db_session:
                 t = self.get_token(d['id'])
             # test for corret data
             self.assertGreater(answer1['tokens'][i]['timeid'], old_timeid)
-            if i == 0:
-                # first token is background
-                self.assertEqual(answer1['tokens'][i]['size'], -1)
+            if answer1['tokens'][i]['size'] == -1:
+                self.assertEqual(answer1['tokens'][i]['id'], scene.backing.id)
             else:
                 # other tokens regular ones
                 self.assertEqual(answer1['tokens'][i]['size'], 23)
@@ -1089,7 +1089,6 @@ class PlayerCacheTest(EngineBaseTest):
             # test for being in sync with token data
             self.assertEqual(answer1['tokens'][i]['id'],    t.id)  
             self.assertEqual(answer1['tokens'][i]['timeid'], t.timeid)
-            self.assertEqual(answer1['tokens'][i]['size'],  t.size)
             self.assertEqual(answer1['tokens'][i]['url'],   t.url)
             self.assertEqual(answer1['tokens'][i]['posx'],  t.posx)
             self.assertEqual(answer1['tokens'][i]['posy'],  t.posy)
@@ -1111,7 +1110,7 @@ class PlayerCacheTest(EngineBaseTest):
         # can create token with optional label (colored by the player)
         with db_session:
             self.purge_scene(self.active_scene())
-        create_data = copy.deepcopy(default_data) 
+        create_data = copy.deepcopy(default_data)
         create_data['urls'] = ['/static/token_d4.png']
         create_data['labels'] = ['#3']
         game_cache.onCreateToken(player_cache1, create_data)
@@ -1124,6 +1123,27 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(len(answer1['tokens']), 1)
         self.assertEqual(answer1['tokens'][0]['text'],  '#3')
         self.assertEqual(answer1['tokens'][0]['color'], 'red')
+
+        # can change background
+        create_data = copy.deepcopy(default_data)
+        create_data['size'] = '-1' 
+        create_data['urls'] = ['/foo/bar.png']
+        game_cache.onCreateToken(player_cache1, create_data)
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'CREATE')          
+        self.assertEqual(len(answer1['tokens']), 1)
+        with db_session:
+            scene = self.active_scene()
+            tokens = gm_cache.db.Token.select(lambda t: t.scene == scene)
+            # expect only one background token
+            self.assertIsNotNone(scene.backing)
+            for t in tokens:
+                if t.size == -1:
+                    self.assertEqual(t.id, scene.backing.id)
     
     def test_onDeleteToken(self):
         socket1 = SocketDummy()

@@ -17,6 +17,21 @@
             <img id="gmhint" src="/static/bottom.png" draggable="false" title="SHOW SCENES" />
         </div>
     </div>
+
+    <div id="camerapreview">
+        <img class="close" src="/static/delete.png" onClick="closeWebcam();" draggable="false" title="CLOSE CAMERA" />
+        <span>
+            <p>WEBCAM</p>
+            <video id="video" playsinline autoplay></video><br />
+            <input type="button" id="snapshotWebcam" onClick="onTakeSnapshot();" value="TAKE SNAPSHOT" />
+        </span>
+
+        <span>  
+            <p>SNAPSHOT</p>
+            <canvas id="snapshot" width="1600" height="900"></canvas><br />
+            <input type="button" id="applySnapshot" onClick="onApplyBackground();" value="APPLY BACKGROUND" />
+        </span>
+    </div>
 %end
 
     <div id="dicebox">

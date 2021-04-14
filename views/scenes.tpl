@@ -1,5 +1,9 @@
 %import time
-    <img class="largeicon" src="/static/add.png" onClick="addScene();" draggable="false" title="CREATE SCENE" />
+    <div class="tools">
+        <img class="largeicon" src="/static/add.png" onClick="addScene();" draggable="false" title="CREATE SCENE" />
+        <img class="largeicon" style="float: right;" src="/static/camera.png" onClick="initWebcam();" draggable="false" title="PREVIEW WEBCAM" />
+    </div>
+    
 %for i, scene_id in enumerate(game.order):
     %for s in game.scenes:
         %if scene_id == s.id:
@@ -14,7 +18,7 @@
                 %css  = "active"
                 %hint = "ACTIVE SCENE"
             %end
-    <div>
+    <div class="scene">
         <img class="{{css}}" src="{{url}}" onClick="activateScene({{s.id}})" draggable="false" title="{{hint}}" />
         <div class="controls">
             %if i > 0:
@@ -26,6 +30,7 @@
             <img class="icon" src="/static/right.png" onClick="moveScene({{s.id}}, 1);" draggable="false" title="MOVE RIGHT" />
             %end
         </div>
-    </div>
+    </div> 
+        %end
     %end
-%end 
+%end

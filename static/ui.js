@@ -1864,14 +1864,7 @@ function saveMusicPos(pos) {
     localStorage.setItem('music', JSON.stringify(pos));
 }
 
-function getImageBlob(img) {
-    var tmp_canvas = document.createElement("canvas");
-    tmp_canvas.width  = img.width;
-    tmp_canvas.height = img.height;
-    var ctx = tmp_canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-    url = tmp_canvas.toDataURL("image/png");
-    
+function getBlobFromDataURL(url) {
     var arr  = url.split(',');
     var mime = arr[0].match(/:(.*?);/)[1];
     var bstr = atob(arr[1]);
@@ -1883,9 +1876,20 @@ function getImageBlob(img) {
     return new Blob([u8arr], {type: mime});
 }
 
+function getImageBlob(img) {
+    var tmp_canvas = document.createElement("canvas");
+    tmp_canvas.width  = img.width;
+    tmp_canvas.height = img.height;
+    var ctx = tmp_canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    url = tmp_canvas.toDataURL("image/png");
+
+    return getBlobFromDataURL(url);
+}
+
 function ignoreBackground() {
     showInfo('LOADING');
-
+    
     // load transparent image from URL
     var img = new Image()
     img.src = '/static/transparent.png';
@@ -1894,37 +1898,6 @@ function ignoreBackground() {
         var f = new FormData();
         f.append('file[]', blob, 'transparent.png');
 
-        // upload as background (assuming nobody else is faster :D )
-        $.ajax({
-            url: '/' + gm_name + '/' + game_url + '/upload',
-            type: 'POST',
-            data: f,
-            contentType: false,
-            cache: false,
-            processData: false,
-            success: function(response) {
-                // reset uploadqueue
-                $('#uploadqueue').val("");
-                
-                // load images if necessary
-                var data = JSON.parse(response);
-                $.each(data.urls, function(index, url) {
-                    loadImage(data);
-                });
-                
-                // trigger token creation via websocket
-                writeSocket({
-                    'OPID' : 'CREATE',
-                    'posx' : 0,
-                    'posy' : 0,
-                    'size' : -1,
-                    'urls' : data.urls
-                });
-                
-                $('#popup').hide();
-            }, error: function(response, msg) {
-                handleError(response);
-            }
-        });
+        uploadBackground(gm_name, game_url, f);
     };
 }

@@ -395,6 +395,54 @@ def setup_gm_routes(engine):
         
         return dict(gm=gm, server=server, all_games=all_games)
 
+    @post('/vtt/upload-background/<gmurl>/<url>')
+    def post_set_background(gmurl, url):
+        gm = engine.main_db.GM.loadFromSession(request)
+        if gm is None:
+            engine.logging.warning('GM url="{0}" tried set the background at the game {1} by {2} but is not the GM'.format(gmurl, url, engine.getClientIp(request)))
+            abort(404)
+        
+        # load GM from cache
+        gm_cache = engine.cache.get(gm)
+        if gm_cache is None:
+            engine.logging.warning('GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but he was not inside the cache'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+            abort(404)
+        
+        # load game from GM's database
+        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        if game is None:
+            engine.logging.warning('GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+            abort(404)
+
+        # load active scene
+        scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
+        if scene is None:
+            abort(404)
+
+        # expect single background to be uploaded
+        files = request.files.getall('file[]')
+        if len(files) != 1:
+            engine.logging.warning('GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but did not provide a single image'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+            abort(403) # Forbidden
+
+        # check mime type
+        handle  = files[0]
+        content = handle.content_type.split('/')[0]
+        if content != 'image':            
+            engine.logging.warning('GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but used an unsupported type'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+            abort(403) # Forbidden
+
+        # check file size
+        max_filesize = engine.file_limit['background']
+        size = engine.getSize(handle)
+        if size > max_filesize * 1024 * 1024:      
+            engine.logging.warning('GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but file was too large'.format(gm.name, gm.url, url, engine.getClientIp(request)))
+            abort(403) # Forbidden
+
+        # upload image
+        img_url = game.upload(handle)
+        return img_url
+
     @post('/vtt/query-scenes/<url>')
     @view('scenes')
     def post_create_scene(url):

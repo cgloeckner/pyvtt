@@ -616,7 +616,12 @@ class GameCache(object):
                 
                 # use first token as background if necessary
                 if s.backing is None:
-                    t.size    = -1
+                    t.size = -1
+
+                # apply as background if size equals -1
+                if t.size == -1:
+                    if s.backing is not None:
+                        s.backing.delete()
                     s.backing = t
                 
                 tokens.append(t.to_dict())

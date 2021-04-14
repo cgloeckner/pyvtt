@@ -1002,7 +1002,7 @@ class VttTest(EngineBaseTest):
         with self.assertRaises(KeyError):
             player_cache.greenlet.get()
         self.assertEqual(len(log), 0)
-    
+
     def test_upload(self):
         # create some images
         img_small  = makeImage(512, 512)   # as token
@@ -1163,31 +1163,58 @@ class VttTest(EngineBaseTest):
         self.assertEqual(id_from_url(data['urls'][1]), 2)
         self.assertTrue(data['music'])
 
-
-        """
-        def test_game_music(self):
+    def test_upload_background(self):
+        # create some images
+        img_large  = makeImage(1500, 1500) # as background
+        img_huge   = makeImage(2000, 2000) # too large
+        mib = 2**20
+        self.assertGreater(len(img_large), 5 * mib)  
+        self.assertGreater(len(img_huge), 10 * mib)
+        
         # register arthur
         ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
         self.assertEqual(ret.status_int, 200)
         
-        # create two games
+        # create a game
         img_small = makeImage(512, 512)
         ret = self.app.post('/vtt/import-game/test-game-1',
-            upload_files=[('file', 'test.png', img_small)], xhr=True) 
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
         self.assertEqual(ret.status_int, 200)
         gm_sid = self.app.cookies['session']
         self.app.reset()
-
-        # cannot load music if not uploaded yet
-        ret = self.app.get('/music/arthur/test-game-1', expect_errors=True)
+        
+        # players can upload new background to an existing game
+        ret = self.app.post('/vtt/upload-background/arthur/test-game-1',
+            upload_files=[
+                ('file[]', 'back.png', img_large)
+            ], xhr=True, expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
-        # upload music (fake file)
-        ret = self.app.post('/arthur/test-game-1/set-music',
-            upload_files=[('file', 'test.mp3', b'')], xhr=True)
-        self.assertEqual(ret.status_int, 200)
+        # login as GM
+        self.app.set_cookie('session', gm_sid)
 
-        # can load music of specific game 
-        ret = self.app.get('/music/arthur/test-game-1')
+        id_from_url = lambda s: int(s.split('/')[-1].split('.png')[0])
+        
+        # gm can upload background to an existing game
+        ret = self.app.post('/vtt/upload-background/arthur/test-game-1',
+            upload_files=[
+                ('file[]', 'back.png', img_large)
+            ], xhr=True)
         self.assertEqual(ret.status_int, 200)
-        """
+        self.assertEqual(id_from_url(str(ret.body)), 1)
+        
+        # gm cannot upload multiple files as background
+        ret = self.app.post('/vtt/upload-background/arthur/test-game-1',
+            upload_files=[
+                ('file[]', 'back.png', img_large),
+                ('file[]', 'back2.png', img_large)
+            ], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 403)
+        
+        # gm cannot upload too large file as background
+        ret = self.app.post('/vtt/upload-background/arthur/test-game-1',
+            upload_files=[
+                ('file[]', 'back.png', img_huge)
+            ], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 403)
+    
