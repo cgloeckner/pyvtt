@@ -327,6 +327,13 @@ function notifyUpload(url) {
             $('#assetsLoading')[0].innerHTML = '';
         }
     }
+    images[url].onerror = function() {
+        num_loading -= 1;
+        if (num_loading == 0) {
+            $('#assetsLoading')[0].innerHTML = '';
+        }
+        console.error('Unable to load ' + url);
+    }
 }
 
 /// Start loading image into cache
