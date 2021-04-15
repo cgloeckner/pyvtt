@@ -78,8 +78,11 @@
     <div class="mapfooter" id="mapfooter">
         <div id="ping">Ping: &infin;</div>
         <div id="fps">0 FPS</div>
-        <div id="zoom" title="CLICK TO RESET" onClick="resetViewport();">Zoom: 100%</div>
         <div id="version">unknown version</div>
+        <div id="zoom">
+            <img id="beamLock" class="icon" title="AUTO-MOVEMENT" onClick="toggleAutoMove();" src="/static/unlocked.png" />
+            <span id="zoomLevel" title="RESET ZOOM" onClick="resetViewport();"></span>
+        </div>
         <div id="musicStatus">Music muted</div>
         <div id="assetsLoading"></div>
 

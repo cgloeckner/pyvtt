@@ -1878,6 +1878,29 @@ function saveMusicPos(pos) {
     localStorage.setItem('music', JSON.stringify(pos));
 }
 
+/// Event handle for toggling auto movement
+function toggleAutoMove(load=false) {
+    if (load) {
+        // load from browser's storage
+        var raw = localStorage.getItem('allow_auto_movement');
+        allow_auto_movement = JSON.parse(raw);
+    } else {
+        // toggle
+        allow_auto_movement = !allow_auto_movement;
+    }
+
+    // show (un)locked
+    if (allow_auto_movement) {
+        $('#beamLock')[0].src = '/static/unlocked.png';
+    } else {
+        $('#beamLock')[0].src = '/static/locked.png';
+    }
+
+    // save to browser's storage
+    var raw = JSON.stringify(allow_auto_movement);
+    localStorage.setItem('allow_auto_movement', raw);
+}
+
 function getBlobFromDataURL(url) {
     var arr  = url.split(',');
     var mime = arr[0].match(/:(.*?);/)[1];

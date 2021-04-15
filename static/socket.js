@@ -180,11 +180,15 @@ function onBeacon(data) {
         addBeacon(data['color'], data['uuid']);
         beacon = beacons[data['uuid']];
     }
-
-    console.log(beacons, data);
-
+    
     // update beacon
     startBeacon(beacon, data['x'], data['y']);
+
+    // move viewport towards beacon if zoomed in
+    if (viewport.zoom > 1.0) {
+        viewport.newx = data['x'];
+        viewport.newy = data['y'];
+    }
 }
 
 function onMusic(data) {
@@ -348,6 +352,7 @@ function login(event, gmname, url, websocket_url) {
 /// Sets up the game and triggers the update loop
 function start(gmname, url, playername, color) {
     onInitMusicPlayer(gmname, url);
+    toggleAutoMove();
 
     writeSocket({
         'name'     : playername,

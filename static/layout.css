@@ -820,19 +820,24 @@ div#ping {
 div#fps {
     left: 120px;
 }
+       
+div#version {
+    left: 200px;
+}
 
 div#zoom {
-    left: 200px;
+    left: 270px;
     
     cursor: pointer;
 }
 
-div#version {
-    left: 320px;
+div#zoom > img#beamLock {
+    user-select: none;
+    cursor: pointer;
 }
 
 div#musicStatus {
-    left: 400px;
+    left: 410px;
 }
 
 div#assetsLoading {

@@ -13,17 +13,69 @@ function resetViewport() {
     viewport = {
         'x'    : MAX_SCENE_WIDTH / 2, // left in [0, 1000]
         'y'    : MAX_SCENE_WIDTH * canvas_ratio / 2,
-        'zoom' : 1.0
+        'zoom' : 1.0,
+        'newx' : null,
+        'newy' : null
     };
     
     displayZoom();
 };
 
+var allow_auto_movement = true;
+
+function updateViewport() {
+    if (!allow_auto_movement) {
+        viewport.newx = null;
+        viewport.newy = null;
+    }
+    
+    if (viewport.newx == null || viewport.newy == null) {
+        return;
+    }
+
+    var speed = parseInt(interpolation_speed * 1.5);
+    // move viewport towards desired position
+    if (speed > 0) {
+        // interpolate viewport position if necessary
+        var dx = viewport.newx - viewport.x;
+        var dy = viewport.newy - viewport.y;
+        if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
+            // get normalized direction vector
+            var d = Math.sqrt(dx * dx + dy * dy);
+            // scale vector
+            dx = dx * interpolation_speed / d;
+            dy = dy * interpolation_speed / d;
+            // update position
+            viewport.x = parseInt(viewport.x + dx);
+            viewport.y = parseInt(viewport.y + dy);    
+            
+            interpolated = true;
+        } else {
+            // finish movement
+            viewport.x = parseInt(viewport.newx);
+            viewport.y = parseInt(viewport.newy);
+            viewport.newx = null;
+            viewport.newy = null;
+        }
+    } else {
+        // do not interpolate 
+        viewport.x = parseInt(viewport.newx);
+        viewport.y = parseInt(viewport.newy);
+    }
+
+    limitViewportPosition();
+}
+
 var ZOOM_MOVE_SPEED   = 20.0;
 var ZOOM_FACTOR_SPEED = 1.05;
 
 function displayZoom() {
-    $('#zoom')[0].innerHTML = 'Zoom: ' + parseInt(viewport.zoom*100) + '%';
+    if (viewport.zoom > 1.0) {
+        $('#zoom').show();
+        $('#zoomLevel')[0].innerHTML = 'Zoom: ' + parseInt(viewport.zoom*100) + '%';
+    } else {
+        $('#zoom').hide();
+    }
 }
 
 var interpolation_speed = 25; // speed for interpolating between two positions
@@ -648,6 +700,7 @@ function drawScene() {
     
     updatePing();
     updateTokenbar();
+    updateViewport();
     
     if (!client_side_prediction) {
         updateTokenbar();
