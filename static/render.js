@@ -202,6 +202,7 @@ function Token(id, url) {
     this.text = null;
     this.color = null;
     this.label_canvas = null;
+    this.hue_canvas = null;
 }
 
 /// Add token with id and url to the scene
@@ -284,6 +285,8 @@ function updateToken(data, force=false) {
     if (tokens[data.id].text != data.text || tokens[data.id].color != data.color) {
         // reset canvas for pre-drawn text
         tokens[data.id].label_canvas = null;
+        // reset canvas for pre-drawn token hue
+        tokens[data.id].hue_canvas   = null;
     }
     tokens[data.id].text     = data.text;
     tokens[data.id].color    = data.color;
@@ -434,26 +437,40 @@ function drawToken(token, color, is_background) {
             context.shadowBlur = 25;
         }
 
-        // rotate token's hue if used as timer-token
-        if (token.text != null && token.text.startsWith('#')) {
-            context.filter = "hue-rotate(" + getHue(token.color) + "turn) brightness(" + (1+getBrightness(token.color)) + ")";
+        var is_timer = token.text.startsWith('#');
+
+        if (token.hue_canvas == null && images[token.url].complete) {
+            if (token.text != null && is_timer) {
+                // create buffer canvas sized like the token
+                token.hue_canvas = document.createElement('canvas');
+                token.hue_canvas.width  = sizes[0];
+                token.hue_canvas.height = sizes[1];
+                
+                // rotate token's hue if used as timer-token
+                var ctx = token.hue_canvas.getContext('2d');
+                ctx.filter = "hue-rotate(" + getHue(token.color) + "turn) brightness(" + (1+getBrightness(token.color)) + ")";
+
+                // pre-render token hue
+                ctx.drawImage(images[token.url], 0, 0, sizes[0], sizes[1]);
+            }
         }
+        
         // draw token image
         try {
+            var img = images[token.url];
+            if (token.hue_canvas != null) {
+                img = token.hue_canvas;
+            }
+            
             context.drawImage(
-                images[token.url],                    // url
-                -sizes[0] / 2, -sizes[1] / 2,        // position
+                img,                                  // url
+                -sizes[0] / 2, -sizes[1] / 2,         // position
                 sizes[0], sizes[1]                    // size
             );
         } catch (err) {
             // required to avoid Chrome choking from missing images
         }
-
-        // unrotate hue
-        if (token.text != null && token.text.startsWith('#')) {
-            context.filter = "hue-rotate(0.0turn)";
-        }
-
+        
         // draw token label
         if (token.text != null) {
             // reverse flip and rotation to keep text unaffected
@@ -463,61 +480,60 @@ function drawToken(token, color, is_background) {
             } else {
                 context.rotate(-token.rotate * 3.14/180.0);
             }
-
-            w = parseInt(2 * token.size * 1.25); // label size
-            w2 = w * token.text.length; // label canvas
-            h = 5 * w;
+            
             if (token.label_canvas == null) {
+                // determine optional fontsize and width
+                var fontsize = 12
+                if (is_timer) {
+                    fontsize = 25 * token.size / default_token_size;
+                }
+                context.font = fontsize + 'pt sans';
+                var metrics = context.measureText(token.text);
+                var padding = 14; // to allow for line width
+                var width   = metrics.width + padding;
+                var height  = fontsize * 96 / 72 + padding;
+
+                // create buffer context
                 token.label_canvas = document.createElement('canvas');
-                token.label_canvas.width  = w2;
-                token.label_canvas.height = h;
-                ctx = token.label_canvas.getContext('2d')
-                ctx.textAlign = "center";
-                ctx.fillStyle = token.color;
-                
-                // use black or white outline based in color's brightness
+                token.label_canvas.width  = width;
+                token.label_canvas.height = height;
+                ctx = token.label_canvas.getContext('2d');
+
+                // prepare buffer context
+                ctx.textAlign  =  "center";
+                ctx.fillStyle  = token.color;
+                ctx.font       = context.font;
+                ctx.lineWidth  = 6;
+                ctx.lineJoin   = "round";
+                ctx.miterLimit = 2;
                 if (brightnessByColor(token.color) > 60) {
                     ctx.strokeStyle = '#000000';
                 } else {
+                    ctx.strokeStyle = '#FFFFFF'; 
+                    ctx.lineWidth   = 4;
+                }
+                var text = token.text;
+                if (is_timer) {   
+                    ctx.lineWidth   = 4; 
+                    ctx.lineJoin    = "miter";
+                    ctx.fillStyle   = '#FFFFFF';
                     ctx.strokeStyle = '#FFFFFF';
+                    text = text.substr(1);
                 }
-                
-                if (token.text.startsWith('#')) {
-                    // large white font for locked labels
-                    ctx.font = w/2 + "px sans";
-                    ctx.lineWidth = 8;   
-                    ctx.fillStyle = '#FFFFFF';
-                    //ctx.strokeStyle = token.color;
-                    ctx.strokeStyle = '#FFFFFF';
-                } else {
-                    // regular font for regular labels
-                    ctx.font = "30px sans"; 
-                    ctx.lineWidth = 7;
-                }
-                
-                ctx.lineJoin = "round";
-                ctx.miterLimit = 2;
 
-                let tmp_text = token.text;
-                if (token.text.startsWith('#')) {
-                    tmp_text = token.text.substr(1);
-                }
-                
-                ctx.strokeText(tmp_text, w2/2, h/2);
-                ctx.fillText(tmp_text, w2/2, h/2);
+                // render label
+                ctx.strokeText(text, width/2, height - padding/2);
+                ctx.fillText(text, width/2, height - padding/2);
             }
-
-            context.scale(0.5, 0.5); // since text is pre-rendered in higher res
-            if (token.text.startsWith('#')) {  
-                // place label at the center
-                context.translate(-w2/2, -h/2 + token.size/2);
-            } else {
-                // place label at the bottom
-                context.translate(-w2/2, -h * 0.475 + token.size);
-            }
-
+            
             try {
-                context.drawImage(token.label_canvas, 0, 0);
+                var left = -token.label_canvas.width/2;
+                var top  = token.size/2 - token.label_canvas.height/2; 
+                if (is_timer) {
+                    // vertical center it
+                    top = -token.label_canvas.height * 0.6;
+                }
+                context.drawImage(token.label_canvas, left, top);
             } catch (error) {
             }
         }

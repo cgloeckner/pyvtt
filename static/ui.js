@@ -311,8 +311,9 @@ function onTokenResize() {
         // clide-side prediction kicks in
         token.size = size;
 
-        // force label to be redrawn
+        // trigger buffer redraw
         token.label_canvas = null;
+        token.hue_canvas   = null;
     });
 }
 
@@ -786,8 +787,9 @@ function onGrab(event) {
             token.rotate = 0;
             token.size   = default_token_size;
             
-            // force label to be redrawn
+            // trigger buffer redraw
             token.label_canvas = null;
+            token.hue_canvas   = null;
             
             changes.push({
                 'id'     : id,
@@ -1208,8 +1210,9 @@ function onLock() {
         var token = tokens[id];
         token.locked = !primary_lock;
 
-        // force label to be redrawn
+        // trigger buffer redraw
         token.label_canvas = null;
+        token.hue_canvas   = null;
         
         changes.push({
             'id'     : id,
@@ -1336,7 +1339,10 @@ function onLabelStep(delta) {
         } else {
             token.text = '#';
         }
-        token.label_canvas = null; // trigger redrawing
+        
+        // trigger buffer redraw
+        token.label_canvas = null;
+        token.hue_canvas   = null;
 
         if (number == 0) {
             deleted.push(id);
@@ -1384,9 +1390,13 @@ function onLabel() {
             // ignore if locked
             return;
         }
+        
         // move beneath lowest known z-order
         token.text  = text;
+        
+        // trigger buffer redraw
         token.label_canvas = null;
+        token.hue_canvas   = null;
         
         changes.push({
             'id'    : id,
