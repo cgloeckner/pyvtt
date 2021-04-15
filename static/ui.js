@@ -1014,6 +1014,10 @@ function onMove(event) {
 /// Event handle mouse wheel scrolling
 function onWheel(event) {
     if (zooming) {
+        if (event.ctrlKey || event.metaKey) {
+            // ignore browser zooming
+            return;
+        }
         var show = false;
         var canvas = $('#battlemap');
         

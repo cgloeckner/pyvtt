@@ -1780,7 +1780,12 @@ class PlayerCacheTest(EngineBaseTest):
         
         # clear game
         all_scene_ids, active = reset()
-            
+
+        # test scene order
+        with db_session:
+            game = gm_cache.db.Game.select(url='bar').first()
+        self.assertEqual(game.order, [3, 4, 5, 6])
+        
         # GM can delete an inactive scene
         game_cache.onDeleteScene(player_cache2, {'scene': all_scene_ids[1]}) 
         # expect no broadcast
@@ -1798,9 +1803,18 @@ class PlayerCacheTest(EngineBaseTest):
             game = self.get_game()
             expected = [all_scene_ids[0], all_scene_ids[2], all_scene_ids[3]]
             self.assertEqual(game.order, expected)
+        # expect scene order to remain
+        with db_session:
+            game = gm_cache.db.Game.select(url='bar').first()
+        self.assertEqual(game.order, [3, 5, 6])
         
         # clear game
         all_scene_ids, active = reset()
+        
+        # test scene order
+        with db_session:
+            game = gm_cache.db.Game.select(url='bar').first()
+        self.assertEqual(game.order, [7, 8, 9, 10])
 
         # GM can delete an active scene
         game_cache.onDeleteScene(player_cache2, {'scene': active.id})
@@ -1811,7 +1825,11 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1, answer2)
         self.assertEqual(answer1, answer3)
         self.assertEqual(answer1['OPID'], 'REFRESH')
-
+        # expect scene order to remain
+        with db_session:
+            game = gm_cache.db.Game.select(url='bar').first()
+        self.assertEqual(game.order, [7, 8, 9])
+        
         # @NOTE: REFRESH is tested in-depth somewhere else
         # except first id to be missing now
         with db_session:
@@ -1832,6 +1850,10 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertIsNone(answer1)
         # except first id still being there
         self.assertIsNotNone(gm_cache.db.Scene.select(lambda s: s.id == all_scene_ids[0]))
+        # expect the same scene order
+        with db_session:
+            game = gm_cache.db.Game.select(url='bar').first()
+        self.assertEqual(game.order, [7, 8, 9])
 
         # reset to only one scene
         with db_session:
