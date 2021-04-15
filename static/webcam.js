@@ -75,3 +75,17 @@ function closeWebcam() {
     var context = preview.getContext('2d');
     context.clearRect(0, 0, preview.width, preview.height);
 }
+
+function togglePreview(id) {
+    var target = $(id);
+    if (target.hasClass('largepreview')) {
+        // reset to preview
+        target.removeClass('largepreview');
+        target.css('height', 180);
+    } else {
+        // enlarge
+        target.addClass('largepreview');
+        target.css('width', 'auto');
+        target.css('height', window.innerHeight - 100);
+    }
+}

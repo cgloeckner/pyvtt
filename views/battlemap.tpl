@@ -22,13 +22,13 @@
         <img class="close" src="/static/delete.png" onClick="closeWebcam();" draggable="false" title="CLOSE CAMERA" />
         <span>
             <p>LIVESTREAM</p>
-            <video id="video" playsinline autoplay></video><br />
+            <video id="video" playsinline autoplay onClick="togglePreview(this);" title="CLICK TO ENLARGE"></video><br />
             <input type="button" id="snapshotWebcam" onClick="onTakeSnapshot();" value="TAKE SNAPSHOT" />
         </span>
 
         <span>  
             <p>SNAPSHOT</p>
-            <canvas id="snapshot" width="1600" height="900"></canvas><br />
+            <canvas id="snapshot" width="1600" height="900" onClick="togglePreview(this);" title="CLICK TO ENLARGE"></canvas><br />
             <input type="button" id="applySnapshot" onClick="onApplyBackground();" value="APPLY BACKGROUND" />
         </span>
     </div>

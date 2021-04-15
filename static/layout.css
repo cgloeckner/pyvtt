@@ -385,6 +385,15 @@ div#camerapreview > span > canvas {
     padding: 7px;
     width: 320px;
     height: 180px;
+
+    cursor: pointer;
+}
+
+div#camerapreview > span > .largepreview {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
 }
 
 div#camerapreview > span > p {    
