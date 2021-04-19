@@ -482,14 +482,6 @@ function drawToken(token, color, is_background) {
             }
         }
         
-        // handle fip, rotation
-        if (token.flipx) {
-            context.scale(-1, 1);
-            context.rotate(token.rotate * -3.14/180.0);
-        } else {
-            context.rotate(token.rotate * 3.14/180.0);
-        }
-        
         // handle selection
         if (color != null) {
             context.shadowColor = color;
@@ -514,11 +506,18 @@ function drawToken(token, color, is_background) {
             }
         }
         
-        // draw token image
+        // draw token image 
+        context.save();
         try {
             var img = images[token.url];
             if (token.hue_canvas != null) {
                 img = token.hue_canvas;
+            }
+
+            // handle rotation and x-flipping
+            context.rotate(token.rotate * 3.14/180.0);
+            if (token.flipx) {
+                context.scale(-1, 1);
             }
             
             context.drawImage(
@@ -529,17 +528,10 @@ function drawToken(token, color, is_background) {
         } catch (err) {
             // required to avoid Chrome choking from missing images
         }
+        context.restore();
         
         // draw token label
         if (token.text != null) {
-            // reverse flip and rotation to keep text unaffected
-            if (token.flipx) {
-                context.scale(-1, 1);
-                context.rotate(-token.rotate * -3.14/180.0);
-            } else {
-                context.rotate(-token.rotate * 3.14/180.0);
-            }
-            
             if (token.label_canvas == null) {
                 // determine optional fontsize and width
                 var fontsize = 12
