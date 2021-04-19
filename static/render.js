@@ -516,7 +516,8 @@ function drawToken(token, color, is_background) {
                 
                 // rotate token's hue if used as timer-token
                 var ctx = token.hue_canvas.getContext('2d');
-                ctx.filter = "hue-rotate(" + getHue(token.color) + "turn) brightness(" + (1+getBrightness(token.color)) + ")";
+                var hsl = getHsl(token.color);
+                ctx.filter = "hue-rotate(" + hsl[0] + "turn) saturate(" + hsl[1] + ") brightness(" + (2*hsl[2]) + ")";
 
                 // pre-render token hue
                 ctx.drawImage(images[token.url], 0, 0, sizes[0], sizes[1]);
