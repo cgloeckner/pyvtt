@@ -11,7 +11,7 @@
                 <input type="text" name="playername" id="playername" autocomplete="off" value="{{playername}}" maxlength="30" />
                 
                 <p>PLAYER COLOR</p>
-                <input type="color" name="playercolor" id="playercolor" value="{{playercolor}}">
+                <input type="color" name="playercolor" id="playercolor" value="{{playercolor}}"><img src="/static/rotate.png" class="icon" title="RANDOM COLOR" onClick="pickRandomColor();" />
                 
                 <p><input type="submit" id="loginbtn" value="JOIN" /></p>
             </form> 

@@ -238,6 +238,12 @@ function onPing(data) {
     $('#ping')[0].innerHTML = 'PING: ' + delta + 'ms';
 }
 
+/// Handle picking a random color
+function pickRandomColor() {
+    var index = Math.floor(Math.random() * SUGGESTED_PLAYER_COLORS.length);
+    $('#playercolor')[0].value = SUGGESTED_PLAYER_COLORS[index];
+}
+
 /// Handles login and triggers the game
 function login(event, gmname, url, websocket_url) {
     event.preventDefault();
