@@ -84,7 +84,8 @@
             <span id="zoomLevel" title="RESET ZOOM" onClick="resetViewport();"></span>
         </div>
         <div id="musicStatus">Music muted</div>
-        <div id="assetsLoading"></div>
+        <div id="assetsDownloading"></div>
+        <div id="assetsUploading"></div>
 
         <form id="uploadform" method="post" enctype="multipart/form-data">
             <input id="uploadqueue" name="file[]" type="file" multiple />

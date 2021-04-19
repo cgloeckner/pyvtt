@@ -388,7 +388,7 @@ function onDrop(event) {
         return;
     }
     
-    showInfo('LOADING');
+    notifyUploadStart();
     
     // test upload data sizes
     var queue = $('#uploadqueue')[0];
@@ -397,6 +397,7 @@ function onDrop(event) {
     var error_msg = '';
     $.each(event.dataTransfer.files, function(index, file) {
         if (error_msg != '') {
+            notifyUploadFinish();
             return;
         }
         
@@ -426,6 +427,7 @@ function onDrop(event) {
     });
 
     if (error_msg != '') {
+        notifyUploadFinish();
         showError(error_msg);
         return;
     }
@@ -469,8 +471,9 @@ function onDrop(event) {
                 });
             }
             
-            $('#popup').hide();
+            notifyUploadFinish();
         }, error: function(response, msg) {
+            notifyUploadFinish();
             handleError(response);
         }
     });
@@ -1496,7 +1499,7 @@ function onEndDragDice(event) {
         }
 
         // upload timer token to the game
-        showInfo('LOADING');
+        notifyUploadStart();
 
         // load transparent image from URL
         var img = new Image()
@@ -1534,8 +1537,9 @@ function onEndDragDice(event) {
                         'labels' : ['#' + r]
                     });
                     
-                    $('#popup').hide();
+                    notifyUploadFinish();
                 }, error: function(response, msg) {
+                    notifyUploadFinish();
                     handleError(response);
                 }
             });
@@ -1925,8 +1929,6 @@ function getImageBlob(img) {
 }
 
 function ignoreBackground() {
-    showInfo('LOADING');
-    
     // load transparent image from URL
     var img = new Image()
     img.src = '/static/transparent.png';

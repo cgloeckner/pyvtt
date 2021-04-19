@@ -365,24 +365,41 @@ function updateToken(data, force=false) {
     }
 }
 
-var num_loading = 0;
+var num_downloading = 0;
+var num_uploading   = 0;
 
-/// Handle loading notifcation
-function notifyUpload(url) {
-    if (num_loading == 0) {
-        $('#assetsLoading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> LOADING ASSETS...';
+/// Handle uploading notifcation
+function notifyUploadStart() {
+    if (num_uploading == 0) {
+        $('#assetsUploading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> UPLOADING...';
     }
-    num_loading += 1;
+    num_uploading += 1;
+}
+
+/// Handle upload finish
+function notifyUploadFinish() {
+    num_uploading -= 1;
+    if (num_uploading == 0) {
+        $('#assetsUploading')[0].innerHTML = '';
+    }
+}
+
+/// Handle downloading notifcation
+function notifyDownload(url) {
+    if (num_downloading == 0) {
+        $('#assetsDownloading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> DOWNLOADING...';
+    }
+    num_downloading += 1;
     images[url].onload = function() {
-        num_loading -= 1;
-        if (num_loading == 0) {
-            $('#assetsLoading')[0].innerHTML = '';
+        num_downloading -= 1;
+        if (num_downloading == 0) {
+            $('#assetsDownloading')[0].innerHTML = '';
         }
     }
     images[url].onerror = function() {
-        num_loading -= 1;
-        if (num_loading == 0) {
-            $('#assetsLoading')[0].innerHTML = '';
+        num_downloading -= 1;
+        if (num_downloading == 0) {
+            $('#assetsDownloading')[0].innerHTML = '';
         }
         console.error('Unable to load ' + url);
     }
@@ -395,7 +412,7 @@ function loadImage(url) {
             console.info('Loading image ' + url);
         }
         images[url] = new Image();
-        notifyUpload(url);
+        notifyDownload(url);
         images[url].src = url;
     }
 }

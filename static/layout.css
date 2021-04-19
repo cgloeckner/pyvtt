@@ -799,7 +799,8 @@ div#fps,
 div#zoom,
 div#version,
 div#musicStatus,
-div#assetsLoading {
+div#assetsDownloading,
+div#assetsUploading {
     position: absolute;
     color: grey;
     bottom: 0px;
@@ -840,8 +841,12 @@ div#musicStatus {
     left: 410px;
 }
 
-div#assetsLoading {
+div#assetsDownloading {
     left: 525px;
+}
+
+div#assetsUploading {
+    left: 685px;
 }
 
 div.audioplayer {
