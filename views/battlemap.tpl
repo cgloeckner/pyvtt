@@ -28,7 +28,7 @@
 
         <span>  
             <p>SNAPSHOT</p>
-            <canvas id="snapshot" width="1600" height="900" onClick="togglePreview(this);" title="CLICK TO ENLARGE"></canvas><br />
+            <canvas id="snapshot" onClick="togglePreview(this);" title="CLICK TO ENLARGE"></canvas><br />
             <input type="button" id="applySnapshot" onClick="onApplyBackground();" value="APPLY BACKGROUND" />
         </span>
     </div>

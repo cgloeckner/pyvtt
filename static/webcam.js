@@ -42,7 +42,12 @@ function onStreamReady(stream) {
 }
 
 function onTakeSnapshot() {
+    // apply video resolution to canvas
     var preview = $('#snapshot')[0]
+    preview.width  = webcam_constraints.video.width;
+    preview.height = webcam_constraints.video.height;
+
+    // draw video snapshot onto canvas
     var context = preview.getContext('2d');
     context.clearRect(0, 0, preview.width, preview.height);
     context.drawImage($('#video')[0], 0, 0, preview.width, preview.height);
@@ -55,12 +60,12 @@ function onApplyBackground() {
     
     // fetch JPEG-data from canvas
     var preview = $('#snapshot')[0]
-    var url = preview.toDataURL("image/jpg");
+    var url = preview.toDataURL("image/jpeg");
 
     // prepare upload form data
     var blob = getBlobFromDataURL(url);
     var f = new FormData();
-    f.append('file[]', blob, 'snapshot.jpg');
+    f.append('file[]', blob, 'snapshot.jpeg');
 
     // upload for current scene
     uploadBackground(gm_name, game_url, f);
