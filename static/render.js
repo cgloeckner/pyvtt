@@ -371,7 +371,7 @@ var num_uploading   = 0;
 /// Handle uploading notifcation
 function notifyUploadStart() {
     if (num_uploading == 0) {
-        $('#assetsUploading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> UPLOADING...';
+        $('#assetsUploading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> <img src="/static/top.png" class="icon" />';
     }
     num_uploading += 1;
 }
@@ -387,7 +387,7 @@ function notifyUploadFinish() {
 /// Handle downloading notifcation
 function notifyDownload(url) {
     if (num_downloading == 0) {
-        $('#assetsDownloading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> DOWNLOADING...';
+        $('#assetsDownloading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> <img src="/static/bottom.png" class="icon" >';
     }
     num_downloading += 1;
     images[url].onload = function() {

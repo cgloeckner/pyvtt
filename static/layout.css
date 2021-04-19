@@ -796,11 +796,11 @@ div.battlemap > div#tokenbar > img.dummy:hover {
 
 div#ping,
 div#fps,
+div#assetsDownloading,
+div#assetsUploading,
 div#zoom,
 div#version,
-div#musicStatus,
-div#assetsDownloading,
-div#assetsUploading {
+div#musicStatus {
     position: absolute;
     color: grey;
     bottom: 0px;
@@ -826,8 +826,16 @@ div#version {
     left: 200px;
 }
 
-div#zoom {
+div#assetsDownloading {
     left: 270px;
+}
+
+div#assetsUploading {
+    left: 320px;
+}
+
+div#zoom {
+    left: 370px;
     
     cursor: pointer;
 }
@@ -839,14 +847,6 @@ div#zoom > img#beamLock {
 
 div#musicStatus {
     left: 410px;
-}
-
-div#assetsDownloading {
-    left: 525px;
-}
-
-div#assetsUploading {
-    left: 685px;
 }
 
 div.audioplayer {

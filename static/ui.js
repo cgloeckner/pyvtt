@@ -1563,7 +1563,7 @@ function onResetPlayers(event) {
     if (event.buttons == 2) {
         // reset players position
         var target = $('#players');
-        var pos = [window.innerWidth * 0.5, window.innerHeight - target.height()];
+        var pos = [window.innerWidth * 0.5, window.innerHeight - 1.5 * target.height()];
         
         // apply position
         movePlayersTo(pos);
