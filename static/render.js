@@ -330,6 +330,12 @@ function updateToken(data, force=false) {
     }
     
     tokens[data.id].zorder   = data.zorder;
+    if (tokens[data.id].size != data.size) {
+        // reset canvas for pre-drawn text
+        tokens[data.id].label_canvas = null;
+        // reset canvas for pre-drawn token hue
+        tokens[data.id].hue_canvas   = null;
+    }
     tokens[data.id].size     = data.size;
     tokens[data.id].rotate   = data.rotate;
     tokens[data.id].flipx    = data.flipx;
