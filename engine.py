@@ -54,7 +54,8 @@ class Engine(object):
             "token"      : 2,
             "background" : 10,
             "game"       : 15,
-            "music"      : 10
+            "music"      : 10,
+            "num_music"  : 5
         }
         self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF']
         

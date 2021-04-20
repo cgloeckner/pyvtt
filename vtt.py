@@ -326,12 +326,9 @@ def setup_gm_routes(engine):
         now = time.time()
         game_cache = gm_cache.get(game)
         game.cleanup(now) # cleanup old images and tokens
-        game_cache.cleanup() # close old sockets
+        game_cache.cleanup() # remove all players and music
         
         engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))
-
-        # notify all players about cleared music
-        game_cache.notifyMusic();
 
     @post('/vtt/kick-player/<url>/<uuid>')
     def kick_player(url, uuid):
@@ -600,8 +597,8 @@ def setup_player_routes(engine):
 
         redirect('/thumbnail/{0}/{1}/{2}'.format(gmurl, url, game.active))
 
-    @get('/music/<gmurl>/<url>/<timestamp>')
-    def game_music(gmurl, url, timestamp):
+    @get('/music/<gmurl>/<url>/<slotid>/<timestamp>')
+    def game_music(gmurl, url, slotid, timestamp):
         # NOTE: timestamp ignored but helps to prevent caching in chrome
         #response.set_header('Cache-Control', 'no-store') # not working for chrome
          
@@ -618,7 +615,7 @@ def setup_player_routes(engine):
             abort(404)
         
         # try to load music from disk
-        fname = engine.paths.getMusicFileName()
+        fname = '{0}.mp3'.format(slotid)
         root  = engine.paths.getGamePath(gmurl, url)
         return static_file(fname, root)
 
@@ -785,9 +782,14 @@ def setup_player_routes(engine):
         gm_cache = engine.cache.getFromUrl(gmurl)
         if gm_cache is None:
             abort(404)
+
+        # loda game from cache
+        game_cache = gm_cache.getFromUrl(url)
+        if game_cache is None:
+            abort(404)
         
         # load game from GM's database to upload files
-        answer = {'urls': list(), 'music': False};
+        answer = {'urls': list(), 'music': list()};
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
         if game is None:
             abort(404)
@@ -845,12 +847,8 @@ def setup_player_routes(engine):
 
             # upload music
             elif content == 'audio':
-                if answer['music']:
-                    # ignore multiple music files
-                    continue
-                fname = engine.paths.getGamePath(gmurl, url) / 'music.mp3'
-                handle.save(destination=str(fname), overwrite=True)
-                answer['music'] = True
+                slot_id = game_cache.uploadMusic(handle)
+                answer['music'].append(slot_id)
         
         # return urls
         # @NOTE: request was non-JSON to allow upload, so urls need to be encoded

@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import time, requests, uuid, json, random
+import time, requests, uuid, json, random, os
 
 from bottle import request
 import gevent
@@ -184,6 +184,8 @@ class GameCache(object):
         self.players = dict() # name => player
         self.next_id = 0 # used for player indexing in UI
 
+        self.playback  = None
+
         #self.engine.logging.info('GameCache {0} for GM {1} created'.format(self.url, self.parent.url))
         if num_generated > 0:
             self.engine.logging.info('{0} MD5 hashes generated'.format(num_generated))
@@ -206,7 +208,43 @@ class GameCache(object):
             # generate new_indicex
             for new_index, n in enumerate(tmp):
                 self.players[n].index = new_index
-        
+
+    def getAllSlots(self):
+        root = self.engine.paths.getGamePath(self.parent.url, self.url)
+        slots = list()
+        for slot_id in range(self.engine.file_limit['num_music']):
+            if os.path.exists(root / '{0}.mp3'.format(slot_id)):
+                slots.append(slot_id)
+        return slots
+
+    def uploadMusic(self, handle):
+        root = self.engine.paths.getGamePath(self.parent.url, self.url)
+
+        with self.engine.locks[self.parent.url]: # make IO access safe
+            # search for next free slot
+            slots = self.getAllSlots()
+            next_slot = None
+            for slot_id in range(self.engine.file_limit['num_music']):
+                if slot_id not in slots:
+                    next_slot = slot_id
+                    break
+            if next_slot != None:
+                # save file
+                fname = root / '{0}.mp3'.format(next_slot)
+                handle.save(destination=str(fname), overwrite=True)
+
+        return next_slot
+
+    def deleteMusic(self, slots):
+        root = self.engine.paths.getGamePath(self.parent.url, self.url)
+
+        # delete these tracks
+        with self.engine.locks[self.parent.url]: # make IO access safe
+            for slot_id in slots:
+                fname = root / '{0}.mp3'.format(int(slot_id))
+                if os.path.exists(fname):
+                    os.remove(fname)
+    
     # --- cache implementation ----------------------------------------
         
     def insert(self, name, color, is_gm):
@@ -282,11 +320,13 @@ class GameCache(object):
             urls = [t.url for t in self.parent.db.Token.select(lambda t: t.scene.game == g)] 
         
         player.write({
-            'OPID'    : 'ACCEPT',
-            'players' : self.getData(),
-            'rolls'   : rolls,
-            'urls'    : list(set(urls)) # drop duplicates
-        }); 
+            'OPID'     : 'ACCEPT',
+            'players'  : self.getData(),
+            'rolls'    : rolls,
+            'urls'     : list(set(urls)), # drop duplicates
+            'slots'    : self.getAllSlots(), # music slots
+            'playback' : self.playback
+        });
         
         player.write(self.fetchRefresh(g.active))
         
@@ -342,22 +382,23 @@ class GameCache(object):
                     return name
     
     def cleanup(self):
-        """ Cleanup game and closes unused sockets. """
+        """ Cleanup game. """
+        # disconnect all players
         with self.lock:
-            removing = set()
             for name in self.players:
-                p = self.players[name]    
-                #with p.lock: # note: atm deadlocking
-                if not p.isOnline():
-                    p.socket = None
-                    removing.add(name)
-            for name in removing:
-                del self.players[name]
-            self.rebuildIndices()
+                p = self.players[name]
+                if p.socket != None and not p.socket.closed:
+                    p.socket.close()
+            self.players.clear()
 
-    def notifyMusic(self):
-        """ notify all players about cleared music """
-        self.broadcast({'OPID': 'MUSIC'})
+        # remove all uploaded music
+        root = self.engine.paths.getGamePath(self.parent.url, self.url) 
+        with self.engine.locks[self.parent.url]: # make IO access safe
+            for fname in os.listdir(root):
+                if fname.endswith('.mp3'):
+                    print(fname)
+                    os.remove(root / fname)
+        self.playback = None
     
     def broadcast(self, data):
         """ Broadcast given data to all clients. """
@@ -710,10 +751,14 @@ class GameCache(object):
 
     def onMusic(self, player, data):
         """ Handle player uploaded music. """
-        if data['action'] == 'reset':
-            with db_session: 
-                g = self.parent.db.Game.select(lambda g: g.url == self.url).first() 
-                g.removeMusic()
+        if data['action'] == 'play':
+            self.playback = data['slot']
+            
+        elif data['action'] == 'pause':
+            self.playback = None
+            
+        elif data['action'] == 'remove':
+            self.deleteMusic(data['slots'])
             
         # broadcast notification
         self.broadcast(data)

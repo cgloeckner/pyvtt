@@ -237,11 +237,9 @@ class PlayerCacheTest(EngineBaseTest):
         # disconnect him
         game_cache.cleanup()
         
-        # make player2 is disconnected
+        # expect every player to be disconnected
         data = game_cache.getData()
-        self.assertEqual(len(data), 2)
-        self.assertEqual(data[0]['name'], 'arthur')
-        self.assertEqual(data[1]['name'], 'bob')
+        self.assertEqual(len(data), 0)
         
         # ... and can re-login
         game_cache.insert('gabriel', 'red', False)
@@ -1293,27 +1291,57 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache3 = game_cache.insert('carlos', 'green', False)
         player_cache3.socket = socket3
 
-        beacon_data = {'OPID': 'MUSIC', 'action': 'refresh'}
-        game_cache.onBeacon(player_cache3, beacon_data)
-        # expect MUSIC refresh broadcast
+        beacon_data = {'OPID': 'MUSIC', 'action': 'add', 'slots': [1, 2, 3]}
+        self.assertIsNone(game_cache.playback)
+        game_cache.onMusic(player_cache3, beacon_data)
+        # expect MUSIC add-slots broadcast
+        self.assertIsNone(game_cache.playback)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
         self.assertEqual(answer1, answer2)
         self.assertEqual(answer1, answer3)
         self.assertEqual(answer1['OPID'], 'MUSIC')
-        self.assertEqual(answer1['action'], 'refresh')
+        self.assertEqual(answer1['action'], 'add')
+        self.assertEqual(answer1['slots'], [1, 2, 3])
         
-        beacon_data = {'OPID': 'MUSIC', 'action': 'reset'}
-        game_cache.onBeacon(player_cache3, beacon_data)
-        # expect MUSIC reset broadcast
+        beacon_data = {'OPID': 'MUSIC', 'action': 'remove', 'slots': [2, 3]}
+        game_cache.onMusic(player_cache3, beacon_data)
+        # expect MUSIC remove-slots broadcast
+        self.assertIsNone(game_cache.playback)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
         self.assertEqual(answer1, answer2)
         self.assertEqual(answer1, answer3)
         self.assertEqual(answer1['OPID'], 'MUSIC')  
-        self.assertEqual(answer1['action'], 'reset')
+        self.assertEqual(answer1['action'], 'remove')
+        self.assertEqual(answer1['slots'], [2, 3])
+        
+        beacon_data = {'OPID': 'MUSIC', 'action': 'play', 'slot': 2}
+        game_cache.onMusic(player_cache3, beacon_data)
+        # expect MUSIC play broadcast
+        self.assertEqual(game_cache.playback, 2)
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'MUSIC')  
+        self.assertEqual(answer1['action'], 'play')
+        self.assertEqual(answer1['slot'], 2)
+        
+        beacon_data = {'OPID': 'MUSIC', 'action': 'pause'}
+        game_cache.onMusic(player_cache3, beacon_data)
+        # expect MUSIC pause broadcast
+        self.assertIsNone(game_cache.playback)
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'MUSIC')  
+        self.assertEqual(answer1['action'], 'pause')
         
     def test_onCloneToken(self):
         socket1 = SocketDummy()

@@ -466,6 +466,7 @@ class ConstantExport(object):
         self['MAX_BACKGROUND_FILESIZE'] = engine.file_limit['background']
         self['MAX_GAME_FILESIZE']       = engine.file_limit['game']
         self['MAX_MUSIC_FILESIZE']      = engine.file_limit['music']
+        self['MAX_MUSIC_SLOTS']         = engine.file_limit['num_music']
 
         self['SUGGESTED_PLAYER_COLORS'] = engine.playercolors
         

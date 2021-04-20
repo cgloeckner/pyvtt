@@ -69,10 +69,10 @@
     
     <div class="audioplayer" draggable="true" id="musiccontrols" onDragStart="console.log('test'); onStartDragMusic(event);" onMouseDown="onResetMusic(event);" onDragEnd="onEndDragMusic(event);" ontouchmove="onDragMusic(event);">
         <audio id="audioplayer" loop></audio>
-        <img src="/static/louder.png" draggable="false" onClick="onLouderMusic();" title="MAKE LOUDER" />
-        <img src="/static/muted.png" id="toggleMusic" draggable="false" onClick="onToggleMusic();" title="TOGGLE MUSIC" />
-        <img src="/static/quieter.png" draggable="false" onClick="onQuieterMusic();" title="MAKE QUIETER" />
-        <img src="/static/delete.png" draggable="false" onClick="onClearMusic();" title="CLEAR MUSIC" />
+        <img src="/static/louder.png" draggable="false" onClick="onStepMusic(1);" title="MAKE LOUDER" />
+        <div id="musicvolume"><img src="/static/muted.png" class="icon" /></div>
+        <img src="/static/quieter.png" draggable="false" onClick="onStepMusic(-1);" title="MAKE QUIETER" />
+        <div id="musicslots"></div>
     </div>
         
     <div class="mapfooter" id="mapfooter">
@@ -85,7 +85,6 @@
             <img id="beamLock" class="icon" title="AUTO-MOVEMENT" onClick="toggleAutoMove();" src="/static/unlocked.png" />
             <span id="zoomLevel" title="RESET ZOOM" onClick="resetViewport();"></span>
         </div>
-        <div id="musicStatus">Music muted</div>
 
         <form id="uploadform" method="post" enctype="multipart/form-data">
             <input id="uploadqueue" name="file[]" type="file" multiple />

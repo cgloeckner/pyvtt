@@ -1163,8 +1163,12 @@ class VttTest(EngineBaseTest):
                 ('file[]', 'another.png', img_small3)
             ], xhr=True, expect_errors=True)
         self.assertEqual(ret.status_int, 403)
-
-        # can upload music     
+        
+        root = self.engine.paths.getGamePath('arthur', 'test-game-1')
+        count_mp3s = lambda: len([f for f in os.listdir(root) if f.endswith('.mp3')])
+        
+        # can upload music
+        self.assertEqual(count_mp3s(), 0)
         ret = self.app.post('/arthur/test-game-1/upload',
             upload_files=[
                 ('file[]', 'sample.mp3', b'')
@@ -1172,9 +1176,23 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.status_int, 200) 
         data = json.loads(ret.body)
         self.assertEqual(len(data['urls']), 0)
-        self.assertTrue(data['music'])
+        self.assertEqual(data['music'], [0])
+        self.assertEqual(count_mp3s(), 1)
+
+        # can upload multiple tracks
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'sample.mp3', b''),
+                ('file[]', 'foo.mp3', b''),
+                ('file[]', 'three.mp3', b'')
+            ], xhr=True)
+        self.assertEqual(ret.status_int, 200) 
+        data = json.loads(ret.body)
+        self.assertEqual(len(data['urls']), 0)
+        self.assertEqual(data['music'], [1, 2, 3])
+        self.assertEqual(count_mp3s(), 4)
         
-        # can upload music and images   
+        # can upload music and images
         ret = self.app.post('/arthur/test-game-1/upload',
             upload_files=[                
                 ('file[]', 'test.png', img_small2),
@@ -1186,7 +1204,55 @@ class VttTest(EngineBaseTest):
         self.assertEqual(len(data['urls']), 2) 
         self.assertEqual(id_from_url(data['urls'][0]), 1)
         self.assertEqual(id_from_url(data['urls'][1]), 2)
-        self.assertTrue(data['music'])
+        self.assertEqual(data['music'], [4])
+        self.assertEqual(count_mp3s(), 5)
+
+        # cannot upload too much music (referring music slots)
+        self.assertEqual(self.engine.file_limit['num_music'], 5)
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'sample.mp3', b''),
+                ('file[]', 'foo.mp3', b'')
+            ], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        self.assertEqual(count_mp3s(), 5)
+
+    def test_music(self):
+        id_from_url = lambda s: int(s.split('/')[-1].split('.png')[0])
+        
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        
+        # create a game
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+        
+        # upload music     
+        ret = self.app.post('/arthur/test-game-1/upload',
+            upload_files=[
+                ('file[]', 'sample.mp3', b''),
+                ('file[]', 'foo.mp3', b''),
+                ('file[]', 'three.mp3', b''),
+                ('file[]', 'four.mp3', b'')
+            ], xhr=True)
+        self.assertEqual(ret.status_int, 200) 
+        data = json.loads(ret.body)
+        self.assertEqual(len(data['urls']), 0)
+        self.assertEqual(data['music'], [0, 1, 2, 3])
+
+        # can query existing slots
+        for slot_id in data['music']:
+            ret = self.app.get('/music/arthur/test-game-1/{0}/0815'.format(slot_id))
+            self.assertEqual(ret.status_int, 200)
+
+        # cannot query invalid slot
+        ret = self.app.get('/music/arthur/test-game-1/14/0815', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
 
     def test_upload_background(self):
         # create some images

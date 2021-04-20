@@ -8,6 +8,134 @@ License: MIT (see LICENSE for details)
 var gm   = '';
 var game = '';
 
+var playback = null;
+
+/// Add a music slot
+function addMusicSlot(slot_id) {
+    if ($('#musicslot' + slot_id).length == 0) {
+        // create container
+        var div_id     = 'id="musicslot' + slot_id + '"';
+        var div_title  = 'title="MUSIC SLOT ' + (slot_id+1) + '"';
+        var div_events = 'onClick="onPlayMusicSlot(' + slot_id + ');" onContextMenu="onRemoveMusicSlot(' + slot_id + ');"';
+        var container  = '<div class="slot" ' + div_id + ' ' + div_title + ' ' + div_events + '>' + (slot_id+1) + '</div>';
+        
+        // pick previous container
+        var prev_id = parseInt(slot_id) - 1;     
+        var previous = $('#musicslot' + prev_id);
+        if (slot_id == 0) {
+            $('#musicslots').prepend(container);
+        } else if (previous.length == 1) {
+            $(container).insertAfter(previous);
+        } else {
+            $('#musicslots').append(container);
+        }
+    }
+}
+
+/// Event handle to play a music slot
+function onPlayMusicSlot(slot_id) {
+    var player = $('#audioplayer')[0];
+
+    // check if track was already selected
+    var action = 'play';
+    if (slot_id == playback) {
+        action = 'pause';
+    }
+    
+    writeSocket({
+        'OPID'   : 'MUSIC',
+        'action' : action,
+        'slot'   : slot_id
+    });
+}
+
+/// Event handle for right clicking a music slot
+function onRemoveMusicSlot(slot_id) {
+    var fancy_slot = slot_id+1;
+    switch (fancy_slot) {
+        case 1:
+            fancy_slot += 'ST';
+            break;
+        case 2:
+            fancy_slot += 'ND';
+            break;
+        case 3:
+            fancy_slot += 'RD';
+            break;
+        default:
+            fancy_slot += 'TH';
+    }
+    if (confirm('CLEAR ' + fancy_slot + ' MUSIC SLOT?')) {
+        writeSocket({
+            'OPID'   : 'MUSIC',
+            'action' : 'remove',
+            'slots'  : [slot_id]
+        });
+    }
+}
+
+/// Play a music slot
+function playMusicSlot(slot_id) {
+    var player = $('#audioplayer')[0];
+    var was_paused = player.paused;
+
+    // update player
+    $('#musicStatus').hide();
+    player.oncanplay = function(event) {  
+        $('#musicStatus').show();
+    };
+    player.src = '/music/' + gm + '/' + game + '/' + slot_id + '/' + Date.now();
+    player.play();
+
+    updateSlotHighlight(slot_id);
+    updateMusicUi();
+}
+
+function updateSlotHighlight(slot_id) {
+    if (playback != null) {
+        $('#musicslot' + playback).removeClass('playback');
+    }
+
+    playback = slot_id;
+
+    if (playback != null) {
+        $('#musicslot' + playback).addClass('playback');
+    }
+}
+
+function updateMusicUi() {   
+    var player = $('#audioplayer')[0];
+    
+    // update play button and volume display
+    var v = parseInt(player.volume * 100) + '%'
+    if (player.paused || player.volume == 0.0) {
+        v = '<img src="/static/muted.png" class="icon" />';
+    }
+    $('#musicvolume')[0].innerHTML = v;
+}
+
+/// Pause a music slot
+function pauseMusic() {       
+    var player = $('#audioplayer')[0];
+    
+    // pause player
+    player.pause();
+
+    updateSlotHighlight(null);
+    updateMusicUi();
+}
+
+/// Remove a music slot
+function removeMusicSlot(slot_id) {
+    $('#musicslot' + slot_id).remove();
+
+    if (playback == slot_id) {
+        playback = null;
+        var player = $('#audioplayer')[0];
+        player.pause();
+    }
+}
+
 /// Get delta for stepping music volume up or down, based on the current volume
 function getMusicVolumeDelta(v) {
     if (v > 0.5) {
@@ -21,114 +149,34 @@ function getMusicVolumeDelta(v) {
     }
 }
 
-/// Set the volume to a specific value (also stored in browser, too)
-function setMusicVolume(v) {
-    var player = $('#audioplayer')[0];    
-    player.volume = v;
-    localStorage.setItem('volume', v);
-}
-
-/// Display music volume or 'OFF'
-function showMusicVolume() {
+/// Change music volume
+function onStepMusic(direction) {
     var player = $('#audioplayer')[0];
-    var v = 'Music: ' + parseInt(player.volume * 100) + '%'
-    if (player.paused || player.volume == 0.0) {
-        src = '/static/muted.png';
-        v = 'Music muted';
-    } else {
-        src = '/static/speaker.png';
-    }
-    $('#toggleMusic')[0].src = src;
-    $('#musicStatus')[0].innerHTML = v;
-}
 
-/// Make music one step quieter (may turn it off)
-function onQuieterMusic() {
-    var player = $('#audioplayer')[0];
+    // modify volume
     var v = player.volume;
     delta = getMusicVolumeDelta(v);
-    v -= delta;
+    v += direction * delta;
+
+    // fix bounding issues
     if (v < 0.01) {
-        // stop playback if 0% reached
+        // stop playback
         v = 0.0;
         player.pause();
-    }            
-    setMusicVolume(v);
-    showMusicVolume();
-}
-
-/// Make music one step louder (may turn it on)
-function onLouderMusic() {
-    var player = $('#audioplayer')[0];
-    var v = player.volume;
-    delta = getMusicVolumeDelta(v);
-    v += delta;
-    if (v > 1.0) {
+    } else if (v > 1.0) {
+        // cap at 100%
         v = 1.0;
     }
-    if (player.paused) {
-        // start playback
-        player.play()
-    }
-    setMusicVolume(v);
-    showMusicVolume();
-}
 
-/// Stop music completly (if game was quit)
-function onStopMusic() {   
-    var player = $('#audioplayer')[0];
-    player.pause();
-    showMusicVolume();
-}
-
-/// Toggle music playback (if volume percentage is clicked)
-function onToggleMusic() { 
-    var player = $('#audioplayer')[0];
-    
-    if (player.paused) {
-        if (player.volume == 0.0) {
-            onLouderMusic();
-            
-        } else {
-            player.play();
-            showMusicVolume();
-        }
-    } else {
-        player.pause();
-        showMusicVolume();
-    }
-}
-
-/// Event handle to clear music
-function onClearMusic() {
-    if (confirm('REMOVE MUSIC FOR EVERYBODY?')) {
-        writeSocket({
-            'OPID'   : 'MUSIC',
-            'action' : 'reset'
-        });
-    }
-}
-
-function refreshStream() { 
-    var player = $('#audioplayer')[0];
-
-    $('#musiccontrols').hide();
-    $('#musicStatus').hide();
-    player.oncanplay = function(event) {   
-        $('#musiccontrols').show();
-        $('#musicStatus').show();
-    };
-    player.src = '/music/' + gm + '/' + game + '/' + Date.now();
-}
-
-function onUpdateMusic() {
-    var player = $('#audioplayer')[0];
-    var was_paused = player.paused;
-    
-    refreshStream();
-    if (!was_paused) {
+    // continue playback if suitable
+    if (v > 0.0 && player.paused && direction > 0) {
         player.play();
     }
+
+    // apply volume
+    player.volume = v;
+    localStorage.setItem('volume', v)
+    updateMusicUi();
 }
 
 function onInitMusicPlayer(gmurl, url) {
@@ -144,5 +192,4 @@ function onInitMusicPlayer(gmurl, url) {
     
     var player = $('#audioplayer')[0];
     player.volume = default_volume;
-    refreshStream();
 }

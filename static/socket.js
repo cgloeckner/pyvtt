@@ -100,6 +100,14 @@ function onAccept(data) {
     $.each(data.urls, function(i, url) {
         loadImage(url);
     });
+
+    // show music slots
+    $.each(data.slots, function(i, slot) {
+        addMusicSlot(slot);
+    });
+    if (data.playback != null) {
+        playMusicSlot(data.playback);
+    }
     
     onRefresh(data);
 }
@@ -192,8 +200,29 @@ function onBeacon(data) {
 }
 
 function onMusic(data) {
-    // trigger music player to update
-    onUpdateMusic();
+    switch (data['action']) {
+        case 'play':
+            playMusicSlot(data['slot']);
+            break;
+
+        case 'pause':
+            pauseMusic();
+            break;
+            
+        case 'add':
+            $.each(data['slots'], function(index, slot) {
+                if (slot != null) {
+                    addMusicSlot(slot);
+                }
+            });
+            break;
+
+        case 'remove':
+            $.each(data['slots'], function(index, slot) {
+                removeMusicSlot(data['slots']);
+            });
+            break;
+    }
 }
 
 function onRefresh(data) {
@@ -279,7 +308,7 @@ function login(event, gmname, url, websocket_url) {
                 $('#historydrop').hide();
                 $('#loginbtn').hide();
 
-                $('#musiccontrols').hide();
+                //$('#musiccontrols').hide();
                 $('#game').fadeIn(500, 0.0, function() {
                     // show players
                     $('#mapfooter').css('display', 'block');
@@ -312,7 +341,7 @@ function login(event, gmname, url, websocket_url) {
                 };
                 
                 socket.onclose = function(event) {
-                    onStopMusic();
+                    $('#audioplayer')[0].pause();
                     
                     $('#game').fadeOut(1000, 0.0);
                     

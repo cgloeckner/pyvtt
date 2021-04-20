@@ -35,7 +35,8 @@ class EngineTest(EngineBaseTest):
                 'token'      : 2,
                 'background' : 10,
                 'game'       : 15,
-                'music'      : 10
+                'music'      : 10,
+                'num_music'  : 5
             },
             'playercolors' : ['#FF0000', '#00FF00'],
             'shards'     : list(),

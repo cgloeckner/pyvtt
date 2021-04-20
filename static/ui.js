@@ -424,6 +424,10 @@ function onDrop(event) {
         if (file.size > max_filesize * 1024 * 1024) {
             error_msg = 'TOO LARGE ' + file_type + ' (MAX ' + max_filesize + ' MiB)';
         }
+
+        if (content == 'audio' && $('#musicslots').children().length == MAX_MUSIC_SLOTS) {
+            showError('QUEUE FULL, RIGHT-CLICK SLOT TO CLEAR');
+        }
     });
 
     if (error_msg != '') {
@@ -464,11 +468,19 @@ function onDrop(event) {
                 });
             }
 
-            if (response['music']) {
-                writeSocket({
-                    'OPID'   : 'MUSIC',
-                    'action' : 'refresh'
-                });
+            if (response['music'].length > 0) {
+                if (response['music'][0] == null) {
+                    // notify full slots
+                    showError('QUEUE FULL, RIGHT-CLICK SLOT TO CLEAR');
+                    
+                } else {
+                    // broadcast music upload
+                    writeSocket({
+                        'OPID'   : 'MUSIC',
+                        'action' : 'add',
+                        'slots'  : response['music']
+                    });
+                }
             }
             
             notifyUploadFinish();

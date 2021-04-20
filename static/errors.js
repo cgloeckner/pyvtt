@@ -24,7 +24,7 @@ function showPopup(msg, color, timeout, fadeout) {
   
 function showError(msg) {
     console.warn(msg);
-    showPopup(msg, 'red', 7000, 3000);
+    showPopup(msg, 'red', 1000, 1000);
 }
 
 function showTip(msg) {

@@ -799,8 +799,7 @@ div#fps,
 div#assetsDownloading,
 div#assetsUploading,
 div#zoom,
-div#version,
-div#musicStatus {
+div#version {
     position: absolute;
     color: grey;
     bottom: 0px;
@@ -845,10 +844,6 @@ div#zoom > img#beamLock {
     cursor: pointer;
 }
 
-div#musicStatus {
-    left: 410px;
-}
-
 div.audioplayer {
     z-index: 100;
     background-color: rgba(100, 100, 100, 0.25);
@@ -870,7 +865,55 @@ div.audioplayer:active {
 
 div.audioplayer > img {
     display: block;
-    width: 25px;
-    cursor: pointer;      
+    width: 25px;   
     user-select: none;
+}
+
+div.audioplayer > img:hover {
+    cursor: pointer;
+    
+    filter: drop-shadow(0px 0px 10px white) 
+          drop-shadow(0px 0px 0 white);
+}
+
+div.audioplayer > div#musicvolume {  
+    margin-top: 5px;
+    width: 25px;
+    
+    text-align: center;
+    color: white;
+}
+
+div.audioplayer > div#musicvolume > img {
+    width: 15px;
+    cursor: default;
+    filter: none;
+}
+
+div.audioplayer > div#musicslots > div {
+    border: 2px outset black;
+    width: 22px;
+    height: 22px;
+    margin-top: 5px;
+
+    text-align: center;
+    color: white;
+    font-size: large;
+
+    display: grid;
+    align-content: center;
+}
+
+div.audioplayer > div#musicslots > div.playback {
+    background-color: white;
+    color: black;
+}
+
+div.audioplayer > div#musicslots > div:hover {
+    filter: drop-shadow(0px 0px 10px white) 
+          drop-shadow(0px 0px 0 white);
+}
+
+div.audioplayer > div#musicslots > div:active {
+    border: 2px inset black;
 }
