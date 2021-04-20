@@ -29,7 +29,7 @@ function initScreenShare() {
     .then(function(stream) { onStreamReady(stream); })
     .catch(function(err) {
         console.error(err.toString());
-        showError('SCREENSHARE NO AVAILABLE');
+        showError('SCREENSHARE NOT AVAILABLE');
     });
 }
 
