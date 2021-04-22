@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import time, requests, uuid, json, random, os
+import time, requests, uuid, json, random, os, flag
 
 from bottle import request
 import gevent
@@ -42,9 +42,10 @@ class PlayerCache(object):
         
         self.greenlet = None
         
-        # fetch country from ip
+        # fetch country flag from ip
         self.ip       = self.engine.getClientIp(request)
         self.country  = self.engine.getCountryFromIp(self.ip)
+        self.flag     = flag.flag(self.country)
         
         # add login to stats
         login_data = [self.is_gm, time.time(), self.country, self.ip, PlayerCache.instance_count]
@@ -272,7 +273,7 @@ class GameCache(object):
                     'uuid'    : p.uuid,
                     'color'   : p.color,
                     'ip'      : p.ip,
-                    'country' : p.country,
+                    'flag'    : p.flag,
                     'index'   : p.index
                 })
         # sort to ensure index-order
@@ -337,6 +338,7 @@ class GameCache(object):
             'uuid'    : player.uuid,
             'color'   : player.color,
             'country' : player.country,
+            'flag'    : player.flag,
             'index'   : player.index
         })
         

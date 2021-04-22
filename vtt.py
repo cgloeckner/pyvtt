@@ -10,7 +10,7 @@ License: MIT (see LICENSE for details)
 from gevent import monkey; monkey.patch_all()
 import gevent
 
-import os, json, time, sys, random, subprocess, requests
+import os, json, time, sys, random, subprocess, requests, flag
 
 from pony import orm
 from bottle import *
@@ -525,7 +525,7 @@ def setup_gm_routes(engine):
         ip = host.split('://')[1].split(':')[0]
         d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(ip)).text)
         if 'countryCode' in d:
-            data['countryCode'] = d['countryCode'].lower()
+            data['flag'] = flag.flag(d['countryCode'])
         
         # query server status
         try:

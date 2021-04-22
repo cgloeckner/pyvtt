@@ -102,12 +102,13 @@ function selectToken(x, y) {
 var players = {};
 
 /// Player constructor
-function Player(name, uuid, color, ip, country, index) {
+function Player(name, uuid, color, ip, country, flag, index) {
     this.name    = name;
     this.uuid    = uuid;
     this.color   = color;
     this.ip      = ip;
     this.country = country;
+    this.flag    = flag;
     this.index   = index;
     this.is_last = false;
 }
@@ -146,12 +147,7 @@ function showPlayer(p, force=false) {
         // ignore existing player
         return;
     }
-    
-    var flag = '';
-    if (p.country != '?') {
-        flag = '<img src="https://www.countryflags.io/' + p.country + '/flat/16.png" />';
-    }
-    
+
     // create player container (uuid as id, custom colored, optional kick click, draggable)
     var coloring = ' style="filter: drop-shadow(1px 1px 9px ' + p.color + ') drop-shadow(-1px -1px 0 ' + p.color + ');"';
     var ordering = ' onMouseEnter="onMouseOverPlayer(\'' + p.uuid + '\');"';
@@ -171,7 +167,9 @@ function showPlayer(p, force=false) {
     menu += '</div>';
     
     // build player's container
-    var player_container = '<span id="player_' + p.uuid + '"' + ordering + ' draggable="true" class="player"' + coloring + '>'  + menu + flag + '&nbsp;' + p.name + '</span>';
+    var player_container = '<span id="player_' + p.uuid + '"' + ordering + ' draggable="true" class="player"' + coloring + '>'  + menu + p.flag + '&nbsp;' + p.name + '</span>';
+
+    console.log(p.country, p.flag)
     
     $('#players').append(player_container);
     players[p.uuid] = p;

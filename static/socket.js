@@ -86,7 +86,7 @@ function onSocketMessage(event) {
 function onAccept(data) {
     // show all players
     $.each(data.players, function(i, details) {
-        var p = new Player(details.name, details.uuid, details.color, details.ip, details.country, details.index);
+        var p = new Player(details.name, details.uuid, details.color, details.ip, details.country, details.flag, details.index);
         p.is_last = p.index == data.players.length - 1;
         showPlayer(p);
     });
@@ -147,7 +147,7 @@ function onDelete(data) {
 }
 
 function onJoin(data) {
-    var p = new Player(data.name, data.uuid, data.color, data.ip, data.country, data.index);
+    var p = new Player(data.name, data.uuid, data.color, data.ip, data.country, details.flag, data.index);
     showPlayer(p);
 }
 

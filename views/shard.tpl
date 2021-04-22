@@ -41,7 +41,7 @@ function queryShard(index, host) {
         success: function(response) {
             // show flag
             if (response.countryCode != null) {
-                $('#flag' + index)[0].innerHTML = '<img src="https://www.countryflags.io/' + response.countryCode + '/flat/16.png" />';
+                $('#flag' + index)[0].innerHTML = response.flag;
             }
             
             // fallback output
