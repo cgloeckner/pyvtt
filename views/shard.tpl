@@ -40,7 +40,7 @@ function queryShard(index, host) {
         type: 'GET',
         success: function(response) {
             // show flag
-            if (response.countryCode != null) {
+            if (response.flag != null) {
                 $('#flag' + index)[0].innerHTML = response.flag;
             }
             

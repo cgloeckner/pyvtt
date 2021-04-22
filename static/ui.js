@@ -169,8 +169,6 @@ function showPlayer(p, force=false) {
     // build player's container
     var player_container = '<span id="player_' + p.uuid + '"' + ordering + ' draggable="true" class="player"' + coloring + '>'  + menu + p.flag + '&nbsp;' + p.name + '</span>';
 
-    console.log(p.country, p.flag)
-    
     $('#players').append(player_container);
     players[p.uuid] = p;
 }
