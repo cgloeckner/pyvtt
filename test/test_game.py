@@ -199,7 +199,7 @@ class GameTest(EngineBaseTest):
         p4.touch()
 
         # create music file (not expected to be picked up)
-        p5 = img_path / self.engine.paths.getMusicFileName()
+        p5 = img_path / '2.mp3'
         p5.touch()
         
         # test files being detected
@@ -393,7 +393,7 @@ class GameTest(EngineBaseTest):
         
         # expect music to be deleted on cleanup
         img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
-        p3 = img_path / self.engine.paths.getMusicFileName()
+        p3 = img_path / '3.mp3'
         p3.touch()
         game.removeMusic()
         self.assertFalse(os.path.exists(p3))
@@ -434,7 +434,7 @@ class GameTest(EngineBaseTest):
         self.assertTrue(os.path.exists(p2))
 
         # expect music to be deleted on cleanup
-        p3 = img_path / self.engine.paths.getMusicFileName()
+        p3 = img_path / '4.mp3'
         p3.touch()
         game.cleanup(now)
         self.assertFalse(os.path.exists(p3))

@@ -311,10 +311,12 @@ def createGmDatabase(engine, filename):
 
         def removeMusic(self):
             """ Remove music. """
-            fname = engine.paths.getGamePath(self.gm_url, self.url) / engine.paths.getMusicFileName()
+            root = engine.paths.getGamePath(self.gm_url, self.url)
             with engine.locks[self.gm_url]: # make IO access safe
-                if os.path.exists(fname):
-                    os.remove(fname)
+                for n in range(engine.file_limit['num_music']):
+                    fname = root / '{0}.mp3'.format(n)
+                    if os.path.exists(fname):
+                        os.remove(fname)
         
         def cleanup(self, now):
             """ Cleanup game's unused image and token data. """   

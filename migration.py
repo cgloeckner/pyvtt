@@ -47,7 +47,7 @@ if __name__ == '__main__':
         
         print('Export finished.')
 
-    else:
+    elif '--import' in sys.argv:
         # rename all databases to like gm.db.1 etc.
         print('Rename database files')
         paths = PathApi(appname='pyvtt')
@@ -70,3 +70,23 @@ if __name__ == '__main__':
         
         print('Import finished.')
 
+    elif '--music' in sys.argv:
+        # rename each games' "music.mp3" to "0.mp3"
+        print('Rename music files')
+        paths = PathApi(appname='pyvtt')
+        n = 0
+        for gmname in os.listdir(paths.getGmsPath()):
+            gm_root = paths.getGmsPath(gmname)
+            for gameurl in os.listdir(gm_root):
+                if os.path.isdir(gm_root / gameurl):
+                    continue
+                # check for file to rename
+                old_fname = paths.getGamePath(gmname, gameurl) / 'music.mp3'
+                new_fname = paths.getGamePath(gmname, gameurl) / '0.mp3'
+                if os.path.exists(old_fname):
+                    os.rename(old_fname, new_fname)
+                    n += 1
+        print('{0} Music Files Renamed. Migration finished.'.format(n))
+
+    else:
+        print('Nothing specified.')

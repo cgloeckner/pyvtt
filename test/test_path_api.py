@@ -44,8 +44,6 @@ class PathApiTest(unittest.TestCase):
         self.paths.getMainDatabasePath() 
         self.paths.getSslPath()
         self.paths.getLogPath('foo')
-
-        self.assertEqual(self.paths.getMusicFileName(), 'music.mp3')
         
     def test_advanced_path_getter(self):
         # test GM(s) Path(s)
