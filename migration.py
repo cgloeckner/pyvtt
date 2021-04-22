@@ -78,7 +78,7 @@ if __name__ == '__main__':
         for gmname in os.listdir(paths.getGmsPath()):
             gm_root = paths.getGmsPath(gmname)
             for gameurl in os.listdir(gm_root):
-                if os.path.isdir(gm_root / gameurl):
+                if not os.path.isdir(gm_root / gameurl):
                     continue
                 # check for file to rename
                 old_fname = paths.getGamePath(gmname, gameurl) / 'music.mp3'

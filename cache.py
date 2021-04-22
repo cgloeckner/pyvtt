@@ -45,7 +45,7 @@ class PlayerCache(object):
         # fetch country flag from ip
         self.ip       = self.engine.getClientIp(request)
         self.country  = self.engine.getCountryFromIp(self.ip)
-        self.flag     = flag.flag(self.country) if self.country != 'unknown' else ''
+        self.flag     = flag.flag(self.country) if self.country != '?' else ''
         
         # add login to stats
         login_data = [self.is_gm, time.time(), self.country, self.ip, PlayerCache.instance_count]
