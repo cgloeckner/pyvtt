@@ -147,7 +147,7 @@ function onDelete(data) {
 }
 
 function onJoin(data) {
-    var p = new Player(data.name, data.uuid, data.color, data.ip, data.country, details.flag, data.index);
+    var p = new Player(data.name, data.uuid, data.color, data.ip, data.country, data.flag, data.index);
     showPlayer(p);
 }
 
