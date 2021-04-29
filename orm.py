@@ -186,6 +186,14 @@ def createGmDatabase(engine, filename):
         def getIdByMd5(self, md5):
             return engine.checksums[self.getUrl()].get(md5, None) 
 
+        def removeMd5(self, img_id):
+            cache = engine.checksums[self.getUrl()]
+            # linear search for image hash
+            for k, v in cache.items():
+                if v == img_id:
+                    del cache[k]
+                    return
+
         def postSetup(self):
             """ Adds the game's directory and prepare the md5 cache.
             """
@@ -328,6 +336,8 @@ def createGmDatabase(engine, filename):
                 for fname in relevant:
                     engine.logging.info('     |--x Removing {0}'.format(fname))
                     os.remove(fname)
+                    # remove image's md5 hash from cache
+                    self.removeMd5(self.getIdFromUrl(fname))
 
             # delete all outdated rolls
             rolls = db.Roll.select(lambda r: r.game == self and r.timeid < now - engine.latest_rolls)

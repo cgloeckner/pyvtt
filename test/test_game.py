@@ -102,7 +102,7 @@ class GameTest(EngineBaseTest):
         self.assertEqual(ids, {0, 1, 2, 3}) # compare sets
 
     @db_session
-    def test_getUrlByMd5(self):
+    def test_getIdByMd5(self):
         game = self.db.Game(url='foo', gm_url='url456')
         game.postSetup()
         
@@ -231,7 +231,7 @@ class GameTest(EngineBaseTest):
         p.touch()     
         i = game.getNextId()
         self.assertEqual(i, 13)
-        
+    
     @db_session
     def test_getImageUrl(self):
         game = self.db.Game(url='foo', gm_url='url456')
@@ -410,13 +410,25 @@ class GameTest(EngineBaseTest):
         p1.touch()
         id2 = game.getNextId()
         p2 = img_path / '{0}.png'.format(id2)
+        with open(p2, 'w') as h: # write different content because of hashing
+            h.write('2')
         p2.touch()
+        
+        game.makeMd5s()
 
         for i in range(120):
             self.db.Roll(game=game, name='foo', color='red', sides=4, result=3)
             self.db.Roll(game=game, name='foo', color='red', sides=4, result=3, timeid=15)
+
+        # expect images to be hashed
+        with open(p1, 'rb') as h:
+            md5_1 = self.engine.getMd5(h)
+        with open(p2, 'rb') as h:
+            md5_2 = self.engine.getMd5(h)
+        self.assertEqual(game.getIdByMd5(md5_1), id1)
+        self.assertEqual(game.getIdByMd5(md5_2), id2)
         
-        # assoign second file to token
+        # assign second file to token
         demo_scene = self.db.Scene(game=game)
         url = game.getImageUrl(id2)
         self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
@@ -432,6 +444,9 @@ class GameTest(EngineBaseTest):
         game.cleanup(now)
         self.assertFalse(os.path.exists(p1))
         self.assertTrue(os.path.exists(p2))
+        
+        self.assertEqual(game.getIdByMd5(md5_1), None)
+        self.assertEqual(game.getIdByMd5(md5_2), id2)
 
         # expect music to be deleted on cleanup
         p3 = img_path / '4.mp3'
