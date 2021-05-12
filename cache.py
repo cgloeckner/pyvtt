@@ -94,19 +94,11 @@ class PlayerCache(object):
     def read(self):
         """ Return JSON object read from socket. """
         # fetch data
-        raw = None
-        try:
-            #with self.lock: # note: atm deadlocking
-            raw = self.socket.receive()
-            if raw is None:
-                return None
-        except Exception as e:
-            # close socket
-            self.socket = None  
-            # reraise since it's unexpected
-            raise
-        # parse data
-        return json.loads(raw)
+        #with self.lock: # note: atm deadlocking
+        raw = self.socket.receive()
+        if raw is not None:
+            # parse data
+            return json.loads(raw)
         
     def write(self, data):
         """ Write JSON object to socket. """
@@ -114,16 +106,7 @@ class PlayerCache(object):
         raw = json.dumps(data)
         # send data
         #with self.lock: # note: atm deadlocking
-        try:
-            if self.isOnline():
-                self.socket.send(raw)
-        except Exception as e:
-            # log warning
-            self.engine.logging.warning(e)
-            # close socket
-            self.socket = None
-            # reraise since it's unexpected
-            raise
+        self.socket.send(raw)
         
     def fetch(self, data, key):
         """ Try to fetch key from data or raise ProtocolError. """
@@ -144,9 +127,13 @@ class PlayerCache(object):
         try:
             while True:
                 # query data and operation id
-                data = self.read()
+                try:
+                    data = self.read()
+                except Exception as error:
+                    # player quit (broken socket or invalid JSON data)
+                    break
+
                 if data is None:
-                    # player quit
                     break
                 
                 # dispatch operation
@@ -354,20 +341,20 @@ class GameCache(object):
         });
         
     def logout(self, player):
-        """ Handle player logout. """
-        # broadcast logout to all players
-        self.broadcast({
-            'OPID' : 'QUIT',
-            'name' : player.name,
-            'uuid'  : player.uuid
-        })
-        
+        """ Handle player logout. """ 
         # remove player
         try:
             self.remove(player.name)
         except KeyError:
             # @NOTE: player was kicked
             pass
+        
+        # broadcast logout to all players
+        self.broadcast({
+            'OPID' : 'QUIT',
+            'name' : player.name,
+            'uuid'  : player.uuid
+        })
         
     def disconnect(self, uuid):
         """ Close single socket. """ 
@@ -406,8 +393,17 @@ class GameCache(object):
     def broadcast(self, data):
         """ Broadcast given data to all clients. """
         with self.lock:
+            force_logout = list()
+            # broadcast
             for name in self.players:
-                self.players[name].write(data)
+                try:
+                    self.players[name].write(data)
+                except:
+                    # schedule player quit (broken socket or invalid JSON data)
+                    force_logout.append(name)
+            # logout players whose failed
+            for name in force_logout:
+                self.logout(self.players[name])
         
     def broadcastTokenUpdate(self, player, since):
         """ Broadcast updated tokens. """
@@ -468,9 +464,13 @@ class GameCache(object):
     def onPing(self, player, data):
         """ Handle player pinging the server. """
         # pong!
-        player.write({
-            'OPID'    : 'PING'
-        }); 
+        try:
+            player.write({
+                'OPID'    : 'PING'
+            }); 
+        except:
+            # player quit (broken socket or invalid JSON data)
+            self.logout(player)
         
     def onRoll(self, player, data):
         """ Handle player rolling a dice. """
