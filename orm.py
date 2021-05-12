@@ -349,8 +349,6 @@ def createGmDatabase(engine, filename):
             relevant = self.getBrokenTokens()
             for t in relevant:
                 t.delete()
-
-            self.removeMusic()
             
         def preDelete(self):
             """ Remove this game from disk before removing it from

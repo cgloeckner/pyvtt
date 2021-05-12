@@ -448,11 +448,11 @@ class GameTest(EngineBaseTest):
         self.assertEqual(game.getIdByMd5(md5_1), None)
         self.assertEqual(game.getIdByMd5(md5_2), id2)
 
-        # expect music to be deleted on cleanup
-        p3 = img_path / '4.mp3'
+        # expect music to still be present
+        p3 = img_path / '4.mp3'    
         p3.touch()
         game.cleanup(now)
-        self.assertFalse(os.path.exists(p3))
+        self.assertTrue(os.path.exists(p3))
         
     @db_session
     def test_preDelete(self):
@@ -547,6 +547,10 @@ class GameTest(EngineBaseTest):
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
         url = game.getImageUrl(id1)
+
+        # create dummy music
+        p2 = img_path / '0.mp3'    
+        p2.touch()
         
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
@@ -562,6 +566,9 @@ class GameTest(EngineBaseTest):
         fname, path = game.toZip()
         zip_path    = path / fname
         
+        # expect music to still be present
+        self.assertTrue(os.path.exists(p2))
+        
         # unzip to temp dir to test zip integrity
         with tempfile.TemporaryDirectory() as tmp_dir:
             with zipfile.ZipFile(zip_path, 'r') as fp:
@@ -574,6 +581,7 @@ class GameTest(EngineBaseTest):
                 data = json.load(h)
             
             # check all images being numbered and with PNG-extension
+            # NOTE: so there is no mp3 file there(!)
             for fname in os.listdir(tmp_dir):
                 if fname == 'game.json':
                     continue
