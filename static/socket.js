@@ -341,7 +341,9 @@ function login(event, gmname, url, websocket_url) {
                 };
                 
                 socket.onclose = function(event) {
+                    // reset audio
                     $('#audioplayer')[0].pause();
+                    $('#musicslots')[0].innerHTML = ''
                     
                     $('#game').fadeOut(1000, 0.0);
                     
