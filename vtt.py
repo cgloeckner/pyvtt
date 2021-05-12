@@ -744,7 +744,8 @@ def setup_player_routes(engine):
         # query whether user is the hosting GM
         session_gm = engine.main_db.GM.loadFromSession(request)
         gm_is_host = session_gm is not None and session_gm.url == gmurl
-        
+
+        # kill all timeout players and login this new player
         try:
             player_cache = game_cache.insert(playername, playercolor, is_gm=gm_is_host)
         except KeyError:

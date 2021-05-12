@@ -39,6 +39,7 @@ class PlayerCache(object):
         self.selected = list()
         self.index    = parent.getNextId() # used for ordering players in the UI
         self.is_gm    = is_gm # whether this player is the GM or not
+        self.timeid   = time.time() # NOTE: currently not used but could be useful later
         
         self.greenlet = None
         
@@ -235,7 +236,7 @@ class GameCache(object):
                     os.remove(fname)
     
     # --- cache implementation ----------------------------------------
-        
+
     def insert(self, name, color, is_gm):
         with self.lock:
             if name in self.players and self.players[name].isOnline():
@@ -465,6 +466,7 @@ class GameCache(object):
         """ Handle player pinging the server. """
         # pong!
         try:
+            player.timeid = time.time() # NOTE: currently not used but could be useful later
             player.write({
                 'OPID'    : 'PING'
             }); 
