@@ -616,7 +616,7 @@ function drawToken(token, color, is_background) {
                     // vertical center it
                     top = -token.label_canvas.height * 0.6;
                 }
-                context.scale(1/viewport.zoom, 1/viewport.zoom);
+                context.scale(Math.sqrt(1/viewport.zoom), Math.sqrt(1/viewport.zoom));
                 context.drawImage(token.label_canvas, left, top);
             } catch (error) {
             }
