@@ -519,17 +519,19 @@ def setup_gm_routes(engine):
         
         data = dict()   
         data['countryCode'] = None
-        data['status']      = None
+        data['status']      = None   
+        data['flag']        = None
         
-        # query server location
+        # query server location (if possible)
         ip = host.split('://')[1].split(':')[0]
-        d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(ip)).text)
-        if 'countryCode' in d:
-            data['flag'] = flag.flag(d['countryCode'])
+        data['flag'] = engine.getCountryFromIp(ip)
         
         # query server status
         try:
-            data['status'] = requests.get(host + '/vtt/status').text;
+            html = requests.get(host + '/vtt/status', timeout=3)
+            data['status'] = html.text;
+        except requests.exception.ReadTimeout as e:
+            engine.logging.error('Server {0} seems to be offline'.format(host))
         except requests.exceptions.ConnectionError as e:
             engine.logging.error('Server {0} seems to be offline'.format(host))
         

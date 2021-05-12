@@ -258,14 +258,23 @@ class Engine(object):
         else:
             return request.environ.get('REMOTE_ADDR')
         
-    def getCountryFromIp(self, ip):
-        d = json.loads(requests.get('http://ip-api.com/json/{0}'.format(ip)).text)
-        if 'countryCode' in d:
-            return d['countryCode'].lower()
-        return '?' # fallback case
+    def getCountryFromIp(self, ip, timeout=3):
+        result = '?' # fallback case
+        try:
+            html = requests.get('http://ip-api.com/json/{0}'.format(ip), timeout=timeout)
+            d = json.loads(html.text)
+            if 'countryCode' in d:
+                result = d['countryCode'].lower()
+        except requests.exception.ReadTimeout as e:
+            self.logging.warning('Cannot query location of IP {0}'.format(ip))
+        return result
         
     def getPublicIp(self):
-        return requests.get('https://api.ipify.org').text
+        try:
+            return requests.get('https://api.ipify.org').text
+        except requests.exception.ReadTimeout as e:
+            self.logging.warning('Cannot query server\'s ip')
+            return 'localhost'
         
     @staticmethod
     def getMd5(handle):
