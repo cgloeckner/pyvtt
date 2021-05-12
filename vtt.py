@@ -677,9 +677,14 @@ def setup_player_routes(engine):
         
         protocol = 'wss' if engine.hasSsl() else 'ws'
         websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.getPort())
+
+        supported_dice = engine.getSupportedDice()
+        if 100 in supported_dice:
+            supported_dice.remove(100)
+        supported_dice.reverse()
         
         # show battlemap with login screen ontop
-        return dict(engine=engine, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=gm, is_gm=gm_is_host)
+        return dict(engine=engine, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=gm, is_gm=gm_is_host, dice=supported_dice)
 
     @post('/<gmurl>/<url>/login')
     def set_player_name(gmurl, url):

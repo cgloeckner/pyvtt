@@ -35,10 +35,10 @@
 %end
 
     <div id="dicebox">
-%for d in [20, 12, 10, 8, 6, 4, 2]:
+%for d in dice:
         <div class="dice" id="d{{d}}icon">
             <div>
-                <img src="/static/d{{d}}.png" title="Roll 1D{{d}}" id="d{{d}}drag" onDragStart="onStartDragDice(event, {{d}});" onMouseDown="onResetDice(event, {{d}});" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});"ontouchmove="onMobileDragDice(event, {{d}});" />
+                <img src="/static/d{{d}}.png" title="Roll 1D{{d}}" id="d{{d}}drag" onDragStart="onStartDragDice(event, {{d}});" onMouseDown="onResetDice(event, {{d}});" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});" ontouchmove="onMobileDragDice(event, {{d}});" />
                 <div class="proofani" id="d{{d}}poofani"></div>
             </div>
         </div>

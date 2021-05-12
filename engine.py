@@ -295,7 +295,7 @@ class Engine(object):
         return size
         
     def getSupportedDice(self):
-        return [2, 4, 6, 8, 10, 12, 20]
+        return [2, 4, 6, 8, 10, 12, 20, 100]
         
     def cleanup(self):
         """ Deletes all export games' zip files, unused images and

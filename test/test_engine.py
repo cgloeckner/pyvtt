@@ -172,7 +172,7 @@ class EngineTest(EngineBaseTest):
         
     def test_getSupportedDice(self):
         dice = self.engine.getSupportedDice()
-        self.assertEqual(dice, [2, 4, 6, 8, 10, 12, 20])
+        self.assertEqual(dice, [2, 4, 6, 8, 10, 12, 20, 100])
         
     def test_cleanup(self):
         now = time.time()

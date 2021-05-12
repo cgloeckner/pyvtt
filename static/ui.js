@@ -226,7 +226,11 @@ function addRoll(sides, result, name, color, recent) {
                 + '\t</span>\n'
                 + '\t<span class="' + ani_css + '"></span>\n'
             + '</span>';
-         
+
+        if (sides == 100) {
+            // use d10's results box
+            sides = 10;
+        } 
         var container = $('#d' + sides + 'rolls');
         container.prepend(dice_result_span);
         
@@ -1090,6 +1094,8 @@ function onWheel(event) {
     }
 }
 
+var d100_queue = [];
+
 /// Event handle to click a dice
 function rollDice(sides) {
     // trigger dice shaking and poof (by re-applying CSS class)
@@ -1099,10 +1105,26 @@ function rollDice(sides) {
     target.removeClass('shake').hide().delay(10).show().addClass('shake');
     poofani.removeClass('dicepoof').hide().delay(10).show().addClass('dicepoof');
     
-    writeSocket({
-        'OPID'  : 'ROLL',
-        'sides' : sides
-    }); 
+    if (sides == 10) {
+        if (d100_queue[0] != 10) {
+            // bank d10 and schedule roll
+            d100_queue.push(10);
+            setTimeout(function() {  
+                writeSocket({
+                    'OPID'  : 'ROLL',
+                    'sides' : d100_queue.shift()
+                });
+            }, 250);
+        } else {
+            // morph banked d10 into d100
+            d100_queue[0] = 100;
+        }
+    } else {
+        writeSocket({
+            'OPID'  : 'ROLL',
+            'sides' : sides
+        });
+    }
 }
 
 function toggleDiceHistory() {
