@@ -530,7 +530,7 @@ def setup_gm_routes(engine):
         try:
             html = requests.get(host + '/vtt/status', timeout=3)
             data['status'] = html.text;
-        except requests.exception.ReadTimeout as e:
+        except requests.exceptions.ReadTimeout as e:
             engine.logging.error('Server {0} seems to be offline'.format(host))
         except requests.exceptions.ConnectionError as e:
             engine.logging.error('Server {0} seems to be offline'.format(host))
