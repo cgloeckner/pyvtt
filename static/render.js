@@ -113,6 +113,13 @@ function resizeCanvas() {
     
     // calculate scaling
     canvas_scale = w / MAX_SCENE_WIDTH;
+
+    // force all token labels to be redrawn
+    $.each(tokens, function(index, token) {
+        if (token != null) {
+            token.label_canvas = null;
+        }
+    });
 }
 
 /// Will clear the canvas
@@ -517,8 +524,8 @@ function drawToken(token, color, is_background) {
             if (token.text != null && is_timer) {
                 // create buffer canvas sized like the token
                 token.hue_canvas = document.createElement('canvas');
-                token.hue_canvas.width  = sizes[0];
-                token.hue_canvas.height = sizes[1];
+                token.hue_canvas.width  = sizes[0] * viewport.zoom;
+                token.hue_canvas.height = sizes[1] * viewport.zoom;
                 
                 // rotate token's hue if used as timer-token
                 var ctx = token.hue_canvas.getContext('2d');
@@ -526,6 +533,7 @@ function drawToken(token, color, is_background) {
                 ctx.filter = "hue-rotate(" + hsl[0] + "turn) saturate(" + hsl[1] + ") brightness(" + (2*hsl[2]) + ")";
 
                 // pre-render token hue
+                ctx.scale(viewport.zoom, viewport.zoom);
                 ctx.drawImage(images[token.url], 0, 0, sizes[0], sizes[1]);
             }
         }
@@ -558,11 +566,11 @@ function drawToken(token, color, is_background) {
         if (token.text != null) {
             if (token.label_canvas == null) {
                 // determine optional fontsize and width
-                var fontsize = 12
+                var fontsize = 15 * canvas_scale;
                 if (is_timer) {
-                    fontsize = 25 * token.size / default_token_size;
+                    fontsize *= 2 * token.size / default_token_size;
                 }
-                context.font = fontsize + 'pt sans';
+                context.font = fontsize + 'px sans';
                 var metrics = context.measureText(token.text);
                 var padding = 14; // to allow for line width
                 var width   = metrics.width + padding;
@@ -603,11 +611,12 @@ function drawToken(token, color, is_background) {
             
             try {
                 var left = -token.label_canvas.width/2;
-                var top  = token.size/2 - token.label_canvas.height/2; 
+                var top  = token.size/2 - token.label_canvas.height/2;
                 if (is_timer) {
                     // vertical center it
                     top = -token.label_canvas.height * 0.6;
                 }
+                context.scale(1/viewport.zoom, 1/viewport.zoom);
                 context.drawImage(token.label_canvas, left, top);
             } catch (error) {
             }

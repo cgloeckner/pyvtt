@@ -1039,7 +1039,7 @@ function onWheel(event) {
         // default: zoom using viewport's center
         var reference_x = viewport.x;
         var reference_y = viewport.y;
-        
+
         // modify zoom
         if (event.deltaY > 0) {
             // zoom out
@@ -1057,6 +1057,13 @@ function onWheel(event) {
             reference_x = mouse_x;
             reference_y = mouse_y;
         }
+
+        // force all token labels to be redrawn
+        $.each(tokens, function(index, token) {
+            if (token != null) {
+                token.hue_canvas = null;
+            }
+        });
         
         // calculate view's position
         var rel_x = reference_x / MAX_SCENE_WIDTH;
