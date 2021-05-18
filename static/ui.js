@@ -1561,7 +1561,7 @@ function onEndDragDice(event) {
                     // load images if necessary
                     var data = JSON.parse(response);
                     $.each(data.urls, function(index, url) {
-                        loadImage(data);
+                        loadImage(url);
                     });
                     
                     // trigger token creation via websocket
