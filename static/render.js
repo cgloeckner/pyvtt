@@ -468,6 +468,10 @@ function drawToken(token, color, is_background) {
     
     // cache image if necessary
     loadImage(token.url);
+    if (!images[token.url].complete) {
+        // skip if not loaded yet
+        return;
+    }
     
     var sizes = getActualSize(token, canvas[0].width, canvas[0].height);
     sizes[0] *= canvas_scale;
@@ -520,22 +524,23 @@ function drawToken(token, color, is_background) {
 
         var is_timer = token.text.startsWith('#');
 
-        if (token.hue_canvas == null && images[token.url].complete) {
+        /*if (token.hue_canvas == null && images[token.url].complete) {
             if (token.text != null && is_timer) {
-                // create buffer canvas sized like the token
-                token.hue_canvas = document.createElement('canvas');
-                token.hue_canvas.width  = sizes[0] * viewport.zoom;
-                token.hue_canvas.height = sizes[1] * viewport.zoom;
-                
-                // rotate token's hue if used as timer-token
-                var ctx = token.hue_canvas.getContext('2d');
-                var hsl = getHsl(token.color);
-                ctx.filter = "hue-rotate(" + hsl[0] + "turn) saturate(" + hsl[1] + ") brightness(" + (2*hsl[2]) + ")";
+        */
+        if (token.text != null && is_timer && token.hue_canvas == null) {
+            // create buffer canvas sized like the token
+            token.hue_canvas = document.createElement('canvas');
+            token.hue_canvas.width  = sizes[0] * viewport.zoom;
+            token.hue_canvas.height = sizes[1] * viewport.zoom;
+            
+            // rotate token's hue if used as timer-token
+            var ctx = token.hue_canvas.getContext('2d');
+            var hsl = getHsl(token.color);
+            ctx.filter = "hue-rotate(" + hsl[0] + "turn) saturate(" + hsl[1] + ") brightness(" + (2*hsl[2]) + ")";
 
-                // pre-render token hue
-                ctx.scale(viewport.zoom, viewport.zoom);
-                ctx.drawImage(images[token.url], 0, 0, sizes[0], sizes[1]);
-            }
+            // pre-render token hue
+            ctx.scale(viewport.zoom, viewport.zoom);
+            ctx.drawImage(images[token.url], 0, 0, sizes[0], sizes[1]);
         }
         
         // draw token image 
