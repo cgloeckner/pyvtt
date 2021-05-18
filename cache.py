@@ -529,6 +529,10 @@ class GameCache(object):
         top    = data['top']
         width  = data['width']
         height = data['height']
+
+        if left is None or top is None or width is None or height is None:
+            # ignore incomplete range query
+            return
         
         now = time.time()
         # query inside given rectangle
@@ -536,13 +540,13 @@ class GameCache(object):
             g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
             if g is None:
                 self.engine.logging.warning('Player {0} tried range select at {1}/{2} by {3}, but the game was not found'.format(player.name, self.parent.url, self.url, player.ip))
-                return;
+                return
             g.timeid = now
             
             s = self.parent.db.Scene.select(lambda s: s.id == g.active).first()
             if s is None:
                 self.engine.logging.warning('Player {0} tried range select at {1}/{2} in scene #{3} by {4}, but the scene was not found'.format(player.name, self.parent.url, self.url, g.active, player.ip))
-                return;
+                return
                 
             token_ids = player.selected if adding else list()
             for t in self.parent.db.Token.select(lambda t: t.scene == s and left <= t.posx and t.posx <= left + width and top <= t.posy and t.posy <= top + height): 

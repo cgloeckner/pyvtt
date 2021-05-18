@@ -623,6 +623,25 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(len(player_cache1.selected), 2)
         self.assertIn(145634,    player_cache1.selected)
         self.assertIn(inside.id, player_cache1.selected)
+
+        # incomplete queries are ignored
+        for missing in ['left', 'top', 'width', 'height']:
+            query = {
+                'adding' : False,
+                'left'   : 100,
+                'top'    : 130,
+                'width'  : 40,
+                'height' : 30
+            }
+            query[missing] = None
+            game_cache.onRange(player_cache1, query)
+             
+            answer1 = socket1.pop_send()
+            answer2 = socket2.pop_send()
+            answer3 = socket3.pop_send()
+            self.assertIsNone(answer1)
+            self.assertIsNone(answer2)
+            self.assertIsNone(answer3)
         
     def test_onOrder(self):
         socket1 = SocketDummy()
