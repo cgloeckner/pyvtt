@@ -341,6 +341,8 @@ function login(event, gmname, url, websocket_url) {
                 };
                 
                 socket.onclose = function(event) {
+                    running = false;
+                    
                     // reset audio
                     $('#audioplayer')[0].pause();
                     $('#musicslots')[0].innerHTML = ''
@@ -431,6 +433,7 @@ function start(gmname, url, playername, color) {
     // setup game  
     gm_name = gmname;
     game_url = url;
-    
+
+    running = true;
     drawScene();
 }

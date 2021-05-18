@@ -629,6 +629,8 @@ function drawToken(token, color, is_background) {
 var last_update = 0; // timestamp with integer ms
 var num_frames  = 0; // number of frames since `last_update` was reset
 
+var running = false; // main loop running?
+
 /// Draw the entire scene (locked tokens in the background, unlocked in foreground)
 function drawScene() {
     clearCanvas();
@@ -741,7 +743,9 @@ function drawScene() {
     }
     
     // schedule next drawing
-    setTimeout("drawScene()", 1000.0 / target_fps);
+    if (running) {
+        setTimeout("drawScene()", 1000.0 / target_fps);
+    }
 }
 
 
