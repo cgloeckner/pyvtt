@@ -53,7 +53,7 @@ class PlayerCache(object):
         login_data = [self.is_gm, time.time(), self.country, self.ip, PlayerCache.instance_count]
         self.engine.logging.stats(json.dumps(login_data))
         
-        #self.lock     = lock.RLock() # note: atm deadlocking
+        self.lock     = lock.RLock()
         self.socket   = None
         
         self.dispatch_map = {
@@ -95,7 +95,7 @@ class PlayerCache(object):
     def read(self):
         """ Return JSON object read from socket. """
         # fetch data
-        #with self.lock: # note: atm deadlocking
+        #with self.lock:# note: atm deadlocking
         raw = self.socket.receive()
         if raw is not None:
             # parse data
@@ -106,8 +106,8 @@ class PlayerCache(object):
         # dump data
         raw = json.dumps(data)
         # send data
-        #with self.lock: # note: atm deadlocking
-        self.socket.send(raw)
+        with self.lock: # note: atm deadlocking
+            self.socket.send(raw)
         
     def fetch(self, data, key):
         """ Try to fetch key from data or raise ProtocolError. """
