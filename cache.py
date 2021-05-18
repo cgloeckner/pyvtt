@@ -986,6 +986,7 @@ class GmCache(object):
     # --- cache implementation ----------------------------------------
         
     def insert(self, game):
+        """ Try to insert a game into GM's Cache. """
         url = game.url
         with self.lock:
             if url in self.games:

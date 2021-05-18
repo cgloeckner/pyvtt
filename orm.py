@@ -445,8 +445,11 @@ def createGmDatabase(engine, filename):
         def fromImage(gm, url, handle):
             # create game with that image as background
             game = db.Game(url=url, gm_url=gm.url)
-            game.postSetup()      
-            db.commit()
+            try:
+                game.postSetup()
+            except KeyError:
+                # url already in use
+                return None
             
             # create initial scene
             scene = db.Scene(game=game)
@@ -533,7 +536,11 @@ def createGmDatabase(engine, filename):
                 
                 # create game
                 game = db.Game(url=url, gm_url=gm.url)
-                game.postSetup()
+                try:
+                    game.postSetup()
+                except KeyError:
+                    # url already in use
+                    return None
                 db.commit()
                 
                 # copy images to game directory
