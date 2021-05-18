@@ -229,7 +229,12 @@ def setup_gm_routes(engine):
         status['url_ok'] = True
         
         # upload file
-        files = request.files.getall('file')
+        try:
+            files = request.files.getall('file')
+        except OSError:
+            # cannot read uploaded files
+            abort(404)
+            
         if len(files) != 1:
             engine.logging.warning('GM name="{0}" url={1} tried to import game by {2} but uploaded {3} files'.format(gm.name, gm.url, engine.getClientIp(request), len(files)))
             status['error'] = 'ONE FILE AT ONCE'
@@ -439,7 +444,12 @@ def setup_gm_routes(engine):
             abort(404)
 
         # expect single background to be uploaded
-        files = request.files.getall('file[]')
+        try:
+            files = request.files.getall('file[]')
+        except OSError:
+            # cannot read uploaded files
+            abort(404)
+        
         if len(files) != 1:
             engine.logging.warning('GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but did not provide a single image'.format(gm.name, gm.url, url, engine.getClientIp(request)))
             abort(403) # Forbidden
@@ -809,7 +819,12 @@ def setup_player_routes(engine):
         
         background_set = scene.backing is not None
         # query file sizes
-        files = request.files.getall('file[]')
+        try:
+            files = request.files.getall('file[]')
+        except OSError:
+            # cannot read uploaded files
+            abort(404)
+        
         for i, handle in enumerate(files):
             content = handle.content_type.split('/')[0]
 
