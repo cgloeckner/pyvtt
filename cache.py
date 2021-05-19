@@ -387,7 +387,6 @@ class GameCache(object):
         with self.engine.locks[self.parent.url]: # make IO access safe
             for fname in os.listdir(root):
                 if fname.endswith('.mp3'):
-                    print(fname)
                     os.remove(root / fname)
         self.playback = None
     
