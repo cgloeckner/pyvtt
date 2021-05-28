@@ -32,6 +32,18 @@
             <input type="button" id="applySnapshot" onClick="onApplyBackground();" value="APPLY BACKGROUND" />
         </span>
     </div>
+
+    <div id="uploadscreen">
+        <img class="close" src="/static/delete.png" onClick="closeUpload();" draggable="false" title="CLOSE UPLOAD" />
+
+        <span>
+            <p><label for="fileupload">FILE UPLOAD</label></p>
+            
+            <form id="fileform" method="post" enctype="multipart/form-data">
+                <input type="file" id="fileupload" name="file[]" accept="image/*, audio/*" multiple onChange="mobileUpload();">
+            </form>
+        </span>
+    </div>
 %end
 
     <div id="dicebox">

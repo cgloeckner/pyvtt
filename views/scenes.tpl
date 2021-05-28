@@ -1,8 +1,9 @@
 %import time
     <div class="tools">
         <img class="largeicon" src="/static/add.png" onClick="addScene();" draggable="false" title="CREATE SCENE" />
-        <img class="largeicon" src="/static/camera.png" onClick="initWebcam();" draggable="false" title="PREVIEW WEBCAM" />
+        <img class="largeicon" src="/static/camera.png" onClick="initWebcam();" draggable="false" title="PREVIEW WEBCAM" /><br />
         <img class="largeicon" src="/static/screen.png" onClick="initScreenShare();" draggable="false" title="PREVIEW SCREENSHARE" />
+        <img class="largeicon" src="/static/upload.png" onClick="initUpload();" draggable="false" title="FILE UPLOAD" />
     </div>
     
 %for i, scene_id in enumerate(game.order):

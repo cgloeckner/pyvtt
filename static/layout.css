@@ -303,12 +303,13 @@ img.icon {
 }
 
 div#gmdrop > div.tools {
+    vertical-align: top;
 }
 
 div#gmdrop > div.tools > img.largeicon {
-    width: 24px;
+    width: 28px;
     padding: 5px;
-    display: block;
+    display: inline-block;
 }
 
 div#gmdrop > div {
@@ -346,8 +347,11 @@ div#gmdrop > div.element > div.controls {
     text-align: center;
 }
 
+/* --- Upload Controls (primarily for mobile) ----------------------- */
+
 /* --- Webcam Controls ---------------------------------------------- */
 
+div#uploadscreen,
 div#camerapreview {
     width: 700px;
     height: 300px;
@@ -366,11 +370,26 @@ div#camerapreview {
     display: none;
 }
 
+div#uploadscreen > span {
+    padding: 10px;
+}
+
 div#camerapreview > span {
     padding: 7px;
     float: left;
 }
 
+div#uploadscreen > span > form > input[type=file] {
+    border: 0; 
+    outline: 0;
+    outline-offset: 0px;
+    padding: 10px;
+    margin: 10px;
+    color: white;
+    text-transform: uppercase;
+}
+
+div#uploadscreen > img.close,
 div#camerapreview > img.close {
     width: 32px;
     float: right;
@@ -396,11 +415,13 @@ div#camerapreview > span > .largepreview {
     transform: translate(-50%,-50%);
 }
 
+div#uploadscreen > span > p,
 div#camerapreview > span > p {    
     color: white;
     user-select: none;
 }
 
+div#uploadscreen > span,
 div#camerapreview > span {
     text-align: center;
 }

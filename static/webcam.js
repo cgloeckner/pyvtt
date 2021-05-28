@@ -34,6 +34,8 @@ function initScreenShare() {
 }
 
 function onStreamReady(stream) {
+    closeUpload();
+    
     window.stream = stream;
     $('#video')[0].srcObject = stream;
     $('#camerapreview').fadeIn(500);

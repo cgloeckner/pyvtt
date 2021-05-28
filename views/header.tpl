@@ -23,6 +23,7 @@ License: MIT (see LICENSE for details)
     <script src="/static/music.js"></script>    
     <script src="/static/utils.js"></script>
     <script src="/static/webcam.js"></script>
+    <script src="/static/mobile-upload.js"></script>
     <script src="/static/constants.js"></script>
     <link rel="stylesheet" type="text/css" href="/static/normalize.css">
     <link rel="stylesheet" type="text/css" href="/static/layout.css">
