@@ -809,9 +809,12 @@ function onGrab(event) {
                 // ignore if locked
                 return;
             }
-            
+
+            // reset rotation
             token.rotate = 0;
-            token.size   = default_token_size;
+
+            // reset size to default size (but based on zoom)
+            token.size   = parseInt(default_token_size / viewport.zoom);
             
             // trigger buffer redraw
             token.label_canvas = null;
