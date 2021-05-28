@@ -305,6 +305,9 @@ function onTokenResize() {
     
     // normalize distance using distance mouse/icon
     ratio = scale / radius;
+
+    // determine min token size based on current zoom
+    tmp_min_token_size = parseInt(default_token_size / (1.44 * viewport.zoom));
     
     // resize all selected tokens
     $.each(select_ids, function(index, id) {
@@ -313,7 +316,7 @@ function onTokenResize() {
             return;
         }
         var size = Math.round(token.size * ratio * 2);
-        size = Math.max(min_token_resize, Math.min(max_token_resize, size));
+        size = Math.max(tmp_min_token_size, Math.min(MAX_TOKEN_SIZE, size));
         // save size
         // @NOTE: resizing is updated after completion, meanwhile
         // clide-side prediction kicks in

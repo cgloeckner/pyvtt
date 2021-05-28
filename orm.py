@@ -23,7 +23,7 @@ __licence__ = 'MIT'
 MAX_SCENE_WIDTH  = 1008
 MAX_SCENE_HEIGHT = 567
 
-MIN_TOKEN_SIZE   = 30
+MIN_TOKEN_SIZE   = 1
 MAX_TOKEN_SIZE   = 1000
 
 def createGmDatabase(engine, filename):
