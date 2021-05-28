@@ -1203,6 +1203,8 @@ function deleteSelectedTokens() {
     }
 }
 
+var viewport_scroll_delta = 10;
+
 /// Event handle shortcuts on (first) selected token
 function onShortcut(event) {
     space_bar = event.key == " ";
@@ -1222,6 +1224,24 @@ function onShortcut(event) {
         // Backspace for MacBook's delete key
         if (event.key == 'Delete' || event.key == 'Backspace') {
             deleteSelectedTokens();
+        }
+
+        // handle movement of zoomed viewport
+        if (event.key == 'ArrowUp') {                           
+            viewport.newx = viewport.x;
+            viewport.newy = viewport.y - viewport_scroll_delta;
+        }
+        if (event.key == 'ArrowDown') {
+            viewport.newx = viewport.x;
+            viewport.newy = viewport.y + viewport_scroll_delta;
+        }
+        if (event.key == 'ArrowLeft') {
+            viewport.newx = viewport.x - viewport_scroll_delta;
+            viewport.newy = viewport.y;
+        }
+        if (event.key == 'ArrowRight') {
+            viewport.newx = viewport.x + viewport_scroll_delta;
+            viewport.newy = viewport.y;
         }
     }
 }
