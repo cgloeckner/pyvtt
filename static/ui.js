@@ -711,6 +711,12 @@ function onGrab(event) {
     pickCanvasPos(event);
 
     var is_single_touch = event.type == "touchstart" && event.touches.length == 1;
+    var is_pinch_touch  = event.type == "touchstart" && event.touches.length == 2;
+    if (is_pinch_touch) {
+        pinch_distance = calcPinchDistance();
+        $('#debuglog')[0].innerHTML = 'Grab ' + pinch_distance;
+        return;
+    }
 
     if (event.buttons == 1 || is_single_touch) {
         // trigger check for holding the click
@@ -935,11 +941,18 @@ function onMove(event) {
     
     pickCanvasPos(event);
 
+    var is_single_touch = event.type == "touchmove" && event.touches.length == 1;
+    var is_pinch_touch  = event.type == "touchmove" && event.touches.length == 2;
+    if (is_pinch_touch) {
+        onWheel(event);
+        return;
+    }
+
     var battlemap = $('#battlemap');
     var w = battlemap.width();
     var h = battlemap.height();
     
-    if ((event.buttons == 1 || (event.type == "touchmove" && event.touches.length == 1)) && !space_bar) {
+    if ((event.buttons == 1 || is_single_touch) && !space_bar) {
         // left button clicked
         
         if (primary_id != 0 && grabbed) {
@@ -1040,8 +1053,65 @@ function onMove(event) {
     }
 }
 
+var pinch_distance = null;
+
+/// Calculate distance between fingers during pinch (two fingers)
+function calcPinchDistance() {
+    var x1 = event.touches[0].clientX;
+    var y1 = event.touches[0].clientY;
+    var x2 = event.touches[1].clientX;
+    var y2 = event.touches[1].clientY;
+    var dx = x1 - x2;
+    var dy = y1 - y2;
+    // @NOTE: sqrt is ignored here for gaining maximum speed
+    return dx * dx + dy * dy;
+}
+
+/// Calculate center between fingers during pinch (two fingers)
+function calcPinchCenter() {
+    var x1 = event.touches[0].clientX;
+    var y1 = event.touches[0].clientY;
+    var x2 = event.touches[1].clientX;
+    var y2 = event.touches[1].clientY;
+    x = (x1 + x2) / 2;
+    y = (y1 + y2) / 2;
+    return [x, y];
+}
+
 /// Event handle mouse wheel scrolling
-function onWheel(event) {
+function onWheel(event) {  
+    var speed = ZOOM_FACTOR_SPEED;   
+    var delta = event.deltaY;
+    
+    // default: zoom using viewport's center
+    var reference_x = viewport.x;
+    var reference_y = viewport.y;
+    if (delta < 0) {
+        // zoom using mouse position
+        reference_x = mouse_x;
+        reference_y = mouse_y;
+    }
+    
+    var is_pinch_touch  = event.type == "touchmove" && event.touches.length == 2;
+    if (is_pinch_touch && pinch_distance != null) {
+        // calculate pinch direction (speed is ignored!)
+        var new_pinch_distance = calcPinchDistance();
+        delta = pinch_distance - new_pinch_distance;
+        if (Math.abs(delta) < 500) { // hardcoded threshold
+            // ignore too subtle pinch
+            return;
+        }
+        
+        var center = calcPinchCenter();
+        reference_x = center[0];
+        reference_y = center[1];
+        
+        pinch_distance = new_pinch_distance;
+        if (delta > 0.0) {
+            $('#debuglog')[0].innerHTML = 'Wheel ' + delta + '; ';
+        }
+    }
+    
     if (zooming) {
         if (event.ctrlKey || event.metaKey) {
             // ignore browser zooming
@@ -1050,26 +1120,18 @@ function onWheel(event) {
         var show = false;
         var canvas = $('#battlemap');
         
-        // default: zoom using viewport's center
-        var reference_x = viewport.x;
-        var reference_y = viewport.y;
-
         // modify zoom
-        if (event.deltaY > 0) {
+        if (delta > 0) {
             // zoom out
-            viewport.zoom /= ZOOM_FACTOR_SPEED;
+            viewport.zoom /= speed;
             if (viewport.zoom < 1.0) {
                 viewport.zoom = 1.0;
             }
             show = true;
-        } else if (event.deltaY < 0) {
+        } else if (delta < 0) {
             // zoom in
-            viewport.zoom *= ZOOM_FACTOR_SPEED;
+            viewport.zoom *= speed;
             show = true;
-            
-            // zoom using mouse position
-            reference_x = mouse_x;
-            reference_y = mouse_y;
         }
 
         // force all token labels to be redrawn
