@@ -33,16 +33,11 @@
         </span>
     </div>
 
+    <!-- stays hidden -->
     <div id="uploadscreen">
-        <img class="close" src="/static/delete.png" onClick="closeUpload();" draggable="false" title="CLOSE UPLOAD" />
-
-        <span>
-            <p><label for="fileupload">FILE UPLOAD</label></p>
-            
-            <form id="fileform" method="post" enctype="multipart/form-data">
-                <input type="file" id="fileupload" name="file[]" accept="image/*, audio/*" multiple onChange="mobileUpload();">
-            </form>
-        </span>
+        <form id="fileform" method="post" enctype="multipart/form-data">
+            <input type="file" id="fileupload" name="file[]" accept="image/*, audio/*" multiple onChange="mobileUpload();">
+        </form>
     </div>
 %end
 

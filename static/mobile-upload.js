@@ -1,7 +1,6 @@
 
 function initUpload() {
-    closeWebcam();
-    $('#uploadscreen').fadeIn(500);
+    $('#fileupload')[0].click();
 }
 
 function mobileUpload() {
@@ -77,8 +76,8 @@ function mobileUpload() {
                 // trigger token creation via websocket
                 writeSocket({
                     'OPID' : 'CREATE',
-                    'posx' : 500,
-                    'posy' : 300,
+                    'posx' : MAX_SCENE_WIDTH / 2,
+                    'posy' : MAX_SCENE_WIDTH * canvas_ratio / 2,
                     'size' : default_token_size,
                     'urls' : response['urls']
                 });
@@ -107,8 +106,4 @@ function mobileUpload() {
             handleError(response);
         }
     });
-}
-
-function closeUpload() {
-    $('#uploadscreen').fadeOut(500);
 }
