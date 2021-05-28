@@ -533,8 +533,9 @@ def setup_gm_routes(engine):
         data['flag']        = None
         
         # query server location (if possible)
-        ip = host.split('://')[1].split(':')[0]
-        data['flag'] = engine.getCountryFromIp(ip)
+        ip      = host.split('://')[1].split(':')[0]
+        country = engine.getCountryFromIp(ip)
+        data['flag'] = flag.flag(country) if country not in ['?', 'unknown'] else ''
         
         # query server status
         try:
