@@ -502,6 +502,15 @@ function drawToken(token, color, is_background) {
                 delete tokens_added[token.id];
             }
         }
+
+        /* @NOTE: feature currently not used
+        // alpha-blend large tokens if zoomed in
+        if (viewport.zoom > 1.0) {
+            if (token.size * viewport.zoom > MAX_SCENE_WIDTH * canvas_ratio) {
+                context.globalAlpha = 1 / viewport.zoom;
+            }
+        }
+        */
         
         // handle token despawn
         if (tokens_removed[token.id] != null) {
