@@ -210,7 +210,19 @@ function addRoll(sides, result, name, color, recent) {
         } else {
             result_label = '&mdash;'; // slash
         }
-    } 
+    }
+
+    // special case: d100
+    if (sides == 100) {
+        // use d10's results box
+        sides = 10;
+        console.log(result);
+        if (result < 10) {
+            result_label = '0' + result;
+        } else if (result == 100) {
+            result_label = '00';
+        }
+    }
     
     if (recent) {
         // create dice result
@@ -227,10 +239,6 @@ function addRoll(sides, result, name, color, recent) {
                 + '\t<span class="' + ani_css + '"></span>\n'
             + '</span>';
 
-        if (sides == 100) {
-            // use d10's results box
-            sides = 10;
-        } 
         var container = $('#d' + sides + 'rolls');
         container.prepend(dice_result_span);
         
