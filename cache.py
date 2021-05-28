@@ -403,7 +403,8 @@ class GameCache(object):
                     force_logout.append(name)
             # logout players whose failed
             for name in force_logout:
-                self.logout(self.players[name])
+                if name in self.players:
+                    self.logout(self.players[name])
         
     def broadcastTokenUpdate(self, player, since):
         """ Broadcast updated tokens. """
