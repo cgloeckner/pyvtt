@@ -98,7 +98,7 @@
         </form>
     </div>
 
-    <div id="debuglog" style="position: absolute; z-index: 100; width: 150px; height: 400px; right: 0px; background-color: white; overflow-y: scroll">
+    <!-- <div id="debuglog" style="position: absolute; z-index: 100; width: 150px; height: 400px; right: 0px; background-color: white; overflow-y: scroll"> //-->
     </div>
 </div>
 

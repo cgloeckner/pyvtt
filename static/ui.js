@@ -660,8 +660,14 @@ function pickScreenPos(event) {
     return [x, y]
 }
 
+var mouse_delta_x = 0;
+var mouse_delta_y = 0;
+
 /// Select mouse/touch position relative to the canvas
 function pickCanvasPos(event) {
+    var old_x = mouse_x;
+    var old_y = mouse_y;
+    
     var p = pickScreenPos(event);
     mouse_x = p[0];
     mouse_y = p[1];
@@ -692,6 +698,9 @@ function pickCanvasPos(event) {
     
     mouse_x = parseInt(mouse_x);
     mouse_y = parseInt(mouse_y);
+
+    mouse_delta_x = mouse_x - old_x;
+    mouse_delta_y = mouse_y - old_y;
 }
 
 /// Event handle for pinging with the mouse (left click held)
@@ -714,7 +723,6 @@ function onGrab(event) {
     var is_pinch_touch  = event.type == "touchstart" && event.touches.length == 2;
     if (is_pinch_touch) {
         pinch_distance = calcPinchDistance();
-        $('#debuglog')[0].innerHTML = 'Grab ' + pinch_distance;
         return;
     }
 
@@ -844,6 +852,8 @@ function onGrab(event) {
 /// Event handle for releasing a grabbed token
 function onRelease() {
     var was_grabbed = grabbed;
+    
+    var was_touch = event.type == "touchend";
 
     if (isNaN(mouse_x) || isNaN(mouse_y)) {
         // WORKAROUND: prevent mobile from crashing on pinch-zoom
@@ -874,9 +884,10 @@ function onRelease() {
             'changes' : changes
         });
     }
-    
+
+    var move_viewport = viewport.zoom > 1.0;
+
     if (select_from_x != null) {
-        // finish selection box
         var select_width  = mouse_x - select_from_x;
         var select_height = mouse_y - select_from_y;
         
@@ -885,7 +896,7 @@ function onRelease() {
             select_from_x = select_from_x + select_width;
             select_width *= -1;
         }
-             
+        
         // handle box created to the top
         if (select_height < 0) {
             select_from_y = select_from_y + select_height;
@@ -907,8 +918,17 @@ function onRelease() {
             'width'  : select_width,
             'height' : select_height
         });
+
+        if (select_width != 0 && select_height != 0) {
+            move_viewport = false;
+        }
     }
-    
+
+    if (move_viewport) {
+        viewport.newx = mouse_x;
+        viewport.newy = mouse_y;
+    }
+
     select_from_x = null;
     select_from_y = null;
 }
@@ -1107,9 +1127,6 @@ function onWheel(event) {
         reference_y = center[1];
         
         pinch_distance = new_pinch_distance;
-        if (delta > 0.0) {
-            $('#debuglog')[0].innerHTML = 'Wheel ' + delta + '; ';
-        }
     }
     
     if (zooming) {
