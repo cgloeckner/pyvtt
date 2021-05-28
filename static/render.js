@@ -176,6 +176,7 @@ var beacons = {}; // contains beacons keyed by players' uuid
 function Beacon(color) {
     this.cycles = 0;
     this.color  = color;
+    this.master = true;
 }
 
 /// Add beacon
@@ -186,46 +187,65 @@ function addBeacon(color, uuid) {
 function startBeacon(beacon, x, y) {
     beacon.x = x;
     beacon.y = y;
-
+                       
+    beacon.alpha  = 1.0
     beacon.width  = 5.0;
     beacon.radius = 0;
     beacon.alpha  = 1.0;
-    beacon.cycles = 1;
+    beacon.cycles = 2; 
+    beacon.offset = null;
 }
 
 function animateBeacon(beacon) {
-    beacon.radius += 1.0;
-    if (beacon.radius > 75.0) {
-        beacon.radius = 1.5;
-        beacon.cycles -= 1;
+    if (beacon.cycles > 0) {
+        beacon.radius += 1.25;
+        if (beacon.radius > 55.0) {
+            beacon.radius = 1.5;
+            beacon.cycles -= 1;
+        }
+        beacon.alpha = 1.0 - beacon.radius / 55.0;
     }
-    beacon.alpha = 1.0 - beacon.radius / 75.0;
-
-    return beacon.cycles > 0;
+    
+    // create 2nd beacon (offset)
+    if (beacon.master && beacon.offset == null && beacon.alpha < 0.5) {
+        beacon.offset = new Beacon(beacon.color);
+        startBeacon(beacon.offset, beacon.x, beacon.y);
+        // mark as slave (prevent continued recursion)
+        beacon.offset.master = false;
+    }
 }
 
 function drawBeacon(beacon) { 
-    if (!animateBeacon(beacon)) {
-        return;
-    }
-    
+    animateBeacon(beacon);
+                         
     var canvas = $('#battlemap');
     var context = canvas[0].getContext("2d");
+    if (beacon.master) { 
+    }
 
-    context.save();
-    
-    // handle token position and canvas scale 
-    context.translate(beacon.x * canvas_scale, beacon.y * canvas_scale);
+    if (beacon.cycles > 0) { 
+        context.save();
+        
+        // handle token position and canvas scale 
+        context.translate(beacon.x * canvas_scale, beacon.y * canvas_scale);
 
-    context.beginPath()
-    context.globalAlpha = beacon.alpha;
-    context.arc(0, 0, beacon.radius / viewport.zoom, 0, 2 * Math.PI, false);
-    context.lineWidth = beacon.width / viewport.zoom;
-    context.strokeStyle = beacon.color;
-    context.stroke();
-    context.closePath();
-    
-    context.restore();
+        context.beginPath()
+        context.globalAlpha = beacon.alpha;
+        context.arc(0, 0, beacon.radius / viewport.zoom, 0, 2 * Math.PI, false);
+        context.lineWidth = beacon.width / viewport.zoom;
+        context.strokeStyle = beacon.color;
+        context.stroke();
+        context.closePath();
+        
+        context.restore();
+    }
+     
+    if (beacon.offset != null) {
+        drawBeacon(beacon.offset);
+    }
+
+    if (beacon.master) {
+    }
 }
 
 // --- token implementation -------------------------------------------
