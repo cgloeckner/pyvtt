@@ -219,8 +219,8 @@ function drawBeacon(beacon) {
 
     context.beginPath()
     context.globalAlpha = beacon.alpha;
-    context.arc(0, 0, beacon.radius, 0, 2 * Math.PI, false);
-    context.lineWidth = beacon.width;
+    context.arc(0, 0, beacon.radius / viewport.zoom, 0, 2 * Math.PI, false);
+    context.lineWidth = beacon.width / viewport.zoom;
     context.strokeStyle = beacon.color;
     context.stroke();
     context.closePath();

@@ -391,7 +391,7 @@ function login(event, gmname, url, websocket_url) {
 /// Sets up the game and triggers the update loop
 function start(gmname, url, playername, color) {
     onInitMusicPlayer(gmname, url);
-    toggleAutoMove();
+    toggleAutoMove(true);
 
     writeSocket({
         'name'     : playername,
