@@ -89,7 +89,7 @@
         <div id="assetsDownloading"></div>
         <div id="assetsUploading"></div>
         <div id="zoom">
-            <img id="beamLock" class="icon" title="AUTO-MOVEMENT" onClick="toggleAutoMove();" src="/static/unlocked.png" />
+            <img id="beamLock" class="icon" title="AUTO-MOVEMENT" onClick="onToggleAutoMove(event);" src="/static/unlocked.png" />
             <span id="zoomLevel" title="RESET ZOOM" onClick="resetViewport();"></span>
         </div>
 

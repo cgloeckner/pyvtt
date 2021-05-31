@@ -216,7 +216,6 @@ function addRoll(sides, result, name, color, recent) {
     if (sides == 100) {
         // use d10's results box
         sides = 10;
-        console.log(result);
         if (result < 10) {
             result_label = '0' + result;
         } else if (result == 100) {
@@ -924,9 +923,12 @@ function onRelease() {
         }
     }
 
-    if (move_viewport) {
+    if (was_touch && move_viewport) {
+        // touch move screen
         viewport.newx = mouse_x;
         viewport.newy = mouse_y;
+        console.log('touch scroll');
+        updateViewport(true);
     }
 
     select_from_x = null;
@@ -1054,8 +1056,9 @@ function onMove(event) {
         if (dy > 100) { dy /= 100; }
         
         // move viewport
-        viewport.x -= dx / viewport.zoom;
-        viewport.y -= dy / viewport.zoom;
+        viewport.newx = viewport.x - dx / viewport.zoom;
+        viewport.newy = viewport.y - dy / viewport.zoom;
+        updateViewport(true);
         
         limitViewportPosition();
         
@@ -1306,21 +1309,29 @@ function onShortcut(event) {
         }
 
         // handle movement of zoomed viewport
-        if (event.key == 'ArrowUp') {                           
+        var changed = false;
+        if (event.key == 'ArrowUp') {           
             viewport.newx = viewport.x;
             viewport.newy = viewport.y - viewport_scroll_delta;
+            changed = true;
         }
         if (event.key == 'ArrowDown') {
             viewport.newx = viewport.x;
-            viewport.newy = viewport.y + viewport_scroll_delta;
+            viewport.newy = viewport.y + viewport_scroll_delta;  
+            changed = true;
         }
         if (event.key == 'ArrowLeft') {
             viewport.newx = viewport.x - viewport_scroll_delta;
-            viewport.newy = viewport.y;
+            viewport.newy = viewport.y;                 
+            changed = true;
         }
         if (event.key == 'ArrowRight') {
             viewport.newx = viewport.x + viewport_scroll_delta;
-            viewport.newy = viewport.y;
+            viewport.newy = viewport.y;    
+            changed = true;
+        }
+        if (changed) {
+            updateViewport(true);
         }
     }
 }
@@ -2033,6 +2044,11 @@ function saveMusicPos(pos) {
 }
 
 /// Event handle for toggling auto movement
+function onToggleAutoMove(event) {
+    event.preventDefault();
+    toggleAutoMove();
+}
+
 function toggleAutoMove(load=false) {
     if (load) {
         // load from browser's storage

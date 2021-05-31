@@ -23,13 +23,13 @@ function resetViewport() {
 
 var allow_auto_movement = true;
 
-function updateViewport() {
-    if (!allow_auto_movement) {
+function updateViewport(force=false) {
+    if (!allow_auto_movement && !force) {
         viewport.newx = null;
         viewport.newy = null;
     }
     
-    if (viewport.newx == null || viewport.newy == null) {
+    if (!force && (viewport.newx == null || viewport.newy == null)) {
         return;
     }
 
