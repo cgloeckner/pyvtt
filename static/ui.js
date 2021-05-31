@@ -901,8 +901,8 @@ function onRelease() {
             'changes' : changes
         });
     }
-    
-    if (!space_bar && !was_scrolled) {
+
+    if ((!space_bar || was_touch) && !was_scrolled) {
         if (select_from_x != null) {
             // range select tokens (including resetting selection)
             
@@ -937,7 +937,7 @@ function onRelease() {
                 'height' : select_height
             });
             
-        } else if (!was_grabbed && !space_bar) {
+        } else if (!was_grabbed && (!space_bar || was_touch)) {
             // query touch position to keep token selected or unselect
             writeSocket({
                 'OPID'   : 'RANGE',
@@ -1076,7 +1076,6 @@ function onMove(event) {
     
     } else if ((event.buttons == 1 && !space_bar) || is_single_touch) {
         // handle left click (without spacebar) or touch event
-        $('#debuglog')[0].innerHTML = parseInt(Date.now()) + '//' + grabbed + '//' + touch_force;
         if (primary_id != 0 && grabbed) {
             onMoveToken(event);
             

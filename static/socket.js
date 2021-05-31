@@ -161,16 +161,25 @@ function onRoll(data) {
 }
 
 function onSelect(data) {
+    $('#debuglog')[0].innerHTML = data.selected;
+    console.log(data);
+    
     player_selections[data.color] = data.selected;
     
-    // update player's primary selection
-    if (data.color == my_color && data.selected.length > 0) {
+    // update my selection if it's me
+    if (data.color == my_color) {    
         select_ids = data.selected;
-        if (!select_ids.includes(primary_id)) {
+        // update primary id 
+        if (data.selected.length > 0 && !select_ids.includes(primary_id)) {
             // reselect primary item (previous one does not belong to new selection)
             primary_id = data.selected[0];
+        } else {
+            // reset primary token id            
+            primary_id = 0;
         }
     }
+
+    console.log(select_ids, primary_id);
 }
 
 function onOrder(data) {
