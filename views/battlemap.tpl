@@ -58,7 +58,7 @@
         <canvas id="battlemap" width="{{MAX_SCENE_WIDTH}}" height="{{MAX_SCENE_HEIGHT}}"></canvas>
             
         <div id="tokenbar">
-            <img src="/static/flipx.png" id="tokenFlipX" draggable="false" onClick="onFlipX();" title="HORIZONTAL FLIP" />
+            <img src="/static/flipx.png" id="tokenFlipX" draggable="false" onClick="onFlipX();" onTouch="onFlipX();" title="HORIZONTAL FLIP" />
             <img src="/static/locked.png" id="tokenLock" draggable="false" onClick="onLock();" title="LOCK/UNLOCK" />
             <img src="/static/top.png" id="tokenTop" draggable="false" onClick="onTop();" title="MOVE TO TOP" />
             <img src="/static/copy.png" id="tokenClone" draggable="false" onClick="onClone();" title="CLONE TOKEN" />

@@ -1358,16 +1358,16 @@ function onShortcut(event) {
         // handle movement of zoomed viewport
         // @NOTE: move with arrow direction
         if (event.key == 'ArrowUp') {
-            onZoomViewport(0, -viewport_scroll_delta / viewport.zoom);
+            onMoveViewport(0, -viewport_scroll_delta / viewport.zoom);
         }
         if (event.key == 'ArrowDown') {
-            onZoomViewport(0, viewport_scroll_delta / viewport.zoom);  
+            onMoveViewport(0, viewport_scroll_delta / viewport.zoom);  
         }
         if (event.key == 'ArrowLeft') {
-            onZoomViewport(-viewport_scroll_delta / viewport.zoom, 0); 
+            onMoveViewport(-viewport_scroll_delta / viewport.zoom, 0); 
         }
         if (event.key == 'ArrowRight') {
-            onZoomViewport(viewport_scroll_delta / viewport.zoom, 0);  
+            onMoveViewport(viewport_scroll_delta / viewport.zoom, 0);  
         }
     }
 }
