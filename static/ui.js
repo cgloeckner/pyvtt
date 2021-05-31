@@ -803,10 +803,15 @@ function onGrab(event) {
             select_ids = [];
             primary_id = 0;
 
-            if (!is_single_touch) {
-                // start selection box (if not mobile)
-                select_from_x = mouse_x;
-                select_from_y = mouse_y;
+            // start selection box
+            select_from_x = mouse_x;
+            select_from_y = mouse_y;
+
+            // immediately reset selection if strong touch
+            // @NOTE: use a light gesture (e.g. pen) to select
+            if (is_single_touch && event.touches[0].force == 1.0) {
+                select_from_x = null;
+                select_from_y = null;
             }
         }
         
@@ -884,20 +889,8 @@ function onRelease() {
             'changes' : changes
         });
     }
-
-    if (was_touch) {
-        // query touch position to keep token selected or unselect
-        // the token
-        writeSocket({
-            'OPID'   : 'RANGE',
-            'adding' : false,
-            'left'   : mouse_x,
-            'top'    : mouse_y,
-            'width'  : 0,
-            'height' : 0
-        });
     
-    } else if (select_from_x != null) {
+    if (select_from_x != null) {
         // range select tokens (including resetting selection)
         
         var select_width  = mouse_x - select_from_x;
@@ -930,6 +923,17 @@ function onRelease() {
             'width'  : select_width,
             'height' : select_height
         });
+    } else {
+        // query touch position to keep token selected or unselect
+        // the token
+        writeSocket({
+            'OPID'   : 'RANGE',
+            'adding' : false,
+            'left'   : mouse_x,
+            'top'    : mouse_y,
+            'width'  : 0,
+            'height' : 0
+        });
     }
 
     select_from_x = null;
@@ -956,11 +960,6 @@ function limitViewportPosition() {
 }
 
 function onMoveToken(event) {
-    if (primary_id == 0 || !grabbed) {
-        // nothing selected or grabbed
-        return;
-    }
-    
     var token = tokens[primary_id];
 
     if (token == null || token.locked) {
@@ -1029,7 +1028,7 @@ function onMoveToken(event) {
     }
 }
 
-function onZoomViewport(dx, dy) {
+function onMoveViewport(dx, dy) {
     // change icon
     var battlemap = $('#battlemap');
     battlemap.css('cursor', 'grab');
@@ -1052,34 +1051,34 @@ function onMove(event) {
     
     pickCanvasPos(event);
 
-    var is_single_touch = event.type == "touchmove" && event.touches.length == 1;
-    
+    var is_single_touch = event.type == "touchmove" && event.touches.length == 1;    
     var is_pinch_touch  = event.type == "touchmove" && event.touches.length == 2;
+
     if (is_pinch_touch) {
         // interpret pinch as zooming
-        // and do not trigger any movement (of token or viewport)
         onWheel(event);
-        return;
-    }
     
-    if ((event.buttons == 1 || is_single_touch) && !space_bar) {
+    } else if ((event.buttons == 1 && !space_bar) || is_single_touch) {
         // handle left click (without spacebar) or touch event
-        onMoveToken(event);
+        if (primary_id != 0 || grabbed) {
+            onMoveToken(event);
+            
+        } else if (is_single_touch) {
+            var touch = event.touches[0];
+            $('#debuglog')[0].innerHTML = touch.force + '//' + touch.clientX + '//' + touch.clientY;
+        }
         
-    } else if (event.buttons == 4 || is_single_touch || (event.buttons == 1 && space_bar)) {
-        // handle wheel click or leftclick (with space bar)
-        // @NOTE: move against drag direction
-        onZoomViewport(-event.movementX, -event.movementY);
+    } else if (event.buttons == 4 || (event.buttons == 1 && space_bar) || is_single_touch) {
+        // handle wheel click or leftclick (with space bar) or touch event
+        // @NOTE: move against drag direction    
+        onMoveViewport(-event.movementX, -event.movementY);
                
-    } else {
+    } else {                 
+        // handle token mouse over
         var token = selectToken(mouse_x, mouse_y);
          
         // transform cursor
-        
-    var battlemap = $('#battlemap');
-    var w = battlemap.width();
-    var h = battlemap.height();
-    
+        var battlemap = $('#battlemap');
         if (token == null) {
             battlemap.css('cursor', 'default');
         } else if (token.locked) {
