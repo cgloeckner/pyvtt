@@ -867,6 +867,44 @@ function onGrab(event) {
 
 /// Event handle for releasing click/touch (outside canvas)
 function onReleaseDoc() {
+    if ((!space_bar || was_touch) && !was_scrolled) {
+        if (select_from_x != null) {
+            // range select tokens (including resetting selection)
+            
+            var select_width  = mouse_x - select_from_x;
+            var select_height = mouse_y - select_from_y;
+            
+            // handle box created to the left
+            if (select_width < 0) {
+                select_from_x = select_from_x + select_width;
+                select_width *= -1;
+            }
+            
+            // handle box created to the top
+            if (select_height < 0) {
+                select_from_y = select_from_y + select_height;
+                select_height *= -1;
+            }
+            
+            primary_id = 0;
+            
+            var adding = false; // default: not adding to the selection
+            if (event.ctrlKey || event.metaKey) {
+                adding = true;
+            }
+            
+            writeSocket({
+                'OPID'   : 'RANGE',
+                'adding' : adding,
+                'left'   : select_from_x,
+                'top'    : select_from_y,
+                'width'  : select_width,
+                'height' : select_height
+            });
+            
+        }
+    }
+    
     select_from_x = null;
     select_from_y = null;
 }
@@ -910,41 +948,7 @@ function onRelease() {
     }
 
     if ((!space_bar || was_touch) && !was_scrolled) {
-        if (select_from_x != null) {
-            // range select tokens (including resetting selection)
-            
-            var select_width  = mouse_x - select_from_x;
-            var select_height = mouse_y - select_from_y;
-            
-            // handle box created to the left
-            if (select_width < 0) {
-                select_from_x = select_from_x + select_width;
-                select_width *= -1;
-            }
-            
-            // handle box created to the top
-            if (select_height < 0) {
-                select_from_y = select_from_y + select_height;
-                select_height *= -1;
-            }
-            
-            primary_id = 0;
-            
-            var adding = false; // default: not adding to the selection
-            if (event.ctrlKey || event.metaKey) {
-                adding = true;
-            }
-            
-            writeSocket({
-                'OPID'   : 'RANGE',
-                'adding' : adding,
-                'left'   : select_from_x,
-                'top'    : select_from_y,
-                'width'  : select_width,
-                'height' : select_height
-            });
-            
-        } else if (!was_grabbed && (!space_bar || was_touch)) {
+        if (!was_grabbed && (!space_bar || was_touch)) {
             // query touch position to keep token selected or unselect
             var adding = false; // default: not adding to the selection
             if (event.ctrlKey || event.metaKey) {
