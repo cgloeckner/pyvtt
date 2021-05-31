@@ -33,10 +33,11 @@ var my_color = '';
 /// Handle function for interaction via socket
 function onSocketMessage(event) {
     var data = JSON.parse(event.data);
-    if (!quiet) {
-        console.info(data);
-    }
     var opid = data.OPID;
+    
+    if (!quiet) {
+        console.info('READ', data);
+    }
     
     switch (opid) { 
         case 'PING':
@@ -243,7 +244,7 @@ function onRefresh(data) {
 function writeSocket(data) {
     var raw = JSON.stringify(data);
     if (!quiet) {
-        console.info(data);
+        console.info('SEND', data);
     }
     socket.send(raw);
 }

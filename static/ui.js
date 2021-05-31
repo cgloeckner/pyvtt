@@ -35,6 +35,8 @@ var fade_dice = true;
 var dice_sides = [2, 4, 6, 8, 10, 12, 20];
 
 var touch_start = null; // starting point for a touch action
+var touch_force = 0.0;
+var was_scrolled = false; // indicates whether viewport was dragged/scrolled
 
 // implementation of a double left click
 var initial_click = 0;
@@ -713,6 +715,10 @@ function onGrab(event) {
     closeGmDropdown();
     
     pickCanvasPos(event);
+    if (!space_bar && event.buttons != 4) {
+        // reset "user was scrolling" memory
+        was_scrolled = false;
+    }
 
     var is_single_touch = event.type == "touchstart" && event.touches.length == 1;
     var is_pinch_touch  = event.type == "touchstart" && event.touches.length == 2;
@@ -722,9 +728,9 @@ function onGrab(event) {
         return;
     } else if (is_single_touch) {
         touch_start = [mouse_x, mouse_y];
-        $('#debuglog')[0].innerHTML = 'onGrab';
+        touch_force = event.touches[0].force;
     }
-
+    
     if (event.buttons == 1 || is_single_touch) {
         // trigger check for holding the click
         now = Date.now();
@@ -802,20 +808,23 @@ function onGrab(event) {
                 });
             }
             
-        } else {
-            // Clear selection
-            select_ids = [];
-            primary_id = 0;
+        } else if (!space_bar) {
+            if (is_single_touch && touch_force < 1.0) {
+                // Clear selection
+                select_ids = [];
+                primary_id = 0;
+            }
 
             // start selection box
             select_from_x = mouse_x;
             select_from_y = mouse_y;
 
             // immediately reset selection if strong touch
+            // or if scrolling with spacebar
             // @NOTE: use a light gesture (e.g. pen) to select
             if (is_single_touch && event.touches[0].force == 1.0) {
                 select_from_x = null;
-                select_from_y = null;
+                select_from_y = null; 
             }
         }
         
@@ -857,11 +866,14 @@ function onGrab(event) {
 
 /// Event handle for releasing a grabbed token
 function onRelease() {
-    touch_start = null;
-    $('#debuglog')[0].innerHTML = 'onRelease';
-    
     var was_grabbed = grabbed;
-    
+    if (select_ids.length > 0) {
+        grabbed = false;
+        $('#battlemap').css('cursor', 'grab');
+    }
+
+    touch_force = 0.0;
+    touch_start = null;
     var was_touch = event.type == "touchend";
 
     if (isNaN(mouse_x) || isNaN(mouse_y)) {
@@ -869,11 +881,6 @@ function onRelease() {
         return;
     }
 
-    if (select_ids.length > 0) {
-        grabbed = false;
-        $('#battlemap').css('cursor', 'grab');
-    }
-    
     if (primary_id > 0 && was_grabbed) {
         // finally push movement update to the server
         var changes = [];
@@ -895,50 +902,52 @@ function onRelease() {
         });
     }
     
-    if (select_from_x != null) {
-        // range select tokens (including resetting selection)
-        
-        var select_width  = mouse_x - select_from_x;
-        var select_height = mouse_y - select_from_y;
-        
-        // handle box created to the left
-        if (select_width < 0) {
-            select_from_x = select_from_x + select_width;
-            select_width *= -1;
-        }
-        
-        // handle box created to the top
-        if (select_height < 0) {
-            select_from_y = select_from_y + select_height;
-            select_height *= -1;
-        }
-        
-        primary_id = 0;
-        
-        var adding = false; // default: not adding to the selection
-        if (event.ctrlKey || event.metaKey) {
-            adding = true;
-        }
+    if (!space_bar && !was_scrolled) {
+        if (select_from_x != null) {
+            // range select tokens (including resetting selection)
+            
+            var select_width  = mouse_x - select_from_x;
+            var select_height = mouse_y - select_from_y;
+            
+            // handle box created to the left
+            if (select_width < 0) {
+                select_from_x = select_from_x + select_width;
+                select_width *= -1;
+            }
+            
+            // handle box created to the top
+            if (select_height < 0) {
+                select_from_y = select_from_y + select_height;
+                select_height *= -1;
+            }
+            
+            primary_id = 0;
+            
+            var adding = false; // default: not adding to the selection
+            if (event.ctrlKey || event.metaKey) {
+                adding = true;
+            }
 
-        writeSocket({
-            'OPID'   : 'RANGE',
-            'adding' : adding,
-            'left'   : select_from_x,
-            'top'    : select_from_y,
-            'width'  : select_width,
-            'height' : select_height
-        });
-    } else {
-        // query touch position to keep token selected or unselect
-        // the token
-        writeSocket({
-            'OPID'   : 'RANGE',
-            'adding' : false,
-            'left'   : mouse_x,
-            'top'    : mouse_y,
-            'width'  : 0,
-            'height' : 0
-        });
+            writeSocket({
+                'OPID'   : 'RANGE',
+                'adding' : adding,
+                'left'   : select_from_x,
+                'top'    : select_from_y,
+                'width'  : select_width,
+                'height' : select_height
+            });
+            
+        } else if (!was_grabbed && !space_bar) {
+            // query touch position to keep token selected or unselect
+            writeSocket({
+                'OPID'   : 'RANGE',
+                'adding' : false,
+                'left'   : mouse_x,
+                'top'    : mouse_y,
+                'width'  : 0,
+                'height' : 0
+            });
+        }
     }
 
     select_from_x = null;
@@ -1045,6 +1054,8 @@ function onMoveViewport(dx, dy) {
     // move viewport
     viewport.newx = viewport.x + dx;
     viewport.newy = viewport.y + dy;
+
+    was_scrolled = true;
 }
 
 /// Event handle for moving mouse/finger
@@ -1065,29 +1076,17 @@ function onMove(event) {
     
     } else if ((event.buttons == 1 && !space_bar) || is_single_touch) {
         // handle left click (without spacebar) or touch event
-        if (primary_id != 0 || grabbed) {
+        $('#debuglog')[0].innerHTML = parseInt(Date.now()) + '//' + grabbed + '//' + touch_force;
+        if (primary_id != 0 && grabbed) {
             onMoveToken(event);
             
         } else if (is_single_touch) {
-            if (event.touches[0].force == 1.0) {
-                // only handle hard pressure as movement
-                
-                /*
-                // use screen center as pivot point
-                var touch = event.touches[0];
-                var dx    = touch.screenX - window.screen.width  / 2;
-                var dy    = touch.screenY - window.screen.height / 2;
-                // @NOTE: hardcoded speed factor 1/7
-                dx /= (7 * viewport.zoom);
-                dy /= (7 * viewport.zoom);
-                onMoveViewport(dx, dy);
-                */
-
+            if (touch_force == 1.0) {
+                // only handle hard pressure (finger) as movement
                 var dx = mouse_x - touch_start[0];
                 var dy = mouse_y - touch_start[1];
                 dx *= 3 / viewport.zoom;
                 dy *= 3 / viewport.zoom;
-                //$('#debuglog')[0].innerHTML = parseInt(dx) + '|' + parseInt(dy);
                 // @NOTE: move against drag direction
                 onMoveViewport(-dx, -dy);
             }
@@ -1206,33 +1205,21 @@ function onWheel(event) {
     var y = MAX_SCENE_WIDTH * canvas_ratio * rel_y;
     
     // shift viewport position slightly towards desired direction
-    // @FIXME: use .newx and updateViewport (!!)
+    var dx = 0;
+    var dy = 0;
     if (x > viewport.x) {
-        viewport.x += ZOOM_MOVE_SPEED / viewport.zoom;
-        if (viewport.x > x) {
-            viewport.x = x;
-        }
-    } else if (x < viewport.x) {
-        viewport.x -= ZOOM_MOVE_SPEED / viewport.zoom;
-        if (viewport.x < x) {
-            viewport.x = x;
-        }
+        dx = ZOOM_MOVE_SPEED / viewport.zoom;
+    }
+    if (x < viewport.x) {
+        dx = -ZOOM_MOVE_SPEED / viewport.zoom;
     }
     if (y > viewport.y) {
-        viewport.y += ZOOM_MOVE_SPEED / viewport.zoom;
-        if (viewport.y > y) {
-            viewport.y = y;
-        }
-    } else if (y < viewport.y) {
-        viewport.y -= ZOOM_MOVE_SPEED / viewport.zoom;
-        if (viewport.y < y) {
-            viewport.y = y;
-        }
+        dy = ZOOM_MOVE_SPEED / viewport.zoom;
     }
-    
-    limitViewportPosition();
-    
-    displayZoom();
+    if (y < viewport.y) {
+        dy = -ZOOM_MOVE_SPEED / viewport.zoom;
+    }
+    onMoveViewport(dx, dy);
 }
 
 var d100_queue = [];
