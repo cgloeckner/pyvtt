@@ -173,8 +173,12 @@ function onSelect(data) {
             // reselect primary item (previous one does not belong to new selection)
             primary_id = data.selected[0];
         } else {
-            // reset primary token id            
-            primary_id = 0;
+            // reset primary token id
+            if (select_ids.length > 0) {
+                primary_id = select_ids[0];
+            } else {
+                primary_id = 0;
+            }
         }
     }
 
