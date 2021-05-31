@@ -54,7 +54,7 @@
     </div>
 
     <div class="battlemap" id="gamecontent">
-        <div id="draghint">DRAG AN IMAGE AS BACKGROUND<br /><br /><span onClick="ignoreBackground();">OR CLICK TO SKIP</span></div>
+        <div id="draghint"><span onClick="initUpload();">DRAG AN IMAGE AS BACKGROUND</span><br /><br /><span onClick="ignoreBackground();">OR CLICK TO SKIP</span></div>
         <canvas id="battlemap" width="{{MAX_SCENE_WIDTH}}" height="{{MAX_SCENE_HEIGHT}}"></canvas>
             
         <div id="tokenbar">

@@ -23,13 +23,20 @@
         <p></p>
         
         <div class="dropzone" id="dropzone">                                           
-            <p id="draghint">DRAG AN IMAGE AS BACKGROUND<br /><br /><span onClick="GmQuickStart('{{!engine.url_regex.replace('\\', '\\\\')}}');">OR CLICK TO START WITHOUT</span></p>
+            <p id="draghint"><span onClick="initUpload();">DRAG AN IMAGE AS BACKGROUND</span><span><br /><br /><span onClick="GmQuickStart('{{!engine.url_regex.replace('\\', '\\\\')}}');">OR CLICK TO START WITHOUT</span></p>
             <form id="uploadform" method="post" enctype="multipart/form-data">
                 <input id="uploadqueue" name="file" type="file" />
             </form>
         </div>      
         
-        <br />  
+        <br />
+
+        <!-- stays hidden -->
+        <div id="uploadscreen">
+            <form id="fileform" method="post" enctype="multipart/form-data">
+                <input type="file" id="fileupload" name="file" accept="image/*" multiple onChange="mobileGmUpload('{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.url}}');">
+            </form>
+        </div> 
     </div>
     
 <hr />
@@ -37,14 +44,6 @@
 </div>
 
 <div id="popup"></div>
-<div id="hint"></div>
-
-<script>
-    $('#drophint').fadeIn(1000, 0.0);
-
-    if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        showError('MOBILE DEVICES NOT RECOMMENDED FOR GMs');
-    }
-</script>    
+<div id="hint"></div>   
 
 %include("footer")

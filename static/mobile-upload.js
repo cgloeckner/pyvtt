@@ -107,3 +107,31 @@ function mobileUpload() {
         }
     });
 }
+
+function mobileGmUpload(url_regex, gm_url) {
+    showInfo('LOADING');
+    
+    // test upload data sizes
+    var queue = $('#fileupload')[0];
+    
+    var sizes_ok = true;
+    if (queue.files.length != 1) {   
+        showError('USE A SINGLE FILE');
+        return;
+    }
+    var max_filesize = MAX_BACKGROUND_FILESIZE;
+    var file_type    = 'BACKGROUND';
+    if (queue.files[0].name.endsWith('.zip')) {
+        max_filesize = MAX_GAME_FILESIZE;
+        file_type    = 'GAME';
+    }
+    if (queue.files[0].size > max_filesize * 1024 * 1024) {
+        showError('TOO LARGE ' + file_type + ' (MAX ' + max_filesize + ' MiB)');
+        return;
+    }
+    
+    // fetch upload data
+    var f = new FormData($('#fileform')[0]);
+
+    tryGameCreation(f, url_regex);
+}
