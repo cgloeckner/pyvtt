@@ -34,7 +34,7 @@ var fade_dice = true;
 
 var dice_sides = [2, 4, 6, 8, 10, 12, 20];
 
-var pinch_center = null; // center for multitouch pinch zoom
+var touch_start = null; // starting point for a touch action
 
 // implementation of a double left click
 var initial_click = 0;
@@ -717,8 +717,11 @@ function onGrab(event) {
     var is_single_touch = event.type == "touchstart" && event.touches.length == 1;
     var is_pinch_touch  = event.type == "touchstart" && event.touches.length == 2;
     if (is_pinch_touch) {
+        touch_start = calcPinchCenter();
         pinch_distance = calcPinchDistance();
         return;
+    } else if (is_single_touch) {
+        touch_start = [mouse_x, mouse_y]
     }
 
     if (event.buttons == 1 || is_single_touch) {
@@ -853,7 +856,7 @@ function onGrab(event) {
 
 /// Event handle for releasing a grabbed token
 function onRelease() {
-    pinch_center = null;
+    touch_start = null;
     
     var was_grabbed = grabbed;
     
@@ -1038,8 +1041,8 @@ function onMoveViewport(dx, dy) {
     if (dy > 100) { dy /= 100; }
     
     // move viewport
-    viewport.newx = viewport.x + dx / viewport.zoom;
-    viewport.newy = viewport.y + dy / viewport.zoom;
+    viewport.newx = viewport.x + dx;
+    viewport.newy = viewport.y + dy;
 }
 
 /// Event handle for moving mouse/finger
@@ -1064,14 +1067,36 @@ function onMove(event) {
             onMoveToken(event);
             
         } else if (is_single_touch) {
-            var touch = event.touches[0];
-            $('#debuglog')[0].innerHTML = touch.force + '//' + touch.clientX + '//' + touch.clientY;
+            if (event.touches[0].force == 1.0) {
+                // only handle hard pressure as movement
+                
+                /*
+                // use screen center as pivot point
+                var touch = event.touches[0];
+                var dx    = touch.screenX - window.screen.width  / 2;
+                var dy    = touch.screenY - window.screen.height / 2;
+                // @NOTE: hardcoded speed factor 1/7
+                dx /= (7 * viewport.zoom);
+                dy /= (7 * viewport.zoom);
+                onMoveViewport(dx, dy);
+                */
+
+                var dx = mouse_x - touch_start[0];
+                var dy = mouse_y - touch_start[1];
+                dx *= 5 / viewport.zoom;
+                dy *= 5 /viewport.zoom;
+                $('#debuglog')[0].innerHTML = parseInt(dx) + '|' + parseInt(dy);
+                // @NOTE: move against drag direction
+                onMoveViewport(-dx, -dy);
+            }
         }
         
     } else if (event.buttons == 4 || (event.buttons == 1 && space_bar) || is_single_touch) {
         // handle wheel click or leftclick (with space bar) or touch event
-        // @NOTE: move against drag direction    
-        onMoveViewport(-event.movementX, -event.movementY);
+        // @NOTE: move against drag direction
+        var dx = -event.movementX / viewport.zoom;
+        var dy = -event.movementY / viewport.zoom;
+        onMoveViewport(dx, dy);
                
     } else {                 
         // handle token mouse over
@@ -1138,11 +1163,8 @@ function onWheel(event) {
             return;
         }
 
-        if (pinch_center == null) {
-            pinch_center = calcPinchCenter();
-        }
-        reference_x = pinch_center[0];
-        reference_y = pinch_center[1];
+        reference_x = touch_start[0];
+        reference_y = touch_start[1];
         
         pinch_distance = new_pinch_distance;
     }
@@ -1182,6 +1204,7 @@ function onWheel(event) {
     var y = MAX_SCENE_WIDTH * canvas_ratio * rel_y;
     
     // shift viewport position slightly towards desired direction
+    // @FIXME: use .newx and updateViewport (!!)
     if (x > viewport.x) {
         viewport.x += ZOOM_MOVE_SPEED / viewport.zoom;
         if (viewport.x > x) {
