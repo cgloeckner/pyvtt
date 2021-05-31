@@ -150,14 +150,14 @@ function getMusicVolumeDelta(v) {
 }
 
 /// Change music volume
-function onStepMusic(direction) {
+function onStepMusic(direction) {   
     var player = $('#audioplayer')[0];
 
     // modify volume
     var v = player.volume;
     delta = getMusicVolumeDelta(v);
     v += direction * delta;
-
+    
     // fix bounding issues
     if (v < 0.01) {
         // stop playback
@@ -167,7 +167,7 @@ function onStepMusic(direction) {
         // cap at 100%
         v = 1.0;
     }
-
+    
     // continue playback if suitable
     if (v > 0.0 && player.paused && direction > 0) {
         player.play();
@@ -175,7 +175,7 @@ function onStepMusic(direction) {
 
     // apply volume
     player.volume = v;
-    localStorage.setItem('volume', v)
+    
     updateMusicUi();
 }
 

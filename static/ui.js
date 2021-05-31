@@ -32,7 +32,7 @@ var token_last_angle = null;
 
 var fade_dice = true;
 
-var SCREEN_BORDER_WIDTH = 0.2; // percentage of screen which is used as border for dragging dice
+var SCREEN_BORDER_WIDTH = 0.1; // percentage of screen which is used as border for dragging dice
 
 var dice_sides = [2, 4, 6, 8, 10, 12, 20];
 
@@ -810,7 +810,7 @@ function onGrab(event) {
             }
             
         } else if (!space_bar) {
-            if (is_single_touch && touch_force < 1.0) {
+            if (is_single_touch && !isExtremeForce(touch_force)) {
                 // Clear selection
                 select_ids = [];
                 primary_id = 0;
@@ -823,7 +823,7 @@ function onGrab(event) {
             // immediately reset selection if strong touch
             // or if scrolling with spacebar
             // @NOTE: use a light gesture (e.g. pen) to select
-            if (is_single_touch && event.touches[0].force == 1.0) {
+            if (is_single_touch && isExtremeForce(event.touches[0].force)) {
                 select_from_x = null;
                 select_from_y = null; 
             }
@@ -1071,6 +1071,10 @@ function onMoveViewport(dx, dy) {
     was_scrolled = true;
 }
 
+function isExtremeForce(force) {
+    return force == 0.0 || force == 1.0;
+}
+
 /// Event handle for moving mouse/finger
 function onMove(event) {
     if (event.type == "touchmove") {
@@ -1093,7 +1097,7 @@ function onMove(event) {
             onMoveToken(event);
             
         } else if (is_single_touch) {
-            if (touch_force == 1.0) {
+            if (isExtremeForce(touch_force)) {
                 // only handle hard pressure (finger) as movement
                 var dx = mouse_x - touch_start[0];
                 var dy = mouse_y - touch_start[1];
@@ -1104,8 +1108,8 @@ function onMove(event) {
             }
         }
         
-    } else if (event.buttons == 4 || (event.buttons == 1 && space_bar) || is_single_touch) {
-        // handle wheel click or leftclick (with space bar) or touch event
+    } else if (event.buttons == 4 || (event.buttons == 1 && space_bar)) {
+        // handle wheel click or leftclick (with space bar)
         // @NOTE: move against drag direction
         var dx = -event.movementX / viewport.zoom;
         var dy = -event.movementY / viewport.zoom;
