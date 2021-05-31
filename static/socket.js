@@ -179,8 +179,6 @@ function onSelect(data) {
             }
         }
     }
-
-    console.log(select_ids, primary_id);
 }
 
 function onOrder(data) {
