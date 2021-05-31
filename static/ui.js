@@ -721,7 +721,8 @@ function onGrab(event) {
         pinch_distance = calcPinchDistance();
         return;
     } else if (is_single_touch) {
-        touch_start = [mouse_x, mouse_y]
+        touch_start = [mouse_x, mouse_y];
+        $('#debuglog')[0].innerHTML = 'onGrab';
     }
 
     if (event.buttons == 1 || is_single_touch) {
@@ -857,6 +858,7 @@ function onGrab(event) {
 /// Event handle for releasing a grabbed token
 function onRelease() {
     touch_start = null;
+    $('#debuglog')[0].innerHTML = 'onRelease';
     
     var was_grabbed = grabbed;
     
@@ -1083,9 +1085,9 @@ function onMove(event) {
 
                 var dx = mouse_x - touch_start[0];
                 var dy = mouse_y - touch_start[1];
-                dx *= 5 / viewport.zoom;
-                dy *= 5 /viewport.zoom;
-                $('#debuglog')[0].innerHTML = parseInt(dx) + '|' + parseInt(dy);
+                dx *= 3 / viewport.zoom;
+                dy *= 3 / viewport.zoom;
+                //$('#debuglog')[0].innerHTML = parseInt(dx) + '|' + parseInt(dy);
                 // @NOTE: move against drag direction
                 onMoveViewport(-dx, -dy);
             }
