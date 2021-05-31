@@ -161,8 +161,6 @@ function onRoll(data) {
 }
 
 function onSelect(data) {
-    $('#debuglog')[0].innerHTML = data.selected;
-    
     player_selections[data.color] = data.selected;
     
     // update my selection if it's me
@@ -426,23 +424,21 @@ function start(gmname, url, playername, color) {
     // drop zone implementation (using canvas) --> also as players :) 
     document.addEventListener('dragover',    onDrag);
     document.addEventListener('drop',         onDrop);
-    
+                                                                              
     // desktop controls
     battlemap.addEventListener('mousedown',    onGrab);
-    battlemap.addEventListener('touchstart',   onGrab);
-    
-    document.addEventListener('mousemove',    onMove);
-    document.addEventListener('touchmove',    onMove);
-    
-    battlemap.addEventListener('mouseup',    onRelease);
-    battlemap.addEventListener('touchend',    onRelease);
-
-    document.addEventListener('mouseup',    onReleaseDoc);
-    document.addEventListener('touchend',    onReleaseDoc);
-    
+    document.addEventListener('mousemove',    onMove); 
+    battlemap.addEventListener('mouseup',    onRelease);  
+    document.addEventListener('mouseup',    onReleaseDoc);  
     battlemap.addEventListener('wheel',        onWheel);
     document.addEventListener('keydown',    onShortcut);
     document.addEventListener('keyup',        onKeyRelease);
+
+    // mobile controls
+    battlemap.addEventListener('touchstart',   onGrab);
+    document.addEventListener('touchmove',    onMove);  
+    battlemap.addEventListener('touchend',    onRelease); 
+    document.addEventListener('touchend',    onReleaseDoc);
 
     $(window).resize(onWindowResize);
     

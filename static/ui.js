@@ -300,7 +300,7 @@ function onTokenResize() {
     var dy = first_token.posy - mouse_y;
     var scale = Math.sqrt(dx*dx + dy*dy);
     var radius = first_token.size * 0.8;
-    
+
     // normalize distance using distance mouse/icon
     ratio = scale / radius;
 
@@ -1684,7 +1684,6 @@ function onEndDragDice(event) {
     var is_drag_timer = localStorage.getItem('drag_timer');
     var sides = localStorage.getItem('drag_data');
     
-    $('#debuglog')[0].innerHTML = sides + '/' + is_drag_timer;
     if (sides > 2 && is_drag_timer == '1') {
         
         // query last recent roll of that die by the current player
