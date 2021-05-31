@@ -162,7 +162,6 @@ function onRoll(data) {
 
 function onSelect(data) {
     $('#debuglog')[0].innerHTML = data.selected;
-    console.log(data);
     
     player_selections[data.color] = data.selected;
     
@@ -170,7 +169,7 @@ function onSelect(data) {
     if (data.color == my_color) {    
         select_ids = data.selected;
         // update primary id 
-        if (data.selected.length > 0 && !select_ids.includes(primary_id)) {
+        if (select_ids.includes(primary_id)) {
             // reselect primary item (previous one does not belong to new selection)
             primary_id = data.selected[0];
         } else {
@@ -428,11 +427,11 @@ function start(gmname, url, playername, color) {
     battlemap.addEventListener('mousedown',    onGrab);
     battlemap.addEventListener('touchstart',   onGrab);
     
-    battlemap.addEventListener('mousemove',    onMove);
-    battlemap.addEventListener('touchmove',    onMove);
+    document.addEventListener('mousemove',    onMove);
+    document.addEventListener('touchmove',    onMove);
     
-    battlemap.addEventListener('mouseup',    onRelease);
-    battlemap.addEventListener('touchend',    onRelease);
+    document.addEventListener('mouseup',    onRelease);
+    document.addEventListener('touchend',    onRelease);
     
     battlemap.addEventListener('wheel',        onWheel);
     document.addEventListener('keydown',    onShortcut);

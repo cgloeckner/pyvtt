@@ -33,7 +33,7 @@ function updateViewport() {
         return;
     }
 
-    var speed = parseInt(interpolation_speed * 1.5);
+    var speed = interpolation_speed * 1.5;
     // move viewport towards desired position
     if (speed > 0) {
         // interpolate viewport position if necessary
@@ -46,21 +46,21 @@ function updateViewport() {
             dx = dx * interpolation_speed / d;
             dy = dy * interpolation_speed / d;
             // update position
-            viewport.x = parseInt(viewport.x + dx);
-            viewport.y = parseInt(viewport.y + dy);    
+            viewport.x = viewport.x + dx;
+            viewport.y = viewport.y + dy;
             
             interpolated = true;
         } else {
             // finish movement
-            viewport.x = parseInt(viewport.newx);
-            viewport.y = parseInt(viewport.newy);
+            viewport.x = viewport.newx;
+            viewport.y = viewport.newy;
             viewport.newx = null;
             viewport.newy = null;
         }
     } else {
         // do not interpolate 
-        viewport.x = parseInt(viewport.newx);
-        viewport.y = parseInt(viewport.newy);
+        viewport.x = viewport.newx;
+        viewport.y = viewport.newy;
     }
 
     limitViewportPosition();

@@ -32,6 +32,8 @@ var token_last_angle = null;
 
 var fade_dice = true;
 
+var SCREEN_BORDER_WIDTH = 0.2; // percentage of screen which is used as border for dragging dice
+
 var dice_sides = [2, 4, 6, 8, 10, 12, 20];
 
 var touch_start = null; // starting point for a touch action
@@ -288,7 +290,6 @@ function onDrag(event) {
 function onMobileDragDice(event, d) {
     localStorage.setItem('drag_data', d);
     onDragDice(event);
-    localStorage.removeItem('drag_data');
 }
 
 function onTokenResize() {
@@ -927,7 +928,7 @@ function onRelease() {
             if (event.ctrlKey || event.metaKey) {
                 adding = true;
             }
-
+            
             writeSocket({
                 'OPID'   : 'RANGE',
                 'adding' : adding,
@@ -939,9 +940,14 @@ function onRelease() {
             
         } else if (!was_grabbed && (!space_bar || was_touch)) {
             // query touch position to keep token selected or unselect
+            var adding = false; // default: not adding to the selection
+            if (event.ctrlKey || event.metaKey) {
+                adding = true;
+            }
+            
             writeSocket({
                 'OPID'   : 'RANGE',
-                'adding' : false,
+                'adding' : adding,
                 'left'   : mouse_x,
                 'top'    : mouse_y,
                 'width'  : 0,
@@ -971,6 +977,8 @@ function limitViewportPosition() {
     
     viewport.x = Math.max(min_x, Math.min(max_x, viewport.x));
     viewport.y = Math.max(min_y, Math.min(max_y, viewport.y));
+
+    console.log(viewport);
 }
 
 function onMoveToken(event) {
@@ -1202,23 +1210,33 @@ function onWheel(event) {
     var rel_y = reference_y / (MAX_SCENE_WIDTH * canvas_ratio);
     var x = MAX_SCENE_WIDTH * rel_x;
     var y = MAX_SCENE_WIDTH * canvas_ratio * rel_y;
-    
+
     // shift viewport position slightly towards desired direction
-    var dx = 0;
-    var dy = 0;
     if (x > viewport.x) {
-        dx = ZOOM_MOVE_SPEED / viewport.zoom;
-    }
-    if (x < viewport.x) {
-        dx = -ZOOM_MOVE_SPEED / viewport.zoom;
+        viewport.x += ZOOM_MOVE_SPEED / viewport.zoom;
+        if (viewport.x > x) {
+            viewport.x = x;
+        }
+    } else if (x < viewport.x) {
+        viewport.x -= ZOOM_MOVE_SPEED / viewport.zoom;
+        if (viewport.x < x) {
+            viewport.x = x;
+        }
     }
     if (y > viewport.y) {
-        dy = ZOOM_MOVE_SPEED / viewport.zoom;
+        viewport.y += ZOOM_MOVE_SPEED / viewport.zoom;
+        if (viewport.y > y) {
+            viewport.y = y;
+        }
+    } else if (y < viewport.y) {
+        viewport.y -= ZOOM_MOVE_SPEED / viewport.zoom;
+        if (viewport.y < y) {
+            viewport.y = y;
+        }
     }
-    if (y < viewport.y) {
-        dy = -ZOOM_MOVE_SPEED / viewport.zoom;
-    }
-    onMoveViewport(dx, dy);
+    
+    limitViewportPosition();
+    displayZoon();
 }
 
 var d100_queue = [];
@@ -1647,6 +1665,7 @@ function onTokenDelete() {
 function onStartDragDice(event, sides) {
     event.dataTransfer.setDragImage(drag_img, 0, 0);
     localStorage.setItem('drag_data',  sides);
+    localStorage.setItem('drag_timer', '0');
 }
 
 /// Event handle for clicking a single dice container
@@ -1659,9 +1678,13 @@ function onResetDice(event, sides) {
    
 /// Event handle for stop dragging a single dice container
 function onEndDragDice(event) {
-    if (localStorage.getItem('drag_mod')) {
+    var is_drag_timer = localStorage.getItem('drag_timer');
+    var sides = localStorage.getItem('drag_data');
+    
+    $('#debuglog')[0].innerHTML = sides + '/' + is_drag_timer;
+    if (sides > 2 && is_drag_timer == '1') {
+        
         // query last recent roll of that die by the current player
-        var sides = localStorage.getItem('drag_data');
         if (sides == 2) {
             // ignore binary die
             return;
@@ -1721,15 +1744,13 @@ function onEndDragDice(event) {
     }
     
     localStorage.removeItem('drag_data');
-    localStorage.removeItem('drag_mod');
+    localStorage.removeItem('drag_timer');
 }
 
 /// Event handle for start dragging the players container
-function onStartDragPlayers(event) {         
+function onStartDragPlayers(event) {
     event.dataTransfer.setDragImage(drag_img, 0, 0);
     localStorage.setItem('drag_data', 'players');
-    
-    localStorage.setItem('drag_mod', event.ctrlKey || event.metaKey || event.shiftKey);
 }
 
 /// Event handle for clicking the players container
@@ -1878,30 +1899,63 @@ function moveMusicTo(pos) {
     target.css('top',  pos[1]);
 }
 
+/// Check if die is dragged over screen border or not
+function isDiceAtBorder() {
+    var x = null;
+    var y = null;
+    
+    if (event.type == 'touchmove') {
+        // dragging dice on mobile
+        x = event.touches[0].clientX;
+        y = event.touches[0].clientY;
+    } else {
+        // dragging dice on desktop
+        x = event.clientX;
+        y = event.clientY;
+    }
+
+    // make position relative to screen
+    x /= window.innerWidth;
+    y /= window.innerHeight;
+
+    var left_or_right = x < SCREEN_BORDER_WIDTH || x > 1 - SCREEN_BORDER_WIDTH;
+    var top_or_bottom = y < SCREEN_BORDER_WIDTH || y > 1 - SCREEN_BORDER_WIDTH;
+    
+    return left_or_right || top_or_bottom
+}
+
 /// Drag dice container to position specified by the event
 function onDragDice(event) {
-    if (event.ctrlKey || event.metaKey || event.shiftKey) {
-        localStorage.setItem('drag_mod', true);
-        return;
-    }
-    
-    var p = pickScreenPos(event);
+    var is_drag_timer = localStorage.getItem('drag_timer');
     var sides = localStorage.getItem('drag_data');
+    
+    if (sides == 2 || isDiceAtBorder()) {
+        localStorage.setItem('drag_timer', '0');
+        
+        // move die around edge
+        var p = pickScreenPos(event);
 
-    // drag dice box
-    var target = $('#d' + sides + 'icon');
+        // drag dice box
+        var target = $('#d' + sides + 'icon');
 
-    // limit position to the screen
-    var w = target.width();
-    var h = target.height();
-    var x = Math.max(0, Math.min(window.innerWidth - w,  p[0] - w / 2));
-    var y = Math.max(0, Math.min(window.innerHeight - h, p[1] - h / 2));
-    var data = [x, y];
-    data = snapContainer(data[0], data[1], target, '');
+        // limit position to the screen
+        var w = target.width();
+        var h = target.height();
+        var x = Math.max(0, Math.min(window.innerWidth - w,  p[0] - w / 2));
+        var y = Math.max(0, Math.min(window.innerHeight - h, p[1] - h / 2));
+        var data = [x, y];
+        data = snapContainer(data[0], data[1], target, '');
 
-    // apply position
-    moveDiceTo(data, sides);
-    saveDicePos(sides, data);
+        // apply position
+        moveDiceTo(data, sides);
+        saveDicePos(sides, data);
+        
+    } else {
+        if (is_drag_timer == '0') {
+            showTip('DROP TO ADD TO SCENE');
+            localStorage.setItem('drag_timer', '1');
+        }
+    }
 }
 
 /// Drag players container to position specified by the event
