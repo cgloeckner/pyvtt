@@ -89,7 +89,7 @@
         <div id="assetsDownloading"></div>
         <div id="assetsUploading"></div>
         <div id="zoom">
-            <img id="beamLock" class="icon" title="AUTO-MOVEMENT" onClick="onToggleAutoMove(event);" src="/static/unlocked.png" />
+            <!-- <img id="beamLock" class="icon" title="AUTO-MOVEMENT" onClick="onToggleAutoMove(event);" src="/static/unlocked.png" /> -->
             <span id="zoomLevel" title="RESET ZOOM" onClick="resetViewport();"></span>
         </div>
 
@@ -98,7 +98,7 @@
         </form>
     </div>
 
-    <!-- <div id="debuglog" style="position: absolute; z-index: 100; width: 150px; height: 400px; right: 0px; background-color: white; overflow-y: scroll"> //-->
+    <div id="debuglog" style="position: absolute; z-index: 100; width: 150px; height: 400px; right: 0px; background-color: white; overflow-y: scroll">
     </div>
 </div>
 

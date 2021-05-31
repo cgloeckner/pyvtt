@@ -36,6 +36,8 @@ var fade_dice = true;
 
 var dice_sides = [2, 4, 6, 8, 10, 12, 20];
 
+var pinch_center = null; // center for multitouch pinch zoom
+
 // implementation of a double left click
 var initial_click = 0;
 var double_click_limit = 200;
@@ -850,6 +852,9 @@ function onGrab(event) {
 
 /// Event handle for releasing a grabbed token
 function onRelease() {
+    pinch_center = null;
+    $('#debuglog')[0].innerHTML = 'reset';
+    
     var was_grabbed = grabbed;
     
     var was_touch = event.type == "touchend";
@@ -927,8 +932,6 @@ function onRelease() {
         // touch move screen
         viewport.newx = mouse_x;
         viewport.newy = mouse_y;
-        console.log('touch scroll');
-        updateViewport(true);
     }
 
     select_from_x = null;
@@ -1058,9 +1061,6 @@ function onMove(event) {
         // move viewport
         viewport.newx = viewport.x - dx / viewport.zoom;
         viewport.newy = viewport.y - dy / viewport.zoom;
-        updateViewport(true);
-        
-        limitViewportPosition();
         
     } else {
         var token = selectToken(mouse_x, mouse_y);
@@ -1124,10 +1124,13 @@ function onWheel(event) {
             // ignore too subtle pinch
             return;
         }
-        
-        var center = calcPinchCenter();
-        reference_x = center[0];
-        reference_y = center[1];
+
+        if (pinch_center == null) {
+            pinch_center = calcPinchCenter();
+            $('#debuglog')[0].innerHTML = pinch_center;
+        }
+        reference_x = pinch_center[0];
+        reference_y = pinch_center[1];
         
         pinch_distance = new_pinch_distance;
     }
@@ -1309,29 +1312,21 @@ function onShortcut(event) {
         }
 
         // handle movement of zoomed viewport
-        var changed = false;
         if (event.key == 'ArrowUp') {           
             viewport.newx = viewport.x;
             viewport.newy = viewport.y - viewport_scroll_delta;
-            changed = true;
         }
         if (event.key == 'ArrowDown') {
             viewport.newx = viewport.x;
             viewport.newy = viewport.y + viewport_scroll_delta;  
-            changed = true;
         }
         if (event.key == 'ArrowLeft') {
             viewport.newx = viewport.x - viewport_scroll_delta;
-            viewport.newy = viewport.y;                 
-            changed = true;
+            viewport.newy = viewport.y; 
         }
         if (event.key == 'ArrowRight') {
             viewport.newx = viewport.x + viewport_scroll_delta;
             viewport.newy = viewport.y;    
-            changed = true;
-        }
-        if (changed) {
-            updateViewport(true);
         }
     }
 }
@@ -2050,6 +2045,7 @@ function onToggleAutoMove(event) {
 }
 
 function toggleAutoMove(load=false) {
+    /*
     if (load) {
         // load from browser's storage
         var raw = localStorage.getItem('allow_auto_movement');
@@ -2069,6 +2065,7 @@ function toggleAutoMove(load=false) {
     // save to browser's storage
     var raw = JSON.stringify(allow_auto_movement);
     localStorage.setItem('allow_auto_movement', raw);
+    */
 }
 
 function getBlobFromDataURL(url) {
