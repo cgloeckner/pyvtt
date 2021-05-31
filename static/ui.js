@@ -19,8 +19,6 @@ var select_from_y = null;
 
 var dice_shake = 750; // ms for shaking animation
 
-var zooming = true; // DEBUG switch for enabling the experimental feature
-
 var over_player  = null;    // indicates over which player the mouse is located (by name)
 
 var default_dice_pos = {};  // default dice positions
@@ -42,10 +40,6 @@ var pinch_center = null; // center for multitouch pinch zoom
 var initial_click = 0;
 var double_click_limit = 200;
 
-
-function enableZooming() {
-    zooming = $('#zooming').prop('checked');
-}
 
 // --- token implementation -------------------------------------------
 
@@ -808,10 +802,12 @@ function onGrab(event) {
             // Clear selection
             select_ids = [];
             primary_id = 0;
-            
-            // start selection box
-            select_from_x = mouse_x;
-            select_from_y = mouse_y;
+
+            if (!is_single_touch) {
+                // start selection box (if not mobile)
+                select_from_x = mouse_x;
+                select_from_y = mouse_y;
+            }
         }
         
     } else if (event.buttons == 2 && !is_single_touch) {
@@ -853,7 +849,6 @@ function onGrab(event) {
 /// Event handle for releasing a grabbed token
 function onRelease() {
     pinch_center = null;
-    $('#debuglog')[0].innerHTML = 'reset';
     
     var was_grabbed = grabbed;
     
@@ -870,6 +865,7 @@ function onRelease() {
     }
     
     if (primary_id > 0 && was_grabbed) {
+        // finally push movement update to the server
         var changes = [];
         
         $.each(select_ids, function(index, id) {
@@ -889,9 +885,21 @@ function onRelease() {
         });
     }
 
-    var move_viewport = viewport.zoom > 1.0;
-
-    if (select_from_x != null) {
+    if (was_touch) {
+        // query touch position to keep token selected or unselect
+        // the token
+        writeSocket({
+            'OPID'   : 'RANGE',
+            'adding' : false,
+            'left'   : mouse_x,
+            'top'    : mouse_y,
+            'width'  : 0,
+            'height' : 0
+        });
+    
+    } else if (select_from_x != null) {
+        // range select tokens (including resetting selection)
+        
         var select_width  = mouse_x - select_from_x;
         var select_height = mouse_y - select_from_y;
         
@@ -922,16 +930,6 @@ function onRelease() {
             'width'  : select_width,
             'height' : select_height
         });
-
-        if (select_width != 0 && select_height != 0) {
-            move_viewport = false;
-        }
-    }
-
-    if (was_touch && move_viewport) {
-        // touch move screen
-        viewport.newx = mouse_x;
-        viewport.newy = mouse_y;
     }
 
     select_from_x = null;
@@ -957,7 +955,95 @@ function limitViewportPosition() {
     viewport.y = Math.max(min_y, Math.min(max_y, viewport.y));
 }
 
-/// Event handle for moving a grabbed token (if not locked)
+function onMoveToken(event) {
+    if (primary_id == 0 || !grabbed) {
+        // nothing selected or grabbed
+        return;
+    }
+    
+    var token = tokens[primary_id];
+
+    if (token == null || token.locked) {
+        // skip: no primary token or it is locked
+        return;
+    }
+    
+    // transform cursor
+    var battlemap = $('#battlemap');
+    
+    if (token == null) {
+        battlemap.css('cursor', 'default');
+    } else if (token.locked) {
+        battlemap.css('cursor', 'not-allowed');
+    } else if (grabbed) {
+        battlemap.css('cursor', 'move');
+    } else {
+        battlemap.css('cursor', 'grab');
+    }
+
+    // move all selected tokens relative to the primary one
+    var prev_posx = token.posx;
+    var prev_posy = token.posy;
+
+    var changes = []
+    $.each(select_ids, function(index, id) {
+        var t = tokens[id];
+        if (!t.locked) {
+            // get position relative to primary token
+            var dx = t.posx - prev_posx;
+            var dy = t.posy - prev_posy;
+            // move relative to primary token
+            var tx = mouse_x + dx;
+            var ty = mouse_y + dy;
+            
+            // limit pos to screen (half size as padding)
+            // @NOTE: padding isn't enough (see: resize, rotation), maybe it's even desired not do pad it
+            var padding_x = 0;
+            var padding_y = 0;
+            tx = Math.max(padding_x, Math.min(tx, MAX_SCENE_WIDTH                - padding_x));
+            ty = Math.max(padding_y, Math.min(ty, MAX_SCENE_WIDTH * canvas_ratio - padding_y));
+            
+            if (client_side_prediction) {
+                // client-side predict (immediately place it there)
+                t.posx = tx;
+                t.posy = ty;
+            }
+            t.newx = tx;
+            t.newy = ty;
+            
+            changes.push({
+                'id'   : id,
+                'posx' : parseInt(tx),
+                'posy' : parseInt(ty)
+            });
+        }
+    });
+    
+    // not push every position to go easy on the server
+    if (socket_move_timeout <= Date.now()) {
+        writeSocket({
+            'OPID'    : 'UPDATE',
+            'changes' : changes
+        });
+        socket_move_timeout = Date.now() + socket_move_delay;
+    }
+}
+
+function onZoomViewport(dx, dy) {
+    // change icon
+    var battlemap = $('#battlemap');
+    battlemap.css('cursor', 'grab');
+    
+    // NOTE: some browsers go crazy
+    if (dx > 100) { dx /= 100; }
+    if (dy > 100) { dy /= 100; }
+    
+    // move viewport
+    viewport.newx = viewport.x + dx / viewport.zoom;
+    viewport.newy = viewport.y + dy / viewport.zoom;
+}
+
+/// Event handle for moving mouse/finger
 function onMove(event) {
     if (event.type == "touchmove") {
         // prevent scrolling
@@ -967,105 +1053,33 @@ function onMove(event) {
     pickCanvasPos(event);
 
     var is_single_touch = event.type == "touchmove" && event.touches.length == 1;
+    
     var is_pinch_touch  = event.type == "touchmove" && event.touches.length == 2;
     if (is_pinch_touch) {
+        // interpret pinch as zooming
+        // and do not trigger any movement (of token or viewport)
         onWheel(event);
         return;
     }
-
-    var battlemap = $('#battlemap');
-    var w = battlemap.width();
-    var h = battlemap.height();
     
     if ((event.buttons == 1 || is_single_touch) && !space_bar) {
-        // left button clicked
+        // handle left click (without spacebar) or touch event
+        onMoveToken(event);
         
-        if (primary_id != 0 && grabbed) {
-            var token = tokens[primary_id];
-
-            // transform cursor
-            if (token == null) {
-                battlemap.css('cursor', 'default');
-            } else if (token.locked) {
-                battlemap.css('cursor', 'not-allowed');
-            } else if (grabbed) {
-                battlemap.css('cursor', 'move');
-            } else {
-                battlemap.css('cursor', 'grab');
-            }
-            
-            if (token != null && !token.locked) {
-                var prev_posx = token.posx;
-                var prev_posy = token.posy;
-                
-                var changes = []
-                $.each(select_ids, function(index, id) {
-                    var t = tokens[id];
-                    if (!t.locked) {
-                        // get position relative to primary token
-                        var dx = t.posx - prev_posx;
-                        var dy = t.posy - prev_posy;
-                        // move relative to primary token
-                        var tx = mouse_x + dx;
-                        var ty = mouse_y + dy;
-                        
-                        // limit pos to screen (half size as padding)
-                        // @NOTE: padding isn't enough (see: resize, rotation), maybe it's even desired not do pad it
-                        /*var size = getActualSize(token, battlemap.width(), battlemap.height());
-                        var padding_x = parseInt(size[0] / 2);
-                        var padding_y = parseInt(size[1] / 2);
-                        */
-                        var padding_x = 0;
-                        var padding_y = 0;
-                        tx = Math.max(padding_x, Math.min(tx, MAX_SCENE_WIDTH                - padding_x));
-                        ty = Math.max(padding_y, Math.min(ty, MAX_SCENE_WIDTH * canvas_ratio - padding_y));
-                        
-                        if (client_side_prediction) {
-                            // client-side predict (immediately place it there)
-                            t.posx = tx;
-                            t.posy = ty;
-                        }
-                        t.newx = tx;
-                        t.newy = ty;
-                        
-                        changes.push({
-                            'id'   : id,
-                            'posx' : parseInt(tx),
-                            'posy' : parseInt(ty)
-                        });
-                    }
-                });
-                
-                // not push every position to go easy on the server
-                if (socket_move_timeout <= Date.now()) {
-                    writeSocket({
-                        'OPID'    : 'UPDATE',
-                        'changes' : changes
-                    });
-                    socket_move_timeout = Date.now() + socket_move_delay;
-                }
-            }
-        }
-        
-    } else if ((event.buttons == 4 || (event.buttons == 1 && space_bar)) && zooming) {
-        // wheel clicked
-        battlemap.css('cursor', 'grab');
-        
-        dx = event.movementX;
-        dy = event.movementY;
-        
-        // NOTE: some browsers go crazy
-        if (dx > 100) { dx /= 100; }
-        if (dy > 100) { dy /= 100; }
-        
-        // move viewport
-        viewport.newx = viewport.x - dx / viewport.zoom;
-        viewport.newy = viewport.y - dy / viewport.zoom;
-        
+    } else if (event.buttons == 4 || is_single_touch || (event.buttons == 1 && space_bar)) {
+        // handle wheel click or leftclick (with space bar)
+        // @NOTE: move against drag direction
+        onZoomViewport(-event.movementX, -event.movementY);
+               
     } else {
         var token = selectToken(mouse_x, mouse_y);
          
         // transform cursor
+        
+    var battlemap = $('#battlemap');
+    var w = battlemap.width();
+    var h = battlemap.height();
+    
         if (token == null) {
             battlemap.css('cursor', 'default');
         } else if (token.locked) {
@@ -1127,7 +1141,6 @@ function onWheel(event) {
 
         if (pinch_center == null) {
             pinch_center = calcPinchCenter();
-            $('#debuglog')[0].innerHTML = pinch_center;
         }
         reference_x = pinch_center[0];
         reference_y = pinch_center[1];
@@ -1135,69 +1148,67 @@ function onWheel(event) {
         pinch_distance = new_pinch_distance;
     }
     
-    if (zooming) {
-        if (event.ctrlKey || event.metaKey) {
-            // ignore browser zooming
-            return;
-        }
-        var show = false;
-        var canvas = $('#battlemap');
-        
-        // modify zoom
-        if (delta > 0) {
-            // zoom out
-            viewport.zoom /= speed;
-            if (viewport.zoom < 1.0) {
-                viewport.zoom = 1.0;
-            }
-            show = true;
-        } else if (delta < 0) {
-            // zoom in
-            viewport.zoom *= speed;
-            show = true;
-        }
-
-        // force all token labels to be redrawn
-        $.each(tokens, function(index, token) {
-            if (token != null) {
-                token.hue_canvas = null;
-            }
-        });
-        
-        // calculate view's position
-        var rel_x = reference_x / MAX_SCENE_WIDTH;
-        var rel_y = reference_y / (MAX_SCENE_WIDTH * canvas_ratio);
-        var x = MAX_SCENE_WIDTH * rel_x;
-        var y = MAX_SCENE_WIDTH * canvas_ratio * rel_y;
-        
-        // shift viewport position slightly towards desired direction
-        if (x > viewport.x) {
-            viewport.x += ZOOM_MOVE_SPEED / viewport.zoom;
-            if (viewport.x > x) {
-                viewport.x = x;
-            }
-        } else if (x < viewport.x) {
-            viewport.x -= ZOOM_MOVE_SPEED / viewport.zoom;
-            if (viewport.x < x) {
-                viewport.x = x;
-            }
-        }
-        if (y > viewport.y) {
-            viewport.y += ZOOM_MOVE_SPEED / viewport.zoom;
-            if (viewport.y > y) {
-                viewport.y = y;
-            }
-        } else if (y < viewport.y) {
-            viewport.y -= ZOOM_MOVE_SPEED / viewport.zoom;
-            if (viewport.y < y) {
-                viewport.y = y;
-            }
-        }
-        
-        limitViewportPosition();
-        
-        displayZoom();
+     if (event.ctrlKey || event.metaKey) {
+        // ignore browser zoom
+        return;
     }
+    var show = false;
+    var canvas = $('#battlemap');
+    
+    // modify zoom
+    if (delta > 0) {
+        // zoom out
+        viewport.zoom /= speed;
+        if (viewport.zoom < 1.0) {
+            viewport.zoom = 1.0;
+        }
+        show = true;
+    } else if (delta < 0) {
+        // zoom in
+        viewport.zoom *= speed;
+        show = true;
+    }
+
+    // force all token labels to be redrawn
+    $.each(tokens, function(index, token) {
+        if (token != null) {
+            token.hue_canvas = null;
+        }
+    });
+    
+    // calculate view's position
+    var rel_x = reference_x / MAX_SCENE_WIDTH;
+    var rel_y = reference_y / (MAX_SCENE_WIDTH * canvas_ratio);
+    var x = MAX_SCENE_WIDTH * rel_x;
+    var y = MAX_SCENE_WIDTH * canvas_ratio * rel_y;
+    
+    // shift viewport position slightly towards desired direction
+    if (x > viewport.x) {
+        viewport.x += ZOOM_MOVE_SPEED / viewport.zoom;
+        if (viewport.x > x) {
+            viewport.x = x;
+        }
+    } else if (x < viewport.x) {
+        viewport.x -= ZOOM_MOVE_SPEED / viewport.zoom;
+        if (viewport.x < x) {
+            viewport.x = x;
+        }
+    }
+    if (y > viewport.y) {
+        viewport.y += ZOOM_MOVE_SPEED / viewport.zoom;
+        if (viewport.y > y) {
+            viewport.y = y;
+        }
+    } else if (y < viewport.y) {
+        viewport.y -= ZOOM_MOVE_SPEED / viewport.zoom;
+        if (viewport.y < y) {
+            viewport.y = y;
+        }
+    }
+    
+    limitViewportPosition();
+    
+    displayZoom();
 }
 
 var d100_queue = [];
@@ -1288,7 +1299,7 @@ function deleteSelectedTokens() {
     }
 }
 
-var viewport_scroll_delta = 10;
+var viewport_scroll_delta = 50;
 
 /// Event handle shortcuts on (first) selected token
 function onShortcut(event) {
@@ -1312,21 +1323,18 @@ function onShortcut(event) {
         }
 
         // handle movement of zoomed viewport
-        if (event.key == 'ArrowUp') {           
-            viewport.newx = viewport.x;
-            viewport.newy = viewport.y - viewport_scroll_delta;
+        // @NOTE: move with arrow direction
+        if (event.key == 'ArrowUp') {
+            onZoomViewport(0, -viewport_scroll_delta / viewport.zoom);
         }
         if (event.key == 'ArrowDown') {
-            viewport.newx = viewport.x;
-            viewport.newy = viewport.y + viewport_scroll_delta;  
+            onZoomViewport(0, viewport_scroll_delta / viewport.zoom);  
         }
         if (event.key == 'ArrowLeft') {
-            viewport.newx = viewport.x - viewport_scroll_delta;
-            viewport.newy = viewport.y; 
+            onZoomViewport(-viewport_scroll_delta / viewport.zoom, 0); 
         }
         if (event.key == 'ArrowRight') {
-            viewport.newx = viewport.x + viewport_scroll_delta;
-            viewport.newy = viewport.y;    
+            onZoomViewport(viewport_scroll_delta / viewport.zoom, 0);  
         }
     }
 }
