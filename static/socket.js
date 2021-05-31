@@ -434,8 +434,11 @@ function start(gmname, url, playername, color) {
     document.addEventListener('mousemove',    onMove);
     document.addEventListener('touchmove',    onMove);
     
-    document.addEventListener('mouseup',    onRelease);
-    document.addEventListener('touchend',    onRelease);
+    battlemap.addEventListener('mouseup',    onRelease);
+    battlemap.addEventListener('touchend',    onRelease);
+
+    document.addEventListener('mouseup',    onReleaseDoc);
+    document.addEventListener('touchend',    onReleaseDoc);
     
     battlemap.addEventListener('wheel',        onWheel);
     document.addEventListener('keydown',    onShortcut);

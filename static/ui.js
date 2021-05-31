@@ -865,6 +865,12 @@ function onGrab(event) {
     }
 }
 
+/// Event handle for releasing click/touch (outside canvas)
+function onReleaseDoc() {
+    select_from_x = null;
+    select_from_y = null;
+}
+
 /// Event handle for releasing a grabbed token
 function onRelease() {
     var was_grabbed = grabbed;
@@ -955,9 +961,6 @@ function onRelease() {
             });
         }
     }
-
-    select_from_x = null;
-    select_from_y = null;
 }
 
 /// Limit viewport's position
@@ -977,8 +980,6 @@ function limitViewportPosition() {
     
     viewport.x = Math.max(min_x, Math.min(max_x, viewport.x));
     viewport.y = Math.max(min_y, Math.min(max_y, viewport.y));
-
-    console.log(viewport);
 }
 
 function onMoveToken(event) {
@@ -1236,7 +1237,7 @@ function onWheel(event) {
     }
     
     limitViewportPosition();
-    displayZoon();
+    displayZoom();
 }
 
 var d100_queue = [];
@@ -1374,6 +1375,8 @@ function onKeyRelease(event) {
 
 /// Event handle for fliping a token x-wise
 function onFlipX() {
+    event.preventDefault();
+    
     var changes = [];
     $.each(select_ids, function(index, id) {
         var token = tokens[id];
