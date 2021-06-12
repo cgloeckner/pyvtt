@@ -1545,15 +1545,16 @@ function onLabelStep(delta) {
     var deleted = [];
 
     $.each(select_ids, function(index, id) {
-        var token = tokens[id];
-        var isInt = token.text.startsWith('#') || !isNaN(token.text);
+        var token   = tokens[id];
+        var isTimer = token.text.startsWith('#');
+        var isInt   = isTimer || (!isNaN(token.text) && token.text != '');
             
         if (token == null || token.locked || !isInt) {
             // ignore if locked
             return;
         }
         // click token's number
-        if (token.text.startsWith('#')) {
+        if (isTimer) {
             var number = parseInt(token.text.substr(1));
         } else {
             var number = parseInt(token.text);
@@ -1562,7 +1563,7 @@ function onLabelStep(delta) {
         if (number <= 0) {
             number = 0;
         }
-        if (token.text.startsWith('#')) {
+        if (isTimer) {
             token.text = '#';
         } else {
             token.text = '';
@@ -1575,7 +1576,7 @@ function onLabelStep(delta) {
         token.label_canvas = null;
         token.hue_canvas   = null;
 
-        if (number == 0) {
+        if (number == 0 && isTimer) {
             deleted.push(id);
         } else {
             changes.push({
