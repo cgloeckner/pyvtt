@@ -292,7 +292,9 @@ function onMobileDragDice(event, d) {
     onDragDice(event);
 }
 
-function onTokenResize() {
+function onTokenResize() {      
+    event.preventDefault();
+    
     var first_token = tokens[primary_id];
     
     // calculate distance between mouse and token   
@@ -327,6 +329,8 @@ function onTokenResize() {
 }
 
 function onTokenRotate(event) { 
+    event.preventDefault();
+    
     var first_token = tokens[primary_id];
     
     // calculate vectors between origin/icon and origni/mouse
@@ -572,7 +576,9 @@ function updateTokenbar() {
         var padding = 20;
 
         var icons = [token_icons];
-        if (token.text.startsWith('#')) {
+        var isInt = token.text.startsWith('#') || !isNaN(token.text);
+            
+        if (isInt) {
             icons.push(['LabelInc', 'LabelDec']);
         }
         
@@ -631,7 +637,10 @@ function updateTokenbar() {
             $('#tokenClone').css('visibility', '');
             $('#tokenDelete').css('visibility', '');
             $('#tokenLabel').css('visibility', '');
-            if (token.text.startsWith('#')) {
+
+            var isInt = token.text.startsWith('#') || !isNaN(token.text);
+            
+            if (isInt) {
                 $('#tokenLabelDec').css('visibility', '');
                 $('#tokenLabelInc').css('visibility', '');
             } else {
@@ -1408,7 +1417,9 @@ function onFlipX() {
 }
 
 /// Event handle for (un)locking a token
-function onLock() {
+function onLock() {   
+    event.preventDefault();
+    
     // determine primary lock state
     var primary_lock = false;
     if (primary_id > 0) {
@@ -1495,7 +1506,9 @@ function onQuitAction(event) {
 }
 
 /// Event handle for moving token to lowest z-order
-function onBottom() {
+function onBottom() {  
+    event.preventDefault();
+    
     var changes = [];
     $.each(select_ids, function(index, id) {
         var token = tokens[id];
@@ -1525,29 +1538,37 @@ function onBottom() {
 }
 
 /// Event handle for changing a numeric token label
-function onLabelStep(delta) {
+function onLabelStep(delta) {  
+    event.preventDefault();
+    
     var changes = [];
     var deleted = [];
 
     $.each(select_ids, function(index, id) {
         var token = tokens[id];
-        
-        if (token == null || token.locked || !token.text.startsWith('#')) {
+        var isInt = token.text.startsWith('#') || !isNaN(token.text);
+            
+        if (token == null || token.locked || !isInt) {
             // ignore if locked
             return;
         }
         // click token's number
-        var number = parseInt(token.text.substr(1));
+        if (token.text.startsWith('#')) {
+            var number = parseInt(token.text.substr(1));
+        } else {
+            var number = parseInt(token.text);
+        }
         number += delta;
         if (number <= 0) {
             number = 0;
-        } else if (number > 40) {
-            number = 40;
+        }
+        if (token.text.startsWith('#')) {
+            token.text = '#';
+        } else {
+            token.text = '';
         }
         if (number > 0) {
-            token.text = '#' + number
-        } else {
-            token.text = '#';
+            token.text += number;
         }
         
         // trigger buffer redraw
@@ -1578,7 +1599,9 @@ function onLabelStep(delta) {
 }
 
 /// Event handle for entering a token label
-function onLabel() {
+function onLabel() {  
+    event.preventDefault();
+    
     if (select_ids.length == 0) {
         return;
     }
@@ -1621,7 +1644,9 @@ function onLabel() {
 }
 
 /// Event handle for moving token to hightest z-order
-function onTop() { 
+function onTop() {  
+    event.preventDefault();
+    
     var changes = [];
     $.each(select_ids, function(index, id) {
         var token = tokens[id];
@@ -1651,7 +1676,9 @@ function onTop() {
 }
 
 /// Event handle for cloning the selected tokens
-function onClone() {
+function onClone() {   
+    event.preventDefault();
+    
     // pick random position next to mouse
     var x = mouse_x + Math.floor(Math.random()*100) - 50;
     var y = mouse_y + Math.floor(Math.random()*100) - 50;
@@ -1665,7 +1692,9 @@ function onClone() {
 }
  
 /// Event handle for deleting the selected tokens
-function onTokenDelete() {
+function onTokenDelete() { 
+    event.preventDefault();
+    
     writeSocket({
         'OPID'   : 'DELETE',
         'tokens' : select_ids
