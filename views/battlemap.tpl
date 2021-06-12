@@ -39,7 +39,7 @@
             <input type="color" name="pencolor" id="pencolor" value="#000000">
             <input type="range" name="penwidth" id="penwidth" min="1" max="100" step="1" value="20">
             <input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN</label>
-            <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
+            <button id="upload" onClick="onUploadDrawing();">AS BACKGROUND</button>
               
             <canvas id="doodle" width="1600" height="900" onmousedown="onMovePen(event);" onmouseup="onReleasePen(event);" onmousemove="onMovePen(event);" ontouchstart="onMovePen(event);" ontouchmove="onMovePen(event);" ontouchend="onReleasePen(event);"></canvas>
         </span>

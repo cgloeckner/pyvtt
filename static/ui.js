@@ -576,7 +576,7 @@ function updateTokenbar() {
         var padding = 20;
 
         var icons = [token_icons];
-        var isInt = token.text.startsWith('#') || !isNaN(token.text);
+        var isInt = token.text.startsWith('#') || (!isNaN(token.text) && token.text != '');
             
         if (isInt) {
             icons.push(['LabelInc', 'LabelDec']);
@@ -638,7 +638,7 @@ function updateTokenbar() {
             $('#tokenDelete').css('visibility', '');
             $('#tokenLabel').css('visibility', '');
 
-            var isInt = token.text.startsWith('#') || !isNaN(token.text);
+            var isInt = token.text.startsWith('#') || (!isNaN(token.text) && token.text != '');
             
             if (isInt) {
                 $('#tokenLabelDec').css('visibility', '');

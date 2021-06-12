@@ -598,9 +598,9 @@ function drawToken(token, color, is_background) {
         if (token.text != null) {
             if (token.label_canvas == null) {
                 // determine optional fontsize and width
-                var fontsize = 15 * canvas_scale;
+                var fontsize = 15 * canvas_scale / Math.sqrt(Math.sqrt(viewport.zoom));
                 if (is_timer) {
-                    fontsize *= 2 * token.size / default_token_size;
+                    fontsize = 15 * canvas_scale * 3 * token.size / default_token_size;
                 }
                 context.font = fontsize + 'px sans';
                 var metrics = context.measureText(token.text);
@@ -618,18 +618,18 @@ function drawToken(token, color, is_background) {
                 ctx.textAlign  =  "center";
                 ctx.fillStyle  = token.color;
                 ctx.font       = context.font;
-                ctx.lineWidth  = 6;
+                ctx.lineWidth  = 6 / Math.sqrt(viewport.zoom);
                 ctx.lineJoin   = "round";
                 ctx.miterLimit = 2;
                 if (brightnessByColor(token.color) > 60) {
                     ctx.strokeStyle = '#000000';
                 } else {
                     ctx.strokeStyle = '#FFFFFF'; 
-                    ctx.lineWidth   = 4;
+                    ctx.lineWidth   = 4 / Math.sqrt(viewport.zoom);;
                 }
                 var text = token.text;
                 if (is_timer) {   
-                    ctx.lineWidth   = 4; 
+                    ctx.lineWidth   = 4 / Math.sqrt(viewport.zoom);; 
                     ctx.lineJoin    = "miter";
                     ctx.fillStyle   = '#FFFFFF';
                     ctx.strokeStyle = '#FFFFFF';
