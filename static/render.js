@@ -217,7 +217,7 @@ function animateBeacon(beacon) {
 
 function drawBeacon(beacon) { 
     animateBeacon(beacon);
-                         
+    
     var canvas = $('#battlemap');
     var context = canvas[0].getContext("2d");
     if (beacon.master) { 

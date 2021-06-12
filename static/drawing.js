@@ -1,11 +1,37 @@
 function initDrawing() { 
     closeWebcam();
 
-    // erase canvas
     var canvas = $('#doodle')[0];
     var context = canvas.getContext("2d");
-    context.fillStyle = '#FFFFFF';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    // query background token
+    var background = null;
+    $.each(tokens, function(index, token) {
+        if (token != null) {
+            if (token.size == -1) {
+                background = token;
+                // do not break in case there is a "newer" background
+            }
+        }
+    });
+
+    if (background != null && images[background.url] != null) {
+        // load background into canvas
+        var sizes = getActualSize(background, canvas.width, canvas.height);
+        sizes[0] *= canvas_scale;
+        sizes[1] *= canvas_scale;
+        
+        context.drawImage(
+            images[background.url],
+            0.5 * canvas.width - sizes[0] / 2,
+            0.5 * canvas.height - sizes[1] / 2,
+            sizes[0], sizes[1]);
+        console.log('drawn');
+    
+    } else {
+        context.fillStyle = '#FFFFFF';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
     $('#drawing').fadeIn(500);
 }
@@ -16,8 +42,11 @@ function closeDrawing() {
 
 var pen_pos = [];
 
-function onMovePen(event) {
+function onMovePen(event) { 
+    event.preventDefault();
+    
     var use_pen = $('#penenable')[0].checked;
+    var pressure = 1.0;
     
     if (event.type == "touchstart" || event.type == "touchmove") {
         // search all touches to use pen primarily
@@ -29,6 +58,8 @@ function onMovePen(event) {
             if (!isExtremeForce(event.touches[i].force)) {
                 // found sensitive input, ignore previously found event
                 found = event.touches[i];
+                //pressure = Math.sqrt(found.force);
+                // @NOTE: pressure isn't working with a single path of lines (which uses a single width not handling multiple)
                 use_pen = true;
                 break;
             } 
@@ -71,10 +102,12 @@ function onMovePen(event) {
         context.stroke();
     }
 
-    pen_pos.push([x, y]);
+    pen_pos.push([x, y, pressure]);
 }
 
-function onReleasePen(event) {
+function onReleasePen(event) { 
+    event.preventDefault();
+    
     var canvas = $('#doodle')[0];
     var context = canvas.getContext("2d");
 
@@ -82,7 +115,7 @@ function onReleasePen(event) {
 
     if (pen_pos.length > 1) { 
         // redraw entire line smoothly
-        context.beginPath();
+        context.beginPath();       
         for (var i = 0; i < pen_pos.length; ++i) {
             if (i == 0) {
                 context.moveTo(pen_pos[i][0], pen_pos[i][1]);
@@ -91,9 +124,10 @@ function onReleasePen(event) {
             }
         }
         context.stroke();
+        
     } else if (pen_pos.length == 1) {
         // draw dot
-        context.beginPath();
+        context.beginPath();        
         context.moveTo(pen_pos[0][0], pen_pos[0][1]);
         context.lineTo(pen_pos[0][0]+1, pen_pos[0][1]+1);
         context.stroke();
@@ -103,40 +137,10 @@ function onReleasePen(event) {
 }
 
 function onUploadDrawing() {
-    console.log('up');
-}
-
-/*
-
-
-
-function onStreamReady(stream) {
-    window.stream = stream;
-    $('#video')[0].srcObject = stream;
-    $('#camerapreview').fadeIn(500);
-    
-    $('#applySnapshot').hide();
-}
-
-function onTakeSnapshot() {
-    // apply video resolution to canvas
-    var preview = $('#snapshot')[0]
-    preview.width  = webcam_constraints.video.width;
-    preview.height = webcam_constraints.video.height;
-
-    // draw video snapshot onto canvas
-    var context = preview.getContext('2d');
-    context.clearRect(0, 0, preview.width, preview.height);
-    context.drawImage($('#video')[0], 0, 0, preview.width, preview.height);
-    
-    $('#applySnapshot').fadeIn(100);
-}
-
-function onApplyBackground() {
     showInfo('LOADING');
     
     // fetch JPEG-data from canvas
-    var preview = $('#snapshot')[0]
+    var preview = $('#doodle')[0]
     var url = preview.toDataURL("image/jpeg");
 
     // prepare upload form data
@@ -146,30 +150,7 @@ function onApplyBackground() {
 
     // upload for current scene
     uploadBackground(gm_name, game_url, f);
+
+    closeDrawing();
 }
 
-function closeWebcam() {
-    $('#camerapreview').fadeOut(500);
-    
-    $('#video')[0] = null;
-    window.stream  = null;    
-    var preview = $('#snapshot')[0];
-    var context = preview.getContext('2d');
-    context.clearRect(0, 0, preview.width, preview.height);
-}
-
-function togglePreview(id) {
-    var target = $(id);
-    if (target.hasClass('largepreview')) {
-        // reset to preview
-        target.removeClass('largepreview');
-        target.css('height', 180);
-    } else {
-        // enlarge
-        target.addClass('largepreview');
-        target.css('width', 'auto');
-        target.css('height', window.innerHeight - 100);
-    }
-}
-
-*/
