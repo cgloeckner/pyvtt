@@ -2074,13 +2074,27 @@ function onWindowResize(event) {
     // refresh default dice positions
     var total_dice_height = 50 * 7; // 7 dice
     var starty = window.innerHeight / 2 - total_dice_height / 2;
-    default_dice_pos[20] = [15, starty    , 'left'];
-    default_dice_pos[12] = [15, starty+ 50, 'left'];
-    default_dice_pos[10] = [15, starty+100, 'left'];
-    default_dice_pos[ 8] = [15, starty+150, 'left'];
-    default_dice_pos[ 6] = [15, starty+200, 'left'];
-    default_dice_pos[ 4] = [15, starty+250, 'left'];
-    default_dice_pos[ 2] = [15, starty+300, 'left'];
+
+    if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {  
+        // widely spread aligment on mobile
+        default_dice_pos[20] = [15, window.innerHeight * 0.115, 'left'];
+        default_dice_pos[12] = [15, window.innerHeight * 0.230, 'left'];
+        default_dice_pos[10] = [15, window.innerHeight * 0.345, 'left'];
+        default_dice_pos[ 8] = [15, window.innerHeight * 0.460, 'left'];
+        default_dice_pos[ 6] = [15, window.innerHeight * 0.575, 'left'];
+        default_dice_pos[ 4] = [15, window.innerHeight * 0.690, 'left'];
+        default_dice_pos[ 2] = [15, window.innerHeight * 0.805, 'left'];
+
+    } else {
+        // tightly packed aligment on desktop
+        default_dice_pos[20] = [15, starty    , 'left'];
+        default_dice_pos[12] = [15, starty+ 50, 'left'];
+        default_dice_pos[10] = [15, starty+100, 'left'];
+        default_dice_pos[ 8] = [15, starty+150, 'left'];
+        default_dice_pos[ 6] = [15, starty+200, 'left'];
+        default_dice_pos[ 4] = [15, starty+250, 'left'];
+        default_dice_pos[ 2] = [15, starty+300, 'left'];
+    }
     
     // apply dice positions
     $.each(default_dice_pos, function(sides, data) {
