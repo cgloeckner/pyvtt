@@ -33,6 +33,18 @@
         </span>
     </div>
 
+    <div id="drawing">
+        <img class="close" src="/static/delete.png" onClick="closeDrawing();" draggable="false" title="DISCARD" />
+        <span>
+            <input type="color" name="pencolor" id="pencolor" value="#000000">
+            <input type="range" name="penwidth" id="penwidth" min="1" max="100" step="1" value="20">
+            <input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN</label>
+            <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
+              
+            <canvas id="doodle" width="1600" height="900" onmousedown="onMovePen(event);" onmouseup="onReleasePen(event);" onmousemove="onMovePen(event);" ontouchstart="onMovePen(event);" ontouchmove="onMovePen(event);" ontouchend="onReleasePen(event);"></canvas>
+        </span>
+    </div>
+
     <!-- stays hidden -->
     <div id="uploadscreen">
         <form id="fileform" method="post" enctype="multipart/form-data">
@@ -98,7 +110,7 @@
         </form>
     </div>
 
-    <!-- <div id="debuglog" style="position: absolute; z-index: 100; width: 150px; height: 400px; right: 0px; background-color: white; overflow-y: scroll"> -->
+    <div id="debuglog" style="position: absolute; z-index: 100; width: 150px; height: 400px; right: 0px; background-color: white; overflow-y: scroll">
     </div>
 </div>
 

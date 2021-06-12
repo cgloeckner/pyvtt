@@ -1,7 +1,8 @@
 %import time
     <div class="tools">
         <img class="largeicon" src="/static/add.png" onClick="addScene();" draggable="false" title="CREATE SCENE" />
-        <img class="largeicon" src="/static/upload.png" onClick="initUpload();" draggable="false" title="FILE UPLOAD" /><br />
+        <img class="largeicon" src="/static/upload.png" onClick="initUpload();" draggable="false" title="FILE UPLOAD" />
+        <img class="largeicon" src="/static/pen.png" onClick="initDrawing();" draggable="false" title="DRAW BACKGROUND" /><br />
         <img class="largeicon" src="/static/camera.png" onClick="initWebcam();" draggable="false" title="PREVIEW WEBCAM" />
         <img class="largeicon" src="/static/screen.png" onClick="initScreenShare();" draggable="false" title="PREVIEW SCREENSHARE" />
     </div>

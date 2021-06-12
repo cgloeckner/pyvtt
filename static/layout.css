@@ -347,7 +347,66 @@ div#gmdrop > div.element > div.controls {
     text-align: center;
 }
 
-/* --- Upload Controls (primarily for mobile) ----------------------- */
+/* --- Drawing Controls --------------------------------------------- */
+
+div#drawing {
+    width: 850px;
+    height: 500px;
+
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    background-color: rgba(0, 0, 0, 0.80);
+    padding: 15px;
+    border-radius: 10px;
+    
+    z-index: 499;
+
+    display: none;
+}
+
+div#drawing > span {
+    padding: 10px;
+}
+
+div#drawing > span > label {
+    color: white;
+}
+
+div#drawing > span > canvas#doodle {
+    /*background-color: white;*/
+    border: 3px solid black;
+    
+    width: 800px;
+}
+
+div#drawing > span > input#penwidth,
+div#drawing > span > input#pencolor,
+div#drawing > span > button#upload {
+    background: white;
+    border-radius: 2px;
+    border: 0px;
+    padding: 5px;
+    margin: 5px;      
+    width: 100px;
+    height: 25px;
+}
+
+div#drawing > span > input#penwidth {
+    height: 0px;
+}
+
+div#drawing > span > button#upload {
+    position: absolute;
+    right: 55px;
+}
+
+div#drawing > span > button#upload:hover {
+    cursor: pointer;
+    background: #99ff66;
+}
 
 /* --- Webcam Controls ---------------------------------------------- */
 
@@ -390,7 +449,8 @@ div#uploadscreen > span > form > input[type=file] {
 }
 
 div#uploadscreen > img.close,
-div#camerapreview > img.close {
+div#camerapreview > img.close,
+div#drawing > img.close {
     width: 32px;
     float: right;
     right: 15px;
@@ -416,7 +476,8 @@ div#camerapreview > span > .largepreview {
 }
 
 div#uploadscreen > span > p,
-div#camerapreview > span > p {    
+div#camerapreview > span > p,
+div#drawing > span > p {    
     color: white;
     user-select: none;
 }
