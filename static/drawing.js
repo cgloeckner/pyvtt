@@ -10,27 +10,27 @@ function initDrawing() {
         if (token != null) {
             if (token.size == -1) {
                 background = token;
-                // do not break in case there is a "newer" background
+                console.log(token);
             }
         }
     });
-
+    
+    context.fillStyle = '#FFFFFF';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    
     if (background != null && images[background.url] != null) {
         // load background into canvas
         var sizes = getActualSize(background, canvas.width, canvas.height);
         sizes[0] *= canvas_scale;
         sizes[1] *= canvas_scale;
         
+        
         context.drawImage(
             images[background.url],
             0.5 * canvas.width - sizes[0] / 2,
             0.5 * canvas.height - sizes[1] / 2,
             sizes[0], sizes[1]);
-        console.log('drawn');
     
-    } else {
-        context.fillStyle = '#FFFFFF';
-        context.fillRect(0, 0, canvas.width, canvas.height);
     }
 
     $('#drawing').fadeIn(500);
@@ -110,8 +110,6 @@ function onReleasePen(event) {
     
     var canvas = $('#doodle')[0];
     var context = canvas.getContext("2d");
-
-    console.log(pen_pos);
 
     if (pen_pos.length > 1) { 
         // redraw entire line smoothly
