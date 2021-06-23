@@ -600,7 +600,7 @@ function drawToken(token, color, is_background) {
                 // determine optional fontsize and width
                 var fontsize = 15 * canvas_scale / Math.sqrt(Math.sqrt(viewport.zoom));
                 if (is_timer) {
-                    fontsize = 15 * canvas_scale * 3 * token.size / default_token_size;
+                    fontsize = 10 * canvas_scale * 3 * token.size / default_token_size;
                 }
                 context.font = fontsize + 'px sans';
                 var metrics = context.measureText(token.text);
