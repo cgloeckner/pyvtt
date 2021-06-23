@@ -5,7 +5,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 */
 
-var target_fps = 90;
+var target_fps = 50;
 
 var viewport = null;
 
