@@ -277,9 +277,9 @@ function onDrag(event) {
         
     } else if (primary_id != 0) {        
         if (drag_data == 'resize') {
-            onTokenResize();
+            onTokenResize(event);
         } else if (drag_data == 'rotate') {
-            onTokenRotate();
+            onTokenRotate(event);
         }
     } else {
         onDragDice(event);
@@ -292,7 +292,7 @@ function onMobileDragDice(event, d) {
     onDragDice(event);
 }
 
-function onTokenResize() {      
+function onTokenResize(event) {      
     event.preventDefault();
     
     var first_token = tokens[primary_id];
