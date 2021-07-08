@@ -5,6 +5,10 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 */
 
+img {
+    transform: translateZ(0); /* chrome-workaround against blurry downscale */
+}
+
 body {
     font-family: sans;
     font-size: 11pt;
@@ -508,9 +512,8 @@ div.dice > div {
 div.dice > div > img {
     user-select: none;
     
-    width: 48px;
-    height: 48px;
-    padding: 1px;
+    max-width: 48px;
+    max-height: 48px;
 }
 
 div.dice > div > img:hover {
