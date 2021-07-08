@@ -331,7 +331,7 @@ def setup_gm_routes(engine):
         now = time.time()
         game_cache = gm_cache.get(game)
         game.cleanup(now) # cleanup old images and tokens
-        game_cache.cleanup() # remove all players and music
+        game_cache.cleanup() # remove all players
         
         engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))
 

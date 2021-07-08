@@ -381,14 +381,6 @@ class GameCache(object):
                 if p.socket != None and not p.socket.closed:
                     p.socket.close()
             self.players.clear()
-
-        # remove all uploaded music
-        root = self.engine.paths.getGamePath(self.parent.url, self.url) 
-        with self.engine.locks[self.parent.url]: # make IO access safe
-            for fname in os.listdir(root):
-                if fname.endswith('.mp3'):
-                    os.remove(root / fname)
-        self.playback = None
     
     def broadcast(self, data):
         """ Broadcast given data to all clients. """

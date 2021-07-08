@@ -580,15 +580,14 @@ class GameTest(EngineBaseTest):
             with open(json_path, 'r') as h:
                 data = json.load(h)
             
-            # check all images being numbered and with PNG-extension
-            # NOTE: so there is no mp3 file there(!)
+            # check all images being numbered and with PNG- or MP3-extension
             for fname in os.listdir(tmp_dir):
                 if fname == 'game.json':
                     continue
                 parts = fname.split('.')
                 self.assertEqual(len(parts), 2)
                 int(parts[0])
-                self.assertEqual(parts[1], 'png')
+                self.assertIn(parts[1], ['png', 'mp3'])
             
             # check all token data in each scene
             for scene in data["scenes"]:
