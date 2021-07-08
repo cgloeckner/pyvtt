@@ -51,14 +51,15 @@ var double_click_limit = 200;
 function isOverToken(x, y, token) {
     var canvas   = $('#battlemap');
     var size     = getActualSize(token, canvas[0].width, canvas[0].height);
-    var max_size = Math.max(size[0], size[1]); // because the token might be rotated
+    var max_width  = size[0] * 10; // because of labels
+    var max_height = size[1];
     
     // 1st stage: bounding box test
     if (token.size > 0) {
-        var min_x = token.posx - max_size / 2;
-        var max_x = token.posx + max_size / 2;
-        var min_y = token.posy - max_size / 2;
-        var max_y = token.posy + max_size / 2;
+        var min_x = token.posx - max_width / 2;
+        var max_x = token.posx + max_width / 2;
+        var min_y = token.posy - max_height / 2;
+        var max_y = token.posy + max_height / 2;
         var in_box = min_x <= x && x <= max_x && min_y <= y && y <= max_y;
         if (!in_box) {
             return false;
@@ -77,7 +78,7 @@ function isOverToken(x, y, token) {
 function selectToken(x, y) {
     var result = null;
     var bestz = min_z - 1;
-    
+
     // search for any fitting culling with highest z-order (unlocked first)
     $.each(culling, function(index, item) {
         if (item != null && !item.locked && item.zorder > bestz && isOverToken(x, y, item)) {
@@ -94,6 +95,7 @@ function selectToken(x, y) {
             }
         });
     }
+     
     return result;
 }
 
@@ -2188,6 +2190,17 @@ function getBlobFromDataURL(url) {
     }
     return new Blob([u8arr], {type: mime});
 }
+
+function saveBlob(blob, fileName) {
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+    var url = window.URL.createObjectURL(blob);
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(url);
+};
 
 function getImageBlob(img) {
     var tmp_canvas = document.createElement("canvas");

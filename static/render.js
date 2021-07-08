@@ -159,8 +159,38 @@ function getPixelData(token, x, y) {
     }
     
     mem_ctx.drawImage(images[token.url], -sizes[0] / 2, -sizes[1] / 2, sizes[0], sizes[1]);
+
+    /*
+    @NOTE: label seems to be rendered at the WRONG size -.-
+    * 
+    // add labels if present to allow for token selection via label
+    if (token.label_canvas != null) {
+        var is_timer = token.text.startsWith('#');
+        var left = -token.label_canvas.width/2;
+        var top  = token.label_canvas.height/4;
+        if (is_timer) {
+            // vertical center it
+            top = -token.label_canvas.height/2;
+        }
+        var scale = Math.sqrt(1/viewport.zoom) / 2.0;
+
+        mem_ctx.restore();  
+        mem_ctx.translate(dom_canvas.width / 2, dom_canvas.height / 2);
+        mem_ctx.scale(scale, scale);
+        mem_ctx.drawImage(token.label_canvas, left, top);
+    }
+    */
     
     mem_ctx.restore();
+
+    /*
+    var url = mem_canvas.toDataURL("image/png");
+    var blob = getBlobFromDataURL(url);
+    console.log(blob);
+    if (mem_ctx.getImageData(x + dom_canvas.width / 2, y + dom_canvas.height / 2, 1, 1).data[3] > 0) {
+        //saveBlob(blob, 'out.png');
+    }
+    */
     
     // query pixel data
     // note: consider (x,y) is relative to token's center

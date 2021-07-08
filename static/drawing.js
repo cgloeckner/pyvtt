@@ -138,7 +138,7 @@ function onUploadDrawing() {
     showInfo('LOADING');
     
     // fetch JPEG-data from canvas
-    var preview = $('#doodle')[0]
+    var preview = $('#doodle')[0];
     var url = preview.toDataURL("image/jpeg");
 
     // prepare upload form data
