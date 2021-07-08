@@ -637,16 +637,16 @@ function drawToken(token, color, is_background) {
                 }
 
                 // render label
-                ctx.strokeText(text, width/2, height - padding/2);
-                ctx.fillText(text, width/2, height - padding/2);
+                ctx.strokeText(text, width/2, height*3/4);
+                ctx.fillText(text, width/2, height*3/4);
             }
             
             try {
                 var left = -token.label_canvas.width/2;
-                var top  = token.size/2 - token.label_canvas.height/2;
+                var top  = token.label_canvas.height/4;
                 if (is_timer) {
                     // vertical center it
-                    top = -token.label_canvas.height * 0.6;
+                    top = -token.label_canvas.height/2;
                 }
                 var scale = Math.sqrt(1/viewport.zoom) / 2.0;
                 context.scale(scale, scale);
