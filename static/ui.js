@@ -1295,6 +1295,11 @@ function selectAllTokens() {
             select_ids.push(token.id);
         }
     });
+
+    if (select_ids.length > 0 && primary_id == null) {
+        primary_id = select_ids[0];
+    }
+    console.log(select_ids, primary_id);
 }
 
 /// Event handle to copy selected tokens
