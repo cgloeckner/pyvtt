@@ -625,11 +625,11 @@ function drawToken(token, color, is_background) {
                     ctx.strokeStyle = '#000000';
                 } else {
                     ctx.strokeStyle = '#FFFFFF'; 
-                    ctx.lineWidth   = 8 / Math.sqrt(viewport.zoom);;
+                    ctx.lineWidth   = 8 / Math.sqrt(viewport.zoom);
                 }
                 var text = token.text;
                 if (is_timer) {   
-                    ctx.lineWidth   = 6 / Math.sqrt(viewport.zoom);; 
+                    ctx.lineWidth   = 6 / Math.sqrt(viewport.zoom);
                     ctx.lineJoin    = "miter";
                     ctx.fillStyle   = '#FFFFFF';
                     ctx.strokeStyle = '#FFFFFF';
