@@ -86,7 +86,7 @@
 
     <div id="players" onDragStart="onStartDragPlayers(event);" onMouseDown="onResetPlayers(event);" onDragEnd="onEndDragPlayers(event);" onWheel="onWheelPlayers();" ontouchmove="onDragPlayers(event);"></div>
     
-    <div class="audioplayer" draggable="true" id="musiccontrols" onDragStart="console.log('test'); onStartDragMusic(event);" onMouseDown="onResetMusic(event);" onDragEnd="onEndDragMusic(event);" ontouchmove="onDragMusic(event);">
+    <div class="audioplayer" draggable="true" id="musiccontrols" onDragStart="onStartDragMusic(event);" onMouseDown="onResetMusic(event);" onDragEnd="onEndDragMusic(event);" ontouchmove="onDragMusic(event);">
         <audio id="audioplayer" loop></audio>
         <img src="/static/louder.png" draggable="false" onClick="onStepMusic(1);" title="MAKE LOUDER" />
         <div id="musicvolume"><img src="/static/muted.png" class="icon" /></div>

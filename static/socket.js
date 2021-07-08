@@ -162,10 +162,16 @@ function onRoll(data) {
 
 function onSelect(data) {
     player_selections[data.color] = data.selected;
-    
+
     // update my selection if it's me
     if (data.color == my_color) {    
         select_ids = data.selected;
+
+        if (!select_ids.includes(primary_id)) {
+            primary_id = select_ids[0];
+        }
+
+        /*
         // update primary id 
         if (select_ids.includes(primary_id)) {
             // reselect primary item (previous one does not belong to new selection)
@@ -177,7 +183,7 @@ function onSelect(data) {
             } else {
                 primary_id = 0;
             }
-        }
+        }*/
     }
 }
 

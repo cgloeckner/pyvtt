@@ -783,9 +783,9 @@ function onGrab(event) {
             
         } else if (token != null) {
             $('#battlemap').css('cursor', 'move');
-            
-            var before = select_ids;
-            
+    
+            var modified = false;
+
             if (event.ctrlKey || event.metaKey) {
                 // toggle token in/out selection group
                 var index = select_ids.indexOf(token.id);
@@ -797,6 +797,7 @@ function onGrab(event) {
                     select_ids.push(token.id);
                 }
                 primary_id = select_ids[0];
+                modified   = true;
                 
             } else {
                 // reselect only if token wasn't selected before
@@ -807,10 +808,11 @@ function onGrab(event) {
                 } else {
                     primary_id = token.id;
                 }
-                grabbed = true;
+                modified = true;
+                grabbed  = true;
             }
-            
-            if (before != select_ids) {
+
+            if (modified) {
                 // notify server about selection
                 writeSocket({
                     'OPID'     : 'SELECT',
@@ -954,25 +956,6 @@ function onRelease() {
             'OPID'    : 'UPDATE',
             'changes' : changes
         });
-    }
-
-    if ((!space_bar || was_touch) && !was_scrolled) {
-        if (!was_grabbed && (!space_bar || was_touch)) {
-            // query touch position to keep token selected or unselect
-            var adding = false; // default: not adding to the selection
-            if (event.ctrlKey || event.metaKey) {
-                adding = true;
-            }
-            
-            writeSocket({
-                'OPID'   : 'RANGE',
-                'adding' : adding,
-                'left'   : mouse_x,
-                'top'    : mouse_y,
-                'width'  : 0,
-                'height' : 0
-            });
-        }
     }
 }
 

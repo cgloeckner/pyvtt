@@ -577,7 +577,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket1.clearAll()
         socket2.clearAll()
         socket3.clearAll()
-        
+
         # trigger adding range query on empty space
         player_cache1.selected = [145634]  
         query = {
