@@ -512,8 +512,8 @@ div.dice > div {
 div.dice > div > img {
     user-select: none;
     
-    max-width: 48px;
-    max-height: 48px;
+    width: 48px;
+    height: 48px;
 }
 
 div.dice > div > img:hover {

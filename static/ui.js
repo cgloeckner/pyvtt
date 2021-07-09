@@ -1299,7 +1299,6 @@ function selectAllTokens() {
     if (select_ids.length > 0 && primary_id == null) {
         primary_id = select_ids[0];
     }
-    console.log(select_ids, primary_id);
 }
 
 /// Event handle to copy selected tokens
@@ -1696,7 +1695,7 @@ function onTokenDelete() {
 function onStartDragDice(event, sides) {
     event.dataTransfer.setDragImage(drag_img, 0, 0);
     localStorage.setItem('drag_data',  sides);
-    localStorage.setItem('drag_timer', '0');
+    //localStorage.setItem('drag_timer', '0');
 }
 
 /// Event handle for clicking a single dice container
@@ -1709,11 +1708,15 @@ function onResetDice(event, sides) {
    
 /// Event handle for stop dragging a single dice container
 function onEndDragDice(event) {
-    var is_drag_timer = localStorage.getItem('drag_timer');
     var sides = localStorage.getItem('drag_data');
-    
-    if (sides > 2 && is_drag_timer == '1') {
-        
+
+    var min_x = 0;
+    var min_y = 0;
+    var max_x = MAX_SCENE_WIDTH;
+    var max_y = MAX_SCENE_WIDTH * canvas_ratio;
+
+    // drop timer within scene
+    if (min_x <= mouse_x && mouse_x <= max_x && min_y <= mouse_y && mouse_y <= max_y) {
         // query last recent roll of that die by the current player
         if (sides == 2) {
             // ignore binary die
@@ -1771,10 +1774,9 @@ function onEndDragDice(event) {
                 }
             });
         };
-    }
+    } 
     
     localStorage.removeItem('drag_data');
-    localStorage.removeItem('drag_timer');
 }
 
 /// Event handle for start dragging the players container
@@ -1956,11 +1958,25 @@ function isDiceAtBorder() {
 
 /// Drag dice container to position specified by the event
 function onDragDice(event) {
-    var is_drag_timer = localStorage.getItem('drag_timer');
+    //var is_drag_timer = localStorage.getItem('drag_timer');
     var sides = localStorage.getItem('drag_data');
-    
+
+    // NOTE: moving dice icons around is currently disabled to allow proper timer dice stuff
+
+    /*
     if (sides == 2 || isDiceAtBorder()) {
-        localStorage.setItem('drag_timer', '0');
+    */
+     /*
+    var min_x = 0;
+    var min_y = 0;
+    var max_x = MAX_SCENE_WIDTH;
+    var max_y = MAX_SCENE_WIDTH * canvas_ratio;
+    var is_over_scene = min_x <= mouse_x && mouse_x <= max_x && min_y <= mouse_y && mouse_y <= max_y
+
+    // move dice outside scene
+    if (!is_over_scene || isDiceAtBorder()) {
+        console.log('outside while drag');
+        //localStorage.setItem('drag_timer', '0');
         
         // move die around edge
         var p = pickScreenPos(event);
@@ -1980,12 +1996,7 @@ function onDragDice(event) {
         moveDiceTo(data, sides);
         saveDicePos(sides, data);
         
-    } else {
-        if (is_drag_timer == '0') {
-            showTip('DROP TO ADD TO SCENE');
-            localStorage.setItem('drag_timer', '1');
-        }
-    }
+    }  */
 }
 
 /// Drag players container to position specified by the event
