@@ -454,6 +454,12 @@ function onDrop(event) {
     // upload files
     var f = new FormData($('#uploadform')[0]);
 
+
+    // save drop position for later adding
+    var x = mouse_x;
+    var y = mouse_y;
+
+
     $.ajax({
         url: '/' + gm_name + '/' + game_url + '/upload',
         type: 'POST',
@@ -476,8 +482,8 @@ function onDrop(event) {
                 // trigger token creation via websocket
                 writeSocket({
                     'OPID' : 'CREATE',
-                    'posx' : mouse_x,
-                    'posy' : mouse_y,
+                    'posx' : x,
+                    'posy' : y,
                     'size' : default_token_size,
                     'urls' : response['urls']
                 });
@@ -1731,6 +1737,10 @@ function onEndDragDice(event) {
         // upload timer token to the game
         notifyUploadStart();
 
+        // save drop position for later adding
+        var x = mouse_x;
+        var y = mouse_y;
+
         // load transparent image from URL
         var img = new Image()
         img.src = '/static/token_d' + sides + '.png';
@@ -1756,12 +1766,15 @@ function onEndDragDice(event) {
                     $.each(data.urls, function(index, url) {
                         loadImage(url);
                     });
+
+                    
+                    console.log('add', mouse_x, mouse_y);
                     
                     // trigger token creation via websocket
                     writeSocket({
                         'OPID' : 'CREATE',
-                        'posx' : mouse_x,  
-                        'posy' : mouse_y,
+                        'posx' : x,  
+                        'posy' : y,
                         'size' : default_token_size,
                         'urls' : data.urls,
                         'labels' : ['#' + r]
