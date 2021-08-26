@@ -188,8 +188,105 @@ var roll_timeout = 10000.0; // ms until roll will START to disappear
 
 var roll_history = {}; // save each player's last dice roll per die
 
+function toggleRollHistory() {
+    var tray = $('#rollhistory');
+    if (tray.css('right') == '0px') {
+        tray.animate({right: '-=175'}, 500);
+    } else {
+        tray.animate({right: '+=175'}, 500);
+    }
+}
+
+/// Start dragging dice tray dice
+function startDragRoll() {
+    localStorage.setItem('drag_data', 'rollbox');
+}
+
+/// Drag dice within dice tray
+function onDragRoll(event) {    
+    var parent = $('#rollhistory').position();
+    var x = event.clientX - parent['left'];
+    var y = event.clientY - parent['top'];
+    var data = [x, y];
+
+    localStorage.setItem('roll_pos', JSON.stringify(data));
+}
+
+/// Drop dice from dice tray
+function stopDragRoll(event, elem) {         
+    var raw = localStorage.getItem('roll_pos');
+
+    var pos = JSON.parse(raw);
+    if (pos[0] < 0 || pos[1] < 0) {
+        // grab sides and roll result
+        var sides = parseInt(elem.children[0].src.split('token_d')[1].split('.png')[0]);
+        var result = parseInt(elem.children[1].innerHTML);
+        console.log(result);
+        if (!isNaN(result)) {
+            onDropTimerInScene(sides, result);
+        }                                     
+        return;
+    }
+    
+    pos[0] = Math.max(20, Math.min(180, pos[0]));
+    pos[1] = Math.max(20, Math.min(380, pos[1]));
+
+    var container = $(elem);
+    container.css('left', pos[0]);
+    container.css('top', pos[1]);
+    
+    localStorage.removeItem('roll_pos');
+    localStorage.removeItem('drag_data');
+}
+
+/// Adds a roll to the rollhistory dice tray
+function logRoll(sides, result) {
+    var tray = $('#rollhistory');
+
+    var row = parseInt(Math.random() * (3));
+    var col =  parseInt(Math.random() * (7));
+    var x = 20 + 50 * row + Math.random() * 15;
+    var y = 20 + 50 * col + Math.random() * 15;
+
+    var css = '';
+    if (sides == 2) {
+        // use D6 as binary dice
+        sides = 6;
+        result = (result == 2) ? '<img src="/static/skull.png" />' : '';
+    }
+    if (sides == 100) {
+        // use D10 for D100
+        sides = 10;
+    }
+
+    // calculate player's hue for dice
+    var hsl = getHsl(my_color);
+    var filter = "hue-rotate(" + hsl[0] + "turn) saturate(" + hsl[1] + ") brightness(" + (2*hsl[2]) + ")";
+
+    var die = '<div style="left: ' + x + 'px; top: ' + y + 'px;" draggable="true"'
+        + 'onDragStart="startDragRoll(event, this);"'
+        + 'ontouchstart="startDragRoll(event, this);"'
+        + 'ontouchend="stopDragRoll(event, this);"'
+        + 'onDragEnd="stopDragRoll(event, this);">'
+        + '<img src="/static/token_d' + sides + '.png" style="filter: ' + filter + ';"><span>' + result + '</span></div>';
+
+    tray.prepend(die);
+    var dom_span = tray.children(':first-child')
+    dom_span.delay(dice_shake).fadeIn(100, function() {
+        if (fade_dice) {
+            dom_span.delay(6 * roll_timeout).fadeOut(500, function() {
+                this.remove();
+            });
+        }
+    });
+}
+
 function addRoll(sides, result, name, color, recent) {
     roll_history[sides + '_' + name] = result;
+
+    if (recent && color == my_color) {
+        logRoll(sides, result);
+    }
     
     // handling min-/max-rolls
     var ani_css = '';
@@ -201,17 +298,11 @@ function addRoll(sides, result, name, color, recent) {
         ani_css = 'maxani';
         lbl_css = ' maxroll';
     }
-    rslt_css = '';
     
     // special case: d2
     var result_label = result
     if (sides == 2) {
-        if (result == 2) {
-            result_label = '&#x2620;'; // skull
-            rslt_css += ' skull' ;
-        } else {
-            result_label = '&mdash;'; // slash
-        }
+        result_label = (result == 2) ? '<img src="/static/skull.png" />' : '<img src="/static/transparent.png" />';
     }
 
     // special case: d100
@@ -229,7 +320,7 @@ function addRoll(sides, result, name, color, recent) {
         // create dice result
         var parent_span = '<span style="display: none;">';
         var box_span    = '<span class="roll' + lbl_css + '" style="border: 3px inset ' + color + ';">';
-        var result_span = '<span class="result' + rslt_css + '">';
+        var result_span = '<span class="result">';
         var player_span = '<span class="player">';
         var dice_result_span =
             parent_span + '\n'
@@ -271,7 +362,9 @@ function onDrag(event) {
     event.preventDefault();
     pickCanvasPos(event);
 
-    if (drag_data == 'players') {
+    if (drag_data == 'rollbox') {
+        onDragRoll(event);
+    } else if (drag_data == 'players') {
         onDragPlayers(event);
 
     } else if (drag_data == 'music') {
@@ -283,6 +376,7 @@ function onDrag(event) {
         } else if (drag_data == 'rotate') {
             onTokenRotate(event);
         }
+    
     } else {
         onDragDice(event);
     }
@@ -1710,6 +1804,60 @@ function onResetDice(event, sides) {
         resetDicePos(sides);
     }
 }
+
+/// Add timer dice in the scene
+function onDropTimerInScene(sides, r) {
+    // upload timer token to the game
+    notifyUploadStart();
+
+    // save drop position for later adding
+    var x = mouse_x;
+    var y = mouse_y;
+
+    // load transparent image from URL
+    var img = new Image()
+    img.src = '/static/token_d' + sides + '.png';
+    img.onload = function() {
+        var blob = getImageBlob(img);
+        var f = new FormData();
+        f.append('file[]', blob, 'transparent.png');
+
+        // upload as background (assuming nobody else is faster :D )
+        $.ajax({
+            url: '/' + gm_name + '/' + game_url + '/upload',
+            type: 'POST',
+            data: f,
+            contentType: false,
+            cache: false,
+            processData: false,
+            success: function(response) {
+                // reset uploadqueue
+                $('#uploadqueue').val("");
+                
+                // load images if necessary
+                var data = JSON.parse(response);
+                $.each(data.urls, function(index, url) {
+                    loadImage(url);
+                });
+
+                // trigger token creation via websocket
+                writeSocket({
+                    'OPID' : 'CREATE',
+                    'posx' : x,  
+                    'posy' : y,
+                    'size' : default_token_size,
+                    'urls' : data.urls,
+                    'labels' : ['#' + r]
+                });
+                
+                notifyUploadFinish();
+            }, error: function(response, msg) {
+                notifyUploadFinish();
+                handleError(response);
+            }
+        });
+    };
+}
    
 /// Event handle for stop dragging a single dice container
 function onEndDragDice(event) {
@@ -1733,59 +1881,8 @@ function onEndDragDice(event) {
             var r = roll_history[key];
         }
 
-        // upload timer token to the game
-        notifyUploadStart();
-
-        // save drop position for later adding
-        var x = mouse_x;
-        var y = mouse_y;
-
-        // load transparent image from URL
-        var img = new Image()
-        img.src = '/static/token_d' + sides + '.png';
-        img.onload = function() {
-            var blob = getImageBlob(img);
-            var f = new FormData();
-            f.append('file[]', blob, 'transparent.png');
-
-            // upload as background (assuming nobody else is faster :D )
-            $.ajax({
-                url: '/' + gm_name + '/' + game_url + '/upload',
-                type: 'POST',
-                data: f,
-                contentType: false,
-                cache: false,
-                processData: false,
-                success: function(response) {
-                    // reset uploadqueue
-                    $('#uploadqueue').val("");
-                    
-                    // load images if necessary
-                    var data = JSON.parse(response);
-                    $.each(data.urls, function(index, url) {
-                        loadImage(url);
-                    });
-
-                    
-                    console.log('add', mouse_x, mouse_y);
-                    
-                    // trigger token creation via websocket
-                    writeSocket({
-                        'OPID' : 'CREATE',
-                        'posx' : x,  
-                        'posy' : y,
-                        'size' : default_token_size,
-                        'urls' : data.urls,
-                        'labels' : ['#' + r]
-                    });
-                    
-                    notifyUploadFinish();
-                }, error: function(response, msg) {
-                    notifyUploadFinish();
-                    handleError(response);
-                }
-            });
-        };
+        // add timer
+        onDropTimerInScene(sides, r);
     } 
     
     localStorage.removeItem('drag_data');

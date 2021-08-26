@@ -687,8 +687,11 @@ div.rollbox > span > span.roll > span.result {
     top: -3px;
 }
 
-div.rollbox > span > span.roll > span.skull {
-    font-family: serif;
+div.rollbox > span > span.roll > span.result > img {
+    width: 28px;
+    height: 28px;
+    
+    margin-top: -2px;
 }
 
 div.rollbox > span > span.roll > span.player {
@@ -794,6 +797,59 @@ div#players > span > div.playermenu > img:hover {
     filter: invert(1.0)
         drop-shadow(1px 1px 10px white) 
         drop-shadow(-1px -1px 10px white);
+}
+
+/* --- Roll History ------------------------------------------------- */
+
+div#rollhistory {
+    width: 200px;
+    height: 400px;
+    
+    position: absolute;
+    top: 50px;  
+    right: -175px;
+    
+    background-image: url('/static/dicetray.png');
+    background-size: 200px 400px;
+    margin: 5px;
+}
+
+div#rollhistory > div {
+    position: absolute;
+    
+    width: 48px;
+    height: 48px;    
+    transform: translate(-50%, -50%);
+    
+    cursor: grab;
+}
+
+div#rollhistory > div > img {
+    position: absolute;
+    width: 48px;
+
+    hue-rotate: 90deg;
+}
+
+div#rollhistory > div > span {
+    position: absolute;
+    user-select: none;
+    
+    color: white;
+    font-size: x-large;
+    text-align: center;
+    font-weight: bold;
+    
+    width: 48px;
+    height: 48px;
+    
+    padding-top: 13px;
+}
+
+div#rollhistory > div > span > img {
+    width: 28px;
+    margin-top: -2px;
+    filter: invert(1.0);
 }
 
 /* --- Map Footer --------------------------------------------------- */
@@ -1013,9 +1069,8 @@ div.audioplayer {
     padding: 10px;
 
     position: absolute;
-    top: 50%;
+    bottom: 50px;
     right: 0px;
-    transform: translate(0, -50%);
     width: 25px;
 
     cursor: grab;
