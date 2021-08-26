@@ -885,7 +885,7 @@ function onGrab(event) {
                 'width'  : Math.abs(x1 - x2),
                 'height' : Math.abs(y1 - y2)
             });
-            
+
         } else if (token != null) {
             $('#battlemap').css('cursor', 'move');
     
@@ -943,6 +943,18 @@ function onGrab(event) {
                 select_from_x = null;
                 select_from_y = null; 
             }
+
+            if (token == null) {
+                // unselect
+                writeSocket({
+                    'OPID'   : 'RANGE',
+                    'adding' : false,
+                    'left'   : mouse_x,
+                    'top'    : mouse_x,
+                    'width'  : 0,
+                    'height' : 0
+                });
+            }
         }
         
     } else if (event.buttons == 2 && !is_single_touch) {
@@ -958,7 +970,7 @@ function onGrab(event) {
 
             // reset rotation
             token.rotate = 0;
-
+            
             // reset size to default size (but based on zoom)
             token.size   = parseInt(default_token_size / viewport.zoom);
             
@@ -973,7 +985,7 @@ function onGrab(event) {
                 'flipx'  : false
             });
         });
-        
+
         writeSocket({
             'OPID'    : 'UPDATE',
             'changes' : changes
