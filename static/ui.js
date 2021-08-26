@@ -478,13 +478,13 @@ function onDrop(event) {
                 $.each(response['urls'], function(index, url) {
                     loadImage(url);
                 });
-                
+
                 // trigger token creation via websocket
                 writeSocket({
                     'OPID' : 'CREATE',
                     'posx' : x,
                     'posy' : y,
-                    'size' : default_token_size,
+                    'size' : Math.round(default_token_size / viewport.zoom),
                     'urls' : response['urls']
                 });
             }
