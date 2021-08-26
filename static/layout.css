@@ -117,7 +117,7 @@ span.links a {
 div.form {
     margin-left: auto;
     margin-right: auto;
-    width: 50%;
+    width: 300px;
 }
 
 input {
@@ -155,8 +155,12 @@ input[type=color] {
     border-radius: 2px;
     border: 0px;
     padding: 10px 30px;
-    margin: 5px;      
+    margin: 5px;
     width: 250px;
+}
+
+input[type=color] {
+    width: 150px;
 }
 
 input[type=color] {
@@ -193,6 +197,8 @@ div.menu {
     left: 50%;
     top: 50%;
     transform: translate(-50%,-50%);
+
+    min-width: 500px;
 }
 
 div.walloftext {
