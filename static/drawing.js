@@ -1,24 +1,33 @@
-function initDrawing() { 
-    closeWebcam();
+var doodle_on_background = true;
+
+function initDrawing(as_background) {
+    // may fail if player draws
+    try {
+        closeWebcam();
+    } catch {}
+
+    doodle_on_background = as_background;
 
     var canvas = $('#doodle')[0];
     var context = canvas.getContext("2d");
 
-    // query background token
-    var background = null;
-    $.each(tokens, function(index, token) {
-        if (token != null) {
-            if (token.size == -1) {
-                background = token;
-                console.log(token);
+    if (as_background) {
+        // query background token
+        var background = null;
+        $.each(tokens, function(index, token) {
+            if (token != null) {
+                if (token.size == -1) {
+                    background = token;
+                    console.log(token);
+                }
             }
-        }
-    });
-    
+        });
+    }
+
     context.fillStyle = '#FFFFFF';
     context.fillRect(0, 0, canvas.width, canvas.height);
     
-    if (background != null && images[background.url] != null) {
+    if (as_background && background != null && images[background.url] != null) {
         // load background into canvas
         var sizes = getActualSize(background, canvas.width, canvas.height);
         sizes[0] *= canvas_scale;
@@ -135,7 +144,7 @@ function onReleasePen(event) {
 }
 
 function onUploadDrawing() {
-    showInfo('LOADING');
+    notifyUploadStart();
     
     // fetch JPEG-data from canvas
     var preview = $('#doodle')[0];
@@ -146,8 +155,16 @@ function onUploadDrawing() {
     var f = new FormData();
     f.append('file[]', blob, 'snapshot.jpeg');
 
-    // upload for current scene
-    uploadBackground(gm_name, game_url, f);
+    if (doodle_on_background) {
+        // upload for current scene
+        uploadBackground(gm_name, game_url, f);
+        
+    } else {
+        // upload as token at screen center
+        var x = Math.round(MAX_SCENE_WIDTH / 2)
+        var y = Math.round(MAX_SCENE_HEIGHT / 2);
+        uploadFiles(gm_name, game_url, f, x, y);
+    }
 
     closeDrawing();
 }

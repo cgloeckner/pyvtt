@@ -497,6 +497,26 @@ div#camerapreview > span {
     text-align: center;
 }
 
+/* --- Player Tools ------------------------------------------------- */
+
+div#playertools {
+    position: absolute;
+    bottom: 20px;
+    left: 5px;
+}
+
+div#playertools > img.largeicon {
+    width: 28px;
+    display: inline-block;
+}
+
+div#playertools > img.largeicon:hover {
+    cursor: pointer;
+    
+    filter: drop-shadow(0px 0px 10px white) 
+          drop-shadow(0px 0px 0 white);
+}
+
 /* --- Dicebox Layout ----------------------------------------------- */
 
 div#dicebox {

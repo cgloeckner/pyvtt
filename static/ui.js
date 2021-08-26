@@ -454,12 +454,11 @@ function onDrop(event) {
     // upload files
     var f = new FormData($('#uploadform')[0]);
 
+    // upload and drop tokens at mouse pos
+    uploadFiles(gm_name, game_url, f, mouse_x, mouse_y);
+}
 
-    // save drop position for later adding
-    var x = mouse_x;
-    var y = mouse_y;
-
-
+function uploadFiles(gm_name, game_url, f, x, y) {
     $.ajax({
         url: '/' + gm_name + '/' + game_url + '/upload',
         type: 'POST',

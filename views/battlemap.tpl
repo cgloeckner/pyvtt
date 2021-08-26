@@ -33,18 +33,6 @@
         </span>
     </div>
 
-    <div id="drawing">
-        <img class="close" src="/static/delete.png" onClick="closeDrawing();" draggable="false" title="DISCARD" />
-        <span>
-            <input type="color" name="pencolor" id="pencolor" value="#000000">
-            <input type="range" name="penwidth" id="penwidth" min="1" max="100" step="1" value="20">
-            <input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN</label>
-            <button id="upload" onClick="onUploadDrawing();">AS BACKGROUND</button>
-              
-            <canvas id="doodle" width="1600" height="900" onmousedown="onMovePen(event);" onmouseup="onReleasePen(event);" onmousemove="onMovePen(event);" ontouchstart="onMovePen(event);" ontouchmove="onMovePen(event);" ontouchend="onReleasePen(event);"></canvas>
-        </span>
-    </div>
-
     <!-- stays hidden -->
     <div id="uploadscreen">
         <form id="fileform" method="post" enctype="multipart/form-data">
@@ -52,6 +40,18 @@
         </form>
     </div>
 %end
+
+    <div id="drawing">
+        <img class="close" src="/static/delete.png" onClick="closeDrawing();" draggable="false" title="DISCARD" />
+        <span>
+            <input type="color" name="pencolor" id="pencolor" value="#000000">
+            <input type="range" name="penwidth" id="penwidth" min="1" max="100" step="1" value="20">
+            <input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN</label>
+            <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
+              
+            <canvas id="doodle" width="1600" height="900" onmousedown="onMovePen(event);" onmouseup="onReleasePen(event);" onmousemove="onMovePen(event);" ontouchstart="onMovePen(event);" ontouchmove="onMovePen(event);" ontouchend="onReleasePen(event);"></canvas>
+        </span>
+    </div>
 
     <div id="dicebox">
 %for d in dice:
@@ -93,7 +93,11 @@
         <img src="/static/quieter.png" draggable="false" onClick="onStepMusic(-1);" title="MAKE QUIETER" />
         <div id="musicslots"></div>
     </div>
-        
+
+    <div id="playertools">
+        <img class="largeicon" src="/static/pen.png" onClick="initDrawing(false);" draggable="false" title="DRAW INDEX CARD" /><br />
+    </div>
+    
     <div class="mapfooter" id="mapfooter">
         <div id="ping">Ping: &infin;</div>
         <div id="fps">0 FPS</div>

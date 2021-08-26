@@ -294,9 +294,11 @@ function uploadBackground(gm_name, game_url, f) {
                 'urls'  : [response]
             });
             
-            $('#popup').hide();
+            $('#popup').hide();    
+            notifyUploadFinish();
         }, error: function(response, msg) {
-            handleError(response);
+            handleError(response); 
+            notifyUploadFinish();
         }
     });
 }
