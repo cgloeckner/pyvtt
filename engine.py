@@ -7,13 +7,16 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import os, sys, hashlib, time, requests, json, re, shutil
+import os, sys, hashlib, time, requests, json, re, shutil, pathlib
 
 import bottle
 
 from orm import db_session, createMainDatabase
 from server import VttServer
 from cache import EngineCache
+
+from buildnumber import BuildNumber
+
 import utils 
 
 
@@ -72,7 +75,7 @@ class Engine(object):
         self.notify_api     = None   # notify api instance
         
         self.cache         = None   # later engine cache
-        
+
         # handle commandline arguments
         self.debug     = '--debug' in argv
         self.quiet     = '--quiet' in argv
@@ -203,6 +206,12 @@ class Engine(object):
         # dice roll specific timers
         self.recent_rolls = 30 # rolls within past 30s are recent
         self.latest_rolls = 60 * 10 # rolls within the past 10min are up-to-date
+
+        # load version number
+        bn = BuildNumber()
+        bn.loadFromFile(pathlib.Path('static') / 'version.js')
+        self.version = str(bn)
+        
         
         # game cache
         self.cache = EngineCache(self)

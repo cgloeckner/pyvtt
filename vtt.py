@@ -564,7 +564,8 @@ def setup_gm_routes(engine):
 def setup_player_routes(engine):
 
     @get('/static/<fname>')
-    def static_files(fname):
+    @get('/static/<fname>/<version>')
+    def static_files(fname, version=None):
         root = engine.paths.getStaticPath()
         if not os.path.isdir(root) or not os.path.exists(root / fname):
             root = './static' 

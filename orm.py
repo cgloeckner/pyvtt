@@ -20,7 +20,7 @@ __licence__ = 'MIT'
 
 
 # NOTE: screen is exactly 16:9
-MAX_SCENE_WIDTH  = 1008
+MAX_SCENE_WIDTH  = 1008                               
 MAX_SCENE_HEIGHT = 567
 
 MIN_TOKEN_SIZE   = 1

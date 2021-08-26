@@ -4,7 +4,7 @@
         <h1>{{game.url.upper()}} by {{gm.name}}</h1>
         
         <img class="logo" src="/static/logo.png" />
-        <div id="countdown">FOO</div>
+        <div id="countdown"></div>
         
         <div class="form">
             <form onsubmit="login(event, '{{gm.url}}', '{{game.url}}', '{{websocket_url}}');">
@@ -21,8 +21,10 @@
     </div>  
 </div>
 
-%if timestamp is not None:
 <script>
+%if timestamp is not None:
     onCountdown('{{timestamp}}');
-</script>
+%else:
+    onCountdown('0');
 %end
+</script>

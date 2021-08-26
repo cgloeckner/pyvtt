@@ -10,24 +10,24 @@ License: MIT (see LICENSE for details)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon"> 
-    <script src="/static/jquery-3.3.1.min.js"></script>
-    <script src="/static/md5.js"></script>
-    <script src="/static/version.js"></script>   
-    <script src="/static/errors.js"></script>   
-    <script src="/static/dropdown.js"></script>   
-    <script src="/static/render.js"></script>  
-    <script src="/static/ui.js"></script>
-    <script src="/static/socket.js"></script>
-    <script src="/static/gm.js"></script>
-    <script src="/static/music.js"></script>    
-    <script src="/static/utils.js"></script>
-    <script src="/static/webcam.js"></script>
-    <script src="/static/mobile-upload.js"></script>
-    <script src="/static/drawing.js"></script>
-    <script src="/static/constants.js"></script>
-    <link rel="stylesheet" type="text/css" href="/static/normalize.css">
-    <link rel="stylesheet" type="text/css" href="/static/layout.css">
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <script src="/static/jquery-3.3.1.min.js/{{engine.version}}"></script>
+    <script src="/static/md5.js/{{engine.version}}"></script>
+    <script src="/static/version.js/{{engine.version}}"></script>   
+    <script src="/static/errors.js/{{engine.version}}"></script>   
+    <script src="/static/dropdown.js/{{engine.version}}"></script>   
+    <script src="/static/render.js/{{engine.version}}"></script>  
+    <script src="/static/ui.js/{{engine.version}}"></script>
+    <script src="/static/socket.js/{{engine.version}}"></script>
+    <script src="/static/gm.js/{{engine.version}}"></script>
+    <script src="/static/music.js/{{engine.version}}"></script>    
+    <script src="/static/utils.js/{{engine.version}}"></script>
+    <script src="/static/webcam.js/{{engine.version}}"></script>
+    <script src="/static/mobile-upload.js/{{engine.version}}"></script>
+    <script src="/static/drawing.js/{{engine.version}}"></script>
+    <script src="/static/constants.js/{{engine.version}}"></script>
+    <link rel="stylesheet" type="text/css" href="/static/normalize.css/{{engine.version}}">
+    <link rel="stylesheet" type="text/css" href="/static/layout.css/{{engine.version}}">
     <title>{{engine.title}}: {{title}}</title>
 </head>
 

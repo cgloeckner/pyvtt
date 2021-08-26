@@ -188,13 +188,16 @@ var roll_timeout = 10000.0; // ms until roll will START to disappear
 
 var roll_history = {}; // save each player's last dice roll per die
 
+var history_rolled_out = false;
+
 function toggleRollHistory() {
     var tray = $('#rollhistory');
-    if (tray.css('right') == '0px') {
+    if (history_rolled_out) {
         tray.animate({right: '-=175'}, 500);
     } else {
         tray.animate({right: '+=175'}, 500);
     }
+    history_rolled_out = !history_rolled_out;
 }
 
 /// Start dragging dice tray dice
@@ -203,17 +206,17 @@ function startDragRoll() {
 }
 
 /// Drag dice within dice tray
-function onDragRoll(event) {    
+function onDragRoll(event) {
     var parent = $('#rollhistory').position();
-    var x = event.clientX - parent['left'];
-    var y = event.clientY - parent['top'];
-    var data = [x, y];
+    var data = pickScreenPos(event);
+    data[0] -= parent['left'];
+    data[1] -= parent['top'];
 
     localStorage.setItem('roll_pos', JSON.stringify(data));
 }
 
 /// Drop dice from dice tray
-function stopDragRoll(event, elem) {         
+function stopDragRoll(event, elem) {
     var raw = localStorage.getItem('roll_pos');
 
     var pos = JSON.parse(raw);
@@ -244,7 +247,7 @@ function logRoll(sides, result) {
     var tray = $('#rollhistory');
 
     var row = parseInt(Math.random() * (3));
-    var col =  parseInt(Math.random() * (7));
+    var col = parseInt(Math.random() * (7));
     var x = 20 + 50 * row + Math.random() * 15;
     var y = 20 + 50 * col + Math.random() * 15;
 
@@ -264,9 +267,10 @@ function logRoll(sides, result) {
     var filter = "hue-rotate(" + hsl[0] + "turn) saturate(" + hsl[1] + ") brightness(" + (2*hsl[2]) + ")";
 
     var die = '<div style="left: ' + x + 'px; top: ' + y + 'px;" draggable="true"'
-        + 'onDragStart="startDragRoll(event, this);"'
-        + 'ontouchstart="startDragRoll(event, this);"'
-        + 'ontouchend="stopDragRoll(event, this);"'
+        + 'onDragStart="startDragRoll(event, this);" '
+        + 'ontouchstart="startDragRoll(event, this);" '
+        + 'ontouchmove="onDragRoll(event);" '
+        + 'ontouchend="stopDragRoll(event, this);" '
         + 'onDragEnd="stopDragRoll(event, this);">'
         + '<img src="/static/token_d' + sides + '.png" style="filter: ' + filter + ';"><span>' + result + '</span></div>';
 
