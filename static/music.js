@@ -9,9 +9,14 @@ var gm   = '';
 var game = '';
 
 var playback = null;
+var num_slots = 0;
 
 /// Add a music slot
 function addMusicSlot(slot_id) {
+    if ($('#musiccontrols').css('display') == 'none') {
+        $('#musiccontrols').show(1000);
+    }
+    
     if ($('#musicslot' + slot_id).length == 0) {
         // create container
         var div_id     = 'id="musicslot' + slot_id + '"';
@@ -29,6 +34,8 @@ function addMusicSlot(slot_id) {
         } else {
             $('#musicslots').append(container);
         }
+
+        num_slots += 1;
     }
 }
 
@@ -66,11 +73,16 @@ function onRemoveMusicSlot(slot_id) {
             fancy_slot += 'TH';
     }
     if (confirm('CLEAR ' + fancy_slot + ' MUSIC SLOT?')) {
+        num_slots -= 1;
         writeSocket({
             'OPID'   : 'MUSIC',
             'action' : 'remove',
             'slots'  : [slot_id]
         });
+
+        if (num_slots == 0) {
+            $('#musiccontrols').hide(1000);
+        }
     }
 }
 

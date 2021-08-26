@@ -322,6 +322,7 @@ function login(event, gmname, url, websocket_url) {
             } else {
                 $('#historydrop').hide();
                 $('#loginbtn').hide();
+                $('#musiccontrols').hide();
 
                 //$('#musiccontrols').hide();
                 $('#game').fadeIn(500, 0.0, function() {
