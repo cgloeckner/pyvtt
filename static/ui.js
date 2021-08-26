@@ -1816,12 +1816,15 @@ function onEndDragPlayers(event) {
     localStorage.removeItem('drag_data');
 }
 
+/** NOT USED ANYMORE
 /// Event handle for start dragging the music tools container
 function onStartDragMusic(event) {
     event.dataTransfer.setDragImage(drag_img, 0, 0);
     localStorage.setItem('drag_data', 'music');
 }
+*/
 
+/** NOT USED ANYMORE
 /// Event handle for clicking the music tools container
 function onResetMusic(event) {
     if (event.buttons == 2) {
@@ -1836,11 +1839,14 @@ function onResetMusic(event) {
         localStorage.removeItem('music');
     }
 }
-   
+*/
+    
+/** NOT USED ANYMORE
 /// Event handle for stop dragging the players container
 function onEndDragMusic(event) {
     localStorage.removeItem('drag_data');
 }
+*/
 
 /// Snaps dice container to the closest edge (from x, y)
 function snapContainer(x, y, container, default_snap) {
@@ -2028,6 +2034,7 @@ function onDragPlayers(event) {
     savePlayersPos(pos);
 }
 
+/** NOT USED ANYMORE
 /// Drag music tools container to position specified by the event
 function onDragMusic(event) {
     var p = pickScreenPos(event);
@@ -2043,6 +2050,7 @@ function onDragMusic(event) {
     moveMusicTo(pos);
     saveMusicPos(pos);
 }
+*/
 
 /// Event handle for entering a player container with the mouse
 function onMouseOverPlayer(uuid) {
@@ -2171,12 +2179,14 @@ function savePlayersPos(pos) {
     localStorage.setItem('players', JSON.stringify(pos));
 }
 
+/** NOTE USED ANYMORE
 /// Save music tools position to local storage using percentage values
 function saveMusicPos(pos) {
     pos[0] /= window.innerWidth;
     pos[1] /= window.innerHeight;
     localStorage.setItem('music', JSON.stringify(pos));
 }
+*/
 
 /// Event handle for toggling auto movement
 function onToggleAutoMove(event) {
