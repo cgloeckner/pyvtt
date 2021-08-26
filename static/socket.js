@@ -288,6 +288,39 @@ function pickRandomColor() {
     $('#playercolor')[0].value = SUGGESTED_PLAYER_COLORS[index];
 }
 
+/// Handles countdown at login screen
+function onCountdown(hexstamp) {
+    var date  = new Date(parseInt(hexstamp, 16));
+    date.second = 0;
+
+    // only show hours and minutes
+    var start = date.toLocaleDateString([], {day: '2-digit', month: '2-digit', year: '2-digit'}) + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+
+    // calculate time difference
+    var now = new Date();
+    var s = parseInt((date - now) / 1000);
+    if (s > 0) {
+        var m = parseInt(s / 60);
+        var s = s % 60;
+        var h = parseInt(m / 60);
+        var m = m % 60;
+
+        s = (s < 10) ? '0' + s : s;
+        m = (m < 10) ? '0' + m : m;
+        h = (h < 10) ? '0' + h : h;
+
+        var line1 = 'GAME STARTS AT<br /><h2>' + start + '</h2>';
+        var line2 = '<h1>'+h+'<span class="small">H</span>'+m+'<span class="small">M</span>'+s+'<span class="small">S</span></h1>';
+
+        $('#countdown')[0].innerHTML = line1 + line2;
+
+        window.setTimeout(function() { onCountdown(hexstamp); }, 1000);
+    } else {
+        $('#countdown')[0].innerHTML = '';
+        $('#countdown').fadeOut(100);
+    }
+}
+
 /// Handles login and triggers the game
 function login(event, gmname, url, websocket_url) {
     event.preventDefault();

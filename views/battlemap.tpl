@@ -5,7 +5,7 @@
 <div id="popup"></div>
 <div id="hint"></div> 
 
-%include("login")
+%include("login", timestamp=timestamp)
 
 <div id="game">
 %if is_gm:

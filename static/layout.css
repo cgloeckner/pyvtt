@@ -217,6 +217,27 @@ div.menu > img.logo {
     width: auto;
 }
 
+div.menu > div#countdown {
+    width: 300px;  
+    height: 125px;
+    
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, 100px);
+    
+    background-color: rgba(20, 20, 20, 0.95);
+    border-radius: 15px;
+    border: 1px solid black;
+    
+    padding: 15px;
+    margin: 5px;
+}
+
+div.menu > div#countdown > h1 > span.small {
+    font-size: initial;
+}
+
 div.menu table {
     margin-left: auto;
     margin-right: auto;
@@ -238,7 +259,37 @@ div#game {
     height: 100%;
 }
 
-/* --- Settings Area ------------------------------------------------ */
+/* --- GM Schedule Overlay ------------------------------------------ */
+
+div#schedule {
+    display: none;
+    
+    width: 500px;
+    height: 215px;
+    border: 1px solid red;
+    top: 50%;
+    left: 50%;
+    position: absolute;
+    transform: translate(-50%,-50%);
+    
+    border: 1px solid white;
+    
+    background-color: rgba(0, 0, 0, 0.85);
+    border-radius: 10px;
+    padding: 5px;
+    margin: 5px;
+    
+    z-index: 10;
+}
+
+div#schedule > form > p > select,
+div#schedule > form > p > input {
+    padding: 5px;
+}
+
+div#schedule > form > p > input[type=number] {
+    width: 80px;
+}
 
 /* --- GM Area ------------------------------------------------------ */
 

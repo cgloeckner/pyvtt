@@ -40,6 +40,44 @@ function cleanUp(url) {
     $.post(url='/vtt/clean-up/' + url);
 }
 
+function showSchedule(gm, url) {
+    $('#schedule').show(500);
+    $('#schedule_base_url')[0].value = '/' + gm + '/' + url;
+}
+
+function createCountdown() {
+    var url = $('#schedule_base_url')[0].value;
+    
+    var day    = parseInt($('#day>:selected')[0].value);
+    var month  = parseInt($('#month>:selected')[0].value);
+    var year   = $('#year')[0].valueAsNumber;   
+    var hour   = parseInt($('#hour>:selected')[0].value);
+    var minute = parseInt($('#minute>:selected')[0].value);
+    
+    var d      = new Date(year, month-1, day, hour, minute)
+    url += '/' + d.getTime().toString(16);
+
+    window.location = url;
+}
+
+function updateDays() {
+    var day   = parseInt($('#day>:selected')[0].value);
+    var month = parseInt($('#month>:selected')[0].value);
+    var year  = $('#year')[0].valueAsNumber;
+    var num_days = new Date(year, month, 0).getDate();
+
+    console.log(day, month, year, num_days);
+    
+    // refill days for selected month
+    var options = ''
+    for (var i = 1; i <= num_days; ++i) {
+        var selected = (i == day) ? ' selected' : '';
+        var shown = (i < 10) ? '0' + i : i;
+        options += '<option value="' + i + '"' + selected + '>' + shown + '</option>'
+    }
+    $('#day')[0].innerHTML = options;
+}
+
 function kickPlayer(url, uuid) {
     var kick = confirm("KICK THIS PLAYER?");
     if (kick) {

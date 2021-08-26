@@ -654,10 +654,11 @@ def setup_player_routes(engine):
             abort(404)
         
         return static_file(fname, root=path)
-    
+
     @get('/<gmurl>/<url>')
+    @get('/<gmurl>/<url>/<timestamp>')
     @view('battlemap')
-    def get_player_battlemap(gmurl, url):
+    def get_player_battlemap(gmurl, url, timestamp=None):
         # try to load playername from cookie (or from GM name)
         playername = request.get_cookie('playername', default='')
         
@@ -695,7 +696,7 @@ def setup_player_routes(engine):
         supported_dice.reverse()
         
         # show battlemap with login screen ontop
-        return dict(engine=engine, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=gm, is_gm=gm_is_host, dice=supported_dice)
+        return dict(engine=engine, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=gm, is_gm=gm_is_host, dice=supported_dice, timestamp=timestamp)
 
     @post('/<gmurl>/<url>/login')
     def set_player_name(gmurl, url):
