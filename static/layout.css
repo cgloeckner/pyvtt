@@ -816,12 +816,17 @@ div#rollhistory {
 
 div#rollhistory > div {
     position: absolute;
+    display: none;
     
     width: 48px;
     height: 48px;    
     transform: translate(-50%, -50%);
     
     cursor: grab;
+}
+
+div#rollhistory > div:active {
+    cursor: move;
 }
 
 div#rollhistory > div > img {

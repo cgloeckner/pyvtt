@@ -242,6 +242,13 @@ function stopDragRoll(event, elem) {
     localStorage.removeItem('drag_data');
 }
 
+/// Handle clicking a rollhistory's die
+function onClickRoll(event, elem) {
+    if (event.buttons == 2) {
+        elem.remove();
+    }
+}
+
 /// Adds a roll to the rollhistory dice tray
 function logRoll(sides, result) {
     var tray = $('#rollhistory');
@@ -275,10 +282,12 @@ function logRoll(sides, result) {
         + '<img src="/static/token_d' + sides + '.png" style="filter: ' + filter + ';"><span>' + result + '</span></div>';
 
     tray.prepend(die);
-    var dom_span = tray.children(':first-child')
-    dom_span.delay(dice_shake).fadeIn(100, function() {
+    var dom_span = tray.children(':first-child');
+    dom_span[0].onmousedown = function(event) { onClickRoll(event, $(this)) };
+
+    dom_span.delay(dice_shake).fadeIn(250, function() {
         if (fade_dice) {
-            dom_span.delay(6 * roll_timeout).fadeOut(500, function() {
+            dom_span.delay(6 * roll_timeout).fadeOut(100, function() {
                 this.remove();
             });
         }
