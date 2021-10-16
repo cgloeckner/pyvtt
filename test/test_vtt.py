@@ -459,7 +459,7 @@ class VttTest(EngineBaseTest):
         
         # GM cannot cleanup for unknown game
         self.app.set_cookie('session', gm_sid)
-        ret = self.app.post('/vtt/kick-clean-up/test-weird', expect_errors=True)
+        ret = self.app.post('/vtt/clean-up/test-weird', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
         # upload some music
@@ -727,7 +727,7 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.content_type, 'text/css')
 
         # cannot query parent directory   
-        ret = self.app.get('/static/../README.md', expect_errors=True)  
+        ret = self.app.get('/static/../README.md/0', expect_errors=True)  
         self.assertEqual(ret.status_int, 404)
 
         # cannot query sub-directory

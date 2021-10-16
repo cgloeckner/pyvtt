@@ -77,6 +77,8 @@ def setup_gm_routes(engine):
         else:
             # create new session for already existing GM
             gm.sid = session['sid']
+            # update GM name
+            gm.name = session['user']['username']
             
         gm.refreshSession(response)
         
