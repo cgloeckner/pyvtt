@@ -86,7 +86,7 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.status_int, 200)
         # open fake socket
         s = SocketDummy()
-        s.block = True       
+        s.block = True
         s.push_receive({'name': playername, 'gm_url': gm_url, 'game_url': game_url})
         # listen to the faked websocket
         return ret, self.engine.cache.listen(s)
@@ -489,29 +489,30 @@ class VttTest(EngineBaseTest):
         ret1, player1 = self.joinPlayer('arthur', 'test-game-1', 'arthur', 'gold')
         ret2, player2 = self.joinPlayer('arthur', 'test-game-1', 'bob', 'red')
         ret3, player3 = self.joinPlayer('arthur', 'test-game-1', 'carlos', 'blue')
+        ret3, player4 = self.joinPlayer('arthur', 'test-game-1', 'blocker', 'green')
 
         gm_cache   = self.engine.cache.getFromUrl('arthur')
         game_cache = gm_cache.getFromUrl('test-game-1')
-        self.assertEqual(len(game_cache.players), 3) 
+        self.assertEqual(len(game_cache.players), 4) 
         
         # non-GM cannot kick any player
         for p in [player1, player2, player3]:
             ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(p.uuid), expect_errors=True)
             self.assertEqual(ret.status_int, 404)
-            self.assertEqual(len(game_cache.players), 3)
+            self.assertEqual(len(game_cache.players), 4)
         
         # GM cannot kick players from unknown game
         self.app.set_cookie('session', gm_sid)
         for p in [player1, player2, player3]:
             ret = self.app.post('/vtt/kick-player/test-weird-1/{0}'.format(p.uuid), expect_errors=True)
             self.assertEqual(ret.status_int, 404)
-            self.assertEqual(len(game_cache.players), 3)
+            self.assertEqual(len(game_cache.players), 4)
         
         # GM can kick a single player from his game
         self.app.set_cookie('session', gm_sid)
         ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player2.uuid))
         self.assertEqual(ret.status_int, 200)
-        self.assertEqual(len(game_cache.players), 2)
+        self.assertEqual(len(game_cache.players), 3)
         self.assertIn('arthur', game_cache.players) 
         self.assertNotIn('bob', game_cache.players)
         self.assertIn('carlos', game_cache.players)
@@ -521,7 +522,7 @@ class VttTest(EngineBaseTest):
         self.app.set_cookie('session', gm_sid)
         ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player1.uuid))
         self.assertEqual(ret.status_int, 200) 
-        self.assertEqual(len(game_cache.players), 1)
+        self.assertEqual(len(game_cache.players), 2)
         self.assertNotIn('arthur', game_cache.players)
         self.assertIn('carlos', game_cache.players) 
         gevent.kill(player1.greenlet)
@@ -530,15 +531,15 @@ class VttTest(EngineBaseTest):
         self.app.set_cookie('session', gm_sid)
         ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player3.uuid))
         self.assertEqual(ret.status_int, 200) 
-        self.assertEqual(len(game_cache.players), 0) 
-        gevent.kill(player3.greenlet)
+        self.assertEqual(len(game_cache.players), 1) 
+        gevent.kill(player2.greenlet)
         
         # GM cannot kick player twice (but nothing happens)
         self.app.set_cookie('session', gm_sid)
         ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player3.uuid))
         self.assertEqual(ret.status_int, 200) 
-        self.assertEqual(len(game_cache.players), 0)
-    
+        self.assertEqual(len(game_cache.players), 1)
+        
     def test_vtt_deletegame(self):
         # register arthur
         ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
