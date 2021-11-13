@@ -110,19 +110,20 @@ class GameTest(EngineBaseTest):
         img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
-        p1.touch()
+        with open(p1, 'w') as h: # write different content because of hashing
+            h.write('FOO')
         id2 = game.getNextId()
         p2 = img_path / '{0}.png'.format(id2)
         with open(p2, 'w') as h: # write different content because of hashing
-            h.write('2')
+            h.write('A')
         id3 = game.getNextId()
         p3 = img_path / '{0}.png'.format(id3)
         with open(p3, 'w') as h: # write different content because of hashing
-            h.write('3')
+            h.write('AAAA')
         id4 = game.getNextId()
         p4 = img_path / '{0}.png'.format(id4)
         with open(p4, 'w') as h: # write different content because of hashing
-            h.write('4')
+            h.write('ABAAB')
         
         # assume empty cache
         cache_instance = self.engine.checksums[game.getUrl()]
@@ -139,7 +140,46 @@ class GameTest(EngineBaseTest):
         # query non-existing image  
         queried_id = game.getIdByMd5('foobar')
         self.assertIsNone(queried_id)
+
+    @db_session
+    def test_removeMd5(self):  
+        game = self.db.Game(url='foo', gm_url='url456')
+        game.postSetup()
         
+        # create empty files (to mimic uploaded images)
+        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        id1 = game.getNextId()
+        p1 = img_path / '{0}.png'.format(id1)
+        with open(p1, 'w') as h: # write different content because of hashing
+            h.write('FOO')
+        id2 = game.getNextId()
+        p2 = img_path / '{0}.png'.format(id2)
+        with open(p2, 'w') as h: # write different content because of hashing
+            h.write('A')
+        id3 = game.getNextId()
+        p3 = img_path / '{0}.png'.format(id3)
+        with open(p3, 'w') as h: # write different content because of hashing
+            h.write('AAAA')
+        id4 = game.getNextId()
+        p4 = img_path / '{0}.png'.format(id4)
+        with open(p4, 'w') as h: # write different content because of hashing
+            h.write('ABAAB')
+        
+        # assume empty cache
+        cache_instance = self.engine.checksums[game.getUrl()]
+        self.assertEqual(len(cache_instance), 0)
+
+        # create checksums
+        game.makeMd5s()
+        with open(p3, "rb") as handle:
+            md5_3 = self.engine.getMd5(handle)
+        queried_id = game.getIdByMd5(md5_3)
+        self.assertEqual(queried_id, id3)
+
+        # remove md5
+        game.removeMd5(id3)
+        queried_id = game.getIdByMd5(md5_3)
+        self.assertIsNone(queried_id)
     
     @db_session
     def test_postSetup(self):
@@ -278,6 +318,8 @@ class GameTest(EngineBaseTest):
         game = self.db.Game(url='foo', gm_url='url456')
         game.postSetup()
         
+        scene = self.db.Scene(game=game)
+        
         # can upload image file
         pil_img = Image.new(mode='RGB', size=(32, 32))
         with tempfile.NamedTemporaryFile('wb') as wh:
@@ -309,6 +351,43 @@ class GameTest(EngineBaseTest):
                 new_id = game.getNextId()
                 self.assertEqual(old_id, new_id)
                 self.assertEqual(url, new_url)
+        
+                # can upload another image file (different to 1st one)
+                pil_img2 = Image.new(mode='RGB', size=(48, 48))
+                with tempfile.NamedTemporaryFile('wb') as wh:
+                    pil_img2.save(wh.name, 'PNG')
+                    with open(wh.name, 'rb') as rh2:
+                        # upload 2nd file
+                        fupload2 = FileUpload(rh2, 'test.png', 'test.png') 
+                        new_id = game.getNextId()
+                        url2 = game.upload(fupload2)
+                        
+                        # test 2nd file exists   
+                        img_path2 = self.engine.paths.getGamePath(game.gm_url, game.url)
+                        p2 = img_path2 / '{0}.png'.format(new_id)
+                        self.assertTrue(os.path.exists(p2))
+                        
+                        # check 2nd md5 being stored
+                        md5_2 = self.engine.getMd5(fupload2.file)
+                        checksums = self.engine.checksums[game.getUrl()]
+                        self.assertIn(md5_2, checksums) 
+                        
+                        # cleanup to delete 1st file
+                        game.cleanup(0)
+                        checksums = self.engine.checksums[game.getUrl()]
+                        self.assertNotIn(md5, checksums)
+                        self.assertFalse(os.path.exists(p))
+                        self.assertIn(md5_2, checksums)
+                        self.assertTrue(os.path.exists(p2))
+
+                        # reupload 1st file            
+                        p1_new = img_path2 / '{0}.png'.format(game.getNextId())
+                        url = game.upload(fupload)  
+                        checksums = self.engine.checksums[game.getUrl()]
+                        self.assertIn(md5, checksums)
+                        self.assertTrue(os.path.exists(p1_new))
+                        self.assertIn(md5_2, checksums)
+                        self.assertTrue(os.path.exists(p2))
 
         # cannot upload broken file
         with tempfile.NamedTemporaryFile('wb') as wh:
@@ -403,18 +482,24 @@ class GameTest(EngineBaseTest):
         game = self.db.Game(url='foo', gm_url='url456')
         game.postSetup()
         
-        # create two empty files (to mimic uploaded images)
+        # create three empty files (to mimic uploaded images)
         img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
-        p1.touch()
+        with open(p1, 'w') as h: # write different content because of hashing
+            h.write('FOOBAR')
         id2 = game.getNextId()
         p2 = img_path / '{0}.png'.format(id2)
         with open(p2, 'w') as h: # write different content because of hashing
-            h.write('2')
-        p2.touch()
+            h.write('AAB')
+        p2.touch()   
+        id3 = game.getNextId()
+        p3 = img_path / '{0}.png'.format(id3)
+        with open(p3, 'w') as h: # write different content because of hashing
+            h.write('AB234')
+        p3.touch()
         
-        game.makeMd5s()
+        game.makeMd5s() 
 
         for i in range(120):
             self.db.Roll(game=game, name='foo', color='red', sides=4, result=3)
@@ -425,8 +510,11 @@ class GameTest(EngineBaseTest):
             md5_1 = self.engine.getMd5(h)
         with open(p2, 'rb') as h:
             md5_2 = self.engine.getMd5(h)
+        with open(p3, 'rb') as h:
+            md5_3 = self.engine.getMd5(h)
         self.assertEqual(game.getIdByMd5(md5_1), id1)
         self.assertEqual(game.getIdByMd5(md5_2), id2)
+        self.assertEqual(game.getIdByMd5(md5_3), id3)
         
         # assign second file to token
         demo_scene = self.db.Scene(game=game)
@@ -444,7 +532,7 @@ class GameTest(EngineBaseTest):
         game.cleanup(now)
         self.assertFalse(os.path.exists(p1))
         self.assertTrue(os.path.exists(p2))
-        
+
         self.assertEqual(game.getIdByMd5(md5_1), None)
         self.assertEqual(game.getIdByMd5(md5_2), id2)
 

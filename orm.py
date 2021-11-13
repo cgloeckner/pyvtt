@@ -260,19 +260,33 @@ def createGmDatabase(engine, filename):
                 # create md5 checksum for duplication test
                 new_md5 = engine.getMd5(tmpfile.file)
                 
-                game_root = engine.paths.getGamePath(self.gm_url, self.url)
+                game_root  = engine.paths.getGamePath(self.gm_url, self.url)
+                image_id   = self.getNextId()
+                local_path = game_root / '{0}.png'.format(image_id)
                 with engine.locks[self.gm_url]: # make IO access safe
                     if new_md5 not in engine.checksums[self.getUrl()]:
                         # copy image to target
-                        image_id   = self.getNextId()
-                        local_path = game_root / '{0}.png'.format(image_id)
                         shutil.copyfile(tmpfile.name, local_path)
                         
                         # store pair: checksum => image_id
                         engine.checksums[self.getUrl()][new_md5] = image_id
+
+                # fetch remote path (query image_id via by checksum)
+                remote_path = self.getImageUrl(engine.checksums[self.getUrl()][new_md5])
+
+                # assure image file exists
+                img_id = int(remote_path.split('/')[-1].split('.png')[0])
+                local_path = game_root / '{0}.png'.format(img_id)
+                with engine.locks[self.gm_url]: # make IO access safe
+                    if not os.path.exists(local_path):
+                        # copy image to target
+                        shutil.copyfile(tmpfile.name, local_path)
+
+                        engine.logging.warning('Image got re-uploaded to fix a cache error')
+                        if engine.notify_api is not None:
+                            engine.notify_api(None, 'Image got re-uploaded to fix a cache error')
                 
-                # propagate remote path (query image_id by checksum)
-                return self.getImageUrl(engine.checksums[self.getUrl()][new_md5])
+                return remote_path
         
         @staticmethod
         def getIdFromUrl(url):
