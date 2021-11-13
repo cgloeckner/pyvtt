@@ -304,13 +304,19 @@ function onCountdown(hexstamp) {
         var s = s % 60;
         var h = parseInt(m / 60);
         var m = m % 60;
+        var d = parseInt(h / 24);
+        var h = h % 24;
 
         s = (s < 10) ? '0' + s : s;
         m = (m < 10) ? '0' + m : m;
         h = (h < 10) ? '0' + h : h;
 
         var line1 = 'GAME STARTS AT<br /><h2>' + start + '</h2>';
-        var line2 = '<h1>'+h+'<span class="small">H</span>'+m+'<span class="small">M</span>'+s+'<span class="small">S</span></h1>';
+        var line2 = '<h1>';
+        if (d > 0) { line2 += d+'<span class="small">D</span>' };
+        if (d > 0 || h > 0) { line2 += h+'<span class="small">H</span>' };
+        if (d > 0 || h > 0 || m > 0) { line2 += m+'<span class="small">M</span>' };
+        if (d > 0 || h > 0 || h > 0 || s > 0) { line2 += s+'<span class="small">S</span></h1>' };
 
         $('#countdown')[0].innerHTML = line1 + line2;
 
