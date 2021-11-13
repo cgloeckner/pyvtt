@@ -938,8 +938,8 @@ class GameCache(object):
                     # create new scene
                     remain = self.parent.db.Scene(game=g)
                     self.parent.db.commit()
+                    g.order = [remain.id]
                 g.active = remain.id
-                g.reorderScenes()
                 self.parent.db.commit()
                 # broadcast scene switch
                 self.broadcastSceneSwitch(g) 

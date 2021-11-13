@@ -1852,7 +1852,7 @@ class PlayerCacheTest(EngineBaseTest):
             self.assertEqual(game.order, expected)
         # expect scene order to remain
         with db_session:
-            game = gm_cache.db.Game.select(url='bar').first()
+            game = self.get_game()
         self.assertEqual(game.order, [3, 5, 6])
         
         # clear game
@@ -1860,7 +1860,7 @@ class PlayerCacheTest(EngineBaseTest):
         
         # test scene order
         with db_session:
-            game = gm_cache.db.Game.select(url='bar').first()
+            game = self.get_game()
         self.assertEqual(game.order, [7, 8, 9, 10])
 
         # GM can delete an active scene
@@ -1916,7 +1916,13 @@ class PlayerCacheTest(EngineBaseTest):
             self.assertEqual(game.order, [active.id])
         
         # GM can delete the last remaining scene
-        game_cache.onDeleteScene(player_cache2, {'scene': active.id}) 
+        game_cache.onDeleteScene(player_cache2, {'scene': active.id})
+        last_active = active.id
+        # refetch game
+        with db_session:
+            game = self.get_game()  
+            active = self.active_scene()
+        print(game.order)
         # expect REFRESH broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1924,16 +1930,10 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1, answer2)
         self.assertEqual(answer1, answer3)
         self.assertEqual(answer1['OPID'], 'REFRESH')
+        self.assertEqual(game.order, [active.id])
         # @NOTE: REFRESH is tested in-depth somewhere else
         # except first id to be missing now
         with db_session:
             self.assertIsNone(gm_cache.db.Scene.select(lambda s: s.id == all_scene_ids[0]).first())
         # expect a new scene being created
-        with db_session:
-            now_active = self.active_scene()
-        self.assertNotEqual(active.id, now_active.id)
-        # expect scene order with freshly created scene
-        with db_session:
-            game = self.get_game()
-            active = self.active_scene()
-            self.assertEqual(game.order, [active.id])
+        self.assertNotEqual(active.id, last_active)
