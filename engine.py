@@ -56,7 +56,7 @@ class Engine(object):
         self.file_limit = {
             "token"      : 2,
             "background" : 10,
-            "game"       : 15,
+            "game"       : 30,
             "music"      : 10,
             "num_music"  : 5
         }

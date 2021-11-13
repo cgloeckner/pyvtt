@@ -178,9 +178,9 @@ class VttTest(EngineBaseTest):
         img_huge  = makeImage(2000, 2000)
         mib = 2**20
         self.assertLess(len(img_small), mib)       
-        self.assertLess(len(img_large), 11 * mib)
-        self.assertGreater(len(img_large), 5 * mib)  
-        self.assertGreater(len(img_huge), 10 * mib)
+        self.assertLess(len(img_large), (self.engine.file_limit['background']+1) * mib)
+        self.assertGreater(len(img_large), (self.engine.file_limit['background'] // 2) * mib)  
+        self.assertGreater(len(img_huge), self.engine.file_limit['background'] * mib)
 
         # create some zips
         empty_game = json.dumps({
@@ -188,10 +188,10 @@ class VttTest(EngineBaseTest):
             'scenes': [{'tokens': [], 'backing': None}]
         })
         
-        zip_normal = makeZip('zip2', empty_game, 4)
-        zip_huge   = makeZip('zip2', empty_game, 8)
-        self.assertLess(len(zip_normal), 15 * mib)
-        self.assertGreater(len(zip_huge), 15 * mib)
+        zip_normal = makeZip('zip2', empty_game, 5)
+        zip_huge   = makeZip('zip2', empty_game, self.engine.file_limit['game'])
+        self.assertLess(len(zip_normal), self.engine.file_limit['game'] * mib)
+        self.assertGreater(len(zip_huge), self.engine.file_limit['game'] * mib)
         
         fake_file = b'0' * mib
         text_file = b'hello world'
@@ -318,7 +318,7 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.content_type, 'application/json')
         self.assertTrue(ret.json['url_ok'])
         self.assertFalse(ret.json['file_ok'])
-        self.assertEqual(ret.json['error'], 'TOO LARGE BACKGROUND (MAX 10 MiB)')
+        self.assertEqual(ret.json['error'], 'TOO LARGE BACKGROUND (MAX {0} MiB)'.format(self.engine.file_limit['background']))
         self.assertEqual(ret.json['url'], '')
         ret = self.app.get('/arthur/test-url-5', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
@@ -353,7 +353,7 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.content_type, 'application/json')
         self.assertTrue(ret.json['url_ok'])
         self.assertFalse(ret.json['file_ok'])
-        self.assertEqual(ret.json['error'], 'TOO LARGE GAME (MAX 15 MiB)')
+        self.assertEqual(ret.json['error'], 'TOO LARGE GAME (MAX {0} MiB)'.format(self.engine.file_limit['game']))
         ret = self.app.get('/arthur/test-url-8', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
         
@@ -1037,9 +1037,9 @@ class VttTest(EngineBaseTest):
         img_huge   = makeImage(2000, 2000) # too large
         mib = 2**20
         self.assertLess(len(img_small), mib)       
-        self.assertLess(len(img_large), 11 * mib)
-        self.assertGreater(len(img_large), 5 * mib)  
-        self.assertGreater(len(img_huge), 10 * mib)
+        self.assertLess(len(img_large), (self.engine.file_limit['background'] + 1) * mib)
+        self.assertGreater(len(img_large), (self.engine.file_limit['background'] // 2) * mib)  
+        self.assertGreater(len(img_huge), self.engine.file_limit['background'] * mib)
         
         id_from_url = lambda s: int(s.split('/')[-1].split('.png')[0])
         
@@ -1260,8 +1260,8 @@ class VttTest(EngineBaseTest):
         img_large  = makeImage(1500, 1500) # as background
         img_huge   = makeImage(2000, 2000) # too large
         mib = 2**20
-        self.assertGreater(len(img_large), 5 * mib)  
-        self.assertGreater(len(img_huge), 10 * mib)
+        self.assertGreater(len(img_large), (self.engine.file_limit['background'] // 2) * mib)  
+        self.assertGreater(len(img_huge), self.engine.file_limit['background'] * mib)
         
         # register arthur
         ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
