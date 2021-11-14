@@ -284,7 +284,7 @@ def createGmDatabase(engine, filename):
 
                         engine.logging.warning('Image got re-uploaded to fix a cache error')
                         if engine.notify_api is not None:
-                            engine.notify_api(None, 'Image got re-uploaded to fix a cache error')
+                            engine.notify_api(remote_path, 'Image got re-uploaded to fix a cache error:\n {0}'.format(remote_path))
                 
                 return remote_path
         
