@@ -1368,6 +1368,11 @@ function onWheel(event) {
 
 var d100_queue = [];
 
+/// Event handle to keypress for multi dice
+function rollMultipleDice(event, sides) {
+    console.log(event, sides);
+}
+
 /// Event handle to click a dice
 function rollDice(sides) {
     // trigger dice shaking and poof (by re-applying CSS class)
@@ -1462,6 +1467,21 @@ var viewport_scroll_delta = 50;
 
 /// Event handle shortcuts on (first) selected token
 function onShortcut(event) {
+    var hovered_sides = null;
+    $('#dicebox').find('img').each(function() {
+        if ($(this).is(':hover')) {
+            hovered_sides = parseInt(this.id.split('drag')[0].split('d')[1]);
+        }
+    })
+    if (hovered_sides != null) {
+        // trigger 1-9 dice rolls
+        if (1 <= event.key && event.key <= 9) {
+            for (var i = 0; i < event.key; ++i) {
+                rollDice(hovered_sides);
+            }
+        }
+    }
+    
     space_bar = event.key == " ";
 
     // metaKey for Mac's Command Key
