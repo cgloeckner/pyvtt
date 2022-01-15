@@ -173,7 +173,6 @@ function onStepMusic(direction) {
     delta = getMusicVolumeDelta(v);
     v += direction * delta;
     v = Math.round(v * 100) / 100.0;
-    console.log(v);
     
     // fix bounding issues
     if (v < 0.01) {
