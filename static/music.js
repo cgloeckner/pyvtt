@@ -172,6 +172,8 @@ function onStepMusic(direction) {
     var v = player.volume;
     delta = getMusicVolumeDelta(v);
     v += direction * delta;
+    v = Math.round(v * 100) / 100.0;
+    console.log(v);
     
     // fix bounding issues
     if (v < 0.01) {
@@ -202,7 +204,6 @@ function onInitMusicPlayer(gmurl, url) {
     } else {
         default_volume = 0.10;
     }
-    console.log(default_volume);
 
     // setup audio source
     gm   = gmurl;

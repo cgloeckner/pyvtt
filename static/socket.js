@@ -85,7 +85,6 @@ function onSocketMessage(event) {
 }
 
 function onAccept(data) {
-    console.log('onAccept:\t', data);
     // show all players
     $.each(data.players, function(i, details) {
         var p = new Player(details.name, details.uuid, details.color, details.ip, details.country, details.agent, details.flag, details.index);
@@ -149,7 +148,6 @@ function onDelete(data) {
 }
 
 function onJoin(data) {
-    console.log('onJoin:\t', data);
     var p = new Player(data.name, data.uuid, data.color, data.ip, data.country, data.agent, data.flag, data.index);
     showPlayer(p);
 }
