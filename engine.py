@@ -266,6 +266,9 @@ class Engine(object):
             return request.environ.get('HTTP_X_FORWARDED_FOR')
         else:
             return request.environ.get('REMOTE_ADDR')
+
+    def getClientAgent(self, request):
+        return request.environ.get('HTTP_USER_AGENT')
         
     def getCountryFromIp(self, ip, timeout=3):
         result = '?' # fallback case

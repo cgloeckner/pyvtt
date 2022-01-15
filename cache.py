@@ -46,6 +46,7 @@ class PlayerCache(object):
         # fetch country flag from ip
         self.ip       = self.engine.getClientIp(request)
         self.country  = self.engine.getCountryFromIp(self.ip)
+        self.agent    = self.engine.getClientAgent(request)
         # ? = localhost, 'unknown' = unittest
         self.flag     = flag.flag(self.country) if self.country not in ['?', 'unknown'] else ''
         
@@ -261,8 +262,10 @@ class GameCache(object):
                     'name'    : name,
                     'uuid'    : p.uuid,
                     'color'   : p.color,
-                    'ip'      : p.ip,
-                    'flag'    : p.flag,
+                    'ip'      : p.ip,   
+                    'country' : p.country,
+                    'agent'   : p.agent,
+                    'flag'    : p.flag,  
                     'index'   : p.index
                 })
         # sort to ensure index-order
@@ -327,6 +330,7 @@ class GameCache(object):
             'uuid'    : player.uuid,
             'color'   : player.color,
             'country' : player.country,
+            'agent'   : player.agent,
             'flag'    : player.flag,
             'index'   : player.index
         })

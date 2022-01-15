@@ -104,12 +104,13 @@ function selectToken(x, y) {
 var players = {};
 
 /// Player constructor
-function Player(name, uuid, color, ip, country, flag, index) {
+function Player(name, uuid, color, ip, country, agent, flag, index) {
     this.name    = name;
     this.uuid    = uuid;
     this.color   = color;
     this.ip      = ip;
     this.country = country;
+    this.agent   = agent;
     this.flag    = flag;
     this.index   = index;
     this.is_last = false;
@@ -169,7 +170,12 @@ function showPlayer(p, force=false) {
     menu += '</div>';
     
     // build player's container
-    var player_container = '<span id="player_' + p.uuid + '"' + ordering + ' draggable="true" class="player"' + coloring + '>'  + menu + p.flag + '&nbsp;' + p.name + '</span>';
+    var agent_str = '';
+    if (is_gm) {
+        agent_str =' title="' + p.agent + '"';
+    }
+    
+    var player_container = '<span id="player_' + p.uuid + '"' + ordering + ' draggable="true" class="player"' + coloring + agent_str + '>'  + menu + p.flag + '&nbsp;' + p.name + '</span>';
 
     $('#players').append(player_container);
     players[p.uuid] = p;
@@ -224,7 +230,6 @@ function stopDragRoll(event, elem) {
         // grab sides and roll result
         var sides = parseInt(elem.children[0].src.split('token_d')[1].split('.png')[0]);
         var result = parseInt(elem.children[1].innerHTML);
-        console.log(result);
         if (!isNaN(result)) {
             onDropTimerInScene(sides, result);
         }                                     
@@ -1367,11 +1372,6 @@ function onWheel(event) {
 }
 
 var d100_queue = [];
-
-/// Event handle to keypress for multi dice
-function rollMultipleDice(event, sides) {
-    console.log(event, sides);
-}
 
 /// Event handle to click a dice
 function rollDice(sides) {
