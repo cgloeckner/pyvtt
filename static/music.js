@@ -124,6 +124,9 @@ function updateMusicUi() {
         v = '<img src="/static/muted.png" class="icon" />';
     }
     $('#musicvolume')[0].innerHTML = v;
+
+    // save current volume
+    localStorage.setItem('volume', player.volume);
 }
 
 /// Pause a music slot
@@ -193,10 +196,13 @@ function onStepMusic(direction) {
 
 function onInitMusicPlayer(gmurl, url) {
     // setup default volume
-    default_volume = localStorage.getItem('volume');
-    if (default_volume == null) {
-        default_volume = 0.15;
+    var raw = localStorage.getItem('volume');
+    if (raw != null) {
+        default_volume = parseFloat(raw);
+    } else {
+        default_volume = 0.10;
     }
+    console.log(default_volume);
 
     // setup audio source
     gm   = gmurl;

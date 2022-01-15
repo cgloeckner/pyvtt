@@ -140,6 +140,19 @@ class EngineTest(EngineBaseTest):
         settings['hosting']['socket'] = '/path/to/socket' 
         self.reloadEngine(settings=settings)
         self.assertEqual(self.engine.getClientIp(dummy_request), '5.6.7.8')
+
+    def test_getClientAgent(self):
+        class FakeRequest(object):
+            def __init__(self):
+                class FakeEnviron(object):
+                    def get(self, s):
+                        if s == 'HTTP_USER_AGENT':
+                            return 'Fake Browser'
+                        return None
+                self.environ = FakeEnviron()
+        
+        dummy_request = FakeRequest()
+        self.assertEqual(self.engine.getClientAgent(dummy_request), 'Fake Browser')
         
     def test_getCountryFromIp(self):
         # only test that the external API is working
