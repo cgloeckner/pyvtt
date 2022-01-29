@@ -11,6 +11,9 @@ var game = '';
 var playback = null;
 var num_slots = 0;
 
+/// Each slots has a timestamp assign indicating when it was set. This will help to ignore cache in case a music slot got updated
+var update_ids = [];
+
 /// Add a music slot
 function addMusicSlot(slot_id) {
     if ($('#musiccontrols').css('display') == 'none') {
@@ -25,7 +28,7 @@ function addMusicSlot(slot_id) {
         var container  = '<div class="slot" ' + div_id + ' ' + div_title + ' ' + div_events + '>' + (slot_id+1) + '</div>';
         
         // pick previous container
-        var prev_id = parseInt(slot_id) - 1;     
+        var prev_id = parseInt(slot_id) - 1;
         var previous = $('#musicslot' + prev_id);
         if (slot_id == 0) {
             $('#musicslots').prepend(container);
@@ -35,6 +38,8 @@ function addMusicSlot(slot_id) {
             $('#musicslots').append(container);
         }
 
+        update_ids[slot_id] = Date.now();
+        
         num_slots += 1;
     }
 }
@@ -87,7 +92,7 @@ function onRemoveMusicSlot(slot_id) {
 }
 
 /// Play a music slot
-function playMusicSlot(slot_id) {
+function playMusicSlot(slot_id, update_id) {
     var player = $('#audioplayer')[0];
     var was_paused = player.paused;
 
@@ -96,7 +101,7 @@ function playMusicSlot(slot_id) {
     player.oncanplay = function(event) {  
         $('#musicStatus').show();
     };
-    player.src = '/music/' + gm + '/' + game + '/' + slot_id + '/' + Date.now();
+    player.src = '/music/' + gm + '/' + game + '/' + slot_id + '/' + update_ids[slot_id];
     player.play();
 
     updateSlotHighlight(slot_id);
@@ -144,10 +149,12 @@ function pauseMusic() {
 function removeMusicSlot(slot_id) {
     $('#musicslot' + slot_id).remove();
 
-    if (playback == slot_id) {
+    if (playback == slot_id) {        
         playback = null;
         var player = $('#audioplayer')[0];
         player.pause();
+        
+        update_ids[slot_id] = null;
     }
 }
 

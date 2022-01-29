@@ -227,7 +227,7 @@ function onMusic(data) {
         case 'add':
             $.each(data['slots'], function(index, slot) {
                 if (slot != null) {
-                    addMusicSlot(slot);
+                    addMusicSlot(slot, data['update_id']);
                 }
             });
             break;
