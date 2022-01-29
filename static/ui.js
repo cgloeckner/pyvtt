@@ -508,6 +508,17 @@ function isSingleAudio(queue) {
 
 function fetchMd5FromImages(filelist, onfinished) {
     var md5s = [];
+    var num_images = 0;
+
+    $.each(filelist, function(index, file) {
+        content = file.type.split('/')[0];
+
+        if (content == 'image') {
+            ++num_images;
+        }
+    });
+    
+    var ready_images = 0;
     $.each(filelist, function(index, file) {
         content = file.type.split('/')[0];
 
@@ -517,8 +528,8 @@ function fetchMd5FromImages(filelist, onfinished) {
             
             filereader.onload = function(event) {
                 md5s.push(md5(filereader.result));
-
-                if (md5s.length == filelist.length) {
+                ++ready_images;
+                if (ready_images == num_images) {
                     onfinished(md5s);
                 }
             }
@@ -527,6 +538,10 @@ function fetchMd5FromImages(filelist, onfinished) {
             md5s.push(null);
         }
     });
+
+    if (ready_images == num_images) { // probably == 0 if audio only
+        onfinished(md5s);
+    }
 }
 
 function onDrop(event) {
@@ -587,6 +602,7 @@ function onDrop(event) {
     }
 
     fetchMd5FromImages(event.dataTransfer.files, function(md5s) {
+        console.log(md5s);
         // query server with hashes
         $.ajax({     
             type: 'POST',
