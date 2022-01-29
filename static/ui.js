@@ -1859,49 +1859,16 @@ function onDropTimerInScene(sides, r) {
     var x = mouse_x;
     var y = mouse_y;
 
-    // load transparent image from URL
-    var img = new Image()
-    img.src = '/static/token_d' + sides + '.png';
-    img.onload = function() {
-        var blob = getImageBlob(img);
-        var f = new FormData();
-        f.append('file[]', blob, 'transparent.png');
+    writeSocket({
+        'OPID' : 'CREATE',
+        'posx' : x,  
+        'posy' : y,
+        'size' : default_token_size,
+        'urls' : ['/static/token_d' + sides + '.png'],
+        'labels' : ['#' + r]
+    }); 
 
-        // upload as background (assuming nobody else is faster :D )
-        $.ajax({
-            url: '/' + gm_name + '/' + game_url + '/upload',
-            type: 'POST',
-            data: f,
-            contentType: false,
-            cache: false,
-            processData: false,
-            success: function(response) {
-                // reset uploadqueue
-                $('#uploadqueue').val("");
-                
-                // load images if necessary
-                var data = JSON.parse(response);
-                $.each(data.urls, function(index, url) {
-                    loadImage(url);
-                });
-
-                // trigger token creation via websocket
-                writeSocket({
-                    'OPID' : 'CREATE',
-                    'posx' : x,  
-                    'posy' : y,
-                    'size' : default_token_size,
-                    'urls' : data.urls,
-                    'labels' : ['#' + r]
-                });
-                
-                notifyUploadFinish();
-            }, error: function(response, msg) {
-                notifyUploadFinish();
-                handleError(response);
-            }
-        });
-    };
+    notifyUploadFinish();
 }
    
 /// Event handle for stop dragging a single dice container
