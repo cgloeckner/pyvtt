@@ -113,7 +113,7 @@ function Player(name, uuid, color, ip, country, agent, flag, index) {
     this.agent   = agent;
     this.flag    = flag;
     this.index   = index;
-    this.is_last = false;
+    this.is_last = false; 
 }
 
 
@@ -506,6 +506,29 @@ function isSingleAudio(queue) {
     return queue.files.length == 1 && queue.files[0].type == 'audio/mpeg';
 }
 
+function fetchMd5FromImages(filelist, onfinished) {
+    var md5s = [];
+    $.each(filelist, function(index, file) {
+        content = file.type.split('/')[0];
+
+        if (content == 'image') {
+            var filereader = new FileReader();
+            filereader.readAsBinaryString(file);
+            
+            filereader.onload = function(event) {
+                md5s.push(md5(filereader.result));
+
+                if (md5s.length == filelist.length) {
+                    onfinished(md5s);
+                }
+            }
+        } else {
+            // ignore file format but keep array indexing fine
+            md5s.push(null);
+        }
+    });
+}
+
 function onDrop(event) {
     event.preventDefault();
     pickCanvasPos(event);
@@ -517,9 +540,9 @@ function onDrop(event) {
     
     notifyUploadStart();
     
-    // test upload data sizes
-    var queue = $('#uploadqueue')[0];
-    queue.files = event.dataTransfer.files;
+    // test upload data sizes and create md5 hashs
+    //var queue = $('#uploadqueue')[0];
+    //queue.files = event.dataTransfer.files;
 
     var error_msg = '';
     $.each(event.dataTransfer.files, function(index, file) {
@@ -556,21 +579,57 @@ function onDrop(event) {
             showError('QUEUE FULL, RIGHT-CLICK SLOT TO CLEAR');
         }
     });
-
+    
     if (error_msg != '') {
         notifyUploadFinish();
         showError(error_msg);
         return;
     }
 
-    // upload files
-    var f = new FormData($('#uploadform')[0]);
+    fetchMd5FromImages(event.dataTransfer.files, function(md5s) {
+        // query server with hashes
+        $.ajax({     
+            type: 'POST',
+            url: '/' + gm_name + '/' + game_url + '/hashtest',
+            dataType: 'json',
+            data: {
+                'hashs': md5s
+            },
+            success: function(response) {
+                var known_urls = response['urls'];
+                
+                // upload files
+                var f = new FormData();
+                var total_urls = []
+                $.each(event.dataTransfer.files, function(index, file) {
+                    content = file.type.split('/')[0];
 
-    // upload and drop tokens at mouse pos
-    uploadFiles(gm_name, game_url, f, mouse_x, mouse_y);
+                    if (content == 'image') {
+                        // add unknown image file
+                        if (known_urls[index] == null) {
+                            f.append('file[]', file);
+                        }
+                    
+                    } else if (content == 'audio') {
+                        // add audio file
+                        f.append('file[]', file);
+                    }
+                });
+                
+                // upload and drop tokens at mouse pos
+                uploadFiles(gm_name, game_url, f, known_urls, mouse_x, mouse_y);
+                
+                notifyUploadFinish();
+                
+            }, error: function(response, msg) {
+                notifyUploadFinish();
+                handleError(response);
+            }
+        });
+    });
 }
 
-function uploadFiles(gm_name, game_url, f, x, y) {
+function uploadFiles(gm_name, game_url, f, known_urls, x, y) {
     $.ajax({
         url: '/' + gm_name + '/' + game_url + '/upload',
         type: 'POST',
@@ -578,16 +637,25 @@ function uploadFiles(gm_name, game_url, f, x, y) {
         contentType: false,
         cache: false,
         processData: false,
-        success: function(response) {
+        success: function(response) { 
             // reset uploadqueue
             $('#uploadqueue').val("");
 
             response = JSON.parse(response);
 
             // load images if necessary
-            if (response['urls'].length > 0) {
+            if (response['urls'].length + known_urls.length > 0) {
+                var total_urls = [];
+                
                 $.each(response['urls'], function(index, url) {
                     loadImage(url);
+                    total_urls.push(url);
+                });
+
+                $.each(known_urls, function(index, url) {
+                    if (url != null) {
+                        total_urls.push(url);
+                    }
                 });
 
                 // trigger token creation via websocket
@@ -596,7 +664,7 @@ function uploadFiles(gm_name, game_url, f, x, y) {
                     'posx' : x,
                     'posy' : y,
                     'size' : Math.round(default_token_size / viewport.zoom),
-                    'urls' : response['urls']
+                    'urls' : total_urls
                 });
             }
 

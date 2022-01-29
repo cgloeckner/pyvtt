@@ -330,6 +330,7 @@ class GameCache(object):
             'uuid'    : player.uuid,
             'color'   : player.color,
             'country' : player.country,
+            'ip'      : player.ip,
             'agent'   : player.agent,
             'flag'    : player.flag,
             'index'   : player.index

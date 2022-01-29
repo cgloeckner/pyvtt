@@ -799,6 +799,39 @@ def setup_player_routes(engine):
                 # reraise greenlet's exception to trigger proper error reporting
                 raise error
 
+    @post('/<gmurl>/<url>/hashtest')
+    def get_image_hashtest(gmurl, url):
+        # load GM from cache
+        gm_cache = engine.cache.getFromUrl(gmurl)
+        if gm_cache is None:
+            abort(404)
+
+        # loda game from cache
+        game_cache = gm_cache.getFromUrl(url)
+        if game_cache is None:
+            abort(404)
+        
+        # load game from GM's database to upload files
+        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        if game is None:  
+            abort(404)
+
+        # query urls for given md5 hashes
+        known_urls = list()
+        for md5 in request.forms.getall('hashs[]'):
+            if md5 is None:
+                pass # probably an audio track
+            
+            imgid = game.getIdByMd5(md5)
+            
+            if imgid is not None:
+                url = game.getImageUrl(imgid)
+                known_urls.append(url)
+            else:
+                known_urls.append(None)
+
+        return {'urls': known_urls}
+
     @post('/<gmurl>/<url>/upload')
     def post_image_upload(gmurl, url):
         # load GM from cache
@@ -880,6 +913,7 @@ def setup_player_routes(engine):
         
         # return urls
         # @NOTE: request was non-JSON to allow upload, so urls need to be encoded
+        
         return json.dumps(answer)
 
 
