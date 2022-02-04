@@ -333,7 +333,9 @@ def createGmDatabase(engine, filename):
             broken = list()
             for s in self.scenes:
                 for t in s.tokens:
-                    if t.url.split('/')[-1] not in all_images:
+                    if t.url.split('/')[-1] in all_images:
+                        continue
+                    if not t.url.startswith('/static'): # e.g. timer token
                         broken.append(t)
             return broken
 

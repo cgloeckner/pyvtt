@@ -463,6 +463,7 @@ class GameTest(EngineBaseTest):
         url = game.getImageUrl(id1)
         fine   = self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
         broken = self.db.Token(scene=demo_scene, url='bullshit.png', posx=200, posy=150, size=20)
+        static = self.db.Token(scene=demo_scene, url='/static/paths/are/fine.png', posx=200, posy=150, size=20)
         self.db.commit()
         
         # expect broken token to be identified
@@ -470,6 +471,7 @@ class GameTest(EngineBaseTest):
         self.assertEqual(len(all_broken), 1)
         self.assertIn(broken, all_broken)
         self.assertNotIn(fine, all_broken)
+        self.assertNotIn(static, all_broken)
 
     @db_session
     def test_removeMusic(self):
