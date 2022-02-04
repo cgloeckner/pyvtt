@@ -559,6 +559,8 @@ function onDrop(event) {
     //var queue = $('#uploadqueue')[0];
     //queue.files = event.dataTransfer.files;
 
+    var files = event.dataTransfer.files; // workaround for chrome
+
     var error_msg = '';
     $.each(event.dataTransfer.files, function(index, file) {
         if (error_msg != '') {
@@ -601,8 +603,7 @@ function onDrop(event) {
         return;
     }
 
-    fetchMd5FromImages(event.dataTransfer.files, function(md5s) {
-        console.log(md5s);
+    fetchMd5FromImages(files, function(md5s) {
         // query server with hashes
         $.ajax({     
             type: 'POST',
@@ -616,8 +617,11 @@ function onDrop(event) {
                 
                 // upload files
                 var f = new FormData();
-                var total_urls = []
-                $.each(event.dataTransfer.files, function(index, file) {
+                var total_urls = []; 
+    
+                console.log(files);
+                
+                $.each(files, function(index, file) {
                     content = file.type.split('/')[0];
 
                     if (content == 'image') {

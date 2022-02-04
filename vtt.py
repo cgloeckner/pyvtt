@@ -817,21 +817,14 @@ def setup_player_routes(engine):
             abort(404)
 
         # query urls for given md5 hashes
-        print(engine.checksums[game.getUrl()])
-        
         known_urls = list()
         for md5 in request.forms.getall('hashs[]'):
-            if md5 is None:
-                pass # probably an audio track
+            if md5 is not None:
+                imgid = game.getIdByMd5(md5)
             
-            imgid = game.getIdByMd5(md5)
-            print(md5, imgid)
-            
-            if imgid is not None:
-                url = game.getImageUrl(imgid)
-                known_urls.append(url)
-            else:
-                known_urls.append(None)
+                if imgid is not None:
+                    url = game.getImageUrl(imgid)
+                    known_urls.append(url)
 
         return {'urls': known_urls}
 
