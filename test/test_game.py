@@ -101,6 +101,12 @@ class GameTest(EngineBaseTest):
             ids.add(img_id)
         self.assertEqual(ids, {0, 1, 2, 3}) # compare sets
 
+        # delete file
+        os.remove(p3)
+        game.makeMd5s()        
+        cache_instance = self.engine.checksums[game.getUrl()]
+        self.assertEqual(len(cache_instance), 3)
+
     @db_session
     def test_getIdByMd5(self):
         game = self.db.Game(url='foo', gm_url='url456')
