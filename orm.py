@@ -162,6 +162,12 @@ def createGmDatabase(engine, filename):
                 with open(md5_path, 'r') as handle:
                     data = json.load(handle)
             
+            # check if image exists for all md5s
+            for md5 in data.copy():
+                fname = '{0}.png'.format(data[md5])
+                if not os.path.exists(root / fname):
+                    del data[md5]
+            
             # check for images without md5
             missing = list()
             for fname in all_images:
