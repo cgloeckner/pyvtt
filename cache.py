@@ -127,14 +127,10 @@ class PlayerCache(object):
     def handle(self):
         """ Thread-handle for dispatching player actions. """
         try:
-            while True:
+            while self.isOnline():
                 # query data and operation id
-                try:
-                    data = self.read()
-                except Exception as error:
-                    # player quit (broken socket or invalid JSON data)
-                    break
-
+                data = self.read()
+                
                 if data is None:
                     break
                 
@@ -143,20 +139,12 @@ class PlayerCache(object):
                 func = self.dispatch_map[opid]
                 func(self, data)
             
-        except WebSocketError as e:
-            # player quit (expected error)
-            self.engine.logging.access('Player closed WebSocket by {0}'.format(self.ip))
-            return
-            
         except Exception as error:
-            error.metadata = self.getMetaData()
-            # any other exception - make sure player is logged out
-            self.parent.logout(self)
-            # reraise since it's unexpected
-            raise error
-        
-        # regular logout player
-        self.parent.logout(self)
+            self.engine.logging.warning('WebSocket died: {0}'.format(error))
+            self.socket = None
+
+        # remove player
+        self.parent.remove(self.name)
 
 
 # ---------------------------------------------------------------------
@@ -395,13 +383,8 @@ class GameCache(object):
             for name in self.players:
                 try:
                     self.players[name].write(data)
-                except:
-                    # schedule player quit (broken socket or invalid JSON data)
-                    force_logout.append(name)
-            # logout players whose failed
-            for name in force_logout:
-                if name in self.players:
-                    self.logout(self.players[name])
+                except WebSocketError:
+                    pass
         
     def broadcastTokenUpdate(self, player, since):
         """ Broadcast updated tokens. """

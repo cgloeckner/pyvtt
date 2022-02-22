@@ -28,7 +28,12 @@ __licence__ = 'MIT'
 class Engine(object):
 
     def __init__(self, argv=list(), pref_dir=None):
-        self.paths     = utils.PathApi(appname='pyvtt', root=pref_dir)
+        appname = 'pyvtt'
+        for arg in argv:
+            if arg.startswith('--appname='):
+                appname = arg.split('--appname=')[1]
+        
+        self.paths     = utils.PathApi(appname=appname, root=pref_dir)
         
         # setup per-game stuff
         self.checksums = dict()
@@ -64,7 +69,7 @@ class Engine(object):
         
         self.local_gm       = False
         self.localhost      = False
-        self.title          = 'pyvtt'
+        self.title          = appname
         self.links          = list()
         self.expire         = 3600 * 24 * 30 # default: 30d
         self.login          = dict() # login settings
