@@ -163,7 +163,7 @@ function onUploadDrawing() {
         // upload as token at screen center
         var x = Math.round(MAX_SCENE_WIDTH / 2)
         var y = Math.round(MAX_SCENE_HEIGHT / 2);
-        uploadFiles(gm_name, game_url, f, x, y);
+        uploadFiles(gm_name, game_url, f, [], x, y);
     }
 
     closeDrawing();
