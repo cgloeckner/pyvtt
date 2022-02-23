@@ -145,7 +145,7 @@ class PlayerCache(object):
             self.socket = None
 
         # remove player
-        self.parent.remove(self.name)
+        self.parent.logout(self)
 
 
 # ---------------------------------------------------------------------
@@ -357,13 +357,12 @@ class GameCache(object):
             for name in self.players:
                 p = self.players[name]
                 if p.uuid == uuid:
-                    # close socket (will stop thread as well)
-                    #with p.lock:# note: atm deadlocking
-                    if p.socket != None and not p.socket.closed:
-                        p.socket.close()
-                    # remove player
-                    del self.players[name]
-                    self.rebuildIndices()
+                    # close socket and stop thread
+                    p.socket = None
+                    if p.greenlet is not None:
+                        p.greenlet.join(0.1)
+                    # trigger logout (just in case he is stuck)
+                    self.logout(p)
                     return name
     
     def cleanup(self):

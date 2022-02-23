@@ -1010,7 +1010,7 @@ class VttTest(EngineBaseTest):
         s = player_cache.socket
         s.block = False
         s.push_receive({'OPID': 'fantasy', 'data': None})
-        # expect exception is not killing the greenlet (= closing player session)
+        # expect exception is NOT killing the greenlet (= closing player session)
         self.assertEqual(len(log), 0)
 
         # cannot trigger operation with too few arguments 
@@ -1020,10 +1020,8 @@ class VttTest(EngineBaseTest):
         s = player_cache.socket
         s.block = False
         s.push_receive({'OPID': 'ROLL'}) # not providing number of sides etc.
-        # expect exception killing the greenlet (= closing player session)
-        with self.assertRaises(KeyError):
-            player_cache.greenlet.get()
-        self.assertEqual(len(log), 1)
+        # expect exception is NOT killing the greenlet (= closing player session)
+        self.assertEqual(len(log), 0)
 
     def test_upload(self):
         # create some images
