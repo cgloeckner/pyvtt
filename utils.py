@@ -117,8 +117,8 @@ class EmailApi(object):
         # create mail content
         frm = 'From: pyvtt Server <{0}>'.format(self.sender)
         to  = 'To: Developers <{0}>'.format(self.sender)
-        sub = 'Subject: {0} Online'.format(self.appname)
-        plain = '{0}\n{1}\n{2}\n'.format(frm, to, sub)
+        sub = 'Subject: [{0}] Server Online'.format(self.appname)
+        plain = '{0}\n{1}\n{2}\nThe VTT server {3} is now online!'.format(frm, to, sub, self.appname)
         
         # send email
         try:
@@ -132,7 +132,7 @@ class EmailApi(object):
         # create mail content
         frm = 'From: pyvtt Server <{0}>'.format(self.sender)
         to  = 'To: Developers <{0}>'.format(self.sender)
-        sub = 'Subject: Exception Traceback #{0}'.format(error_id)
+        sub = 'Subject: [{1}] Exception Traceback #{0}'.format(error_id, self.appname)
         plain = '{0}\n{1}\n{2}\n{3}'.format(frm, to, sub, message)
         
         # send email
