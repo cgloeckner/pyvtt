@@ -107,7 +107,8 @@ class PlayerCache(object):
         # dump data
         raw = json.dumps(data)
         # send data
-        with self.lock: # note: atm deadlocking
+        #with self.lock: # note: atm deadlocking
+        if self.socket is not None:
             self.socket.send(raw)
         
     def fetch(self, data, key):

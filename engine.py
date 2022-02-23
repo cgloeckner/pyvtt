@@ -188,7 +188,7 @@ class Engine(object):
             
         if self.notify['type'] == 'email':
             # create email notify API
-            self.notify_api = utils.EmailApi(self, **self.notify)
+            self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
 
         self.logging.info('Loading main database...')
         # create main database

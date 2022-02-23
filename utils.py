@@ -100,6 +100,7 @@ class PathApi(object):
 class EmailApi(object):
     
     def __init__(self, engine, **data):
+        self.appname  = data['appname']
         self.host     = data['host']
         self.port     = data['port']
         self.sender   = data['sender']
@@ -116,7 +117,7 @@ class EmailApi(object):
         # create mail content
         frm = 'From: pyvtt Server <{0}>'.format(self.sender)
         to  = 'To: Developers <{0}>'.format(self.sender)
-        sub = 'Subject: Server Online'
+        sub = 'Subject: {0} Online'.format(self.appname)
         plain = '{0}\n{1}\n{2}\n'.format(frm, to, sub)
         
         # send email
