@@ -377,12 +377,18 @@ class GameCache(object):
     
     def broadcast(self, data):
         """ Broadcast given data to all clients. """
+        # dump once, send multiple times
+        raw = json.dumps(data)
+        
         with self.lock:
             force_logout = list()
             # broadcast
             for name in self.players:
+                s = self.players[name].socket
                 try:
-                    self.players[name].write(data)
+                    #self.players[name].write(data)
+                    if s is not None:
+                        s.send(raw)
                 except WebSocketError:
                     pass
         
@@ -582,6 +588,8 @@ class GameCache(object):
         """ Handle player changing token data. """
         # fetch changes' data
         changes = data['changes']
+        ids = [item['id'] for item in changes]
+        update = list()
         
         now = time.time()
         with db_session:
@@ -592,6 +600,33 @@ class GameCache(object):
             g.timeid = now
             
             # iterate provided tokens
+            tokens = self.parent.db.Token.select(lambda t: t.id in ids)
+
+            for i, token in enumerate(tokens):
+                if token is None:
+                    # ignore deleted token
+                    continue
+                
+                data = changes[i]
+                # fetch changed data (accepting None)
+                posx   = data.get('posx')
+                posy   = data.get('posy')
+                pos    = None if posx is None or posy is None else (posx, posy)
+                zorder = data.get('zorder')
+                size   = data.get('size')
+                rotate = data.get('rotate')
+                flipx  = data.get('flipx')
+                locked = data.get('locked')
+                text   = data.get('text')
+                label  = None if text is None else (text, player.color)
+                token.update(timeid=now, pos=pos, zorder=zorder, size=size,
+                    rotate=rotate, flipx=flipx, locked=locked, label=label)
+                
+                tmp = token.to_dict()
+                tmp['uuid'] = player.uuid
+                update.append(tmp)
+
+            """
             for data in changes:
                 t = self.parent.db.Token.select(lambda t: t.id == data['id']).first()
                 if t is None:
@@ -610,8 +645,15 @@ class GameCache(object):
                 label  = None if text is None else (text, player.color)
                 t.update(timeid=now, pos=pos, zorder=zorder, size=size,
                     rotate=rotate, flipx=flipx, locked=locked, label=label)
+            """
+            
+        # broadcast tokens
+        # self.broadcastTokenUpdate(player, tokens)
         
-        self.broadcastTokenUpdate(player, now)  
+        self.broadcast({
+            'OPID'    : 'UPDATE',
+            'tokens'  : update
+        });
         
     def onCreateToken(self, player, data):
         """ Handle player creating tokens. """
