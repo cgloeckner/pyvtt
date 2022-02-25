@@ -619,12 +619,12 @@ class GameCache(object):
                 locked = data.get('locked')
                 text   = data.get('text')
                 label  = None if text is None else (text, player.color)
-                token.update(timeid=now, pos=pos, zorder=zorder, size=size,
-                    rotate=rotate, flipx=flipx, locked=locked, label=label)
-                
-                tmp = token.to_dict()
-                tmp['uuid'] = player.uuid
-                update.append(tmp)
+                if token.update(timeid=now, pos=pos, zorder=zorder, size=size,
+                    rotate=rotate, flipx=flipx, locked=locked, label=label):
+                    # add to broadcast data
+                    tmp = token.to_dict()
+                    tmp['uuid'] = player.uuid
+                    update.append(tmp)
 
             """
             for data in changes:

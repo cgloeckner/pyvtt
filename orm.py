@@ -52,40 +52,51 @@ def createGmDatabase(engine, filename):
             """Handle update of several data fields. The timeid is set if anything
             has actually changed.
             """
+            updated = False
+            
             if self.locked and locked is None:
                 # token is locked and not unlocked
-                return
+                return updated
             
             if locked is not None and self.locked != locked:
                 self.timeid = timeid
                 self.locked = locked
+                updated = True
             
             if pos != None:
                 # force position onto scene (canvas)
                 self.posx = min(MAX_SCENE_WIDTH, max(0, pos[0]))
                 self.posy = min(MAX_SCENE_HEIGHT, max(0, pos[1]))
-                self.timeid = timeid
+                self.timeid = timeid 
+                updated = True
             
             if zorder != None:
                 self.zorder = zorder
                 self.timeid = timeid
+                updated = True
             
             if size != None:
                 self.size = min(MAX_TOKEN_SIZE, max(MIN_TOKEN_SIZE, size))
-                self.timeid = timeid
+                self.timeid = timeid 
+                updated = True
                 
             if rotate != None:
                 self.rotate = rotate
                 self.timeid = timeid
+                updated = True
         
             if flipx != None:
                 self.flipx  = flipx
                 self.timeid = timeid
+                updated = True
 
             if label != None:
                 self.text   = label[0][:15]
                 self.color  = label[1]
                 self.timeid = timeid
+                updated = True
+
+            return updated
         
         @staticmethod
         def getPosByDegree(origin, k, n):
