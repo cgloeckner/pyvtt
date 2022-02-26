@@ -263,6 +263,17 @@ class Engine(object):
     def getPort(self):
         return self.hosting['port']
         
+    def getUrl(self):
+        return self.hosting.get('hosting_url', 'http://{0}:{1}'.format(self.getDomain(), self.getPort()))
+
+    def getWebsocketUrl(self):
+        configuredUrl = self.hosting.get('hosting_websocket_url')
+        if configuredUrl:
+            return configuredUrl
+
+        protocol = 'wss' if self.hasSsl() else 'ws'
+        return '{0}://{1}:{2}/websocket'.format(protocol, self.getDomain(), self.getPort())
+
     def hasSsl(self):
         return self.hosting['ssl']
         

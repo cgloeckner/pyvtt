@@ -113,8 +113,7 @@ def setup_unittest_routes(engine):
         gm_cache = engine.cache.getFromUrl('arthur')
         game = gm_cache.db.Game.select(lambda g: g.url == 'test-game-1').first()
             
-        protocol = 'wss' if engine.hasSsl() else 'ws'
-        websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.getPort())
+        websocket_url = engine.getWebsocketUrl()
             
         return dict(engine=engine, user_agent='UNITTEST', websocket_url=websocket_url, game=game, playername='arthur',playercolor='#FF0000', gm=gm, is_gm=True)
 
@@ -122,7 +121,7 @@ def setup_unittest_routes(engine):
     # @TODO register GM arthur
     # @TODO create game test-game-1 with background "/static/background.jpg"
     
-    server_uri = 'http://{0}:{1}'.format(engine.getDomain(), engine.getPort())
+    server_uri = engine.getUrl()
     print('=' * 80)
     print('URLs for Unittest scenarios:')
     for route in ['/vtt/unittest/game']:
