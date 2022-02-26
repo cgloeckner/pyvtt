@@ -1070,7 +1070,8 @@ class EngineCache(object):
             return self.gms[url]
         
     def get(self, gm):
-        return self.getFromUrl(gm.url)
+        if gm:
+            return self.getFromUrl(gm.url)
         
     def getFromUrl(self, url):
         with self.lock:
