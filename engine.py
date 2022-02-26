@@ -32,6 +32,9 @@ class Engine(object):
         for arg in argv:
             if arg.startswith('--appname='):
                 appname = arg.split('--appname=')[1]
+
+            elif arg.startswith('--prefdir='):
+                pref_dir = arg.split('--prefdir=')[1]
         
         self.paths     = utils.PathApi(appname=appname, root=pref_dir)
         
