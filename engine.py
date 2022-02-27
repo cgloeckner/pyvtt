@@ -32,6 +32,9 @@ class Engine(object):
         for arg in argv:
             if arg.startswith('--appname='):
                 appname = arg.split('--appname=')[1]
+
+            elif arg.startswith('--prefdir='):
+                pref_dir = arg.split('--prefdir=')[1]
         
         self.paths     = utils.PathApi(appname=appname, root=pref_dir)
         
@@ -260,6 +263,17 @@ class Engine(object):
     def getPort(self):
         return self.hosting['port']
         
+    def getUrl(self):
+        return self.hosting.get('hosting_url', 'http://{0}:{1}'.format(self.getDomain(), self.getPort()))
+
+    def getWebsocketUrl(self):
+        configuredUrl = self.hosting.get('hosting_websocket_url')
+        if configuredUrl:
+            return configuredUrl
+
+        protocol = 'wss' if self.hasSsl() else 'ws'
+        return '{0}://{1}:{2}/websocket'.format(protocol, self.getDomain(), self.getPort())
+
     def hasSsl(self):
         return self.hosting['ssl']
         

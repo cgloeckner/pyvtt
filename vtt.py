@@ -176,7 +176,7 @@ def setup_gm_routes(engine):
         
         server = ''
         if engine.local_gm:
-            server = 'http://{0}:{1}'.format(engine.getDomain(), engine.getPort())
+            server = engine.getUrl()
         
         # load game from GM's database
         all_games = gm_cache.db.Game.select()
@@ -395,7 +395,7 @@ def setup_gm_routes(engine):
         
         server = ''
         if engine.local_gm:
-            server = 'http://{0}:{1}'.format(engine.getDomain(), engine.getPort())
+            server = engine.getUrl()
         
         return dict(gm=gm, server=server, all_games=all_games)
 
@@ -689,9 +689,8 @@ def setup_player_routes(engine):
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
         if game is None:
             abort(404)
-        
-        protocol = 'wss' if engine.hasSsl() else 'ws'
-        websocket_url = '{0}://{1}:{2}/websocket'.format(protocol, engine.getDomain(), engine.getPort())
+
+        websocket_url = engine.getWebsocketUrl()
 
         supported_dice = engine.getSupportedDice()
         if 100 in supported_dice:
