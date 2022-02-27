@@ -12,3 +12,4 @@ See the wiki for more details.
 ## Credits
 
 `dicetray.png` by Kane Driscol
+fixes for nginx proxy by Ryan C. Scott

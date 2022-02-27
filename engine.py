@@ -281,7 +281,8 @@ class Engine(object):
         return bool(re.match(self.url_regex, s))
         
     def getClientIp(self, request):
-        if self.hosting['socket'] != '':
+        # use different header if through unix socket or reverse proxy
+        if self.hosting['socket'] != '' or self.hosting['hosting_url'] != '':
             return request.environ.get('HTTP_X_FORWARDED_FOR')
         else:
             return request.environ.get('REMOTE_ADDR')
