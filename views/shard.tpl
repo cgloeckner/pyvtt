@@ -4,7 +4,7 @@
 
 <hr />
 
-<h1>{{engine.title}} SERVERS</h1>
+<h1>SERVERS</h1>
 
 <table class="status"> 
     <tr>
