@@ -408,6 +408,12 @@ div#gmdrop > div.element > div.controls {
     text-align: center;
 }
 
+div#gmdrop > div.element > div.controls > span.warning {
+    color: red;
+    font-size: x-large;
+    cursor: help;
+}
+
 /* --- Drawing Controls --------------------------------------------- */
 
 div#drawing {

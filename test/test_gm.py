@@ -34,7 +34,21 @@ class GmTest(EngineBaseTest):
         # test GM being in engine's cache
         gm_cache = self.engine.cache.get(gm)
         self.assertIsNotNone(gm_cache)
-        
+
+    @db_session
+    def test_hasExpired(self):
+        gm = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+        gm.postSetup()    
+        now = int(time.time())
+
+        # has not expired yet
+        gm.timeid = int(now - self.engine.expire * 0.75)
+        self.assertFalse(gm.hasExpired(now))
+
+        # has expired
+        gm.timeid = int(now - self.engine.expire * 1.2)
+        self.assertTrue(gm.hasExpired(now))
+    
     def test_cleanup(self):
         with db_session:
             # create demo GM

@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import os, pathlib, tempfile, zipfile, json
+import os, pathlib, tempfile, zipfile, json , time
 
 from bottle import FileUpload
 from pony.orm import db_session
@@ -32,6 +32,38 @@ class GameTest(EngineBaseTest):
         
     def tearDown(self):
         del self.db
+
+    @db_session
+    def test_mayExpireSoon(self):
+        game = self.db.Game(url='foo', gm_url='url456')
+        game.postSetup()  
+        now = int(time.time())
+
+        # will expire soon
+        game.timeid = int(now - self.engine.expire * 0.75)
+        self.assertTrue(game.mayExpireSoon(now))
+
+        # will not expire soon
+        game.timeid = int(now - self.engine.expire * 0.3)
+        self.assertFalse(game.mayExpireSoon(now))
+        
+        # even HAS expired
+        game.timeid = int(now - self.engine.expire * 1.2)
+        self.assertTrue(game.mayExpireSoon(now))
+        
+    @db_session
+    def test_hasExpired(self):
+        game = self.db.Game(url='foo', gm_url='url456') 
+        game.postSetup()   
+        now = int(time.time())
+
+        # has not expired yet
+        game.timeid = int(now - self.engine.expire * 0.75)
+        self.assertFalse(game.hasExpired(now))
+
+        # has expired
+        game.timeid = int(now - self.engine.expire * 1.2)
+        self.assertTrue(game.hasExpired(now))
         
     @db_session
     def test_getUrl(self):

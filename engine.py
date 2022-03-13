@@ -45,10 +45,11 @@ class Engine(object):
         # webserver stuff
         self.host   = '0.0.0.0'
         self.hosting = {
-            'domain' : 'localhost',
-            'port'   : 8080,
-            'socket' : '',
-            'ssl'    : False
+            'domain'      : 'localhost',
+            'port'        : 8080,
+            'socket'      : '',
+            'ssl'         : False,
+            'hosting_url' : ''
         }
         self.debug  = False
         self.quiet  = False
@@ -341,7 +342,7 @@ class Engine(object):
                 gm_cache = self.cache.get(gm)
                 
                 # check if GM expired
-                if gm.timeid > 0 and gm.timeid + self.expire < now:
+                if gm.hasExpired(now):
                     # remove expired GM
                     gm.preDelete()
                     gm.delete() 

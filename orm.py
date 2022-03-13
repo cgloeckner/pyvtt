@@ -158,6 +158,13 @@ def createGmDatabase(engine, filename):
         rolls  = Set(Roll)
         gm_url = Required(str) # used for internal things
         order  = Optional(IntArray) # scene ordering by their ids
+
+        def hasExpired(self, now, scale=1.0):
+            delta = now - self.timeid
+            return self.timeid > 0 and delta > engine.expire * scale
+
+        def mayExpireSoon(self, now):
+            return self.hasExpired(now, scale=0.5)
         
         def getUrl(self):
             return '{0}/{1}'.format(self.gm_url, self.url)
@@ -633,6 +640,10 @@ def createMainDatabase(engine):
             
             # add to engine's GM cache
             engine.cache.insert(self)
+        
+        def hasExpired(self, now):
+            delta = now - self.timeid
+            return self.timeid > 0 and delta > engine.expire
 
         def cleanup(self, gm_db, now):
             """ Cleanup GM's games' outdated rolls, unused images or
@@ -640,7 +651,7 @@ def createMainDatabase(engine):
             engine.logging.info('Cleaning GM {0} <{1}>'.format(self.name, self.url))
 
             for g in gm_db.Game.select():
-                if g.timeid > 0 and g.timeid + engine.expire < now:
+                if g.hasExpired(now):
                     # remove this game
                     g.preDelete()
                     g.delete()

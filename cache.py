@@ -279,14 +279,19 @@ class GameCache(object):
         """ Handle player login. """
         # notify player about all players and  latest rolls
         rolls  = list()
-        recent = time.time() - self.engine.recent_rolls
-        since  = time.time() - self.engine.latest_rolls # last 10min
+        now    = time.time()
+        recent = now - self.engine.recent_rolls
+        since  = now - self.engine.latest_rolls # last 10min
         # query latest rolls and all tokens
         with db_session:
             g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
+            
             if g is None:
                 self.engine.logging.warning('Player {0} tried to login to {1} by {2}, but the game was not found'.format(player.name, self.url, player.ip))
                 return;
+            
+            # update timeid
+            g.timeid = int(now)
             
             for r in self.parent.db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
                 # search playername
