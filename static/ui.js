@@ -1961,7 +1961,11 @@ function onDropTimerInScene(sides, r) {
    
 /// Event handle for stop dragging a single dice container
 function onEndDragDice(event) {
-    var sides = localStorage.getItem('drag_data');
+    var sides = parseInt(localStorage.getItem('drag_data'));
+    if (Number.isNaN(sides)) {
+        localStorage.removeItem('drag_data');
+        return;
+    }
 
     var min_x = 0;
     var min_y = 0;
