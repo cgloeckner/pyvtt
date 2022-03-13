@@ -590,6 +590,7 @@ class GameCache(object):
         """ Handle player changing token data. """
         # fetch changes' data
         changes = data['changes']
+        changes.sort(key=lambda elem: elem['id'])
         ids = [item['id'] for item in changes]
         update = list()
         

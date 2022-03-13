@@ -35,7 +35,7 @@ function onSocketMessage(event) {
     var data = JSON.parse(event.data);
     var opid = data.OPID;
     
-    if (!quiet) {
+    if (!quiet && opid != 'PING') {
         console.info('READ', data);
     }
     
@@ -257,7 +257,7 @@ function onRefresh(data) {
 /// Send data JSONified to server via the websocket
 function writeSocket(data) {
     var raw = JSON.stringify(data);
-    if (!quiet) {
+    if (!quiet && data['OPID'] != 'PING') {
         console.info('SEND', data);
     }
     socket.send(raw);

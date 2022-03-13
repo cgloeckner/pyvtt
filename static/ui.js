@@ -1766,13 +1766,19 @@ function onLabelStep(delta) {
 
     $.each(select_ids, function(index, id) {
         var token   = tokens[id];
+        if (token == null) {
+            return;
+        }
         var isTimer = token.text.startsWith('#');
         var isInt   = isTimer || (!isNaN(token.text) && token.text != '');
-            
+        
         if (token == null || token.locked || !isInt) {
             // ignore if locked
             return;
         }
+
+        var prev = token.text;
+        
         // click token's number
         if (isTimer) {
             var number = parseInt(token.text.substr(1));
@@ -1804,8 +1810,9 @@ function onLabelStep(delta) {
                 'text'  : token.text
             });
         }
+        console.log(id, 'from', prev, 'to', token.text);
     });
-    
+
     writeSocket({
         'OPID'    : 'UPDATE',
         'changes' : changes

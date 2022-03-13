@@ -792,12 +792,12 @@ class PlayerCacheTest(EngineBaseTest):
             scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
             token = gm_cache.db.Token(scene=scene, url='/test', posx=30, posy=15, size=20)
         
-        def query_token():
+        def query_token(tid=token.id):
             with db_session:
                 game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
                 last_update = game.timeid
                 scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
-                return gm_cache.db.Token.select(lambda t: t.id == token.id).first()
+                return gm_cache.db.Token.select(lambda t: t.id == tid).first()
         
         default_update = { 'changes': [ {'id': token.id} ] }
         
@@ -1046,6 +1046,29 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(len(answer1['tokens']), 1) 
         token = query_token()
         self.assertEqual(token.text, '')
+        
+        socket1.clearAll()
+        socket2.clearAll()
+        socket3.clearAll()
+        
+        # tokens do not have to be sorted by IDs
+        update_data = copy.deepcopy(default_update)
+        update_data['changes'][0] = {'id': 2, 'posx': 2, 'posy': 3}
+        update_data['changes'].append({'id': 1, 'posx': 10, 'posy': 9})
+        game_cache.onUpdateToken(player_cache1, update_data)
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'UPDATE')
+        self.assertEqual(len(answer1['tokens']), 2)
+        token2 = query_token(2)
+        token1 = query_token(1)
+        self.assertEqual(token2.posx, 2)
+        self.assertEqual(token2.posy, 3)
+        self.assertEqual(token1.posx, 10)
+        self.assertEqual(token1.posy, 9)
         
         socket1.clearAll()
         socket2.clearAll()
