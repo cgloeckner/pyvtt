@@ -139,18 +139,9 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache2 = game_cache.insert('bob', 'yellow', False)
         player_cache2.socket = new_socket
 
-        with db_session:
-            game = game_cache.parent.db.Game.select(lambda g: g.url == game_cache.url).first()
-            game.timeid = 123
-        
         # trigger login
         game_cache.login(player_cache2)
 
-        # expect timeid update
-        with db_session:
-            game = game_cache.parent.db.Game.select(lambda g: g.url == game_cache.url).first()
-            self.assertGreater(game.timeid, 123)
-        
         # expect ACCEPT to joined player
         accept = new_socket.pop_send()
         self.assertEqual(accept['OPID'], 'ACCEPT')

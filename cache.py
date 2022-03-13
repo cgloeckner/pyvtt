@@ -290,9 +290,6 @@ class GameCache(object):
                 self.engine.logging.warning('Player {0} tried to login to {1} by {2}, but the game was not found'.format(player.name, self.url, player.ip))
                 return;
             
-            # update timeid
-            g.timeid = int(now)
-            
             for r in self.parent.db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(lambda r: r.timeid):
                 # search playername
                 rolls.append({

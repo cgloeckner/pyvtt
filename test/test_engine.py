@@ -133,7 +133,6 @@ class EngineTest(EngineBaseTest):
                 self.environ = FakeEnviron()
         
         dummy_request = FakeRequest()
-        print(self.engine.hosting)
         self.assertEqual(self.engine.getClientIp(dummy_request), '1.2.3.4')
         
         # reload engine with unix socket  
