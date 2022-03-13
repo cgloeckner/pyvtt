@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import time, datetime, os, json
+import time, datetime, os, json, sys
 import xlsxwriter
 
 import orm
@@ -417,7 +417,16 @@ def printPlayersByHour(doc, data):
 
 
 if __name__ == '__main__':
-    paths = PathApi(appname='pyvtt', root=None)
+    appname = None
+    for arg in sys.argv:
+        if arg.startswith('--appname='):
+            appname = arg.split('--appname=')[1]
+
+    if appname is None:
+        print('run with --appname=my-vtt-name')
+        sys.exit(0)
+    
+    paths = PathApi(appname=appname, root=None)
     fname = paths.root / 'analysis.xlsx'
     
     timeids = fetchAllGameTimeids(paths)
