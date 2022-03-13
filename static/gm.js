@@ -66,8 +66,6 @@ function updateDays() {
     var year  = $('#year')[0].valueAsNumber;
     var num_days = new Date(year, month, 0).getDate();
 
-    console.log(day, month, year, num_days);
-    
     // refill days for selected month
     var options = ''
     for (var i = 1; i <= num_days; ++i) {
@@ -306,7 +304,8 @@ function onDropNewBackground(scene_id) {
 
 function uploadBackground(gm_name, game_url, f) {
     // try to query url based on md5
-    //md5 = 
+    //md5 =
+    notifyUploadStart(1);
     
     // upload background
     $.ajax({
@@ -332,11 +331,12 @@ function uploadBackground(gm_name, game_url, f) {
                 'urls'  : [response]
             });
             
-            $('#popup').hide();    
-            notifyUploadFinish();
+            $('#popup').hide();
+            notifyUploadFinish(1);
+            
         }, error: function(response, msg) {
             handleError(response); 
-            notifyUploadFinish();
+            notifyUploadFinish(1);
         }
     });
 }

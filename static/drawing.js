@@ -18,7 +18,6 @@ function initDrawing(as_background) {
             if (token != null) {
                 if (token.size == -1) {
                     background = token;
-                    console.log(token);
                 }
             }
         });
@@ -144,8 +143,6 @@ function onReleasePen(event) {
 }
 
 function onUploadDrawing() {
-    notifyUploadStart();
-    
     // fetch JPEG-data from canvas
     var preview = $('#doodle')[0];
     var url = preview.toDataURL("image/jpeg");

@@ -544,6 +544,38 @@ function fetchMd5FromImages(filelist, onfinished) {
     }
 }
 
+function checkFile(file, index) {
+    content = file.type.split('/')[0];
+        
+    var max_filesize = 0;
+    var file_type    = '';
+    // check image filesize
+    if (content == 'image') {
+        max_filesize = MAX_TOKEN_FILESIZE;
+        file_type    = 'TOKEN';
+        if (index == 0 && !background_set) {
+            // first file is assumed as background image
+            max_filesize = MAX_BACKGROUND_FILESIZE
+            file_type = 'BACKGROUND';
+        }
+
+    // check music filesize
+    } else if (content == 'audio') {
+        max_filesize = MAX_MUSIC_FILESIZE;
+        file_type    = 'MUSIC';
+    }
+
+    if (file.size > max_filesize * 1024 * 1024) {
+        return 'TOO LARGE ' + file_type + ' (MAX ' + max_filesize + ' MiB)';
+    }
+
+    if (content == 'audio' && $('#musicslots').children().length == MAX_MUSIC_SLOTS) {
+        return 'QUEUE FULL, RIGHT-CLICK SLOT TO CLEAR';
+    }
+
+    return '';
+}
+
 function onDrop(event) {
     event.preventDefault();
     pickCanvasPos(event);
@@ -552,104 +584,71 @@ function onDrop(event) {
         // ignore
         return;
     }
-    
-    notifyUploadStart();
-    
-    // test upload data sizes and create md5 hashs
-    //var queue = $('#uploadqueue')[0];
-    //queue.files = event.dataTransfer.files;
-
     var files = event.dataTransfer.files; // workaround for chrome
-
+    
+    // check file sizes
     var error_msg = '';
     $.each(event.dataTransfer.files, function(index, file) {
         if (error_msg != '') {
-            notifyUploadFinish();
             return;
         }
         
-        content = file.type.split('/')[0];
-        
-        var max_filesize = 0;
-        var file_type    = '';
-        // check image filesize
-        if (content == 'image') {
-            max_filesize = MAX_TOKEN_FILESIZE;
-            file_type    = 'TOKEN';
-            if (index == 0 && !background_set) {
-                // first file is assumed as background image
-                max_filesize = MAX_BACKGROUND_FILESIZE
-                file_type = 'BACKGROUND';
-            }
-
-        // check music filesize
-        } else if (content == 'audio') {
-            max_filesize = MAX_MUSIC_FILESIZE;
-            file_type    = 'MUSIC';
-        }
-
-        if (file.size > max_filesize * 1024 * 1024) {
-            error_msg = 'TOO LARGE ' + file_type + ' (MAX ' + max_filesize + ' MiB)';
-        }
-
-        if (content == 'audio' && $('#musicslots').children().length == MAX_MUSIC_SLOTS) {
-            showError('QUEUE FULL, RIGHT-CLICK SLOT TO CLEAR');
-        }
+        error_msg = checkFile(file, index);
     });
     
     if (error_msg != '') {
-        notifyUploadFinish();
         showError(error_msg);
         return;
     }
 
     fetchMd5FromImages(files, function(md5s) {
-        // query server with hashes
-        $.ajax({     
-            type: 'POST',
-            url: '/' + gm_name + '/' + game_url + '/hashtest',
-            dataType: 'json',
-            data: {
-                'hashs': md5s
-            },
-            success: function(response) {
-                var known_urls = response['urls'];
-                
-                // upload files
-                var f = new FormData();
-                var total_urls = []; 
-    
-                console.log(files);
-                
-                $.each(files, function(index, file) {
-                    content = file.type.split('/')[0];
+        uploadFilesViaMd5(gm_name, game_url, md5s, files, mouse_x, mouse_y);
+    });
+}
 
-                    if (content == 'image') {
-                        // add unknown image file
-                        if (known_urls[index] == null) {
-                            f.append('file[]', file);
-                        }
-                    
-                    } else if (content == 'audio') {
-                        // add audio file
+function uploadFilesViaMd5(gm_name, game_url, md5s, files, at_x, at_y) {
+    // query server with hashes
+    $.ajax({     
+        type: 'POST',
+        url: '/' + gm_name + '/' + game_url + '/hashtest',
+        dataType: 'json',
+        data: {
+            'hashs': md5s
+        },
+        success: function(response) {
+            var known_urls = response['urls'];
+            
+            // upload files
+            var f = new FormData();
+            var total_urls = []; 
+    
+            $.each(files, function(index, file) {
+                content = file.type.split('/')[0];
+
+                if (content == 'image') {
+                    // add unknown image file
+                    if (known_urls[index] == null) {
                         f.append('file[]', file);
                     }
-                });
                 
-                // upload and drop tokens at mouse pos
-                uploadFiles(gm_name, game_url, f, known_urls, mouse_x, mouse_y);
-                
-                notifyUploadFinish();
-                
-            }, error: function(response, msg) {
-                notifyUploadFinish();
-                handleError(response);
-            }
-        });
+                } else if (content == 'audio') {
+                    // add audio file
+                    f.append('file[]', file);
+                }
+            });
+            
+            // upload and drop tokens at mouse pos
+            uploadFiles(gm_name, game_url, f, known_urls, at_x, at_y);
+            
+        }, error: function(response, msg) {
+            handleError(response);
+        }
     });
 }
 
 function uploadFiles(gm_name, game_url, f, known_urls, x, y) {
+    notifyUploadStart(f.length);
+    
     $.ajax({
         url: '/' + gm_name + '/' + game_url + '/upload',
         type: 'POST',
@@ -702,10 +701,10 @@ function uploadFiles(gm_name, game_url, f, known_urls, x, y) {
                     });
                 }
             }
+            notifyUploadFinish(f.length);
             
-            notifyUploadFinish();
         }, error: function(response, msg) {
-            notifyUploadFinish();
+            notifyUploadFinish(f.length);
             handleError(response);
         }
     });
@@ -1940,9 +1939,6 @@ function onResetDice(event, sides) {
 
 /// Add timer dice in the scene
 function onDropTimerInScene(sides, r) {
-    // upload timer token to the game
-    notifyUploadStart();
-
     // save drop position for later adding
     var x = mouse_x;
     var y = mouse_y;
@@ -1955,8 +1951,6 @@ function onDropTimerInScene(sides, r) {
         'urls' : ['/static/token_d' + sides + '.png'],
         'labels' : ['#' + r]
     }); 
-
-    notifyUploadFinish();
 }
    
 /// Event handle for stop dragging a single dice container

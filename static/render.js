@@ -430,16 +430,16 @@ var num_downloading = 0;
 var num_uploading   = 0;
 
 /// Handle uploading notifcation
-function notifyUploadStart() {
+function notifyUploadStart(num_uploads=1) {
     if (num_uploading == 0) {
         $('#assetsUploading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> <img src="/static/top.png" class="icon" />';
     }
-    num_uploading += 1;
+    num_uploading += num_uploads;
 }
 
 /// Handle upload finish
-function notifyUploadFinish() {
-    num_uploading -= 1;
+function notifyUploadFinish(num_uploads=1) {
+    num_uploading -= num_uploads;
     if (num_uploading == 0) {
         $('#assetsUploading')[0].innerHTML = '';
     }
