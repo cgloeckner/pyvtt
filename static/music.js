@@ -11,6 +11,18 @@ var game = '';
 var playback = null;
 var num_slots = 0;
 
+const volume_scale = 0.25;
+
+/// Set music volume to audio object
+function setAudioVolume(audio, volume) {
+    audio.volume = volume * volume_scale;
+}
+
+/// Get music volume from audio object
+function getAudioVolume(audio) {
+    return audio.volume / volume_scale;
+}
+
 /// Each slots has a timestamp assign indicating when it was set. This will help to ignore cache in case a music slot got updated
 var update_ids = [];
 
@@ -124,14 +136,15 @@ function updateMusicUi() {
     var player = $('#audioplayer')[0];
     
     // update play button and volume display
-    var v = parseInt(player.volume * 100) + '%'
-    if (player.paused || player.volume == 0.0) {
-        v = '<img src="/static/muted.png" class="icon" />';
+    var raw_volume = getAudioVolume(player)
+    var vol_str = parseInt(raw_volume * 100) + '%'
+    if (player.paused || raw_volume == 0.0) {
+        vol_str = '<img src="/static/muted.png" class="icon" />';
     }
-    $('#musicvolume')[0].innerHTML = v;
+    $('#musicvolume')[0].innerHTML = vol_str;
 
     // save current volume
-    localStorage.setItem('volume', player.volume);
+    localStorage.setItem('volume', raw_volume);
 }
 
 /// Pause a music slot
@@ -176,28 +189,28 @@ function onStepMusic(direction) {
     var player = $('#audioplayer')[0];
 
     // modify volume
-    var v = player.volume;
-    delta = getMusicVolumeDelta(v);
-    v += direction * delta;
-    v = Math.round(v * 100) / 100.0;
+    var raw_volume = getAudioVolume(player);
+    delta = getMusicVolumeDelta(raw_volume);
+    raw_volume += direction * delta;
+    raw_volume = Math.round(raw_volume * 100) / 100.0;
     
     // fix bounding issues
-    if (v < 0.01) {
+    if (raw_volume < 0.01) {
         // stop playback
-        v = 0.0;
+        raw_volume = 0.0;
         player.pause();
-    } else if (v > 1.0) {
+    } else if (raw_volume > 1.0) {
         // cap at 100%
-        v = 1.0;
+        raw_volume = 1.0;
     }
     
     // continue playback if suitable
-    if (v > 0.0 && player.paused && direction > 0) {
+    if (raw_volume > 0.0 && player.paused && direction > 0) {
         player.play();
     }
 
     // apply volume
-    player.volume = v;
+    setAudioVolume(player, raw_volume);
     
     updateMusicUi();
 }
@@ -216,5 +229,5 @@ function onInitMusicPlayer(gmurl, url) {
     game = url;
     
     var player = $('#audioplayer')[0];
-    player.volume = default_volume;
+    setAudioVolume(player, default_volume);
 }
