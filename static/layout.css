@@ -750,7 +750,7 @@ div.rollbox > span > span.maxani {
 div#players {  
     position: absolute; 
     left: 50%;
-    bottom: 0px;
+    bottom: 1px;
     
     height: 54px;
     transform: translate(-50%, 0);
