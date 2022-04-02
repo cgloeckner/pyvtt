@@ -2231,7 +2231,7 @@ function onDragPlayers(event) {
     var w = target.width();
     var h = target.height();
     var x = parseInt(Math.max(w / 2, Math.min(window.innerWidth - w/2, p[0])));
-    var y = parseInt(Math.max(0,     Math.min(window.innerHeight - h,  p[1])));
+    var y = parseInt(Math.max(0,     Math.min(window.innerHeight - 1.5 * h + 25,  p[1])));
     var pos = [x, y];
     
     movePlayersTo(pos);
