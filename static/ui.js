@@ -2004,7 +2004,10 @@ function onResetPlayers(event) {
     if (event.buttons == 2) {
         // reset players position
         var target = $('#players');
-        var pos = [window.innerWidth * 0.5, window.innerHeight - 1.5 * target.height() + 27];
+        var pos = [
+            parseInt(window.innerWidth * 0.5),
+            parseInt(window.innerHeight - 1.5 * target.height() + 25)
+        ];
         
         // apply position
         movePlayersTo(pos);
@@ -2227,8 +2230,8 @@ function onDragPlayers(event) {
     // limit position to the screen
     var w = target.width();
     var h = target.height();
-    var x = Math.max(w / 2, Math.min(window.innerWidth - w/2, p[0]));
-    var y = Math.max(0,     Math.min(window.innerHeight - h,  p[1]));
+    var x = parseInt(Math.max(w / 2, Math.min(window.innerWidth - w/2, p[0])));
+    var y = parseInt(Math.max(0,     Math.min(window.innerHeight - h,  p[1])));
     var pos = [x, y];
     
     movePlayersTo(pos);
