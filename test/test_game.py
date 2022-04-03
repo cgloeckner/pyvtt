@@ -630,6 +630,9 @@ class GameTest(EngineBaseTest):
             self.db.Token(scene=scene2, url=url, posx=200, posy=150, size=20)
         self.db.commit()
 
+        # create a timer token
+        self.db.Token(scene=scene1, url='/url456/foo/token_d20.png', posx=100, posy=5, size=40)
+
         # build dict from game, scenes and tokens
         data = game.toDict()
 
@@ -649,7 +652,7 @@ class GameTest(EngineBaseTest):
                 self.assertIn('text', token)
                 self.assertIn('color', token)
                 # test values
-                self.assertIsInstance(token['url'], int)
+                # note: urls are mostly int (regular tokens) but can be str (timer)
                 self.assertIsInstance(token['posx'], int)
                 self.assertIsInstance(token['posy'], int)
                 self.assertIsInstance(token['zorder'], int)
@@ -679,7 +682,7 @@ class GameTest(EngineBaseTest):
         # create dummy music
         p2 = img_path / '0.mp3'    
         p2.touch()
-        
+
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
         self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1) # background
@@ -689,6 +692,9 @@ class GameTest(EngineBaseTest):
         for i in range(4):
             self.db.Token(scene=scene2, url=url, posx=200, posy=150, size=20)
         self.db.commit()
+
+        # create a timer token
+        self.db.Token(scene=scene1, url='/url456/foo/token_d20.png', posx=100, posy=5, size=40)
         
         # create zip file
         fname, path = game.toZip()
@@ -731,7 +737,7 @@ class GameTest(EngineBaseTest):
                     self.assertIn('flipx', token)
                     self.assertIn('locked', token)
                     # test values
-                    self.assertIsInstance(token['url'], int)
+                    # note: urls are mostly int (regular tokens) but can be str (timer)
                     self.assertIsInstance(token['posx'], int)
                     self.assertIsInstance(token['posy'], int)
                     self.assertIsInstance(token['zorder'], int)
@@ -740,6 +746,9 @@ class GameTest(EngineBaseTest):
                     self.assertIsInstance(token['flipx'], bool)
                     self.assertIsInstance(token['locked'], bool)
                     # test image existence
+                    if isinstance(token['posx'], str):
+                        # don't test whether static image exists
+                        continue
                     img_path = pathlib.Path(tmp_dir) / '{0}.png'.format(token['url'])
                     self.assertTrue(os.path.exists(img_path))
                 # check scene background

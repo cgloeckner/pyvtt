@@ -419,8 +419,12 @@ def createGmDatabase(engine, filename):
                     and t.scene.game == self
             )
             for t in game_tokens:
+                url = t.url.split('/')[-1].split('.png')[0]
+                if url.isdigit():
+                    url = int(url)
+                
                 tokens.append({
-                    "url"    : int(t.url.split('/')[-1].split('.png')[0]), # only take image id
+                    "url"    : url,
                     "posx"   : t.posx,
                     "posy"   : t.posy,
                     "zorder" : t.zorder,
@@ -523,10 +527,16 @@ def createGmDatabase(engine, filename):
                 for token_id in s["tokens"]:
                     token_data = data["tokens"][token_id]
                     url = token_data['url']
-                    if isinstance(url, str): # backwards compatibility
-                        url = url.split('.png')[0]
-                    t = db.Token(                                
-                        scene=scene, url=self.getImageUrl(url),
+                    if isinstance(url, int):
+                        # regular token
+                        newurl = self.getImageUrl(url)
+                    else:                             
+                        # timer token
+                        newurl = '/static/{0}.png'.format(url)
+                    # create token
+                    t = db.Token(
+                        scene  = scene,
+                        url    = newurl,
                         posx   = token_data['posx'],
                         posy   = token_data['posy'],
                         zorder = token_data.get('zorder', 0),
