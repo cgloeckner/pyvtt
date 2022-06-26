@@ -1,4 +1,7 @@
 var doodle_on_background = true;
+var pen_pos = [];
+var line_from = null; // used for straight lines
+
 
 function initDrawing(as_background) {
     // may fail if player draws
@@ -14,7 +17,7 @@ function initDrawing(as_background) {
     if (as_background) {
         // query background token
         var background = null;
-        $.each(tokens, function(index, token) {
+            $.each(tokens, function(index, token) {
             if (token != null) {
                 if (token.size == -1) {
                     background = token;
@@ -47,8 +50,6 @@ function initDrawing(as_background) {
 function closeDrawing() {
     $('#drawing').fadeOut(500);
 }
-
-var pen_pos = [];
 
 function onMovePen(event) { 
     event.preventDefault();
@@ -118,7 +119,29 @@ function onReleasePen(event) {
     
     var canvas = $('#doodle')[0];
     var context = canvas.getContext("2d");
-
+    
+    // get mouse position with canvas (and consider hardcoded zoom)
+    var box = canvas.getBoundingClientRect()
+    var x = (event.clientX - box.left) * 2
+    var y = (event.clientY - box.top) * 2
+    
+    if (event.shiftKey && line_from != null) {
+        var width = parseInt($('#penwidth')[0].value);
+        var color = $('#pencolor')[0].value;
+        
+        // draw straight line
+        context.strokeStyle = color;
+        context.fillStyle = color;
+        context.lineWidth = width;
+        context.lineCap = "round";
+        
+        context.beginPath()
+        context.moveTo(line_from[0], line_from[1])
+        context.lineTo(x, y)
+        context.stroke()
+    }
+    line_from = [x, y];
+    
     if (pen_pos.length > 1) { 
         // redraw entire line smoothly
         context.beginPath();       
