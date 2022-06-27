@@ -119,6 +119,7 @@ function detectPressure(event) {
                 found = event.touches[i]
                 // @NOTE: pressure isn't working with a single path of lines (which uses a single width not handling multiple)
                 use_pen = true
+                pressure = parseInt(25 * event.touches[i].force)
                 break
             } 
         }
@@ -139,7 +140,7 @@ function detectPressure(event) {
         
         console.log('save to storage', pressure)
     }
-
+    
     return pressure
 }
 
@@ -149,9 +150,17 @@ function getDoodlePos(event) {
     var context = canvas.getContext("2d")
 
     var box = canvas.getBoundingClientRect()
-    var x = (event.clientX - box.left) * 2
-    var y = (event.clientY - box.top) * 2
     
+    if (event.type == "touchstart" || event.type == "touchmove") {
+        // search all touches to use pen primarily
+        var found = event.touches[0] // fallback: 1st touch
+        var x = (found.clientX - box.left) * 2
+        var y = (found.clientY - box.top) * 2
+    } else {
+        var x = (event.clientX - box.left) * 2
+        var y = (event.clientY - box.top) * 2
+    }
+
     return [x, y]
 }
 
@@ -169,7 +178,7 @@ function onMovePen(event) {
     var color = $('#pencolor')[0].value
     drawDot(pos[0], pos[1], color, width, context)
 
-    if (event.buttons == 1) {
+    if (event.buttons == 1 || event.type == "touchstart" || event.type == "touchmove") {
         // drag mode
         if (drag != null) { 
             straight = null
@@ -182,6 +191,7 @@ function onMovePen(event) {
             )
             edges.push(line)
         }
+        
         // continue dragging
         drag = pos
     
@@ -203,39 +213,6 @@ function onMovePen(event) {
     }
     
     /*
-    // detect pen pressure
-    var use_pen = $('#penenable')[0].checked
-    var pressure = 1.0
-    
-    if (event.type == "touchstart" || event.type == "touchmove") {
-        // search all touches to use pen primarily
-        var found = event.touches[0] // fallback: 1st touch
-        if (use_pen) {
-            found = null
-        }
-        for (var i = 0; i < event.touches.length; ++i) {
-            if (!isExtremeForce(event.touches[i].force)) {
-                // found sensitive input, ignore previously found event
-                found = event.touches[i]
-                // @NOTE: pressure isn't working with a single path of lines (which uses a single width not handling multiple)
-                use_pen = true
-                break
-            } 
-        }
-        event = found
-        
-    } else if (event.buttons != 1) {
-        event = null
-    }
-    if (event == null) {
-        // ignore
-        return
-    }
-    $('#penenable')[0].checked = use_pen;
-    */
-
-    /*
-
     if (pen_pos.length > 0) {
         var n = pen_pos.length;
         var width = parseInt($('#penwidth')[0].value);
