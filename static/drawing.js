@@ -129,7 +129,7 @@ function detectPressure(event) {
     }
     $('#penenable')[0].checked = use_pen
 
-    if (!use_pen) {
+    if (!use_pen || pressure == 1.0) {
         pressure = parseInt(localStorage.getItem('draw_pressure'))
         if (isNaN(pressure)) {
             localStorage.setItem('draw_pressure', 20)
