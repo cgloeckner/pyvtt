@@ -1,3 +1,5 @@
+const gridsize = 32
+
 var doodle_on_background = true
 
 var edges = []
@@ -152,14 +154,19 @@ function getDoodlePos(event) {
     var box = canvas.getBoundingClientRect()
     
     if (event.type == "touchstart" || event.type == "touchmove") {
-        // search all touches to use pen primarily
-        var found = event.touches[0] // fallback: 1st touch
-        var x = (found.clientX - box.left) * 2
-        var y = (found.clientY - box.top) * 2
-    } else {
-        var x = (event.clientX - box.left) * 2
-        var y = (event.clientY - box.top) * 2
+        // use first touch event
+        event = event.touches[0]
     }
+    
+    var x = (event.clientX - box.left) * 2
+    var y = (event.clientY - box.top) * 2
+    
+    if (event.ctrlKey) {
+        // snap to invisible grid
+        x = gridsize * parseInt(x / gridsize)
+        y = gridsize * parseInt(y / gridsize)
+    }
+
 
     return [x, y]
 }
@@ -211,27 +218,6 @@ function onMovePen(event) {
             drawLine(straight, context)
         }
     }
-    
-    /*
-    if (pen_pos.length > 0) {
-        var n = pen_pos.length;
-        var width = parseInt($('#penwidth')[0].value);
-        var color = $('#pencolor')[0].value;
-        
-        // preview next line segment
-        context.strokeStyle = color;
-        context.fillStyle = color;
-        context.lineWidth = width;
-        context.lineCap = "round";
-        
-        context.beginPath();
-        context.moveTo(pen_pos[n-1][0], pen_pos[n-1][1]);
-        context.lineTo(x, y);
-        context.stroke();
-    }
-
-    pen_pos.push([x, y, pressure]);
-    */
 }
 
 function onReleasePen(event) { 
