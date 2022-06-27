@@ -45,7 +45,6 @@
         <img class="close" src="/static/delete.png" onClick="closeDrawing();" draggable="false" title="DISCARD" />
         <span>
             <input type="color" name="pencolor" id="pencolor" value="#000000">
-            <input type="range" name="penwidth" id="penwidth" min="1" max="100" step="1" value="20">
             <input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN</label>
             <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
               

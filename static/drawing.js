@@ -100,32 +100,7 @@ function closeDrawing() {
     $('#drawing').fadeOut(500)
 }
 
-function getDoodlePos(event) {
-    // get mouse position with canvas (and consider hardcoded zoom) 
-    var canvas = $('#doodle')[0]
-    var context = canvas.getContext("2d")
-
-    var box = canvas.getBoundingClientRect()
-    var x = (event.clientX - box.left) * 2
-    var y = (event.clientY - box.top) * 2
-    
-    return [x, y]
-}
-
-function onMovePen(event) { 
-    event.preventDefault()
-
-    // redraw everything
-    var canvas = $('#doodle')[0]
-    var context = canvas.getContext("2d")
-    drawAll(context);
-
-    // grab relevant data
-    var pos = getDoodlePos(event)
-    var color = $('#pencolor')[0].value  
-    var width = parseInt($('#penwidth')[0].value)
-    drawDot(pos[0], pos[1], color, width, context)
-
+function detectPressure(event) {
     // detect pen pressure
     var use_pen = $('#penenable')[0].checked
     var pressure = 1.0
@@ -150,6 +125,49 @@ function onMovePen(event) {
         event = found
     }
     $('#penenable')[0].checked = use_pen
+
+    if (!use_pen) {
+        pressure = parseInt(localStorage.getItem('draw_pressure'))
+        if (isNaN(pressure)) {
+            localStorage.setItem('draw_pressure', 20)
+            pressure = 20
+        }
+        
+        console.log('load from storage', pressure)
+    } else {
+        localStorage.setItem('draw_pressure', pressure)
+        
+        console.log('save to storage', pressure)
+    }
+
+    return pressure
+}
+
+function getDoodlePos(event) {
+    // get mouse position with canvas (and consider hardcoded zoom) 
+    var canvas = $('#doodle')[0]
+    var context = canvas.getContext("2d")
+
+    var box = canvas.getBoundingClientRect()
+    var x = (event.clientX - box.left) * 2
+    var y = (event.clientY - box.top) * 2
+    
+    return [x, y]
+}
+
+function onMovePen(event) { 
+    event.preventDefault()
+
+    // redraw everything
+    var canvas = $('#doodle')[0]
+    var context = canvas.getContext("2d")
+    drawAll(context);
+
+    // grab relevant data
+    var width = detectPressure(event)
+    var pos = getDoodlePos(event)
+    var color = $('#pencolor')[0].value
+    drawDot(pos[0], pos[1], color, width, context)
 
     if (event.buttons == 1) {
         // drag mode
@@ -243,7 +261,7 @@ function onReleasePen(event) {
     event.preventDefault()
 
     // grab some data
-    var width = parseInt($('#penwidth')[0].value)
+    var width = detectPressure(event)
     var color = $('#pencolor')[0].value
     var pos = getDoodlePos(event)
 
@@ -324,19 +342,19 @@ function onReleasePen(event) {
 
 /// Modify line width using the mouse wheel
 function onWheel(event) {
-    var width = parseInt($('#penwidth')[0].value)
+    var pressure = parseInt(localStorage.getItem('draw_pressure'))
     if (event.deltaY < 0) {
-        width += 3
-        if (width >= 100) {
-            width = 100
+        pressure += 3
+        if (pressure >= 100) {
+            pressure = 100
         }
     } else if (event.deltaY > 0) {
-        width -= 3
-        if (width <= 5) {
-            width = 5
+        pressure -= 3
+        if (pressure <= 5) {
+            pressure = 5
         }
     }
-    $('#penwidth')[0].value = width
+    localStorage.setItem('draw_pressure', pressure)
     
     var canvas = $('#doodle')[0]
     var context = canvas.getContext("2d")
@@ -344,7 +362,7 @@ function onWheel(event) {
 
     var pos = getDoodlePos(event)
     var color = $('#pencolor')[0].value
-    drawDot(pos[0], pos[1], color, width, context)
+    drawDot(pos[0], pos[1], color, pressure, context)
 }
 
 function onUploadDrawing() {
