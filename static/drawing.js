@@ -252,55 +252,6 @@ function onReleasePen(event) {
         null, null,
         width, color
     )
-
-    /*
-    var canvas = $('#doodle')[0];
-    var context = canvas.getContext("2d");
-    
-    // get mouse position with canvas (and consider hardcoded zoom)
-    var box = canvas.getBoundingClientRect()
-    var x = (event.clientX - box.left) * 2
-    var y = (event.clientY - box.top) * 2
-    
-    if (event.shiftKey && line_from != null) {
-        var width = parseInt($('#penwidth')[0].value);
-        var color = $('#pencolor')[0].value;
-        
-        // draw straight line
-        context.strokeStyle = color;
-        context.fillStyle = color;
-        context.lineWidth = width;
-        context.lineCap = "round";
-        
-        context.beginPath()
-        context.moveTo(line_from[0], line_from[1])
-        context.lineTo(x, y)
-        context.stroke()
-    }
-    line_from = [x, y];
-    
-    if (pen_pos.length > 1) { 
-        // redraw entire line smoothly
-        context.beginPath();       
-        for (var i = 0; i < pen_pos.length; ++i) {
-            if (i == 0) {
-                context.moveTo(pen_pos[i][0], pen_pos[i][1]);
-            } else {
-                context.lineTo(pen_pos[i][0], pen_pos[i][1]);
-            }
-        }
-        context.stroke();
-        
-    } else if (pen_pos.length == 1) {
-        // draw dot
-        context.beginPath();        
-        context.moveTo(pen_pos[0][0], pen_pos[0][1]);
-        context.lineTo(pen_pos[0][0]+1, pen_pos[0][1]+1);
-        context.stroke();
-    }
-    
-    pen_pos = [];
-    */
 }
 
 /// Modify line width using the mouse wheel
@@ -344,8 +295,8 @@ function onUploadDrawing() {
         
     } else {
         // upload as token at screen center
-        var x = Math.round(MAX_SCENE_WIDTH / 2)
-        var y = Math.round(MAX_SCENE_HEIGHT / 2);
+        var x = Math.round(viewport.x)
+        var y = Math.round(viewport.y)
         uploadFiles(gm_name, game_url, f, [], x, y);
     }
 
