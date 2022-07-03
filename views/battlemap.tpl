@@ -48,7 +48,7 @@
             <input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN</label>
             <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
               
-            <canvas id="doodle" width="1600" height="900" onmousedown="onMovePen(event);" onmouseup="onReleasePen(event);" onmousemove="onMovePen(event);" onwheel="onWheel(event);" ontouchstart="onMovePen(event);" ontouchmove="onMovePen(event);" ontouchend="onReleasePen(event);"></canvas>
+            <canvas id="doodle" width="1600" height="900" onmousedown="onMovePen(event);" onmouseup="onReleasePen(event);" onmousemove="onMovePen(event);" onwheel="onWheelPen(event);" ontouchstart="onMovePen(event);" ontouchmove="onMovePen(event);" ontouchend="onReleasePen(event);"></canvas>
         </span>
     </div>
 

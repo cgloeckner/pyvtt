@@ -304,7 +304,7 @@ function onReleasePen(event) {
 }
 
 /// Modify line width using the mouse wheel
-function onWheel(event) {
+function onWheelPen(event) {
     var pressure = parseInt(localStorage.getItem('draw_pressure'))
     if (event.deltaY < 0) {
         pressure += 3
