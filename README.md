@@ -9,6 +9,16 @@ This piece of software is meant to be a easy-to-use, no-tutorial implementation 
 
 See the wiki for more details.
 
+## Dev environment setup
+
+0. Install [Poetry](https://python-poetry.org)
+1. `poetry install` (or `poetry install --no-dev` for production build)
+2. `poetry shell`
+
+Then you can do everything as usual inside a python virtual environment. Run `deactivate` to get out of it
+
+Use `poetry` to install and update dependencies: `poetry add`/`poetry update`
+
 ## Credits
 
 - `dicetray.png` by Kane Driscol
