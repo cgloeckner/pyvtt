@@ -439,6 +439,9 @@ function onTokenResize(event) {
         // trigger buffer redraw
         token.label_canvas = null;
         token.hue_canvas   = null;
+
+        // auto-layering preview for large/small tokens
+        token.zorder = -parseInt(0.1 * (token.size - 100))
     });
 }
 
@@ -1684,8 +1687,9 @@ function onQuitResize() {
     var changes = [];
     $.each(select_ids, function(index, id) {
         changes.push({
-            'id'   : id,
-            'size' : tokens[id].size
+            'id'     : id,
+            'size'   : tokens[id].size,
+            'zorder' : tokens[id].zorder
         });
     });
     
