@@ -147,15 +147,26 @@ class EmailApi(object):
 # ---------------------------------------------------------------------
 
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
-class PatreonApi(object):
+class BaseLoginApi(object):
+
+    def __init__(self, api, host_callback, **data):
+        self.api           = api
+        self.callback      = host_callback         # https://example.com/my/callback/path
+        self.client_id     = data['client_id']     # ID of API key
+        self.client_secret = data['client_secret'] # Secret of API key
+
+
+# ---------------------------------------------------------------------
+
+# @NOTE: this class is not covered in the unit tests because it depends too much on external resources
+class PatreonApi(BaseLoginApi):
     
     def __init__(self, host_callback, **data):
-        self.callback      = host_callback         # https://example.com/my/callback/path
-        self.client_id     = data['client_id']     # ID of Patreon API key
-        self.client_secret = data['client_secret'] # Secret of Patreon API key
+        super().__init__('google', host_callback, **data)
+        
         self.min_pledge    = data['min_pledge']    # minimum pledge level for access (amount)
         self.whitelist     = data['whitelist']     # whitelist to ignore pledge level
-        
+    
     @staticmethod
     def getUserInfo(json_data):
         return {
