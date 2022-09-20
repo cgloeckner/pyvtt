@@ -162,7 +162,7 @@ class BaseLoginApi(object):
 class PatreonApi(BaseLoginApi):
     
     def __init__(self, host_callback, **data):
-        super().__init__('google', host_callback, **data)
+        super().__init__('patreon', host_callback, **data)
         
         self.min_pledge    = data['min_pledge']    # minimum pledge level for access (amount)
         self.whitelist     = data['whitelist']     # whitelist to ignore pledge level
