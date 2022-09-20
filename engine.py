@@ -100,7 +100,8 @@ class Engine(object):
             error_file   = self.paths.getLogPath('error'),
             access_file  = self.paths.getLogPath('access'),
             warning_file = self.paths.getLogPath('warning'),
-            stats_file   = self.paths.getLogPath('stats')
+            stats_file   = self.paths.getLogPath('stats'),
+            auth_file    = self.paths.getLogPath('auth')
         )
         
         self.logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))
@@ -188,7 +189,7 @@ class Engine(object):
                     port_suffix = ':{0}'.format(port)
                 host_callback = '{0}/vtt/patreon/callback'.format(self.getUrl())
                 # create patreon query API
-                self.login_api = utils.PatreonApi(host_callback=host_callback, **self.login)
+                self.login_api = utils.PatreonApi(engine=self, host_callback=host_callback, **self.login)
             
         if self.notify['type'] == 'email':
             # create email notify API

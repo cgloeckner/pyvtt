@@ -24,7 +24,8 @@ class LoggingApiTest(unittest.TestCase):
             error_file   = self.root / 'error.log',
             access_file  = self.root / 'access.log',
             warning_file = self.root / 'warning.log',
-            stats_file   = self.root / 'stats.log'
+            stats_file   = self.root / 'stats.log',
+            auth_file    = self.root / 'auth.log'
         )
         
     def tearDown(self):
@@ -56,3 +57,8 @@ class LoggingApiTest(unittest.TestCase):
     def test_stats(self):
         self.logging.stats('hello stats world')
         self.assertLastLine('stats', 'hello stats world')
+    
+    def test_auth(self):
+        data = {'id': '123', 'username': 'foobar'}
+        self.logging.auth(data)
+        self.assertLastLine('auth', str(data))

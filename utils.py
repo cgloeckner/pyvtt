@@ -149,8 +149,9 @@ class EmailApi(object):
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class BaseLoginApi(object):
 
-    def __init__(self, api, host_callback, **data):
+    def __init__(self, api, engine, host_callback, **data):
         self.api           = api
+        self.engine        = engine
         self.callback      = host_callback         # https://example.com/my/callback/path
         self.client_id     = data['client_id']     # ID of API key
         self.client_secret = data['client_secret'] # Secret of API key
@@ -161,9 +162,9 @@ class BaseLoginApi(object):
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class PatreonApi(BaseLoginApi):
     
-    def __init__(self, host_callback, **data):
-        super().__init__('patreon', host_callback, **data)
-        
+    def __init__(self, engine, host_callback, **data):
+        super().__init__('patreon', engine, host_callback, **data)
+
         self.min_pledge    = data['min_pledge']    # minimum pledge level for access (amount)
         self.whitelist     = data['whitelist']     # whitelist to ignore pledge level
     
@@ -214,6 +215,7 @@ class PatreonApi(BaseLoginApi):
         """
         oauth_client = patreon.OAuth(self.client_id, self.client_secret)
         tokens = oauth_client.get_tokens(request.query.code, self.callback)
+        self.engine.logging.auth(tokens)
         access_token = tokens['access_token']
         
         return access_token, patreon.API(access_token)
@@ -223,9 +225,11 @@ class PatreonApi(BaseLoginApi):
         This tests the pledge level. """
         token, client = self.getApiClient(request)
         
-        user_response = client.fetch_user()
+        user_response = client.fetch_user()   
+        self.engine.logging.auth(user_response)
         json_data     = user_response.json_data
         user          = PatreonApi.getUserInfo(json_data)
+        self.engine.logging.auth(user)
         result = {
             'sid'     : token,
             'user'    : user,
@@ -249,7 +253,7 @@ class PatreonApi(BaseLoginApi):
 
 class LoggingApi(object):
     
-    def __init__(self, quiet, info_file, error_file, access_file, warning_file, stats_file):
+    def __init__(self, quiet, info_file, error_file, access_file, warning_file, stats_file, auth_file):
         self.log_format = logging.Formatter('[%(asctime)s at %(module)s/%(filename)s:%(lineno)d] %(message)s')
         
         # setup info logger
@@ -295,6 +299,13 @@ class LoggingApi(object):
         self.stats_logger = logging.getLogger('stats_log')   
         self.stats_logger.setLevel(logging.INFO)
         self.stats_logger.addHandler(self.stats_filehandler)
+
+        # setup auth logger
+        self.auth_filehandler = logging.FileHandler(auth_file, mode='a')   
+        self.auth_filehandler.setFormatter(self.log_format)
+        self.auth_logger = logging.getLogger('auth_log')
+        self.auth_logger.setLevel(logging.INFO)
+        self.auth_logger.addHandler(self.auth_filehandler)
         
         # link logging handles
         self.info    = self.info_logger.info
@@ -302,6 +313,7 @@ class LoggingApi(object):
         self.access  = self.access_logger.info
         self.warning = self.warning_logger.warning
         self.stats   = self.stats_logger.info
+        self.auth    = self.auth_logger.info
         
         boot = '{0} {1} {0}'.format('=' * 15, 'STARTED')
         self.info(boot)
