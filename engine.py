@@ -180,16 +180,22 @@ class Engine(object):
             self.logging.info('Defaulting to dev-login for local-gm')
         else:
             # load patreon API
-            if self.login['type'] == 'patreon':
+            if self.login['type'] in ['patreon', 'google']:
                 protocol = 'https' if self.hasSsl() else 'http'
                 port     = self.hosting['port']
                 if port in [80, 443]:
                     port_suffix = '' # port not required in URL
                 else:
                     port_suffix = ':{0}'.format(port)
-                host_callback = '{0}/vtt/patreon/callback'.format(self.getUrl())
-                # create patreon query API
-                self.login_api = utils.PatreonApi(engine=self, host_callback=host_callback, **self.login)
+                host_callback = '{0}/vtt/callback'.format(self.getUrl())
+                if self.login['type'] == 'patreon':
+                    # create patreon query API
+                    self.login_api = utils.PatreonApi(engine=self, host_callback=host_callback, **self.login)
+                elif self.login['type'] == 'google':
+                    # create google query API
+                    self.login_api = utils.GoogleApi(engine=self, host_callback=host_callback, **self.login)
+                else:
+                    raise NotImplementedError(self.login['type'])
             
         if self.notify['type'] == 'email':
             # create email notify API

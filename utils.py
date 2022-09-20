@@ -12,6 +12,10 @@ import sys, os, logging, smtplib, pathlib, tempfile, traceback, uuid, random
 import bottle
 import patreon
 
+from google.oauth2 import id_token
+from google_auth_oauthlib.flow import Flow
+import google.auth.transport.requests
+
 
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
@@ -156,6 +160,62 @@ class BaseLoginApi(object):
         self.client_id     = data['client_id']     # ID of API key
         self.client_secret = data['client_secret'] # Secret of API key
 
+
+# ---------------------------------------------------------------------
+
+# @NOTE: this class is not covered in the unit tests because it depends too much on external resources
+class GoogleApi(BaseLoginApi):
+
+    def __init__(self, engine, host_callback, **data):
+        super().__init__('google', engine, host_callback, **data)
+
+        if engine.debug:
+            # accept non-https for testing oauth (e.g. localhost)
+            os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
+        self.flow = Flow.from_client_config(
+            client_config={
+                'web': {
+                    'client_id'    : self.client_id,
+                    'client_secret': self.client_secret,
+                    'auth_uri'     : 'https://accounts.google.com/o/oauth2/auth',
+                    'token_uri'    : 'https://oauth2.googleapis.com/token'
+                }
+            },
+            scopes=[
+                'https://www.googleapis.com/auth/userinfo.profile',
+                'openid'
+            ],
+            redirect_uri=host_callback)
+
+    def getAuthUrl(self):
+        """ Generate google-URL to access in order to fetch data. """
+        auth_url, state = self.flow.authorization_url()
+        return auth_url
+    
+    def getSession(self, request):
+        """ Query google to return required user data and infos."""
+        self.flow.fetch_token(authorization_response=bottle.request.url)
+        creds = self.flow.credentials
+        token_request = google.auth.transport.requests.Request()
+
+        id_info = id_token.verify_oauth2_token(
+            id_token=creds._id_token,
+            request=token_request,
+            audience=self.client_id
+        )
+
+        result = {
+            'sid'  : str(uuid.uuid4()),
+            'user' : {
+                'id'      : id_info.get('sub'),
+                'username': id_info.get('name')
+            },
+            'granted': True # no reason for something else here
+        }
+        self.engine.logging.auth(result)
+        
+        return result
 
 # ---------------------------------------------------------------------
 

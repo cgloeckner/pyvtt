@@ -15,7 +15,7 @@
         <input type="text" id="gmname" maxlength="20" autocomplete="off" />
         
         <p><input type="submit" value="CREATE GM ACCOUNT" /></p>
-%elif engine.login_api.api == 'patreon':
+%elif engine.login_api.api in ['patreon', 'google']:
         <p><a href="{{engine.login_api.getAuthUrl()}}"><input type="button" value="LOG IN WITH {{engine.login_api.api.upper()}}" /></a></p>
 %else:
     %raise NotImplementedError()

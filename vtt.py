@@ -31,13 +31,13 @@ def setup_gm_routes(engine):
     def gm_login():
         return dict(engine=engine)
 
-    # patreon-login callback
-    @get('/vtt/patreon/callback')
-    def gm_patreon():
-        if engine.login['type'] != 'patreon':
+    # login callback
+    @get('/vtt/callback')
+    def gm_login_callback():
+        if engine.login['type'] not in ['patreon', 'google']:
             abort(404)
         
-        # query session from patreon auth
+        # query session from login auth
         session = engine.login_api.getSession(request)
         
         if not session['granted']:
@@ -47,7 +47,7 @@ def setup_gm_routes(engine):
         # test whether GM is already there
         gm = engine.main_db.GM.select(lambda g: g.url == session['user']['id']).first()
         if gm is None:
-            # create GM (username as display name, patreon-id as url)
+            # create GM (username as display name, user-id as url)
             gm = engine.main_db.GM(
                 name=session['user']['username'],
                 url=str(session['user']['id']),
@@ -72,7 +72,7 @@ def setup_gm_routes(engine):
                 # reraise greenlet's exception to trigger proper error reporting
                 raise
             
-            engine.logging.access('GM created using patreon with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
+            engine.logging.access('GM created using external auth with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
             
         else:
             # create new session for already existing GM
@@ -82,13 +82,13 @@ def setup_gm_routes(engine):
             
         gm.refreshSession(response)
         
-        engine.logging.access('GM name="{0}" url={1} session refreshed using patreon by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
+        engine.logging.access('GM name="{0}" url={1} session refreshed using external auth by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
         
         engine.main_db.commit()
         # redirect to GM's game overview
         redirect('/')
-
-    # non-patreon login
+    
+    # non-auth login
     @post('/vtt/join')
     def post_gm_login():
         if engine.login['type'] != '':
