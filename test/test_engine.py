@@ -39,18 +39,19 @@ class EngineTest(EngineBaseTest):
                 'num_music'  : 5
             },
             'playercolors' : ['#FF0000', '#00FF00'],
-            'shards'     : list(),
-            'expire'     : 3600,
-            'hosting'    : {
-                'domain' : 'vtt.example.com',
-                'port'   : 80,
-                'ssl'    : False
+            'shards'  : list(),
+            'expire'  : 3600,
+            'hosting' : {
+                'domain'  : 'vtt.example.com',
+                'port'    : 80,
+                'ssl'     : False,
+                'reverse' : True
             },
-            'login'      : {
-                'type'   : None
+            'login'    : {
+                'type' : None
             },
-            'notify'     : {
-                'type'   : None
+            'notify'   : {
+                'type' : None
             }
         }
         
@@ -134,7 +135,7 @@ class EngineTest(EngineBaseTest):
     def test_getWebsocketUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com:80/websocket')
+        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/websocket')
 
         # internal SSL does not effect it
         settings['hosting']['ssl'] = False
@@ -145,6 +146,11 @@ class EngineTest(EngineBaseTest):
         settings['hosting']['port'] = 443
         self.reloadEngine(settings=settings)
         self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/websocket')
+        
+        # reload without reverse proxy will take effect
+        settings['hosting']['reverse'] = False 
+        self.reloadEngine(settings=settings)      
+        self.assertEqual(self.engine.getWebsocketUrl(), 'ws://vtt.example.com:443/websocket')
         
     def test_getAuthCallbackUrl(self):
         settings = EngineTest.defaultSettings()
@@ -160,6 +166,11 @@ class EngineTest(EngineBaseTest):
         settings['hosting']['port'] = 443
         self.reloadEngine(settings=settings)
         self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com/vtt/callback')
+        
+        # reload without reverse proxy will take effect
+        settings['hosting']['reverse'] = False 
+        self.reloadEngine(settings=settings)      
+        self.assertEqual(self.engine.getAuthCallbackUrl(), 'http://vtt.example.com:443/vtt/callback')
         
     def test_verifyUrlSection(self):
         self.assertTrue(self.engine.verifyUrlSection('foo-bar.lol_test'))
