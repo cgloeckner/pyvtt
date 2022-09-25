@@ -93,7 +93,7 @@ class Engine(object):
         
         if self.localhost:
             assert(not self.local_gm)
-        
+
         self.logging = utils.LoggingApi(
             quiet        = self.quiet,
             info_file    = self.paths.getLogPath('info'),
@@ -276,7 +276,7 @@ class Engine(object):
         return f'ws{suffix}://{self.getDomain()}:{self.getPort()}/websocket'
 
     def getAuthCallbackUrl(self):
-        return f'{self.getUrl()}/vtt/callback'
+        return f'https://{self.getDomain()}/vtt/callback'
 
     def hasSsl(self):
         return self.hosting['ssl']

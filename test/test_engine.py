@@ -149,17 +149,17 @@ class EngineTest(EngineBaseTest):
     def test_getAuthCallbackUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getAuthCallbackUrl(), 'http://vtt.example.com:80/vtt/callback')
+        self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com/vtt/callback')
 
-        # reload with ssl
+        # reload with internal ssl
         settings['hosting']['ssl'] = True
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com:80/vtt/callback')
+        self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com/vtt/callback')
 
-        # reload with a different port
+        # reload with a different internal port
         settings['hosting']['port'] = 443
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com:443/vtt/callback')
+        self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com/vtt/callback')
         
     def test_verifyUrlSection(self):
         self.assertTrue(self.engine.verifyUrlSection('foo-bar.lol_test'))
