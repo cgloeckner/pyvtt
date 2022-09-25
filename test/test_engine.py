@@ -43,6 +43,9 @@ class EngineTest(EngineBaseTest):
             'expire'     : 3600,
             'hosting'    : {
                 'domain'     : 'localhost',
+                'port'       : 80,
+                'ssl'        : False,
+                'external'   : '127.0.0.1'
             },
             'login'      : {
                 'type'   : None

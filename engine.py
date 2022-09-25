@@ -49,7 +49,7 @@ class Engine(object):
             'port'        : 8080,
             'socket'      : '',
             'ssl'         : False,
-            'hosting_url' : ''
+            'external'    : ''
         }
         self.debug  = False
         self.quiet  = False
@@ -141,6 +141,9 @@ class Engine(object):
                 self.login        = settings['login']
                 self.notify       = settings['notify']
             self.logging.info('Settings loaded')
+
+        # add this server to the shards list
+        self.shards.append(self.getUrl())
         
         # export server constants to javascript-file
         self.constants = utils.ConstantExport()
@@ -272,15 +275,18 @@ class Engine(object):
         return self.hosting['port']
         
     def getUrl(self):
-        return self.hosting.get('hosting_url', 'http://{0}:{1}'.format(self.getDomain(), self.getPort()))
+        suffix = 's' if self.hasSsl() else ''
+        domain = self.hosting['external']
+        if domain == '':
+            domain = self.getDomain()
+        return f'http{suffix}://{domain}:{self.getPort()}'
 
     def getWebsocketUrl(self):
-        configuredUrl = self.hosting.get('hosting_websocket_url')
-        if configuredUrl:
-            return configuredUrl
-
-        protocol = 'wss' if self.hasSsl() else 'ws'
-        return '{0}://{1}:{2}/websocket'.format(protocol, self.getDomain(), self.getPort())
+        suffix = 's' if self.hasSsl() else ''
+        domain = self.hosting['external']
+        if domain == '':
+            domain = self.getDomain()
+        return f'ws{suffix}://{domain}:{self.getPort()}/websocket'
 
     def hasSsl(self):
         return self.hosting['ssl']
@@ -290,7 +296,7 @@ class Engine(object):
         
     def getClientIp(self, request):
         # use different header if through unix socket or reverse proxy
-        if self.hosting['socket'] != '' or self.hosting['hosting_url'] != '':
+        if self.hosting['socket'] != '' or self.hosting['external'] != '':
             return request.environ.get('HTTP_X_FORWARDED_FOR')
         else:
             return request.environ.get('REMOTE_ADDR')

@@ -630,9 +630,9 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.body, b'')
     
     def test_vtt_status(self):
-        # cannot query if no shard was set up
+        # can query if no more shards were specified
         ret = self.app.get('/vtt/status', expect_errors=True)
-        self.assertEqual(ret.status_int, 404)
+        self.assertEqual(ret.status_int, 200)
 
         # can query if shard was set up
         self.engine.shards = ['http://localhost:80']
@@ -643,9 +643,9 @@ class VttTest(EngineBaseTest):
         self.assertIn('num_players', ret.json)
         
     def test_vtt_query(self):
-        # cannot query if no shard was set up
+        # can only query this server if no shards are specified
         ret = self.app.get('/vtt/query/0', expect_errors=True)
-        self.assertEqual(ret.status_int, 404)
+        self.assertEqual(ret.status_int, 200)
         
         # setup server shards
         test_ports = [8081, 8000]
@@ -685,9 +685,9 @@ class VttTest(EngineBaseTest):
             gevent.kill(g)
         
     def test_vtt_shard(self):
-        # cannot show shards page if no shard was set up
+        # can show shards page if no more shards were specified
         ret = self.app.get('/vtt/shard', expect_errors=True)
-        self.assertEqual(ret.status_int, 404)
+        self.assertEqual(ret.status_int, 200)
 
         # can show shard page for single server
         self.engine.shards = ['http://localhost:80']
