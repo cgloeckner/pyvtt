@@ -43,13 +43,13 @@ class Engine(object):
         self.locks     = dict()
         
         # webserver stuff
-        self.host   = '0.0.0.0'
+        self.listen = '0.0.0.0'
         self.hosting = {
             'domain'      : 'localhost',
             'port'        : 8080,
             'socket'      : '',
             'ssl'         : False,
-            'external'    : ''
+            'reverse'     : False
         }
         self.debug  = False
         self.quiet  = False
@@ -167,12 +167,12 @@ class Engine(object):
 
         self.logging.info('Loading domain...')
         if self.localhost:
-            # overwrite domain and host to localhost
-            self.host   = '127.0.0.1'
+            # run via localhost
+            self.listen = '127.0.0.1'
             self.hosting['domain'] = 'localhost'
             self.logging.info('Overwriting connections to localhost')
         elif self.local_gm or self.hosting['domain'] == '':
-            # overwrite domain with public ip
+            # run via public ip
             self.hosting['domain'] = self.getPublicIp()
             self.logging.info('Overwriting Domain by Public IP: {0}'.format(self.hosting['domain']))
 
@@ -252,7 +252,7 @@ class Engine(object):
             self.notify_api.notifyStart()
         
         bottle.run(
-            host       = self.host,
+            host       = self.listen,
             port       = self.hosting['port'],
             debug      = self.debug,
             quiet      = self.quiet,
@@ -276,17 +276,14 @@ class Engine(object):
         
     def getUrl(self):
         suffix = 's' if self.hasSsl() else ''
-        domain = self.hosting['external']
-        if domain == '':
-            domain = self.getDomain()
-        return f'http{suffix}://{domain}:{self.getPort()}'
+        return f'http{suffix}://{self.getDomain()}:{self.getPort()}'
 
     def getWebsocketUrl(self):
         suffix = 's' if self.hasSsl() else ''
-        domain = self.hosting['external']
-        if domain == '':
-            domain = self.getDomain()
-        return f'ws{suffix}://{domain}:{self.getPort()}/websocket'
+        return f'ws{suffix}://{self.getDomain()}:{self.getPort()}/websocket'
+
+    def getAuthCallbackUrl(self):
+        return f'{self.getUrl()}/vtt/callback'
 
     def hasSsl(self):
         return self.hosting['ssl']
@@ -296,7 +293,7 @@ class Engine(object):
         
     def getClientIp(self, request):
         # use different header if through unix socket or reverse proxy
-        if self.hosting['socket'] != '' or self.hosting['external'] != '':
+        if self.hosting['socket'] != '' or self.hosting['reverse']:
             return request.environ.get('HTTP_X_FORWARDED_FOR')
         else:
             return request.environ.get('REMOTE_ADDR')

@@ -163,6 +163,7 @@ class BaseLoginApi(object):
 
 # ---------------------------------------------------------------------
 
+
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class GoogleApi(BaseLoginApi):
 

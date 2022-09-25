@@ -556,9 +556,7 @@ def setup_gm_routes(engine):
         if len(engine.shards) == 0:
             abort(404)
         
-        protocol = 'https' if engine.hasSsl() else 'http'
-        own = '{0}://{1}:{2}'.format(protocol, engine.getDomain(), engine.getPort())
-        return dict(engine=engine, own=own)
+        return dict(engine=engine, own=engine.getUrl())
 
 
 # ---------------------------------------------------------------------

@@ -42,10 +42,9 @@ class EngineTest(EngineBaseTest):
             'shards'     : list(),
             'expire'     : 3600,
             'hosting'    : {
-                'domain'     : 'localhost',
-                'port'       : 80,
-                'ssl'        : False,
-                'external'   : '127.0.0.1'
+                'domain' : 'vtt.example.com',
+                'port'   : 80,
+                'ssl'    : False
             },
             'login'      : {
                 'type'   : None
@@ -108,7 +107,7 @@ class EngineTest(EngineBaseTest):
         p = self.engine.getPort()
         self.assertEqual(p, 80)
         
-    def test_hasSsel(self):
+    def test_hasSsl(self):
         self.assertFalse(self.engine.hasSsl())
         
         # reload with ssl
@@ -116,6 +115,51 @@ class EngineTest(EngineBaseTest):
         settings['hosting']['ssl'] = True 
         self.reloadEngine(settings=settings)   
         self.assertTrue(self.engine.hasSsl())
+        
+    def test_getUrl(self):
+        settings = EngineTest.defaultSettings()
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.getUrl(), 'http://vtt.example.com:80')
+
+        # reload with ssl
+        settings['hosting']['ssl'] = True
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.getUrl(), 'https://vtt.example.com:80')
+
+        # reload with a different port
+        settings['hosting']['port'] = 443
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.getUrl(), 'https://vtt.example.com:443')
+        
+    def test_getWebsocketUrl(self):
+        settings = EngineTest.defaultSettings()
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.getWebsocketUrl(), 'ws://vtt.example.com:80/websocket')
+
+        # reload with ssl
+        settings['hosting']['ssl'] = True
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com:80/websocket')
+
+        # reload with a different port
+        settings['hosting']['port'] = 443
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com:443/websocket')
+        
+    def test_getAuthCallbackUrl(self):
+        settings = EngineTest.defaultSettings()
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.getAuthCallbackUrl(), 'http://vtt.example.com:80/vtt/callback')
+
+        # reload with ssl
+        settings['hosting']['ssl'] = True
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com:80/vtt/callback')
+
+        # reload with a different port
+        settings['hosting']['port'] = 443
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com:443/vtt/callback')
         
     def test_verifyUrlSection(self):
         self.assertTrue(self.engine.verifyUrlSection('foo-bar.lol_test'))
