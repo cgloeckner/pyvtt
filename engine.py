@@ -224,7 +224,6 @@ class Engine(object):
         bn.loadFromFile(pathlib.Path('static') / 'version.js')
         self.version = str(bn)
         
-        
         # game cache
         self.cache = EngineCache(self)
         
@@ -243,10 +242,6 @@ class Engine(object):
         
         if self.notify_api is not None:
             self.notify_api.notifyStart()
-
-        print(self.getUrl())
-        print(self.getWebsocketUrl())
-        print(self.getAuthCallbackUrl())
         
         bottle.run(
             host       = self.listen,
