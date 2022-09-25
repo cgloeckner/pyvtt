@@ -243,6 +243,10 @@ class Engine(object):
         
         if self.notify_api is not None:
             self.notify_api.notifyStart()
+
+        print(self.getUrl())
+        print(self.getWebsocketUrl())
+        print(self.getAuthCallbackUrl())
         
         bottle.run(
             host       = self.listen,
@@ -272,10 +276,14 @@ class Engine(object):
         return f'http{suffix}://{self.getDomain()}:{self.getPort()}'
 
     def getWebsocketUrl(self):
-        return f'wss://{self.getDomain()}/websocket'
+        protocol = 'wss' if self.hosting['reverse'] or self.hasSsl() else 'ws'
+        port     = '' if self.hosting['reverse'] else f':{self.getPort()}'
+        return f'{protocol}://{self.getDomain()}{port}/websocket'
 
     def getAuthCallbackUrl(self):
-        return f'https://{self.getDomain()}/vtt/callback'
+        protocol = 'https' if self.hosting['reverse'] or self.hasSsl() else 'http'
+        port     = '' if self.hosting['reverse'] else f':{self.getPort()}'
+        return f'{protocol}://{self.getDomain()}{port}/vtt/callback'
 
     def hasSsl(self):
         return self.hosting['ssl']
