@@ -187,7 +187,7 @@ class GoogleApi(BaseLoginApi):
                 'https://www.googleapis.com/auth/userinfo.profile',
                 'openid'
             ],
-            redirect_uri=host_callback)
+            redirect_uri=self.callback)
 
     def getAuthUrl(self):
         """ Generate google-URL to access in order to fetch data. """
