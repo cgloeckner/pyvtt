@@ -153,10 +153,10 @@ class EmailApi(object):
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class BaseLoginApi(object):
 
-    def __init__(self, api, engine, host_callback, **data):
+    def __init__(self, api, engine, **data):
         self.api           = api
         self.engine        = engine
-        self.callback      = host_callback         # https://example.com/my/callback/path
+        self.callback      = engine.getAuthCallbackUrl() # https://example.com/my/callback/path
         self.client_id     = data['client_id']     # ID of API key
         self.client_secret = data['client_secret'] # Secret of API key
 
@@ -167,8 +167,8 @@ class BaseLoginApi(object):
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class GoogleApi(BaseLoginApi):
 
-    def __init__(self, engine, host_callback, **data):
-        super().__init__('google', engine, host_callback, **data)
+    def __init__(self, engine, **data):
+        super().__init__('google', engine, **data)
 
         if engine.debug:
             # accept non-https for testing oauth (e.g. localhost)
@@ -223,8 +223,8 @@ class GoogleApi(BaseLoginApi):
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class PatreonApi(BaseLoginApi):
     
-    def __init__(self, engine, host_callback, **data):
-        super().__init__('patreon', engine, host_callback, **data)
+    def __init__(self, engine, **data):
+        super().__init__('patreon', engine, **data)
 
         self.min_pledge    = data['min_pledge']    # minimum pledge level for access (amount)
         self.whitelist     = data['whitelist']     # whitelist to ignore pledge level

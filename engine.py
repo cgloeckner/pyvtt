@@ -184,19 +184,12 @@ class Engine(object):
         else:
             # load patreon API
             if self.login['type'] in ['patreon', 'google']:
-                protocol = 'https' if self.hasSsl() else 'http'
-                port     = self.hosting['port']
-                if port in [80, 443]:
-                    port_suffix = '' # port not required in URL
-                else:
-                    port_suffix = ':{0}'.format(port)
-                host_callback = '{0}/vtt/callback'.format(self.getUrl())
                 if self.login['type'] == 'patreon':
                     # create patreon query API
-                    self.login_api = utils.PatreonApi(engine=self, host_callback=host_callback, **self.login)
+                    self.login_api = utils.PatreonApi(engine=self, **self.login)
                 elif self.login['type'] == 'google':
                     # create google query API
-                    self.login_api = utils.GoogleApi(engine=self, host_callback=host_callback, **self.login)
+                    self.login_api = utils.GoogleApi(engine=self, **self.login)
                 else:
                     raise NotImplementedError(self.login['type'])
             
