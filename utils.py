@@ -104,6 +104,7 @@ class PathApi(object):
 class EmailApi(object):
     
     def __init__(self, engine, **data):
+        self.engine   = engine
         self.appname  = data['appname']
         self.host     = data['host']
         self.port     = data['port']
@@ -121,8 +122,8 @@ class EmailApi(object):
         # create mail content
         frm = 'From: pyvtt Server <{0}>'.format(self.sender)
         to  = 'To: Developers <{0}>'.format(self.sender)
-        sub = 'Subject: [{0}] Server Online'.format(self.appname)
-        plain = '{0}\n{1}\n{2}\nThe VTT server {3} is now online!'.format(frm, to, sub, self.appname)
+        sub = 'Subject: [{0}/{1}] Server Online'.format(self.appname, self.engine.title)
+        plain = '{0}\n{1}\n{2}\nThe VTT server {3}/{4} on {5} is now online!'.format(frm, to, sub, self.appname, self.engine.title, self.engine.getDomain())
         
         # send email
         try:
@@ -136,7 +137,7 @@ class EmailApi(object):
         # create mail content
         frm = 'From: pyvtt Server <{0}>'.format(self.sender)
         to  = 'To: Developers <{0}>'.format(self.sender)
-        sub = 'Subject: [{1}] Exception Traceback #{0}'.format(error_id, self.appname)
+        sub = 'Subject: [{1}/{2}] Exception Traceback #{0}'.format(error_id, self.appname, self.engine.title)
         plain = '{0}\n{1}\n{2}\n{3}'.format(frm, to, sub, message)
         
         # send email
