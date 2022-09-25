@@ -272,8 +272,7 @@ class Engine(object):
         return f'http{suffix}://{self.getDomain()}:{self.getPort()}'
 
     def getWebsocketUrl(self):
-        suffix = 's' if self.hasSsl() else ''
-        return f'ws{suffix}://{self.getDomain()}:{self.getPort()}/websocket'
+        return f'wss://{self.getDomain()}/websocket'
 
     def getAuthCallbackUrl(self):
         return f'https://{self.getDomain()}/vtt/callback'

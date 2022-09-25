@@ -134,29 +134,29 @@ class EngineTest(EngineBaseTest):
     def test_getWebsocketUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getWebsocketUrl(), 'ws://vtt.example.com:80/websocket')
-
-        # reload with ssl
-        settings['hosting']['ssl'] = True
-        self.reloadEngine(settings=settings)
         self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com:80/websocket')
 
-        # reload with a different port
+        # internal SSL does not effect it
+        settings['hosting']['ssl'] = False
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/websocket')
+
+        # internal port does not effect it
         settings['hosting']['port'] = 443
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com:443/websocket')
+        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/websocket')
         
     def test_getAuthCallbackUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)
         self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com/vtt/callback')
 
-        # reload with internal ssl
-        settings['hosting']['ssl'] = True
+        # internal SSL does not effect it
+        settings['hosting']['ssl'] = False
         self.reloadEngine(settings=settings)
         self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com/vtt/callback')
 
-        # reload with a different internal port
+        # internal port does not effect it
         settings['hosting']['port'] = 443
         self.reloadEngine(settings=settings)
         self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com/vtt/callback')
