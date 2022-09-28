@@ -1,4 +1,6 @@
 const gridsize = 32
+const card_width  = 1600
+const card_height = 900
 
 var doodle_on_background = true
 
@@ -24,8 +26,8 @@ function drawLine(line, target) {
     target.strokeStyle = line.color
     target.fillStyle = line.color
     target.lineWidth = line.width
-    target.moveTo(line.x1, line.y1)
-    target.lineTo(line.x2, line.y2)
+    target.moveTo(line.x1 * card_width, line.y1 * card_height)
+    target.lineTo(line.x2 * card_width, line.y2 * card_height)
     target.stroke();
 }
 
@@ -34,7 +36,7 @@ function drawDot(x, y, color, width, target) {
     target.strokeStyle = color
     target.fillStyle = color
     target.lineWidth = width
-    target.arc(x, y, 1, 0, 2*Math.PI)
+    target.arc(x * card_width, y * card_height, 1, 0, 2*Math.PI)
     target.stroke();
 }
 
@@ -135,12 +137,8 @@ function detectPressure(event) {
             localStorage.setItem('draw_pressure', 20)
             pressure = 20
         }
-        
-        console.log('load from storage', pressure)
     } else {
         localStorage.setItem('draw_pressure', pressure)
-        
-        console.log('save to storage', pressure)
     }
     
     return pressure
@@ -158,15 +156,14 @@ function getDoodlePos(event) {
         event = event.touches[0]
     }
     
-    var x = (event.clientX - box.left) * 2
-    var y = (event.clientY - box.top) * 2
+    var x = (event.clientX - box.left) / box.width
+    var y = (event.clientY - box.top) / box.height
     
     if (event.ctrlKey) {
         // snap to invisible grid
         x = gridsize * parseInt(x / gridsize)
         y = gridsize * parseInt(y / gridsize)
     }
-
 
     return [x, y]
 }

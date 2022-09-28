@@ -417,8 +417,8 @@ div#gmdrop > div.element > div.controls > span.warning {
 /* --- Drawing Controls --------------------------------------------- */
 
 div#drawing {
-    width: 850px;
-    height: 500px;
+    width: 66%;
+    aspect-ratio: 16/9;
 
     position: absolute;
     left: 50%;
@@ -443,10 +443,10 @@ div#drawing > span > label {
 }
 
 div#drawing > span > canvas#doodle {
-    /*background-color: white;*/
     border: 3px solid black;
     
-    width: 800px;
+    max-width: 100%;
+    max-height: 100%;
 }
 
 div#drawing > span > input#penwidth,
