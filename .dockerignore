@@ -1,0 +1,10 @@
+__pycache__
+bin
+Dockerfile
+LICENSE
+include
+lib
+pyvenv.cfg
+pyvtt.doxygen
+README.md
+test
