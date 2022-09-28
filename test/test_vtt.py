@@ -642,7 +642,7 @@ class VttTest(EngineBaseTest):
         """
         self.assertIn('cpu', ret.json)
         self.assertIn('memory', ret.json)
-        """"
+        """
         self.assertIn('num_players', ret.json)
         
     def test_vtt_query(self):
