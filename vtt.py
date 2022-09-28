@@ -499,10 +499,12 @@ def setup_gm_routes(engine):
     def status_report():
         if len(engine.shards) == 0:
             abort(404)
-        
+
+        # @NOTE: this needs to be rewritten, since there's no `ps` in slim containres
         pid = os.getpid()
         data = dict()
-        
+
+        """
         # query cpu load
         ret = subprocess.run(["ps", "-p", str(pid), "-o", "%cpu"], capture_output=True)
         val = ret.stdout.decode('utf-8').split('\n')[1].strip()
@@ -512,6 +514,7 @@ def setup_gm_routes(engine):
         ret = subprocess.run(["ps", "-p", str(pid), "-o", "%mem"], capture_output=True)
         val = ret.stdout.decode('utf-8').split('\n')[1].strip()
         data['memory'] = float(val)
+        """
         
         # query number of players
         data['num_players'] = PlayerCache.instance_count

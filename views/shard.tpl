@@ -49,10 +49,12 @@ function queryShard(index, host) {
             var status  = 'OFFLINE';
             var hint    = 'Please report this';
             var players = 'UNKNOWN'
-            
+
             // try to parse status
             try {
                 data = JSON.parse(response.status);
+                /// @NOTE: this needs to be rewritten, since there's no `ps` in slim containres
+                /*
                 if (data.cpu > 90.0 || data.memory > 90.0) {
                     color  = 'orange';
                     status = 'VERY BAD';
@@ -70,6 +72,10 @@ function queryShard(index, host) {
                     status = 'VERY GOOD';
                 }
                 hint    = data.cpu + '% CPU\n' + data.memory + '% Memory';
+                */
+                color   = 'green'
+                status  = 'ONLINE'
+                hint    = 'Trouble? E-Mail us!'
                 players = data.num_players;
             } catch (e) {
                 console.warn('Server Status unknown: ', host);
