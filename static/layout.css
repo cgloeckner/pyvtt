@@ -737,7 +737,11 @@ div.rollbox > span > span.maxani {
     width: 100px;
     height: 108px;
     background: url('/static/dice_max.png') left center;
-    animation: dicemax 0.75s steps(12) infinite;
+
+    animation-name: dicemax;
+    animation-duration: 0.75s;
+    animation-timing-function: steps(12);
+    animation-iteration-count: 1;
 }
 
 @keyframes dicemax {
