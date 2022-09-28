@@ -34,7 +34,7 @@ class EngineBaseTest(unittest.TestCase):
         self.app = webtest.TestApp(self.engine.app)
         
         self.monkeyPatch()
-        
+                
     def monkeyPatch(self):
         # save methods for later
         self.prev_getPublicIp = self.engine.getPublicIp

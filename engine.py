@@ -193,7 +193,7 @@ class Engine(object):
                 else:
                     raise NotImplementedError(self.login['type'])
             
-        if self.notify['type'] == 'email':
+        if self.notify['type'] == 'email' and not self.debug:
             # create email notify API
             self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
 
@@ -267,18 +267,22 @@ class Engine(object):
         return self.hosting['port']
         
     def getUrl(self):
-        suffix = 's' if self.hasSsl() else ''
-        return f'http{suffix}://{self.getDomain()}:{self.getPort()}'
+        suffix = 's' if self.hasReverseProxy() or self.hasSsl() else ''
+        port   = '' if self.hasReverseProxy() else f':{self.getPort()}'
+        return f'http{suffix}://{self.getDomain()}{port}'
 
     def getWebsocketUrl(self):
-        protocol = 'wss' if self.hosting['reverse'] or self.hasSsl() else 'ws'
-        port     = '' if self.hosting['reverse'] else f':{self.getPort()}'
+        protocol = 'wss' if self.hasReverseProxy() or self.hasSsl() else 'ws'
+        port     = '' if self.hasReverseProxy() else f':{self.getPort()}'
         return f'{protocol}://{self.getDomain()}{port}/websocket'
 
     def getAuthCallbackUrl(self):
-        protocol = 'https' if self.hosting['reverse'] or self.hasSsl() else 'http'
-        port     = '' if self.hosting['reverse'] else f':{self.getPort()}'
+        protocol = 'https' if self.hasReverseProxy() or self.hasSsl() else 'http'
+        port     = '' if self.hasReverseProxy() else f':{self.getPort()}'
         return f'{protocol}://{self.getDomain()}{port}/vtt/callback'
+
+    def hasReverseProxy(self):
+        return self.hosting['reverse']
 
     def hasSsl(self):
         return self.hosting['ssl']
@@ -288,7 +292,7 @@ class Engine(object):
         
     def getClientIp(self, request):
         # use different header if through unix socket or reverse proxy
-        if self.hosting['socket'] != '' or self.hosting['reverse']:
+        if self.hosting['socket'] != '' or self.hasReverseProxy():
             return request.environ.get('HTTP_X_FORWARDED_FOR')
         else:
             return request.environ.get('REMOTE_ADDR')

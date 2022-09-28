@@ -120,17 +120,22 @@ class EngineTest(EngineBaseTest):
     def test_getUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getUrl(), 'http://vtt.example.com:80')
+        self.assertEqual(self.engine.getUrl(), 'https://vtt.example.com')
 
-        # reload with ssl
-        settings['hosting']['ssl'] = True
+        # internal SSL does not effect it
+        settings['hosting']['ssl'] = False
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getUrl(), 'https://vtt.example.com:80')
+        self.assertEqual(self.engine.getUrl(), 'https://vtt.example.com')
 
-        # reload with a different port
+        # internal port does not effect it
         settings['hosting']['port'] = 443
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getUrl(), 'https://vtt.example.com:443')
+        self.assertEqual(self.engine.getUrl(), 'https://vtt.example.com')
+        
+        # reload without reverse proxy will take effect
+        settings['hosting']['reverse'] = False 
+        self.reloadEngine(settings=settings)       
+        self.assertEqual(self.engine.getUrl(), 'http://vtt.example.com:443')
         
     def test_getWebsocketUrl(self):
         settings = EngineTest.defaultSettings()
