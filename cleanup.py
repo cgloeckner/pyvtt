@@ -7,6 +7,8 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
+import sys
+
 from engine import Engine
 
 
@@ -15,7 +17,7 @@ __licence__ = 'MIT'
 
 
 if __name__ == '__main__':
-    engine = Engine()#argv=['--quiet'])     
+    engine = Engine(sys.argv)
     print('{0} cleanup script started.'.format(engine.title))
     engine.cleanup() 
     print('Done.')
