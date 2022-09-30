@@ -314,60 +314,61 @@ class PatreonApi(BaseLoginApi):
 # ---------------------------------------------------------------------
 
 class LoggingApi(object):
-    
-    def __init__(self, quiet, info_file, error_file, access_file, warning_file, stats_file, auth_file):
+
+    def __init__(self, quiet, info_file, error_file, access_file, warning_file, stats_file, auth_file, stdout_only=False):
         self.log_format = logging.Formatter('[%(asctime)s at %(module)s/%(filename)s:%(lineno)d] %(message)s')
         
         # setup info logger
-        self.info_filehandler = logging.FileHandler(info_file, mode='a')
-        self.info_filehandler.setFormatter(self.log_format)
-        
-        self.info_stdouthandler = logging.StreamHandler(sys.stdout)
-        self.info_stdouthandler.setFormatter(self.log_format)
-        
         self.info_logger = logging.getLogger('info_log')
         self.info_logger.setLevel(logging.INFO)
-        self.info_logger.addHandler(self.info_filehandler)
-        if not quiet:
-            self.info_logger.addHandler(self.info_stdouthandler)
+        
+        if not stdout_only:
+            self.linkFile(self.info_logger, info_file)
+        elif not quiet:
+            self.linkStdout(self.info_logger)
         
         # setup error logger
-        self.error_filehandler = logging.FileHandler(error_file, mode='a')
-        self.error_filehandler.setFormatter(self.log_format)
-        
         self.error_logger = logging.getLogger('error_log')   
         self.error_logger.setLevel(logging.ERROR)
-        self.error_logger.addHandler(self.error_filehandler)
+        
+        if not stdout_only:
+            self.linkFile(self.error_logger, error_file)
+        elif not quiet:
+            self.linkStdout(self.error_logger)
         
         # setup access logger
-        self.access_filehandler = logging.FileHandler(access_file, mode='a')
-        self.access_filehandler.setFormatter(self.log_format)
-        
         self.access_logger = logging.getLogger('access_log')
         self.access_logger.setLevel(logging.INFO)
-        self.access_logger.addHandler(self.access_filehandler)
+
+        if not stdout_only:
+            self.linkFile(self.access_logger, access_file)
+        elif not quiet:
+            self.linkStdout(self.access_logger)
         
         # setup warning logger
-        self.warning_filehandler = logging.FileHandler(warning_file, mode='a')
-        self.warning_filehandler.setFormatter(self.log_format)
-        
         self.warning_logger = logging.getLogger('warning_log')   
         self.warning_logger.setLevel(logging.WARNING)
-        self.warning_logger.addHandler(self.warning_filehandler)
+        
+        if not stdout_only:
+            self.linkFile(self.warning_logger, warning_file)
+        elif not quiet:
+            self.linkStdout(self.warning_logger)
         
         # setup stats logger
-        self.stats_filehandler = logging.FileHandler(stats_file, mode='a')
-        
         self.stats_logger = logging.getLogger('stats_log')   
         self.stats_logger.setLevel(logging.INFO)
-        self.stats_logger.addHandler(self.stats_filehandler)
+        
+        if not stdout_only:
+            self.linkFile(self.stats_logger, stats_file)
+        elif not quiet:
+            self.linkStdout(self.stats_logger)
 
         # setup auth logger
-        self.auth_filehandler = logging.FileHandler(auth_file, mode='a')   
-        self.auth_filehandler.setFormatter(self.log_format)
         self.auth_logger = logging.getLogger('auth_log')
         self.auth_logger.setLevel(logging.INFO)
-        self.auth_logger.addHandler(self.auth_filehandler)
+        
+        # @NOTE: this log is required for `stats.py` and cannot be disabled
+        self.linkFile(self.auth_logger, auth_file)
         
         # link logging handles
         self.info    = self.info_logger.info
@@ -376,13 +377,26 @@ class LoggingApi(object):
         self.warning = self.warning_logger.warning
         self.stats   = self.stats_logger.info
         self.auth    = self.auth_logger.info
-        
-        boot = '{0} {1} {0}'.format('=' * 15, 'STARTED')
-        self.info(boot)
-        self.error(boot)
-        self.access(boot)
-        self.warning(boot)
 
+        if not stdout_only:
+            boot = '{0} {1} {0}'.format('=' * 15, 'STARTED')
+            self.info(boot)
+            self.error(boot)
+            self.access(boot)
+            self.warning(boot)
+    
+    def linkStdout(self, target):
+        """Links the given logger to stdout."""
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(self.log_format)
+        target.addHandler(handler)
+
+    def linkFile(self, target, fname):
+        """Links the given logger to the provided filename."""
+        handler = logging.FileHandler(fname, mode='a')
+        handler.setFormatter(self.log_format)
+        target.addHandler(handler)
+    
 
 # ---------------------------------------------------------------------
 

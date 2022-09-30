@@ -90,6 +90,7 @@ class Engine(object):
         self.quiet     = '--quiet' in argv
         self.local_gm  = '--local-gm' in argv
         self.localhost = '--localhost' in argv
+        self.no_logs   = '--no-logs' in argv
         
         if self.localhost:
             assert(not self.local_gm)
@@ -101,7 +102,8 @@ class Engine(object):
             access_file  = self.paths.getLogPath('access'),
             warning_file = self.paths.getLogPath('warning'),
             stats_file   = self.paths.getLogPath('stats'),
-            auth_file    = self.paths.getLogPath('auth')
+            auth_file    = self.paths.getLogPath('auth'),
+            stdout_only  = self.no_logs
         )
         
         self.logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))

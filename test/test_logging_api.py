@@ -37,6 +37,11 @@ class LoggingApiTest(unittest.TestCase):
             content = h.read()
         last_line = content.split('\n')[-2] # note: last line is empty
         self.assertTrue(last_line.endswith(line)) # ignore line's beginning (time etc.)
+
+    def assertFileNotFound(self, logname):
+        with self.assertRaises(FileNotFoundError):
+            with open(self.root / f'{logname}.log', 'r') as h:
+                pass
         
     def test_info(self):
         self.logging.info('hello info world')
@@ -62,3 +67,41 @@ class LoggingApiTest(unittest.TestCase):
         data = {'id': '123', 'username': 'foobar'}
         self.logging.auth(data)
         self.assertLastLine('auth', str(data))
+
+    def test_stdout_only(self):
+        # NOTE: manual setUp to make sure logs are cleared
+        
+        # create temporary directory
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.root   = pathlib.Path(self.tmpdir.name)
+        
+        self.logging = utils.LoggingApi(
+            quiet        = False,
+            info_file    = self.root / 'info.log',
+            error_file   = self.root / 'error.log',
+            access_file  = self.root / 'access.log',
+            warning_file = self.root / 'warning.log',
+            stats_file   = self.root / 'stats.log',
+            auth_file    = self.root / 'auth.log',
+            stdout_only  = True
+        )
+
+        # regular logs are empty
+        self.logging.info('hello info world')
+        self.assertFileNotFound('info')
+         
+        self.logging.error('hello error world')
+        self.assertFileNotFound('error')
+        
+        self.logging.access('hello access world')
+        self.assertFileNotFound('access')
+        
+        self.logging.warning('hello warning world')
+        self.assertFileNotFound('warning')
+
+        # stats log is not empty due to dependency to `stats.py`
+        self.logging.stats('hello stats world')
+        data = {'id': '123', 'username': 'foobar'}
+        self.logging.auth(data)
+        self.assertLastLine('auth', str(data))
+
