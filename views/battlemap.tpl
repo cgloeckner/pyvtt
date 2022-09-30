@@ -14,12 +14,12 @@
     %include("scenes")
         </div>
         <div class="gmhint">
-            <img id="gmhint" src="/static/bottom.png" draggable="false" title="SHOW SCENES" />
+            <img id="gmhint" src="{{engine.adjustStaticsUrl('/static/bottom.png')}}" draggable="false" title="SHOW SCENES" />
         </div>
     </div>
 
     <div id="camerapreview">
-        <img class="close" src="/static/delete.png" onClick="closeWebcam();" draggable="false" title="CLOSE CAMERA" />
+        <img class="close" src="{{engine.adjustStaticsUrl('/static/delete.png')}}" onClick="closeWebcam();" draggable="false" title="CLOSE CAMERA" />
         <span>
             <p>LIVESTREAM</p>
             <video id="video" playsinline autoplay onClick="togglePreview(this);" title="CLICK TO ENLARGE"></video><br />
@@ -42,7 +42,7 @@
 %end
 
     <div id="drawing">
-        <img class="close" src="/static/delete.png" onClick="closeDrawing();" draggable="false" title="DISCARD" />
+        <img class="close" src="{{engine.adjustStaticsUrl('/static/delete.png')}}" onClick="closeDrawing();" draggable="false" title="DISCARD" />
         <span>
             <input type="color" name="pencolor" id="pencolor" value="#000000">
             <input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN</label>
@@ -56,7 +56,7 @@
 %for d in dice:
         <div class="dice" id="d{{d}}icon">
             <div>
-                <img src="/static/d{{d}}.png" title="Roll 1D{{d}}" id="d{{d}}drag" onDragStart="onStartDragDice(event, {{d}});" onMouseDown="onResetDice(event, {{d}});" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});" ontouchmove="onMobileDragDice(event, {{d}});" ontouchend="onEndDragDice(event);" />
+                <img src="{{engine.adjustStaticsUrl('/static/d' + str(d) + '.png')}}" title="Roll 1D{{d}}" id="d{{d}}drag" onDragStart="onStartDragDice(event, {{d}});" onMouseDown="onResetDice(event, {{d}});" onDragEnd="onEndDragDice(event);" onClick="rollDice({{d}});" ontouchmove="onMobileDragDice(event, {{d}});" ontouchend="onEndDragDice(event);" />
                 <div class="proofani" id="d{{d}}poofani"></div>
             </div>
         </div>
@@ -69,17 +69,17 @@
         <canvas id="battlemap" width="{{MAX_SCENE_WIDTH}}" height="{{MAX_SCENE_HEIGHT}}"></canvas>
             
         <div id="tokenbar">
-            <img src="/static/flipx.png" id="tokenFlipX" draggable="false" onClick="onFlipX();" ontouchstart="onFlipX();" title="HORIZONTAL FLIP" />
-            <img src="/static/locked.png" id="tokenLock" draggable="false" onClick="onLock();" ontouchstart="onLock();" title="LOCK/UNLOCK" />
-            <img src="/static/top.png" id="tokenTop" draggable="false" onClick="onTop();" ontouchstart="onTop();" title="MOVE TO TOP" />
-            <img src="/static/copy.png" id="tokenClone" draggable="false" onClick="onClone();" ontouchstart="onClone();" title="CLONE TOKEN" />
-            <img src="/static/delete.png" id="tokenDelete" draggable="false" onClick="onTokenDelete();" ontouchstart="onTokenDelete();" title="DELETE TOKEN" />
-            <img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="onBottom();" ontouchstart="onBottom();" title="MOVE TO BOTTOM" />
-            <img src="/static/louder.png" id="tokenLabelInc" draggable="false" onClick="onLabelStep(1);" ontouchstart="onLabelStep(1);" title="INCREASE NUMBER" />
-            <img src="/static/label.png" id="tokenLabel" draggable="false" onClick="onLabel();" ontouchstart="onLabel();" title="ENTER LABEL" />
-            <img src="/static/quieter.png" id="tokenLabelDec" draggable="false" onClick="onLabelStep(-1);" ontouchstart="onLabelStep(-1);" title="DECREASE LABEL" />
-            <img src="/static/resize.png" id="tokenResize" onDragStart="onStartResize();" onDragEnd="onQuitAction(event);" ontouchmove="onTokenResize(event);" ontouchend="onQuitResize(event);" title="DRAG TO RESIZE" onClick="showTip('DRAG TO RESIZE');" />
-            <img src="/static/rotate.png" id="tokenRotate" onDragStart="onStartRotate();" onDragEnd="onQuitAction(event);" ontouchmove="onTokenRotate(event);" ontouchend="onQuitRotate(event);" title="DRAG TO ROTATE" onClick="showTip('DRAG TO ROTATE');" />
+            <img src="{{engine.adjustStaticsUrl('/static/flipx.png')}}" id="tokenFlipX" draggable="false" onClick="onFlipX();" ontouchstart="onFlipX();" title="HORIZONTAL FLIP" />
+            <img src="{{engine.adjustStaticsUrl('/static/locked.png')}}" id="tokenLock" draggable="false" onClick="onLock();" ontouchstart="onLock();" title="LOCK/UNLOCK" />
+            <img src="{{engine.adjustStaticsUrl('/static/top.png')}}" id="tokenTop" draggable="false" onClick="onTop();" ontouchstart="onTop();" title="MOVE TO TOP" />
+            <img src="{{engine.adjustStaticsUrl('/static/copy.png')}}" id="tokenClone" draggable="false" onClick="onClone();" ontouchstart="onClone();" title="CLONE TOKEN" />
+            <img src="{{engine.adjustStaticsUrl('/static/delete.png')}}" id="tokenDelete" draggable="false" onClick="onTokenDelete();" ontouchstart="onTokenDelete();" title="DELETE TOKEN" />
+            <img src="{{engine.adjustStaticsUrl('/static/bottom.png')}}" id="tokenBottom" draggable="false" onClick="onBottom();" ontouchstart="onBottom();" title="MOVE TO BOTTOM" />
+            <img src="{{engine.adjustStaticsUrl('/static/louder.png')}}" id="tokenLabelInc" draggable="false" onClick="onLabelStep(1);" ontouchstart="onLabelStep(1);" title="INCREASE NUMBER" />
+            <img src="{{engine.adjustStaticsUrl('/static/label.png')}}" id="tokenLabel" draggable="false" onClick="onLabel();" ontouchstart="onLabel();" title="ENTER LABEL" />
+            <img src="{{engine.adjustStaticsUrl('/static/quieter.png')}}" id="tokenLabelDec" draggable="false" onClick="onLabelStep(-1);" ontouchstart="onLabelStep(-1);" title="DECREASE LABEL" />
+            <img src="{{engine.adjustStaticsUrl('/static/resize.png')}}" id="tokenResize" onDragStart="onStartResize();" onDragEnd="onQuitAction(event);" ontouchmove="onTokenResize(event);" ontouchend="onQuitResize(event);" title="DRAG TO RESIZE" onClick="showTip('DRAG TO RESIZE');" />
+            <img src="{{engine.adjustStaticsUrl('/static/rotate.png')}}" id="tokenRotate" onDragStart="onStartRotate();" onDragEnd="onQuitAction(event);" ontouchmove="onTokenRotate(event);" ontouchend="onQuitRotate(event);" title="DRAG TO ROTATE" onClick="showTip('DRAG TO ROTATE');" />
         </div>
     </div>
 
@@ -87,14 +87,14 @@
     
     <div class="audioplayer" draggable="false" id="musiccontrols">
         <audio id="audioplayer" loop></audio>
-        <img src="/static/louder.png" draggable="false" onClick="onStepMusic(1);" title="MAKE LOUDER" />
-        <div id="musicvolume"><img src="/static/muted.png" class="icon" /></div>
-        <img src="/static/quieter.png" draggable="false" onClick="onStepMusic(-1);" title="MAKE QUIETER" />
+        <img src="{{engine.adjustStaticsUrl('/static/louder.png')}}" draggable="false" onClick="onStepMusic(1);" title="MAKE LOUDER" />
+        <div id="musicvolume"><img src="{{engine.adjustStaticsUrl('/static/muted.png')}}" class="icon" /></div>
+        <img src="{{engine.adjustStaticsUrl('/static/quieter.png')}}" draggable="false" onClick="onStepMusic(-1);" title="MAKE QUIETER" />
         <div id="musicslots"></div>
     </div>
 
     <div id="playertools">
-        <img class="largeicon" src="/static/pen.png" onClick="initDrawing(false);" draggable="false" title="DRAW INDEX CARD" /><br />
+        <img class="largeicon" src="{{engine.adjustStaticsUrl('/static/pen.png')}}" onClick="initDrawing(false);" draggable="false" title="DRAW INDEX CARD" /><br />
     </div>
     
     <div class="mapfooter" id="mapfooter">

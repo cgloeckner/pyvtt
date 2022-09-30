@@ -45,7 +45,8 @@ class EngineTest(EngineBaseTest):
                 'domain'  : 'vtt.example.com',
                 'port'    : 80,
                 'ssl'     : False,
-                'reverse' : True
+                'reverse' : True,
+                'statics' : 'https://static.vtt.example.com/'
             },
             'login'    : {
                 'type' : None
@@ -116,7 +117,27 @@ class EngineTest(EngineBaseTest):
         settings['hosting']['ssl'] = True 
         self.reloadEngine(settings=settings)   
         self.assertTrue(self.engine.hasSsl())
+
+    def test_useExternalStatics(self):
+        settings = EngineTest.defaultSettings()
+        self.reloadEngine(settings=settings)
+        self.assertTrue(self.engine.useExternalStatics())
         
+        settings = EngineTest.defaultSettings()
+        del settings['hosting']['statics']
+        self.reloadEngine(settings=settings)
+        self.assertFalse(self.engine.useExternalStatics())
+
+    def test_adjustStaticsUrl(self):
+        settings = EngineTest.defaultSettings()
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.adjustStaticsUrl('/foo/bar'), 'https://static.vtt.example.com/foo/bar')
+        
+        settings = EngineTest.defaultSettings()
+        del settings['hosting']['statics']
+        self.reloadEngine(settings=settings)
+        self.assertEqual(self.engine.adjustStaticsUrl('/foo/bar'), '/foo/bar')
+
     def test_getUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)

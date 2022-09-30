@@ -301,7 +301,8 @@ class GameCache(object):
                 })
 
             # query all urls that are currently used by tokens of that game
-            urls = [t.url for t in self.parent.db.Token.select(lambda t: t.scene.game == g)] 
+            # adjust URL for static data if needed
+            urls = [self.engine.adjustStaticsUrl(t.url) for t in self.parent.db.Token.select(lambda t: t.scene.game == g)]
         
         player.write({
             'OPID'     : 'ACCEPT',
@@ -348,9 +349,9 @@ class GameCache(object):
         
         # broadcast logout to all players
         self.broadcast({
-            'OPID' : 'QUIT',
-            'name' : player.name,
-            'uuid'  : player.uuid
+            'OPID'    : 'QUIT',
+            'name'    : player.name,
+            'uuid'    : player.uuid
         })
         
     def disconnect(self, uuid):
@@ -409,6 +410,9 @@ class GameCache(object):
             
             for t in self.parent.db.Token.select(lambda t: t.scene.id == g.active and t.timeid >= since):
                 tmp = t.to_dict()
+                # adjust URL for static data if needed
+                tmp['url']  = self.engine.adjustStaticsUrl(tmp['url'])
+                
                 tmp['uuid'] = player.uuid
                 all_data.append(tmp)
 
@@ -443,6 +447,8 @@ class GameCache(object):
             # fetch token data
             for t in self.parent.db.Token.select(lambda t: t.scene.id == scene_id):
                 tokens.append(t.to_dict())
+                # adjust URL for static data if needed
+                tokens[-1]['url'] = self.engine.adjustStaticsUrl(tokens[-1]['url'])
         
         return {
             'OPID'       : 'REFRESH',
@@ -626,6 +632,9 @@ class GameCache(object):
                     rotate=rotate, flipx=flipx, locked=locked, label=label):
                     # add to broadcast data
                     tmp = token.to_dict()
+                    # adjust URL for static data if needed
+                    tmp['url']  = self.engine.adjustStaticsUrl(tmp['url'])
+                    
                     tmp['uuid'] = player.uuid
                     update.append(tmp)
 
@@ -749,6 +758,8 @@ class GameCache(object):
                 
                 self.parent.db.commit()
                 tokens.append(t.to_dict())
+                # adjust URL for static data if needed
+                tokens[-1]['url'] = self.engine.adjustStaticsUrl(tokens[-1]['url'])
         
         # broadcast creation
         self.broadcast({

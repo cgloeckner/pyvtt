@@ -139,7 +139,7 @@ function updateMusicUi() {
     var raw_volume = getAudioVolume(player)
     var vol_str = parseInt(raw_volume * 100) + '%'
     if (player.paused || raw_volume == 0.0) {
-        vol_str = '<img src="/static/muted.png" class="icon" />';
+        vol_str = '<img src="' + adjustStaticsUrl('/static/muted.png') + '" class="icon" />';
     }
     $('#musicvolume')[0].innerHTML = vol_str;
 

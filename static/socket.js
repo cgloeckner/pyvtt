@@ -7,6 +7,16 @@ License: MIT (see LICENSE for details)
 
 var socket = null; // websocket used for client-server-interaction
 var quiet = true;
+var statics = '/' // default statics path root
+
+function adjustStaticsUrl(url) {
+    if (!url.startsWith('/')) {
+        // nothing to adjust
+        return url
+    }
+
+    return statics + url.substring(1)
+}
 
 var ping_delay = 2000; // delay between two pings
 var next_ping  = null; // indicates when the next ping will be sent
@@ -351,6 +361,9 @@ function login(event, gmname, url, websocket_url) {
             playercolor = response['playercolor']
             is_gm       = response['is_gm']
             my_uuid     = response['uuid']
+            statics     = response['statics']
+
+            drag_img.src = adjustStaticsUrl('/static/transparent.png')
             
             if (error != '') {
                 showError(error);

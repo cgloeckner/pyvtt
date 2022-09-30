@@ -566,18 +566,66 @@ def setup_gm_routes(engine):
 
 def setup_player_routes(engine):
 
-    @get('/static/<fname>')
-    @get('/static/<fname>/<version>')
-    def static_files(fname, version=None):
-        root = engine.paths.getStaticPath()
-        if not os.path.isdir(root) or not os.path.exists(root / fname):
-            root = './static' 
+    if not engine.useExternalStatics():
+        # route statics internally
 
-        # @NOTE: no need to check file extension, this directory is
-        # meant to be accessable as a whole
+        @get('/static/<fname>')
+        @get('/static/<fname>/<version>')
+        def static_files(fname, version=None):
+            root = engine.paths.getStaticPath()
+            if not os.path.isdir(root) or not os.path.exists(root / fname):
+                root = './static'
 
-        return static_file(fname, root=root)
+            # @NOTE: no need to check file extension, this directory is
+            # meant to be accessable as a whole
 
+            return static_file(fname, root=root)
+
+        @get('/music/<gmurl>/<url>/<slotid>/<timestamp>')
+        def game_music(gmurl, url, slotid, timestamp):
+            # NOTE: timestamp ignored but helps to prevent caching in chrome
+            #response.set_header('Cache-Control', 'no-store') # not working for chrome
+             
+            # load GM from cache
+            gm_cache = engine.cache.getFromUrl(gmurl)
+            if gm_cache is None:
+                # @NOTE: not logged because somebody may play around with this
+                abort(404)
+            
+            # load game from GM's database
+            game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+            if game is None:
+                # @NOTE: not logged because somebody may play around with this
+                abort(404)
+            
+            # try to load music from disk
+            fname = '{0}.mp3'.format(slotid)
+            root  = engine.paths.getGamePath(gmurl, url)
+            return static_file(fname, root)
+
+        @get('/token/<gmurl>/<url>/<fname>')
+        def static_token(gmurl, url, fname):
+            # load GM from cache
+            gm_cache = engine.cache.getFromUrl(gmurl)
+            if gm_cache is None:
+                # @NOTE: not logged because somebody may play around with this
+                abort(404)
+            
+            # load game from GM's database
+            game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+            if game is None:
+                # @NOTE: not logged because somebody may play around with this
+                abort(404)
+            
+            # fetch image path
+            path = engine.paths.getGamePath(gmurl, url)
+
+            # check file extension (just in case more files will be added there in future)
+            if not fname.endswith('.png'):
+                abort(404)
+            
+            return static_file(fname, root=path)
+    
     @get('/thumbnail/<gmurl>/<url>/<scene_id:int>')
     def get_scene_thumbnail(gmurl, url, scene_id):
         # load GM from cache
@@ -585,7 +633,7 @@ def setup_player_routes(engine):
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
-        
+            
         # load scene from GM's database
         scene = gm_cache.db.Scene.select(lambda s: s.id == scene_id and s.game.url == url).first()
         if scene is None:
@@ -594,9 +642,11 @@ def setup_player_routes(engine):
 
         engine.paths.getGamePath(gmurl, url)
         if scene.backing != None:
-            redirect(scene.backing.url)
+            url = engine.adjustStaticsUrl(scene.backing.url)
         else:
-            redirect('/static/empty.jpg')
+            url = engine.adjustStaticsUrl('/static/empty.jpg')
+
+        redirect(url)
 
     @get('/thumbnail/<gmurl>/<url>')
     def get_game_thumbnail(gmurl, url):
@@ -605,7 +655,7 @@ def setup_player_routes(engine):
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
-        
+            
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
         if game is None:
@@ -613,51 +663,6 @@ def setup_player_routes(engine):
             abort(404)
 
         redirect('/thumbnail/{0}/{1}/{2}'.format(gmurl, url, game.active))
-
-    @get('/music/<gmurl>/<url>/<slotid>/<timestamp>')
-    def game_music(gmurl, url, slotid, timestamp):
-        # NOTE: timestamp ignored but helps to prevent caching in chrome
-        #response.set_header('Cache-Control', 'no-store') # not working for chrome
-         
-        # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
-        if gm_cache is None:
-            # @NOTE: not logged because somebody may play around with this
-            abort(404)
-        
-        # load game from GM's database
-        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-        if game is None:
-            # @NOTE: not logged because somebody may play around with this
-            abort(404)
-        
-        # try to load music from disk
-        fname = '{0}.mp3'.format(slotid)
-        root  = engine.paths.getGamePath(gmurl, url)
-        return static_file(fname, root)
-
-    @get('/token/<gmurl>/<url>/<fname>')
-    def static_token(gmurl, url, fname):
-        # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
-        if gm_cache is None:
-            # @NOTE: not logged because somebody may play around with this
-            abort(404)
-        
-        # load game from GM's database
-        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-        if game is None:
-            # @NOTE: not logged because somebody may play around with this
-            abort(404)
-        
-        # fetch image path
-        path = engine.paths.getGamePath(gmurl, url)
-
-        # check file extension (just in case more files will be added there in future)
-        if not fname.endswith('.png'):
-            abort(404)
-        
-        return static_file(fname, root=path)
 
     @get('/<gmurl>/<url>')
     @get('/<gmurl>/<url>/<timestamp>')
@@ -779,6 +784,7 @@ def setup_player_routes(engine):
         result['playercolor'] = player_cache.color
         result['uuid']        = player_cache.uuid
         result['is_gm']       = player_cache.is_gm
+        result['statics']     = engine.adjustStaticsUrl('/')
         return result
 
     @get('/websocket')
