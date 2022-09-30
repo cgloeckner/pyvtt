@@ -28,13 +28,17 @@ __licence__ = 'MIT'
 class Engine(object):
 
     def __init__(self, argv=list(), pref_dir=None):
-        appname = 'pyvtt'
+        appname   = 'pyvtt'
+        self.log_level = 'INFO'
         for arg in argv:
             if arg.startswith('--appname='):
                 appname = arg.split('--appname=')[1]
 
             elif arg.startswith('--prefdir='):
                 pref_dir = arg.split('--prefdir=')[1]
+
+            elif arg.startswith('--loglevel='):
+                self.log_level = arg.split('--loglevel=')[1]
         
         self.paths     = utils.PathApi(appname=appname, root=pref_dir)
         
@@ -103,7 +107,8 @@ class Engine(object):
             warning_file = self.paths.getLogPath('warning'),
             stats_file   = self.paths.getLogPath('stats'),
             auth_file    = self.paths.getLogPath('auth'),
-            stdout_only  = self.no_logs
+            stdout_only  = self.no_logs,
+            loglevel     = self.log_level
         )
         
         self.logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))

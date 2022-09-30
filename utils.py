@@ -315,12 +315,12 @@ class PatreonApi(BaseLoginApi):
 
 class LoggingApi(object):
 
-    def __init__(self, quiet, info_file, error_file, access_file, warning_file, stats_file, auth_file, stdout_only=False):
+    def __init__(self, quiet, info_file, error_file, access_file, warning_file, stats_file, auth_file, stdout_only=False, loglevel='INFO'):
         self.log_format = logging.Formatter('[%(asctime)s at %(module)s/%(filename)s:%(lineno)d] %(message)s')
         
         # setup info logger
         self.info_logger = logging.getLogger('info_log')
-        self.info_logger.setLevel(logging.INFO)
+        self.info_logger.setLevel(loglevel)
         
         if not stdout_only:
             self.linkFile(self.info_logger, info_file)
@@ -329,7 +329,7 @@ class LoggingApi(object):
         
         # setup error logger
         self.error_logger = logging.getLogger('error_log')   
-        self.error_logger.setLevel(logging.ERROR)
+        self.error_logger.setLevel(loglevel)
         
         if not stdout_only:
             self.linkFile(self.error_logger, error_file)
@@ -338,7 +338,7 @@ class LoggingApi(object):
         
         # setup access logger
         self.access_logger = logging.getLogger('access_log')
-        self.access_logger.setLevel(logging.INFO)
+        self.access_logger.setLevel(loglevel)
 
         if not stdout_only:
             self.linkFile(self.access_logger, access_file)
@@ -347,7 +347,7 @@ class LoggingApi(object):
         
         # setup warning logger
         self.warning_logger = logging.getLogger('warning_log')   
-        self.warning_logger.setLevel(logging.WARNING)
+        self.warning_logger.setLevel(loglevel)
         
         if not stdout_only:
             self.linkFile(self.warning_logger, warning_file)
@@ -356,7 +356,7 @@ class LoggingApi(object):
         
         # setup stats logger
         self.stats_logger = logging.getLogger('stats_log')   
-        self.stats_logger.setLevel(logging.INFO)
+        self.stats_logger.setLevel(loglevel)
         
         if not stdout_only:
             self.linkFile(self.stats_logger, stats_file)
