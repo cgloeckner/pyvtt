@@ -10,8 +10,8 @@
 %for i, scene_id in enumerate(game.order):
     %for s in game.scenes:
         %if scene_id == s.id:
-            %if s.backing is None:   
-                %url = {{engine.adjustStaticsUrl('/static/transparent.png')}}
+            %if s.backing is None:
+                %url = engine.adjustStaticsUrl('/static/transparent.png')
             %else:
                 %url = "/thumbnail/" + '/'.join([game.gm_url, game.url, str(s.id)])
             %end

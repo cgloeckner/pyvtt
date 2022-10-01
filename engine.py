@@ -274,7 +274,7 @@ class Engine(object):
         return self.hosting['port']
 
     def useExternalStatics(self):
-        return 'statics' in self.hosting and self.hosting['statics'] != '/'
+        return 'statics' in self.hosting and self.hosting['statics'] not in ['/', None]
 
     def adjustStaticsUrl(self, url):
         if not self.useExternalStatics() or not url.startswith('/'):
