@@ -150,6 +150,12 @@ class Engine(object):
                 self.notify       = settings['notify']
             self.logging.info('Settings loaded')
 
+        # adjust links if external statics are used
+        if self.useExternalStatics():
+            for l in self.links:
+                if l['url'].startswith('/static'):
+                    l['url'] = self.adjustStaticsUrl(l['url'])
+
         # add this server to the shards list
         self.shards.append(self.getUrl())
         
