@@ -1,0 +1,41 @@
+{
+  "title": "Example", 
+  "expire": 2592000,
+  "file_limit": {
+    "token"      : 2,
+    "background" : 10,
+    "game"       : 15,
+    "music"      : 10
+  },
+  "playercolors": ["#C52828", "#13AA4F", "#ECBC15", "#7F99C7", "#9251B7", "#797A90", "#80533F", "#21A0B7"],
+  "links": [
+    {
+      "label" : "ROADMAP",
+      "url"   : "/static/roadmap.html"
+    }, {
+      "label" : "TERMS",
+      "url"   : "/static/terms.html"
+    }
+  ],
+  "shards": [ ],
+  "hosting": {
+    "domain": "example.com",
+    "port": 80,
+    "socket": "",
+    "ssl": false,
+    "reverse": false
+  },
+  "login": {
+    "type": "google",
+    "client_id": "1234wxyz",
+    "client_secret": "zyxw4321",
+  },
+  "notify": {
+    "type": "email",
+    "host": "smtp.example.com",
+    "port": "587",
+    "sender": "noreply@example.com",
+    "user": "noreply",
+    "password": "your-secret-password"
+  }
+}
