@@ -6,7 +6,7 @@
 
 <h1>WHUU!</h1>
 
-    <img class="logo" src="/static/logo.png" />
+    <img class="logo" src="{{engine.adjustStaticsUrl('/static/logo.png')}}" />
 
     <p>THERE IS NOTHING HERE.</p>
 

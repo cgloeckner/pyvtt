@@ -49,11 +49,12 @@ class Engine(object):
         # webserver stuff
         self.listen = '0.0.0.0'
         self.hosting = {
-            'domain'      : 'localhost',
-            'port'        : 8080,
-            'socket'      : '',
-            'ssl'         : False,
-            'reverse'     : False
+            'domain'  : 'localhost',
+            'port'    : 8080,
+            'socket'  : '',
+            'ssl'     : False,
+            'reverse' : False,
+            'statics' : None
         }
         self.debug  = False
         self.quiet  = False
@@ -149,6 +150,12 @@ class Engine(object):
                 self.notify       = settings['notify']
             self.logging.info('Settings loaded')
 
+        # adjust links if external statics are used
+        if self.useExternalStatics():
+            for l in self.links:
+                if l['url'].startswith('/static'):
+                    l['url'] = self.adjustStaticsUrl(l['url'])
+
         # add this server to the shards list
         self.shards.append(self.getUrl())
         
@@ -183,7 +190,6 @@ class Engine(object):
             self.hosting['domain'] = self.getPublicIp()
             self.logging.info('Overwriting Domain by Public IP: {0}'.format(self.hosting['domain']))
 
-        
         self.logging.info('Loading login API...')
         if self.local_gm:
             self.login['type'] = ''
@@ -272,6 +278,16 @@ class Engine(object):
         
     def getPort(self):
         return self.hosting['port']
+
+    def useExternalStatics(self):
+        return 'statics' in self.hosting and self.hosting['statics'] not in ['/', None]
+
+    def adjustStaticsUrl(self, url):
+        if not self.useExternalStatics() or not url.startswith('/'):
+            # nothing to do
+            return url
+        # replace '/' with custom root
+        return '{0}{1}'.format(self.hosting['statics'], url[1:])
         
     def getUrl(self):
         suffix = 's' if self.hasReverseProxy() or self.hasSsl() else ''

@@ -159,13 +159,13 @@ function showPlayer(p, force=false) {
     // create player menu for this player
     var menu = '<div class="playermenu" id="playermenu_' + p.uuid + '">'
     if (p.index > 0) {
-        menu += '<img src="/static/left.png" draggable="false" class="left" title="MOVE TO LEFT" onClick="onPlayerOrder(-1);" />'
+        menu += '<img src="' + adjustStaticsUrl('/static/left.png') + '" draggable="false" class="left" title="MOVE TO LEFT" onClick="onPlayerOrder(-1);" />'
     }
     if (is_gm && p.uuid != my_uuid) {
-        menu += '<img src="/static/delete.png" draggable="false" class="center" title="KICK PLAYER" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
+        menu += '<img src="' + adjustStaticsUrl('/static/delete.png') + '" draggable="false" class="center" title="KICK PLAYER" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
     }
     if (!p.is_last) {
-        menu += '<img src="/static/right.png" draggable="false" class="right" title="MOVE TO RIGHT" onMouseLeave="hideHint();" onClick="onPlayerOrder(1);" />';
+        menu += '<img src="' + adjustStaticsUrl('/static/right.png') + '" draggable="false" class="right" title="MOVE TO RIGHT" onMouseLeave="hideHint();" onClick="onPlayerOrder(1);" />';
     }
     menu += '</div>';
     
@@ -267,7 +267,7 @@ function logRoll(sides, result) {
     if (sides == 2) {
         // use D6 as binary dice
         sides = 6;
-        result = (result == 2) ? '<img src="/static/skull.png" />' : '';
+        result = (result == 2) ? '<img src="' + adjustStaticsUrl('/static/skull.png') + '" />' : '';
     }
     if (sides == 100) {
         // use D10 for D100
@@ -284,7 +284,7 @@ function logRoll(sides, result) {
         + 'ontouchmove="onDragRoll(event);" '
         + 'ontouchend="stopDragRoll(event, this);" '
         + 'onDragEnd="stopDragRoll(event, this);">'
-        + '<img src="/static/token_d' + sides + '.png" style="filter: ' + filter + ';"><span>' + result + '</span></div>';
+        + '<img src="' + adjustStaticsUrl('/static/token_d' + sides + '.png') + '" style="filter: ' + filter + ';"><span>' + result + '</span></div>';
 
     tray.prepend(die);
     var dom_span = tray.children(':first-child');
@@ -320,7 +320,7 @@ function addRoll(sides, result, name, color, recent) {
     // special case: d2
     var result_label = result
     if (sides == 2) {
-        result_label = (result == 2) ? '<img src="/static/skull.png" />' : '<img src="/static/transparent.png" />';
+        result_label = (result == 2) ? '<img src="' + adjustStaticsUrl('/static/skull.png') + '" />' : '<img src="' + adjustStaticsUrl('/static/transparent.png') + '" />';
     }
 
     // special case: d100
@@ -371,8 +371,6 @@ function addRoll(sides, result, name, color, recent) {
 // --- ui event handles -----------------------------------------------
 
 var drag_img = new Image(); // Replacement for default drag image
-drag_img.src = '/static/transparent.png'
-
 
 function onDrag(event) {
     var drag_data = localStorage.getItem('drag_data');
@@ -826,7 +824,7 @@ function updateTokenbar() {
         // handle locked mode
         if (token.locked) {
             $('#tokenFlipX').css('visibility', 'hidden');
-            $('#tokenLock')[0].src = '/static/locked.png';
+            $('#tokenLock')[0].src = adjustStaticsUrl('/static/locked.png')
             $('#tokenTop').css('visibility', 'hidden');
             $('#tokenBottom').css('visibility', 'hidden');
             $('#tokenResize').css('visibility', 'hidden');
@@ -838,7 +836,7 @@ function updateTokenbar() {
             $('#tokenLabelInc').css('visibility', 'hidden');
         } else {
             $('#tokenFlipX').css('visibility', '');
-            $('#tokenLock')[0].src = '/static/unlocked.png';
+            $('#tokenLock')[0].src = adjustStaticsUrl('/static/unlocked.png')
             $('#tokenTop').css('visibility', '');
             $('#tokenBottom').css('visibility', '');
             $('#tokenResize').css('visibility', '');    
@@ -1959,7 +1957,7 @@ function onDropTimerInScene(sides, r) {
         'posx' : x,  
         'posy' : y,
         'size' : default_token_size,
-        'urls' : ['/static/token_d' + sides + '.png'],
+        'urls' : [adjustStaticsUrl('/static/token_d' + sides + '.png')],
         'labels' : ['#' + r]
     }); 
 }
@@ -2463,7 +2461,7 @@ function getImageBlob(img) {
 function ignoreBackground() {
     // load transparent image from URL
     var img = new Image()
-    img.src = '/static/transparent.png';
+    img.src = adjustStaticsUrl('/static/transparent.png');
     img.onload = function() {
         var blob = getImageBlob(img);
         var f = new FormData();

@@ -30,7 +30,10 @@ class EngineTest(EngineBaseTest):
     def defaultSettings():
         return {
             'title'      : 'unittest',
-            'links'      : list(),
+            'links'      : [
+                { 'label': 'FAQ',   'url': '/static/faq.html' },
+                { 'label': 'LOGIN', 'url': '/vtt/join' }
+            ],
             'file_limit' : {
                 'token'      : 2,
                 'background' : 10,
@@ -45,7 +48,8 @@ class EngineTest(EngineBaseTest):
                 'domain'  : 'vtt.example.com',
                 'port'    : 80,
                 'ssl'     : False,
-                'reverse' : True
+                'reverse' : True,
+                'statics' : 'https://static.vtt.example.com/'
             },
             'login'    : {
                 'type' : None
@@ -116,7 +120,35 @@ class EngineTest(EngineBaseTest):
         settings['hosting']['ssl'] = True 
         self.reloadEngine(settings=settings)   
         self.assertTrue(self.engine.hasSsl())
+
+    def test_useExternalStatics(self):
+        settings = EngineTest.defaultSettings()
+        self.reloadEngine(settings=settings)
+        self.assertTrue(self.engine.useExternalStatics())
         
+        settings = EngineTest.defaultSettings()
+        del settings['hosting']['statics']
+        self.reloadEngine(settings=settings)
+        self.assertFalse(self.engine.useExternalStatics())
+
+    def test_adjustStaticsUrl(self):
+        settings = EngineTest.defaultSettings()
+        self.reloadEngine(settings=settings)
+        # URL is adjusted
+        self.assertEqual(self.engine.adjustStaticsUrl('/foo/bar'), 'https://static.vtt.example.com/foo/bar')
+        # only static links are adjusted
+        self.assertEqual(self.engine.links[0]['url'], 'https://static.vtt.example.com/static/faq.html')
+        self.assertEqual(self.engine.links[1]['url'], '/vtt/join')
+        
+        settings = EngineTest.defaultSettings()
+        del settings['hosting']['statics']
+        self.reloadEngine(settings=settings)   
+        # URL is NOT adjusted
+        self.assertEqual(self.engine.adjustStaticsUrl('/foo/bar'), '/foo/bar')  
+        # only static links are NOT adjusted
+        self.assertEqual(self.engine.links[0]['url'], '/static/faq.html')    
+        self.assertEqual(self.engine.links[1]['url'], '/vtt/join')
+
     def test_getUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)

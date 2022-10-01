@@ -19,7 +19,6 @@ body {
 div.container {
     position: absolute;
     
-    background-image: url('/static/background.jpg');
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -640,7 +639,7 @@ div.dice > div > img:active {
     
     width: 64px;
     height: 64px;
-    background: url('/static/dice_poof.png') left center;
+    background-position: left center;
     animation: dicepoof 0.66s steps(10);
 }
 
@@ -736,7 +735,7 @@ div.rollbox > span > span.maxani {
     
     width: 100px;
     height: 108px;
-    background: url('/static/dice_max.png') left center;
+    background-position: left center;
 
     animation-name: dicemax;
     animation-duration: 0.75s;
@@ -819,7 +818,6 @@ div#rollhistory {
     top: 50px;  
     right: -175px;
     
-    background-image: url('/static/dicetray.png');
     background-size: 200px 400px;
     margin: 5px;
 }
