@@ -202,7 +202,7 @@ function GmQuickStart(url_regex) {
 
     // load transparent image from URL
     var img = new Image()
-    img.src = adjustStaticsUrl('/static/transparent.png');
+    img.src = '/static/transparent.png';
     img.onload = function() {
         var blob = getImageBlob(img);
         var f = new FormData();

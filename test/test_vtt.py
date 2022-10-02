@@ -50,7 +50,8 @@ def makeZip(fname, data, n):
 class VttTest(EngineBaseTest):
 
     def setUp(self):
-        super().setUp()
+        super().setUp()        
+        vtt.setup_resource_routes(self.engine)
         vtt.setup_gm_routes(self.engine)
         vtt.setup_player_routes(self.engine)
         # @NOTE: custom errorpages are not routed here

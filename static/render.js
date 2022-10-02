@@ -432,11 +432,7 @@ var num_uploading   = 0;
 /// Handle uploading notifcation
 function notifyUploadStart(num_uploads=1) {
     if (num_uploading == 0) {
-        $('#assetsUploading')[0].innerHTML = '<img src="'
-            + adjustStaticsUrl('/static/loading.gif')
-            + '" class="icon" /> <img src="'
-            + adjustStaticsUrl('/static/top.png')
-            + '" class="icon" />';
+        $('#assetsUploading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> <img src="/static/top.png" class="icon" />';
     }
     num_uploading += num_uploads;
 }
@@ -452,11 +448,7 @@ function notifyUploadFinish(num_uploads=1) {
 /// Handle downloading notifcation
 function notifyDownload(url) {
     if (num_downloading == 0) {
-        $('#assetsDownloading')[0].innerHTML = '<img src="'
-            + adjustStaticsUrl('/static/loading.gif')
-            + '" class="icon" /> <img src="'
-            + adjustStaticsUrl('/static/bottom.png')
-            + '" class="icon" >';
+        $('#assetsDownloading')[0].innerHTML = '<img src="/static/loading.gif" class="icon" /> <img src="/static/bottom.png" class="icon" >';
     }
     num_downloading += 1;
     images[url].onload = function() {
