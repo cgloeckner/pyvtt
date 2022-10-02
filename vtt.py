@@ -570,7 +570,6 @@ def setup_player_routes(engine):
         # route statics internally
 
         @get('/static/<fname>')
-        @get('/static/<fname>/<version>')
         def static_files(fname, version=None):
             root = engine.paths.getStaticPath()
             if not os.path.isdir(root) or not os.path.exists(root / fname):
