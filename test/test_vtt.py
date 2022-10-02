@@ -50,7 +50,8 @@ def makeZip(fname, data, n):
 class VttTest(EngineBaseTest):
 
     def setUp(self):
-        super().setUp()
+        super().setUp()        
+        vtt.setup_resource_routes(self.engine)
         vtt.setup_gm_routes(self.engine)
         vtt.setup_player_routes(self.engine)
         # @NOTE: custom errorpages are not routed here
@@ -1247,11 +1248,11 @@ class VttTest(EngineBaseTest):
 
         # can query existing slots
         for slot_id in data['music']:
-            ret = self.app.get('/music/arthur/test-game-1/{0}/0815'.format(slot_id))
+            ret = self.app.get('/music/arthur/test-game-1/{0}.mp3?update=0815'.format(slot_id))
             self.assertEqual(ret.status_int, 200)
 
         # cannot query invalid slot
-        ret = self.app.get('/music/arthur/test-game-1/14/0815', expect_errors=True)
+        ret = self.app.get('/music/arthur/test-game-1/14.mp3?update=0815', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
     def test_upload_background(self):

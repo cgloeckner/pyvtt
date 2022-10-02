@@ -564,68 +564,69 @@ def setup_gm_routes(engine):
 
 # ---------------------------------------------------------------------
 
+def setup_resource_routes(engine):
+    
+    if not engine.resource_routing:
+        # skip resource routing
+        engine.logging.info('Resource routes were skipped')
+        return
+    
+    @get('/static/<fname>')
+    def static_files(fname):
+        root = engine.paths.getStaticPath()
+        if not os.path.isdir(root) or not os.path.exists(root / fname):
+            root = './static'
+
+        # @NOTE: no need to check file extension, this directory is
+        # meant to be accessable as a whole
+
+        return static_file(fname, root=root)
+
+    @get('/music/<gmurl>/<url>/<fname>')
+    def game_music(gmurl, url, fname):
+        # load GM from cache
+        gm_cache = engine.cache.getFromUrl(gmurl)
+        if gm_cache is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+        
+        # load game from GM's database
+        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        if game is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+        
+        # try to load music from disk
+        root  = engine.paths.getGamePath(gmurl, url)
+        return static_file(fname, root)
+
+    @get('/token/<gmurl>/<url>/<fname>')
+    def static_token(gmurl, url, fname):
+        # load GM from cache
+        gm_cache = engine.cache.getFromUrl(gmurl)
+        if gm_cache is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+        
+        # load game from GM's database
+        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        if game is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+        
+        # fetch image path
+        path = engine.paths.getGamePath(gmurl, url)
+
+        # check file extension (just in case more files will be added there in future)
+        if not fname.endswith('.png'):
+            abort(404)
+        
+        return static_file(fname, root=path)
+
+# ---------------------------------------------------------------------
+
 def setup_player_routes(engine):
 
-    if not engine.useExternalStatics():
-        # route statics internally
-
-        @get('/static/<fname>')
-        @get('/static/<fname>/<version>')
-        def static_files(fname, version=None):
-            root = engine.paths.getStaticPath()
-            if not os.path.isdir(root) or not os.path.exists(root / fname):
-                root = './static'
-
-            # @NOTE: no need to check file extension, this directory is
-            # meant to be accessable as a whole
-
-            return static_file(fname, root=root)
-
-        @get('/music/<gmurl>/<url>/<slotid>/<timestamp>')
-        def game_music(gmurl, url, slotid, timestamp):
-            # NOTE: timestamp ignored but helps to prevent caching in chrome
-            #response.set_header('Cache-Control', 'no-store') # not working for chrome
-             
-            # load GM from cache
-            gm_cache = engine.cache.getFromUrl(gmurl)
-            if gm_cache is None:
-                # @NOTE: not logged because somebody may play around with this
-                abort(404)
-            
-            # load game from GM's database
-            game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-            if game is None:
-                # @NOTE: not logged because somebody may play around with this
-                abort(404)
-            
-            # try to load music from disk
-            fname = '{0}.mp3'.format(slotid)
-            root  = engine.paths.getGamePath(gmurl, url)
-            return static_file(fname, root)
-
-        @get('/token/<gmurl>/<url>/<fname>')
-        def static_token(gmurl, url, fname):
-            # load GM from cache
-            gm_cache = engine.cache.getFromUrl(gmurl)
-            if gm_cache is None:
-                # @NOTE: not logged because somebody may play around with this
-                abort(404)
-            
-            # load game from GM's database
-            game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-            if game is None:
-                # @NOTE: not logged because somebody may play around with this
-                abort(404)
-            
-            # fetch image path
-            path = engine.paths.getGamePath(gmurl, url)
-
-            # check file extension (just in case more files will be added there in future)
-            if not fname.endswith('.png'):
-                abort(404)
-            
-            return static_file(fname, root=path)
-    
     @get('/thumbnail/<gmurl>/<url>/<scene_id:int>')
     def get_scene_thumbnail(gmurl, url, scene_id):
         # load GM from cache
@@ -642,9 +643,9 @@ def setup_player_routes(engine):
 
         engine.paths.getGamePath(gmurl, url)
         if scene.backing != None:
-            url = engine.adjustStaticsUrl(scene.backing.url)
+            url = scene.backing.url
         else:
-            url = engine.adjustStaticsUrl('/static/empty.jpg')
+            url = '/static/empty.jpg'
 
         redirect(url)
 
@@ -784,7 +785,6 @@ def setup_player_routes(engine):
         result['playercolor'] = player_cache.color
         result['uuid']        = player_cache.uuid
         result['is_gm']       = player_cache.is_gm
-        result['statics']     = engine.adjustStaticsUrl('/')
         return result
 
     @get('/websocket')
@@ -943,19 +943,13 @@ def setup_error_routes(engine):
 if __name__ == '__main__':
     try:
         argv = sys.argv
-        if '--unittest' in argv:
-            from test.utils import presetup_unittest, setup_unittest_routes
-            
-            argv = presetup_unittest(argv)
         
-        engine = Engine(argv)
+        engine = Engine(argv)   
+        setup_resource_routes(engine)
         setup_gm_routes(engine)
         setup_player_routes(engine)
         setup_error_routes(engine)
         
-        if '--unittest' in argv:
-            setup_unittest_routes(engine)
-            
         engine.run()
     except KeyboardInterrupt:
         pass

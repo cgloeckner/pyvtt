@@ -113,7 +113,7 @@ function playMusicSlot(slot_id, update_id) {
     player.oncanplay = function(event) {  
         $('#musicStatus').show();
     };
-    player.src = '/music/' + gm + '/' + game + '/' + slot_id + '/' + update_ids[slot_id];
+    player.src = '/music/' + gm + '/' + game + '/' + slot_id + '.mp3?update=' + update_ids[slot_id];
     player.play();
 
     updateSlotHighlight(slot_id);
@@ -139,7 +139,7 @@ function updateMusicUi() {
     var raw_volume = getAudioVolume(player)
     var vol_str = parseInt(raw_volume * 100) + '%'
     if (player.paused || raw_volume == 0.0) {
-        vol_str = '<img src="' + adjustStaticsUrl('/static/muted.png') + '" class="icon" />';
+        vol_str = '<img src="/static/muted.png" class="icon" />';
     }
     $('#musicvolume')[0].innerHTML = vol_str;
 

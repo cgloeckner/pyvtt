@@ -6,7 +6,7 @@
 
 <h1>JOIN as GM</h1>
 
-<img class="logo" src="{{engine.adjustStaticsUrl('/static/logo.png')}}" />
+<img class="logo" src="/static/logo.png" />
  
 <div class="form">
        <form onsubmit="registerGm(event);">
