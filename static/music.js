@@ -113,7 +113,7 @@ function playMusicSlot(slot_id, update_id) {
     player.oncanplay = function(event) {  
         $('#musicStatus').show();
     };
-    player.src = '/music/' + gm + '/' + game + '/' + slot_id + '/' + update_ids[slot_id];
+    player.src = '/music/' + gm + '/' + game + '/' + slot_id + '.mp3?update=' + update_ids[slot_id];
     player.play();
 
     updateSlotHighlight(slot_id);
