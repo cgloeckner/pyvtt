@@ -1247,11 +1247,11 @@ class VttTest(EngineBaseTest):
 
         # can query existing slots
         for slot_id in data['music']:
-            ret = self.app.get('/music/arthur/test-game-1/{0}/0815'.format(slot_id))
+            ret = self.app.get('/music/arthur/test-game-1/{0}.mp3?update=0815'.format(slot_id))
             self.assertEqual(ret.status_int, 200)
 
         # cannot query invalid slot
-        ret = self.app.get('/music/arthur/test-game-1/14/0815', expect_errors=True)
+        ret = self.app.get('/music/arthur/test-game-1/14.mp3?update=0815', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
     def test_upload_background(self):
