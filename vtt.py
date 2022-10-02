@@ -568,7 +568,7 @@ def setup_resource_routes(engine):
     
     if not engine.resource_routing:
         # skip resource routing
-        engine.info('Resource routes were skipped')
+        engine.logging.info('Resource routes were skipped')
         return
     
     @get('/static/<fname>')
