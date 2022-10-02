@@ -580,8 +580,8 @@ def setup_player_routes(engine):
 
             return static_file(fname, root=root)
 
-        @get('/music/<gmurl>/<url>/<slotid>')
-        def game_music(gmurl, url, slotid):
+        @get('/music/<gmurl>/<url>/<fname>')
+        def game_music(gmurl, url, fname):
             # load GM from cache
             gm_cache = engine.cache.getFromUrl(gmurl)
             if gm_cache is None:
@@ -595,7 +595,6 @@ def setup_player_routes(engine):
                 abort(404)
             
             # try to load music from disk
-            fname = '{0}.mp3'.format(slotid)
             root  = engine.paths.getGamePath(gmurl, url)
             return static_file(fname, root)
 
