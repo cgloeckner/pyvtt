@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import sys, os, logging, smtplib, pathlib, tempfile, traceback, uuid, random
+import sys, os, logging, smtplib, pathlib, tempfile, traceback, uuid, random, base64, json
 
 import bottle
 import patreon
@@ -15,6 +15,10 @@ import patreon
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 import google.auth.transport.requests
+
+from authlib.integrations.requests_client import OAuth2Session
+from authlib.oidc.core import CodeIDToken
+from authlib.jose import jwt
 
 
 __author__ = 'Christian Glöckner'
@@ -212,6 +216,64 @@ class GoogleApi(BaseLoginApi):
             'user' : {
                 'id'      : id_info.get('sub'),
                 'username': id_info.get('name')
+            },
+            'granted': True # no reason for something else here
+        }
+        self.engine.logging.auth(result)
+        
+        return result
+
+# ---------------------------------------------------------------------
+
+# @NOTE: this class is not covered in the unit tests because it depends too much on external resources
+class Auth0Api(BaseLoginApi):
+
+    def __init__(self, engine, **data):
+        super().__init__('auth0', engine, **data)
+        self.auth_endpoint  = f'https://{data["domain"]}/authorize'
+        self.token_endpoint = f'https://{data["domain"]}/oauth/token'
+
+        if engine.debug:
+            # accept non-https for testing oauth (e.g. localhost)
+            os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
+        self.session = OAuth2Session(
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            scope='openid profile',
+            redirect_uri=self.callback
+        )
+
+    def getAuthUrl(self):
+        """ Generate external oauth URL to access in order to fetch data. """
+        uri, state = self.session.create_authorization_url(self.auth_endpoint)
+        return uri
+    
+    def getSession(self, request):
+        """ Query google to return required user data and infos."""
+        token = self.session.fetch_token(
+            url=self.token_endpoint,
+            authorization_response=request.url
+        )
+
+        # fetch header from base64 ID-Token
+        raw = token['id_token']
+        l = len(raw) % 4
+        raw += '=' * l
+        raw = base64.b64decode(raw)
+        
+        data = raw.split(b'}')[1] + b'}'
+        data = json.loads(data)
+
+        # create base64 userid from subscription
+        userid = base64.urlsafe_b64encode(data['sub'].encode('utf-8')).decode('utf-8')
+
+        # create login data
+        result = {
+            'sid'  : str(uuid.uuid4()),
+            'user' : {
+                'id'      : userid,
+                'username': data['name']
             },
             'granted': True # no reason for something else here
         }
