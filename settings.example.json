@@ -26,9 +26,10 @@
     "reverse": false
   },
   "login": {
-    "type": "google",
-    "client_id": "1234wxyz",
-    "client_secret": "zyxw4321",
+    "type": "auth0",
+    "domain": "YOUR_APP.us.auth0.com",
+    "client_id": "YOUR_APP_ID",
+    "client_secret": "YOUR_APP_SECRET"
   },
   "notify": {
     "type": "email",
