@@ -271,6 +271,7 @@ class Auth0Api(BaseLoginApi):
         # create login data
         result = {
             'sid'  : str(uuid.uuid4()),
+            'provider': data['sub'].split('|')[0],
             'user' : {
                 'id'      : userid,
                 'username': data['name']
