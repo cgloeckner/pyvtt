@@ -34,9 +34,6 @@ def setup_gm_routes(engine):
     # login callback
     @get('/vtt/callback')
     def gm_login_callback():
-        if engine.login['type'] not in ['patreon', 'google']:
-            abort(404)
-        
         # query session from login auth
         session = engine.login_api.getSession(request)
         

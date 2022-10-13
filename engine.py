@@ -42,6 +42,8 @@ class Engine(object):
         
         self.paths     = utils.PathApi(appname=appname, root=pref_dir)
         
+        self.app = bottle.default_app()
+        
         # setup per-game stuff
         self.checksums = dict()
         self.locks     = dict()
@@ -190,15 +192,17 @@ class Engine(object):
             self.logging.info('Defaulting to dev-login for local-gm')
         else:
             # load patreon API
-            if self.login['type'] in ['patreon', 'google']:
-                if self.login['type'] == 'patreon':
-                    # create patreon query API
-                    self.login_api = utils.PatreonApi(engine=self, **self.login)
-                elif self.login['type'] == 'google':
-                    # create google query API
-                    self.login_api = utils.GoogleApi(engine=self, **self.login)
-                else:
-                    raise NotImplementedError(self.login['type'])
+            if self.login['type'] == 'patreon':
+                # create patreon query API
+                self.login_api = utils.PatreonApi(engine=self, **self.login)
+            elif self.login['type'] == 'google':
+                # create google query API
+                self.login_api = utils.GoogleApi(engine=self, **self.login)
+            elif self.login['type'] == 'auth0':
+                # create auth0 query API
+                self.login_api = utils.Auth0Api(engine=self, **self.login)
+            elif self.login['type'] not in [None, '']:
+                raise NotImplementedError(self.login['type'])
             
         if self.notify['type'] == 'email' and not self.debug:
             # create email notify API
@@ -209,7 +213,6 @@ class Engine(object):
         self.main_db = createMainDatabase(self)
         
         # setup db_session to all routes
-        self.app = bottle.default_app()
         self.app.install(db_session)
         
         # setup error catching
@@ -293,6 +296,11 @@ class Engine(object):
 
     def hasSsl(self):
         return self.hosting['ssl']
+
+    def hasSupportedLogin(self):
+        if self.login_api is None:
+            return True
+        return self.login_api.api in ['patreon', 'google', 'auth0']
         
     def verifyUrlSection(self, s):
         return bool(re.match(self.url_regex, s))
