@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD [ "python3", "./vtt.py", "--appname=prod", "--prefdir=/opt/pyvtt" ]
+CMD [ "python3", "./vtt.py", "--appname=prod", "--prefdir=/opt/pyvtt", "--no-logs" ]
