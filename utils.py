@@ -421,17 +421,17 @@ class LoggingApi(object):
         self.stats_logger = logging.getLogger('stats_log')   
         self.stats_logger.setLevel(loglevel)
         
-        if not stdout_only:
-            self.linkFile(self.stats_logger, stats_file)
-        elif not quiet:
-            self.linkStdout(self.stats_logger)
-
+        # @NOTE: this log is required for `stats.py` and cannot be disabled
+        self.linkFile(self.stats_logger, stats_file)
+        
         # setup auth logger
         self.auth_logger = logging.getLogger('auth_log')
         self.auth_logger.setLevel(logging.INFO)
         
-        # @NOTE: this log is required for `stats.py` and cannot be disabled
-        self.linkFile(self.auth_logger, auth_file)
+        if not stdout_only:
+            self.linkFile(self.auth_logger, auth_file)
+        elif not quiet:
+            self.linkStdout(self.stats_logger)
         
         # link logging handles
         self.info    = self.info_logger.info
