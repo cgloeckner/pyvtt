@@ -97,7 +97,6 @@ class Engine(object):
         self.local_gm  = '--local-gm' in argv
         self.localhost = '--localhost' in argv
         self.no_logs   = '--no-logs' in argv
-        self.resource_routing = '--no-resource-routing' not in argv
         
         if self.localhost:
             assert(not self.local_gm)
