@@ -10,7 +10,9 @@ License: MIT (see LICENSE for details)
 import sys, os, logging, smtplib, pathlib, tempfile, traceback, uuid, random, base64, json
 
 import bottle
-import patreon
+import patreon         
+
+from gevent import lock
 
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
@@ -164,6 +166,24 @@ class BaseLoginApi(object):
         self.callback      = engine.getAuthCallbackUrl() # https://example.com/my/callback/path
         self.client_id     = data['client_id']     # ID of API key
         self.client_secret = data['client_secret'] # Secret of API key
+        
+        # thread-safe structure to hold login sessions
+        self.sessions = dict()
+        self.lock     = lock.RLock()
+
+    def loadSession(self, state):
+        """Query session via state but remove it from the cache"""
+        with self.lock:
+            return self.sessions.pop(state)
+
+    def saveSession(self, state, session):
+        with self.lock:
+            self.sessions[state] = session
+
+    @staticmethod
+    def parseStateFromUrl(url):
+        # query state from url (which contains '&state=foo')
+        return url.split('&state=')[1].split('&')[0]
 
 
 # ---------------------------------------------------------------------
@@ -179,7 +199,10 @@ class GoogleApi(BaseLoginApi):
             # accept non-https for testing oauth (e.g. localhost)
             os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-        self.flow = Flow.from_client_config(
+    def getAuthUrl(self):
+        """ Generate google-URL to access in order to fetch data. """
+        # create auth flow session
+        f = Flow.from_client_config(
             client_config={
                 'web': {
                     'client_id'    : self.client_id,
@@ -194,15 +217,19 @@ class GoogleApi(BaseLoginApi):
             ],
             redirect_uri=self.callback)
 
-    def getAuthUrl(self):
-        """ Generate google-URL to access in order to fetch data. """
-        auth_url, state = self.flow.authorization_url()
+        auth_url, state = f.authorization_url()
+        self.saveSession(state, f)
+        
         return auth_url
     
     def getSession(self, request):
-        """ Query google to return required user data and infos."""
-        self.flow.fetch_token(authorization_response=bottle.request.url)
-        creds = self.flow.credentials
+        """ Query google to return required user data and infos."""  
+        state = BaseLoginApi.parseStateFromUrl(request.url)
+
+        # fetch token
+        f = self.loadSession(state)
+        f.fetch_token(authorization_response=bottle.request.url)
+        creds = f.credentials
         token_request = google.auth.transport.requests.Request()
 
         id_info = id_token.verify_oauth2_token(
@@ -237,21 +264,27 @@ class Auth0Api(BaseLoginApi):
             # accept non-https for testing oauth (e.g. localhost)
             os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-        self.session = OAuth2Session(
+    def getAuthUrl(self):
+        """ Generate external oauth URL to access in order to fetch data. """
+        # create session, redirect uri and state
+        s = OAuth2Session(
             client_id=self.client_id,
             client_secret=self.client_secret,
             scope='openid profile',
             redirect_uri=self.callback
         )
-
-    def getAuthUrl(self):
-        """ Generate external oauth URL to access in order to fetch data. """
-        uri, state = self.session.create_authorization_url(self.auth_endpoint)
+        uri, state = s.create_authorization_url(self.auth_endpoint)
+        self.saveSession(state, s)
+        
         return uri
     
     def getSession(self, request):
         """ Query google to return required user data and infos."""
-        token = self.session.fetch_token(
+        state = BaseLoginApi.parseStateFromUrl(request.url)
+
+        # fetch token
+        s = self.loadSession(state)
+        token = s.fetch_token(
             url=self.token_endpoint,
             authorization_response=request.url
         )
