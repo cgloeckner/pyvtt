@@ -59,14 +59,13 @@ class LoggingApiTest(unittest.TestCase):
         self.logging.warning('hello warning world')
         self.assertLastLine('warning', 'hello warning world')
         
-    def test_stats(self):
-        self.logging.stats('hello stats world')
-        self.assertLastLine('stats', 'hello stats world')
-    
-    def test_auth(self):
+    def test_stats(self):           
         data = {'id': '123', 'username': 'foobar'}
-        self.logging.auth(data)
-        self.assertLastLine('auth', str(data))
+        self.logging.stats(data)
+        self.assertLastLine('stats', str(data))
+    
+    def test_auth(self):              
+        self.logging.auth('hello stats world')
 
     def test_stdout_only(self):
         # NOTE: manual setUp to make sure logs are cleared
@@ -99,9 +98,12 @@ class LoggingApiTest(unittest.TestCase):
         self.logging.warning('hello warning world')
         self.assertFileNotFound('warning')
 
+        self.logging.auth('hello stats world')
+        self.assertFileNotFound('auth')
+        
         # stats log is not empty due to dependency to `stats.py`
-        self.logging.stats('hello stats world')
         data = {'id': '123', 'username': 'foobar'}
-        self.logging.auth(data)
-        self.assertLastLine('auth', str(data))
+        self.logging.stats(data)
+        self.assertLastLine('stats', str(data))
+
 
