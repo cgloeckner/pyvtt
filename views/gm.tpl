@@ -59,7 +59,7 @@
 
 <hr />
 
-<h1>GAMES by {{gm.name}}</h1>
+<h1>GAMES by {{gm.name}} <a href="/vtt/logout"><img src="/static/exit.png" class="icon" draggable="false" title="LOGOUT" /></a></h1>
 
     <div class="form">
         <p>ENTER GAME NAME (optional)</p>

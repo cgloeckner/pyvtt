@@ -170,7 +170,10 @@ class BaseLoginApi(object):
         # thread-safe structure to hold login sessions
         self.sessions = dict()
         self.lock     = lock.RLock()
-
+   
+    def getLogoutUrl(self):
+        raise NotImplementedError()
+    
     def loadSession(self, state):
         """Query session via state but remove it from the cache"""
         with self.lock:
@@ -221,7 +224,7 @@ class GoogleApi(BaseLoginApi):
         self.saveSession(state, f)
         
         return auth_url
-    
+        
     def getSession(self, request):
         """ Query google to return required user data and infos."""  
         state = BaseLoginApi.parseStateFromUrl(request.url)
@@ -256,10 +259,13 @@ class GoogleApi(BaseLoginApi):
 class Auth0Api(BaseLoginApi):
 
     def __init__(self, engine, **data):
-        super().__init__('auth0', engine, **data)
-        self.auth_endpoint  = f'https://{data["domain"]}/authorize'
-        self.token_endpoint = f'https://{data["domain"]}/oauth/token'
+        super().__init__('auth0', engine, **data)   
+        self.auth_endpoint   = f'https://{data["domain"]}/authorize'
+        self.logout_endpoint = f'https://{data["domain"]}/v2/logout'
+        self.token_endpoint  = f'https://{data["domain"]}/oauth/token'
 
+        self.logout_callback = engine.getUrl()
+        
         if engine.debug:
             # accept non-https for testing oauth (e.g. localhost)
             os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -277,6 +283,9 @@ class Auth0Api(BaseLoginApi):
         self.saveSession(state, s)
         
         return uri
+
+    def getLogoutUrl(self):
+        return f'{self.logout_endpoint}?client_id={self.client_id}&returnTo={self.logout_callback}'
     
     def getSession(self, request):
         """ Query google to return required user data and infos."""
@@ -291,8 +300,10 @@ class Auth0Api(BaseLoginApi):
 
         # fetch header from base64 ID-Token
         raw = token['id_token']
+        print(f'Token Size: {len(raw)}')
         l = len(raw) % 4
-        raw += '=' * l
+        raw += '=' * l                  
+        print(f'Added {l} symbols. now {len(raw)}')
         raw = base64.b64decode(raw)
         
         data = raw.split(b'}')[1] + b'}'
@@ -377,7 +388,7 @@ class PatreonApi(BaseLoginApi):
         access_token = tokens['access_token']
         
         return access_token, patreon.API(access_token)
-        
+    
     def getSession(self, request):
         """ Query patreon to return required user data and infos.
         This tests the pledge level. """

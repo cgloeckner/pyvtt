@@ -148,6 +148,14 @@ def setup_gm_routes(engine):
         status['url'] = gm.url
         return status
 
+    @get('/vtt/logout')
+    def vtt_logout():  
+        url = engine.login_api.getLogoutUrl()
+        # remove cookie
+        response.set_cookie('session', '', path='/', max_age=1, secure=engine.hasSsl())
+        # redirect to external logout
+        redirect(url)
+
     @get('/')
     @view('gm')
     def get_game_list():
