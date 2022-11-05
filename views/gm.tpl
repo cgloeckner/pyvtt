@@ -59,7 +59,11 @@
 
 <hr />
 
-<h1>GAMES by {{gm.name}} <a href="/vtt/logout"><img src="/static/exit.png" class="icon" draggable="false" title="LOGOUT" /></a></h1>
+<h1>GAMES by {{gm.name}}
+%if engine.login_api is not None:
+    {{engine.login_api.getGmInfo(gm.url)}}
+%end
+    <a href="/vtt/logout"><img src="/static/exit.png" class="icon" draggable="false" title="LOGOUT" /></a></h1>
 
     <div class="form">
         <p>ENTER GAME NAME (optional)</p>

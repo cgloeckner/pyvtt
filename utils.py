@@ -173,6 +173,9 @@ class BaseLoginApi(object):
    
     def getLogoutUrl(self):
         raise NotImplementedError()
+
+    def getGmInfo(self, url):
+        return ''
     
     def loadSession(self, state):
         """Query session via state but remove it from the cache"""
@@ -286,6 +289,15 @@ class Auth0Api(BaseLoginApi):
 
     def getLogoutUrl(self):
         return f'{self.logout_endpoint}?client_id={self.client_id}&returnTo={self.logout_callback}'
+     
+    def getGmInfo(self, url):
+        """ Query identity provider from the base64 url.
+        Scene: <provider>|<id>
+        but <provider> may include more '|'.
+        """
+        raw = base64.b64decode(url).decode('utf-8')
+        provider = '-'.join(raw.split('|')[:-1])
+        return f'(via {provider})'
     
     def getSession(self, request):
         """ Query google to return required user data and infos."""
@@ -300,10 +312,8 @@ class Auth0Api(BaseLoginApi):
 
         # fetch header from base64 ID-Token
         raw = token['id_token']
-        print(f'Token Size: {len(raw)}')
         l = len(raw) % 4
         raw += '=' * l                  
-        print(f'Added {l} symbols. now {len(raw)}')
         raw = base64.b64decode(raw)
         
         data = raw.split(b'}')[1] + b'}'
