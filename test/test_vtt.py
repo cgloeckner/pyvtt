@@ -641,23 +641,33 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.status_int, 200)
         expect = {"urls": []}
         self.assertEqual(ret.body, json.dumps(expect).encode('utf-8'))
-    
-    def test_vtt_status(self):
-        # can query if no more shards were specified
-        ret = self.app.get('/vtt/status', expect_errors=True)
+
+    def test_vtt_api_queries(self):
+        ret = self.app.get('/vtt/api/users', expect_errors=True)
+        self.assertEqual(ret.status_int, 200)
+        
+        ret = self.app.get('/vtt/api/logins', expect_errors=True)
         self.assertEqual(ret.status_int, 200)
 
-        # can query if shard was set up
-        self.engine.shards = ['http://localhost:80']
-        ret = self.app.get('/vtt/status')
-        self.assertEqual(ret.status_int, 200)
-        # @NOTE: this needs to be rewritten, since there's no `ps` in slim containres
-        """
-        self.assertIn('cpu', ret.json)
-        self.assertIn('memory', ret.json)
-        """
-        self.assertIn('num_players', ret.json)
+        # auth0 analysis is not routed when not loaded
+        ret = self.app.get('/vtt/api/auth0', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
         
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        
+        # create a game 
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-game-1',
+            upload_files=[('file', 'test.png', img_small)], xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        gm_sid = self.app.cookies['session']
+        self.app.reset()
+
+        ret = self.app.get('/vtt/api/assets-list/arthur/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 200)
+    
     def test_vtt_query(self):
         # can only query this server if no shards are specified
         ret = self.app.get('/vtt/query/0', expect_errors=True)

@@ -507,18 +507,6 @@ def setup_gm_routes(engine):
         
         return dict(engine=engine, game=game)
     
-    @get('/vtt/api/gms')
-    def api_query_gms():
-        # query gms and how many accounts do idle
-        now   = time.time()
-        done = time.time()
-        
-        return {
-            'total': total,
-            'idle': idle,
-            'query_time': done-now
-        }
-
     @get('/vtt/api/users')
     def api_query_users():
         now = time.time()
