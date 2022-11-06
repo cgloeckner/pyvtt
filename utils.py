@@ -298,12 +298,8 @@ class Auth0Api(BaseLoginApi):
     
     def getLogoutUrl(self):
         return f'{self.logout_endpoint}?client_id={self.client_id}&returnTo={self.logout_callback}'
-     
-    def getGmInfo(self, url):
-        """ Query identity provider from the base64 url.
-        Scene: <provider>|<id>
-        but <provider> may include more '|'.
-        """
+
+    def parseProvider(self, url):
         # split username from url
         raw = base64.b64decode(url).decode('utf-8')
         provider = '-'.join(raw.split('|')[:-1])
@@ -312,7 +308,16 @@ class Auth0Api(BaseLoginApi):
         for s in ['-oauth2', 'oauth2-']:
             provider = provider.replace(s, '')
 
-        return f'<img src="{self.favicons[provider.lower()]}" class="favicon" />'
+        return provider.lower()
+    
+    def getGmInfo(self, url):
+        """ Query identity provider from the base64 url.
+        Scene: <provider>|<id>
+        but <provider> may include more '|'.
+        """
+        provider = self.parseProvider(url)
+
+        return f'<img src="{self.favicons[provider]}" class="favicon" />'
     
     def getSession(self, request):
         """ Query google to return required user data and infos."""
@@ -337,7 +342,6 @@ class Auth0Api(BaseLoginApi):
         payload += '=' * (4-len(payload) % 4)
         data = base64.b64decode(payload)
         data = json.loads(data)
-        print(data)
 
         # create base64 userid from subscription
         userid = base64.urlsafe_b64encode(data['sub'].encode('utf-8')).decode('utf-8')
@@ -452,7 +456,7 @@ class PatreonApi(BaseLoginApi):
 
 class LoggingApi(object):
 
-    def __init__(self, quiet, info_file, error_file, access_file, warning_file, stats_file, auth_file, stdout_only=False, loglevel='INFO'):
+    def __init__(self, quiet, info_file, error_file, access_file, warning_file, logins_file, auth_file, stdout_only=False, loglevel='INFO'):
         self.log_format = logging.Formatter('[%(asctime)s at %(module)s/%(filename)s:%(lineno)d] %(message)s')
         
         # setup info logger
@@ -491,12 +495,12 @@ class LoggingApi(object):
         elif not quiet:
             self.linkStdout(self.warning_logger)
         
-        # setup stats logger
-        self.stats_logger = logging.getLogger('stats_log')   
-        self.stats_logger.setLevel(loglevel)
+        # setup logins logger
+        self.logins_logger = logging.getLogger('logins_log')   
+        self.logins_logger.setLevel(loglevel)
         
-        # @NOTE: this log is required for `stats.py` and cannot be disabled
-        self.linkFile(self.stats_logger, stats_file)
+        # @NOTE: this log is required for server analysis and cannot be disabled
+        self.linkFile(self.logins_logger, logins_file, skip_format=True)
         
         # setup auth logger
         self.auth_logger = logging.getLogger('auth_log')
@@ -505,14 +509,14 @@ class LoggingApi(object):
         if not stdout_only:
             self.linkFile(self.auth_logger, auth_file)
         elif not quiet:
-            self.linkStdout(self.stats_logger)
+            self.linkStdout(self.auth_logger)
         
         # link logging handles
         self.info    = self.info_logger.info
         self.error   = self.error_logger.error
         self.access  = self.access_logger.info
         self.warning = self.warning_logger.warning
-        self.stats   = self.stats_logger.info
+        self.logins  = self.logins_logger.info
         self.auth    = self.auth_logger.info
 
         if not stdout_only:
@@ -528,10 +532,11 @@ class LoggingApi(object):
         handler.setFormatter(self.log_format)
         target.addHandler(handler)
 
-    def linkFile(self, target, fname):
+    def linkFile(self, target, fname, skip_format=False):
         """Links the given logger to the provided filename."""
         handler = logging.FileHandler(fname, mode='a')
-        handler.setFormatter(self.log_format)
+        if not skip_format:
+            handler.setFormatter(self.log_format)
         target.addHandler(handler)
     
 

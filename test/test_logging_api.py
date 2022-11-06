@@ -24,7 +24,7 @@ class LoggingApiTest(unittest.TestCase):
             error_file   = self.root / 'error.log',
             access_file  = self.root / 'access.log',
             warning_file = self.root / 'warning.log',
-            stats_file   = self.root / 'stats.log',
+            logins_file  = self.root / 'logins.log',
             auth_file    = self.root / 'auth.log'
         )
         
@@ -59,10 +59,10 @@ class LoggingApiTest(unittest.TestCase):
         self.logging.warning('hello warning world')
         self.assertLastLine('warning', 'hello warning world')
         
-    def test_stats(self):           
+    def test_logins(self):           
         data = {'id': '123', 'username': 'foobar'}
-        self.logging.stats(data)
-        self.assertLastLine('stats', str(data))
+        self.logging.logins(data)
+        self.assertLastLine('logins', str(data))
     
     def test_auth(self):              
         self.logging.auth('hello stats world')
@@ -80,7 +80,7 @@ class LoggingApiTest(unittest.TestCase):
             error_file   = self.root / 'error.log',
             access_file  = self.root / 'access.log',
             warning_file = self.root / 'warning.log',
-            stats_file   = self.root / 'stats.log',
+            logins_file  = self.root / 'logins.log',
             auth_file    = self.root / 'auth.log',
             stdout_only  = True
         )
@@ -101,9 +101,9 @@ class LoggingApiTest(unittest.TestCase):
         self.logging.auth('hello stats world')
         self.assertFileNotFound('auth')
         
-        # stats log is not empty due to dependency to `stats.py`
+        # stats log is not empty due to analysis stuff
         data = {'id': '123', 'username': 'foobar'}
-        self.logging.stats(data)
-        self.assertLastLine('stats', str(data))
+        self.logging.logins(data)
+        self.assertLastLine('logins', str(data))
 
 

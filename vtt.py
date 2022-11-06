@@ -506,6 +506,97 @@ def setup_gm_routes(engine):
             abort(404)
         
         return dict(engine=engine, game=game)
+    
+    @get('/vtt/api/gms')
+    def api_query_gms():
+        # query gms and how many accounts do idle
+        now   = time.time()
+        done = time.time()
+        
+        return {
+            'total': total,
+            'idle': idle,
+            'query_time': done-now
+        }
+
+    @get('/vtt/api/users')
+    def api_query_users():
+        now = time.time()
+
+        # query gms
+        total_gms     = engine.main_db.GM.select().count()
+        abandoned_gms = engine.main_db.GM.select(lambda g: g.timeid < now - engine.expire).count()
+
+        # query games
+        threshold = 10
+        total_games   = 0
+        running_games = 0
+        with engine.cache.lock:
+            for gm in engine.cache.gms:
+                gm_cache = engine.cache.gms[gm]
+                with gm_cache.lock:
+                    total_games   += gm_cache.db.Game.select().count()
+                    running_games += gm_cache.db.Game.select(lambda g: g.timeid >= now - threshold * 3600).count()
+        done = time.time()
+
+        # return data
+        return {
+            'gms': {
+                'total': total_gms,
+                'abandoned': abandoned_gms
+            },
+            'games': {
+                'total': total_games,
+                'running': running_games
+            },
+            'query_time': done-now
+        }
+
+    @get('/vtt/api/logins')
+    def api_query_logins():
+        """Count users locations based on IPs within past 30d."""
+        start = time.time()
+        
+        logins    = engine.parseLoginLog()
+        locations  = dict()
+        since = start - 30 * 24 * 3600 # past 30d
+
+        # group IPs by country
+        for record in logins:
+            if record.timeid < since:
+                continue
+            if record.country not in locations:
+                locations[record.country] = set()
+            locations[record.country].add(record.ip)
+
+        # count IPs per country
+        for key in locations:
+            locations[key] = len(locations[key])
+        
+        done = time.time()
+
+        return {
+            'locations': locations,
+            'query_time': done-start
+        }
+    
+    if engine.login['type'] == 'auth0':
+        @get('/vtt/api/auth0')
+        def api_query_auth0():
+            # query gms and how many accounts do idle
+            now   = time.time()
+            total = 0
+            provider = {}
+            for gm in engine.main_db.GM.select():
+                print(gm.url)
+                p = engine.login_api.parseProvider(gm.url)
+                if p not in provider:
+                    provider[p] = 0
+                provider[p] += 1
+            done = time.time()
+
+            provider['query_time'] = done-now
+            return provider
 
     @get('/vtt/status')
     def status_report():

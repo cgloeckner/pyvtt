@@ -52,7 +52,7 @@ class PlayerCache(object):
         
         # add login to stats
         login_data = [self.is_gm, time.time(), self.country, self.ip, PlayerCache.instance_count]
-        self.engine.logging.stats(json.dumps(login_data))
+        self.engine.logging.logins(json.dumps(login_data))
         
         self.lock     = lock.RLock()
         self.socket   = None
