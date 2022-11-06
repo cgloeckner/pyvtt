@@ -607,7 +607,7 @@ def setup_resource_routes(engine):
         root  = engine.paths.getGamePath(gmurl, url)
         return static_file(fname, root)
 
-    @get('/token/<gmurl>/<url>/<fname>')
+    @get('/vtt/token/<gmurl>/<url>/<fname>')
     def static_token(gmurl, url, fname):
         # load GM from cache
         gm_cache = engine.cache.getFromUrl(gmurl)
