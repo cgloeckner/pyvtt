@@ -796,7 +796,7 @@ def setup_player_routes(engine):
         result['is_gm']       = player_cache.is_gm
         return result
 
-    @get('/websocket')
+    @get('/vtt/websocket')
     def accept_websocket():
         socket = request.environ.get('wsgi.websocket')
         

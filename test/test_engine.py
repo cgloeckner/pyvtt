@@ -160,22 +160,22 @@ class EngineTest(EngineBaseTest):
     def test_getWebsocketUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/websocket')
+        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/vtt/websocket')
 
         # internal SSL does not effect it
         settings['hosting']['ssl'] = False
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/websocket')
+        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/vtt/websocket')
 
         # internal port does not effect it
         settings['hosting']['port'] = 443
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/websocket')
+        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/vtt/websocket')
         
         # reload without reverse proxy will take effect
         settings['hosting']['reverse'] = False 
         self.reloadEngine(settings=settings)      
-        self.assertEqual(self.engine.getWebsocketUrl(), 'ws://vtt.example.com:443/websocket')
+        self.assertEqual(self.engine.getWebsocketUrl(), 'ws://vtt.example.com:443/vtt/websocket')
         
     def test_getAuthCallbackUrl(self):
         settings = EngineTest.defaultSettings()

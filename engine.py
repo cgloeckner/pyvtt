@@ -64,7 +64,7 @@ class Engine(object):
         self.main_db = None
         
         # blacklist for GM names and game URLs
-        self.gm_blacklist = ['', 'static', 'token', 'music', 'vtt', 'websocket', 'thumbnail']
+        self.gm_blacklist = ['', 'static', 'token', 'music', 'vtt']
         self.url_regex    = '^[A-Za-z0-9_\-.]+$'
         
         # maximum file sizes for uploads (in MB)
@@ -283,7 +283,7 @@ class Engine(object):
     def getWebsocketUrl(self):
         protocol = 'wss' if self.hasReverseProxy() or self.hasSsl() else 'ws'
         port     = '' if self.hasReverseProxy() else f':{self.getPort()}'
-        return f'{protocol}://{self.getDomain()}{port}/websocket'
+        return f'{protocol}://{self.getDomain()}{port}/vtt/websocket'
 
     def getAuthCallbackUrl(self):
         protocol = 'https' if self.hasReverseProxy() or self.hasSsl() else 'http'
