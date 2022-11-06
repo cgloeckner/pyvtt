@@ -589,8 +589,8 @@ def setup_resource_routes(engine):
 
         return static_file(fname, root=root)
 
-    @get('/music/<gmurl>/<url>/<fname>')
-    def game_music(gmurl, url, fname):
+    @get('/asset/<gmurl>/<url>/<fname>')
+    def game_asset(gmurl, url, fname):
         # load GM from cache
         gm_cache = engine.cache.getFromUrl(gmurl)
         if gm_cache is None:
@@ -602,33 +602,14 @@ def setup_resource_routes(engine):
         if game is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
+
+        # only allow specific file types
+        if not fname.endswith('.png') and not fname.endswith('.mp3'):
+            abort(404)
         
-        # try to load music from disk
+        # try to load asset file from disk
         root  = engine.paths.getGamePath(gmurl, url)
         return static_file(fname, root)
-
-    @get('/vtt/token/<gmurl>/<url>/<fname>')
-    def static_token(gmurl, url, fname):
-        # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
-        if gm_cache is None:
-            # @NOTE: not logged because somebody may play around with this
-            abort(404)
-        
-        # load game from GM's database
-        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-        if game is None:
-            # @NOTE: not logged because somebody may play around with this
-            abort(404)
-        
-        # fetch image path
-        path = engine.paths.getGamePath(gmurl, url)
-
-        # check file extension (just in case more files will be added there in future)
-        if not fname.endswith('.png'):
-            abort(404)
-        
-        return static_file(fname, root=path)
 
 # ---------------------------------------------------------------------
 

@@ -316,7 +316,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         url = game.getImageUrl(17)
-        self.assertEqual(url, '/vtt/token/url456/foo/17.png')
+        self.assertEqual(url, '/asset/url456/foo/17.png')
         
     @db_session
     def test_getFileSize(self):

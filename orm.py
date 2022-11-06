@@ -258,7 +258,7 @@ def createGmDatabase(engine, filename):
             return max_id
 
         def getImageUrl(self, image_id):
-            return '/vtt/token/{0}/{1}/{2}.png'.format(self.gm_url, self.url, image_id)
+            return '/asset/{0}/{1}/{2}.png'.format(self.gm_url, self.url, image_id)
 
         def getFileSize(self, url):
             game_root  = engine.paths.getGamePath(self.gm_url, self.url)

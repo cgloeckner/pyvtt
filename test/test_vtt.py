@@ -632,7 +632,7 @@ class VttTest(EngineBaseTest):
         ret = self.app.post('/vtt/hashtest/arthur/test-game-1', {'hashs[]': [md5]}, xhr=True)
         self.assertEqual(ret.status_int, 200)
         expect = {
-            "urls": ["/vtt/token/arthur/test-game-1/0.png"]
+            "urls": ["/asset/arthur/test-game-1/0.png"]
         }
         self.assertEqual(ret.body, json.dumps(expect).encode('utf-8'))
         
@@ -780,44 +780,44 @@ class VttTest(EngineBaseTest):
         shutil.copyfile(img_path / '0.png', img_path / '1.png')
 
         # can query this image
-        ret = self.app.get('/vtt/token/arthur/test-game-1/0.png')
+        ret = self.app.get('/asset/arthur/test-game-1/0.png')
         self.assertEqual(ret.status_int, 200)
         self.assertEqual(ret.content_type, 'image/png')
-        ret = self.app.get('/vtt/token/arthur/test-game-1/1.png')
+        ret = self.app.get('/asset/arthur/test-game-1/1.png')
         self.assertEqual(ret.status_int, 200)
         self.assertEqual(ret.content_type, 'image/png')
 
         # cannot query unknown image (within right game)
-        ret = self.app.get('/vtt/token/arthur/test-game-2/2.png', expect_errors=True)
+        ret = self.app.get('/asset/arthur/test-game-2/2.png', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
         # cannot query image from another game
-        ret = self.app.get('/vtt/token/arthur/test-game-2/0.png')
+        ret = self.app.get('/asset/arthur/test-game-2/0.png')
         self.assertEqual(ret.status_int, 200)
         self.assertEqual(ret.content_type, 'image/png')
         
         # cannot query image from unknown game
-        ret = self.app.get('/vtt/token/arthur/test-game-3/0.png', expect_errors=True)
+        ret = self.app.get('/asset/arthur/test-game-3/0.png', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
         
         # cannot query image from unknown gm
-        ret = self.app.get('/vtt/token/carlos/test-game-3/0.png', expect_errors=True)
+        ret = self.app.get('/asset/carlos/test-game-3/0.png', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
         # cannot query GM's database         
-        ret = self.app.get('/vtt/token/arthur/test-game-1/../gm.db', expect_errors=True)
+        ret = self.app.get('/asset/arthur/test-game-1/../gm.db', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
-        ret = self.app.get('/vtt/token/arthur/test-game-1/../&#47;m.db', expect_errors=True)
+        ret = self.app.get('/asset/arthur/test-game-1/../&#47;m.db', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
-        ret = self.app.get('/vtt/token/arthur/../gm.db', expect_errors=True)
+        ret = self.app.get('/asset/arthur/../gm.db', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
-        ret = self.app.get('/vtt/token/arthur/test-game-1/"../gm.db"', expect_errors=True)
+        ret = self.app.get('/asset/arthur/test-game-1/"../gm.db"', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
         # cannot query non-image files
         with open(img_path / 'test.txt', 'w') as h:
             h.write('hello world') 
-        ret = self.app.get('/vtt/token/arthur/test-game-1/test.txt', expect_errors=True)
+        ret = self.app.get('/asset/arthur/test-game-1/test.txt', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
     
     def test_game_screen(self):
@@ -1260,11 +1260,11 @@ class VttTest(EngineBaseTest):
 
         # can query existing slots
         for slot_id in data['music']:
-            ret = self.app.get('/music/arthur/test-game-1/{0}.mp3?update=0815'.format(slot_id))
+            ret = self.app.get('/asset/arthur/test-game-1/{0}.mp3?update=0815'.format(slot_id))
             self.assertEqual(ret.status_int, 200)
 
         # cannot query invalid slot
-        ret = self.app.get('/music/arthur/test-game-1/14.mp3?update=0815', expect_errors=True)
+        ret = self.app.get('/asset/arthur/test-game-1/14.mp3?update=0815', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
     def test_upload_background(self):
