@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import tempfile, json, os, zipfile, gevent, requests, shutil
+import tempfile, json, os, zipfile, gevent, requests, shutil, hashlib
 
 from PIL import Image
 
@@ -607,7 +607,7 @@ class VttTest(EngineBaseTest):
         ret = self.app.post('/vtt/query-scenes/test-game-1')
         self.assertEqual(ret.status_int, 200)
 
-    def test_vtt_queryurl(self):
+    def test_vtt_hashtest(self):
         # register arthur
         ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
         self.assertEqual(ret.status_int, 200)
@@ -620,15 +620,27 @@ class VttTest(EngineBaseTest):
         gm_sid = self.app.cookies['session']
         self.app.reset()
 
+        # fetch md5 hash from game's first image (= background)
+        md5 = list(self.engine.checksums['arthur/test-game-1'].keys())[0]
+        
         # create some scenes
         gm_ret, gm_player = self.joinPlayer('arthur', 'test-game-1', 'arthur', 'gold')
         for i in range(3):
             gm_player.socket.push_receive({'OPID': 'GM-CREATE'})
         
-        # non-GM can query for missing url
-        ret = self.app.get('/vtt/query-url/arthur/test-game-1/foobar', expect_errors=True)
+        # non-GM can hashtest for existing assets
+        ret = self.app.post('/vtt/hashtest/arthur/test-game-1', {'hashs[]': [md5]}, xhr=True)
         self.assertEqual(ret.status_int, 200)
-        self.assertEqual(ret.body, b'')
+        expect = {
+            "urls": ["/token/arthur/test-game-1/0.png"]
+        }
+        self.assertEqual(ret.body, json.dumps(expect).encode('utf-8'))
+        
+        # non-GM can hashtest for missing assets
+        ret = self.app.post('/vtt/hashtest/arthur/test-game-1', {'hashs[]': ['deadbeef']}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        expect = {"urls": []}
+        self.assertEqual(ret.body, json.dumps(expect).encode('utf-8'))
     
     def test_vtt_status(self):
         # can query if no more shards were specified

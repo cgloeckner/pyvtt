@@ -613,7 +613,7 @@ function uploadFilesViaMd5(gm_name, game_url, md5s, files, at_x, at_y) {
     // query server with hashes
     $.ajax({     
         type: 'POST',
-        url: '/' + gm_name + '/' + game_url + '/hashtest',
+        url: '/vtt/hashtest/' + gm_name + '/' + game_url,
         dataType: 'json',
         data: {
             'hashs': md5s

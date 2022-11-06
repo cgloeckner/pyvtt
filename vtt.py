@@ -403,28 +403,35 @@ def setup_gm_routes(engine):
             server = engine.getUrl()
         
         return dict(gm=gm, server=server, all_games=all_games)
-
-    # NOTE: THIS IS NOT USED YET SINCE THE CLIENT IS NOT USING MD5 HASHS YET
-    @get('/vtt/query-url/<gmurl>/<url>/<md5>')
-    def query_url_by_md5(gmurl, url, md5):
+    
+    @post('/vtt/hashtest/<gmurl>/<url>')
+    def post_image_hashtest(gmurl, url):
         # load GM from cache
         gm_cache = engine.cache.getFromUrl(gmurl)
         if gm_cache is None:
-            engine.logging.warning('GM url="{0}" tried to query image url by md5 at the game {1} by {2} but he was not inside the cache'.format(gmurl, url, engine.getClientIp(request)))
+            abort(404)
+
+        # loda game from cache
+        game_cache = gm_cache.getFromUrl(url)
+        if game_cache is None:
             abort(404)
         
-        # load game from GM's database
+        # load game from GM's database to upload files
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-        if game is None:           
-            engine.logging.warning('GM url="{0}" tried to query image url by md5 at the game {1} by {2} but game was not found'.format(gmurl, url, engine.getClientIp(request)))
+        if game is None:  
             abort(404)
 
-        # query id by md5
-        queried_id = game.getIdByMd5(md5)
-        if queried_id is not None:
-            return game.getImageUrl(queried_id)
+        # query urls for given md5 hashes
+        known_urls = list()
+        for md5 in request.forms.getall('hashs[]'):
+            if md5 is not None:
+                imgid = game.getIdByMd5(md5)
+            
+                if imgid is not None:
+                    url = game.getImageUrl(imgid)
+                    known_urls.append(url)
 
-        return None
+        return {'urls': known_urls}
 
     @post('/vtt/upload-background/<gmurl>/<url>')
     def post_set_background(gmurl, url):
@@ -806,35 +813,6 @@ def setup_player_routes(engine):
                 error.metadata = player_cache.getMetaData()
                 # reraise greenlet's exception to trigger proper error reporting
                 raise error
-
-    @post('/<gmurl>/<url>/hashtest')
-    def get_image_hashtest(gmurl, url):
-        # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
-        if gm_cache is None:
-            abort(404)
-
-        # loda game from cache
-        game_cache = gm_cache.getFromUrl(url)
-        if game_cache is None:
-            abort(404)
-        
-        # load game from GM's database to upload files
-        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-        if game is None:  
-            abort(404)
-
-        # query urls for given md5 hashes
-        known_urls = list()
-        for md5 in request.forms.getall('hashs[]'):
-            if md5 is not None:
-                imgid = game.getIdByMd5(md5)
-            
-                if imgid is not None:
-                    url = game.getImageUrl(imgid)
-                    known_urls.append(url)
-
-        return {'urls': known_urls}
 
     @post('/<gmurl>/<url>/upload')
     def post_image_upload(gmurl, url):
