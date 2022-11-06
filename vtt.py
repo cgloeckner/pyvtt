@@ -528,7 +528,7 @@ def setup_gm_routes(engine):
         abandoned_gms = engine.main_db.GM.select(lambda g: g.timeid < now - engine.expire).count()
 
         # query games
-        threshold = 10
+        threshold     = 10
         total_games   = 0
         running_games = 0
         with engine.cache.lock:
@@ -536,7 +536,7 @@ def setup_gm_routes(engine):
                 gm_cache = engine.cache.gms[gm]
                 with gm_cache.lock:
                     total_games   += gm_cache.db.Game.select().count()
-                    running_games += gm_cache.db.Game.select(lambda g: g.timeid >= now - threshold * 3600).count()
+                    running_games += gm_cache.db.Game.select(lambda g: g.timeid >= now - threshold * 60).count()
         done = time.time()
 
         # return data
@@ -598,32 +598,6 @@ def setup_gm_routes(engine):
             provider['query_time'] = done-now
             return provider
 
-    @get('/vtt/status')
-    def status_report():
-        if len(engine.shards) == 0:
-            abort(404)
-
-        # @NOTE: this needs to be rewritten, since there's no `ps` in slim containres
-        pid = os.getpid()
-        data = dict()
-
-        """
-        # query cpu load
-        ret = subprocess.run(["ps", "-p", str(pid), "-o", "%cpu"], capture_output=True)
-        val = ret.stdout.decode('utf-8').split('\n')[1].strip()
-        data['cpu'] = float(val)
-        
-        # query memory load
-        ret = subprocess.run(["ps", "-p", str(pid), "-o", "%mem"], capture_output=True)
-        val = ret.stdout.decode('utf-8').split('\n')[1].strip()
-        data['memory'] = float(val)
-        """
-        
-        # query number of players
-        data['num_players'] = PlayerCache.instance_count
-        
-        return data
-
     @get('/vtt/query/<index:int>')
     def status_query(index):
         if len(engine.shards) == 0:
@@ -647,7 +621,7 @@ def setup_gm_routes(engine):
         
         # query server status
         try:
-            html = requests.get(host + '/vtt/status', timeout=3)
+            html = requests.get(host + '/vtt/api/users', timeout=3)
             data['status'] = html.text;
         except requests.exceptions.ReadTimeout as e:
             engine.logging.error('Server {0} seems to be offline'.format(host))

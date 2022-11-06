@@ -11,7 +11,7 @@
         <th></th>
         <th>SERVER</th>
         <th>STATUS</th>
-        <th>PLAYERS</th>
+        <th>GAMES</th>
     </tr>
 %i = 0
 %for host in engine.shards:
@@ -23,7 +23,7 @@
         <td><a href="{{host}}/">{{host}}</a></td>
     %end
         <td id="status{{i}}">UNKNOWN</td>
-        <td id="players{{i}}">UNKNOWN</td>
+        <td id="games{{i}}">UNKNOWN</td>
     </tr>
     %i += 1
 %end 
@@ -45,45 +45,25 @@ function queryShard(index, host) {
             }
             
             // fallback output
-            var color   = 'red'
-            var status  = 'OFFLINE';
-            var hint    = 'Please report this';
-            var players = 'UNKNOWN'
+            var color  = 'red'
+            var status = 'OFFLINE';
+            var hint   = 'Please report this';
+            var games  = 'UNKNOWN'
 
             // try to parse status
             try {
-                data = JSON.parse(response.status);
-                /// @NOTE: this needs to be rewritten, since there's no `ps` in slim containres
-                /*
-                if (data.cpu > 90.0 || data.memory > 90.0) {
-                    color  = 'orange';
-                    status = 'VERY BAD';
-                } else if (data.cpu > 80.0 || data.memory > 80.0) {
-                    color  = 'orange';
-                    status = 'BAD';
-                } else if (data.cpu > 40.0 || data.memory > 40.0) {
-                    color  = 'yellow';
-                    status = 'OK';
-                } else if (data.cpu > 10.0 || data.memory > 10.0) {
-                    color  = 'green';
-                    status = 'GOOD';
-                } else {
-                    color  = 'green';
-                    status = 'VERY GOOD';
-                }
-                hint    = data.cpu + '% CPU\n' + data.memory + '% Memory';
-                */
-                color   = 'green'
-                status  = 'ONLINE'
-                hint    = 'Trouble? E-Mail us!'
-                players = data.num_players;
+                data   = JSON.parse(response.status);
+                color  = 'green'
+                status = 'ONLINE'
+                hint   = 'Trouble? E-Mail us!'
+                games  = data.games.running
             } catch (e) {
                 console.warn('Server Status unknown: ', host);
             }
             
             // show result
             $('#status' + index)[0].innerHTML = '<span style="color: ' + color + '" title="' + hint + '">' + status + '</span>';
-            $('#players' + index)[0].innerHTML = '<span style="color: ' + color + '">' + players + '</span>';
+            $('#games' + index)[0].innerHTML = '<span style="color: ' + color + '">' + games + ' RUNNING</span>';
         }
     });
 }
