@@ -100,6 +100,7 @@ a:hover {
     color: white;
 }
 
+#auth,
 span.links {   
     position: absolute;
     right: 0;
@@ -110,6 +111,16 @@ span.links {
     color: white;
 }
 
+#auth {
+    bottom: 20px;
+}
+
+#auth img.favicon {
+    width: 25px;
+    vertical-align: text-top;
+}
+
+#auth a,
 span.links a {
     padding: 5px;
 }
@@ -1041,6 +1052,7 @@ div#version {
     cursor: default;
 }
 
+#auth,
 span.links {
     user-select: none;
 }

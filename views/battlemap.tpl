@@ -119,5 +119,5 @@
     </div>
 </div>
 
-%include("footer")
+%include("footer", gm=gm)
 
