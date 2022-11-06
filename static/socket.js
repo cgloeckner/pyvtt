@@ -289,7 +289,7 @@ function pickRandomColor() {
 }
 
 /// Handles countdown at login screen
-function onCountdown(hexstamp) {
+function onCountdown(hexstamp, finish_msg='') {
     var date  = new Date(parseInt(hexstamp, 16));
     date.second = 0;
 
@@ -299,6 +299,7 @@ function onCountdown(hexstamp) {
     // calculate time difference
     var now = new Date();
     var s = parseInt((date - now) / 1000);
+    console.log(s);
     if (s > 0) {
         var m = parseInt(s / 60);
         var s = s % 60;
@@ -320,10 +321,15 @@ function onCountdown(hexstamp) {
 
         $('#countdown')[0].innerHTML = line1 + line2;
 
-        window.setTimeout(function() { onCountdown(hexstamp); }, 1000);
+        window.setTimeout(function() { onCountdown(hexstamp, finish_msg); }, 1000);
+        
     } else {
-        $('#countdown')[0].innerHTML = '';
-        $('#countdown').fadeOut(100);
+        $('#countdown')[0].innerHTML = '<h1>' + finish_msg + '</h1>';
+        if (finish_msg != '') {
+            $('#countdown').fadeOut(2500);
+        } else {
+            $('#countdown').hide()
+        }
     }
 }
 

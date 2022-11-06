@@ -24,7 +24,7 @@ function registerGm(event) {
                 
                 // shake input
                 $('#gmname').addClass('shake');
-                setTimeout(function() {    $('#gmname').removeClass('shake'); }, 1000);
+                setTimeout(function() { $('#gmname').removeClass('shake'); }, 1000);
                 
             } else {
                 // redirect
@@ -42,11 +42,11 @@ function cleanUp(url) {
 
 function showSchedule(gm, url) {
     $('#schedule').show(500);
-    $('#schedule_base_url')[0].value = '/' + gm + '/' + url;
+    $('#schedule_base_url')[0].value = '/game/' + gm + '/' + url + '/';
 }
 
 function createCountdown() {
-    var url = $('#schedule_base_url')[0].value;
+    var url = '';
     
     var day    = parseInt($('#day>:selected')[0].value);
     var month  = parseInt($('#month>:selected')[0].value);
@@ -55,8 +55,15 @@ function createCountdown() {
     var minute = parseInt($('#minute>:selected')[0].value);
     
     var d      = new Date(year, month-1, day, hour, minute)
-    url += '/' + d.getTime().toString(16);
 
+    if ($('#global')[0].checked) {
+        // generate link without game instance
+        url = '/vtt/schedule/' + d.getTime().toString(16);
+    } else {
+        // generate link with game instances
+        url = $('#schedule_base_url')[0].value + d.getTime().toString(16);
+    }
+    
     window.location = url;
 }
 

@@ -35,7 +35,7 @@ by {{host.name}}
 
 <script>
 %if timestamp is not None:
-    onCountdown('{{timestamp}}');
+    onCountdown('{{timestamp}}', 'GO FOR IT');
 %else:
     onCountdown('0');
 %end

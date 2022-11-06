@@ -52,6 +52,9 @@
             </select>
         </p>
 
+        <p>
+            <input type="checkbox" id="global" /><label for="global" title="URL WITHOUT GAME">GAME-INDEPENDENT</label>
+        </p>
         <input type="hidden" id="schedule_base_url" value="" />
         <input type="button" onClick="createCountdown();" value="START COUNTDOWN" />
     </form>

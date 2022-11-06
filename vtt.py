@@ -653,6 +653,11 @@ def setup_player_routes(engine):
 
         redirect('/vtt/thumbnail/{0}/{1}/{2}'.format(gmurl, url, game.active))
 
+    @get('/vtt/schedule/<timestamp>')
+    @view('countdown')
+    def vtt_countdown(timestamp):
+        return dict(engine=engine, timestamp=timestamp)
+
     @get('/game/<gmurl>/<url>')
     @get('/game/<gmurl>/<url>/<timestamp>')
     @view('battlemap')
