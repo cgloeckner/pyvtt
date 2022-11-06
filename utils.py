@@ -166,11 +166,13 @@ class BaseLoginApi(object):
         self.callback      = engine.getAuthCallbackUrl() # https://example.com/my/callback/path
         self.client_id     = data['client_id']     # ID of API key
         self.client_secret = data['client_secret'] # Secret of API key
+
+        self.login_caption = f'Login with {api}'
         
         # thread-safe structure to hold login sessions
         self.sessions = dict()
         self.lock     = lock.RLock()
-   
+
     def getLogoutUrl(self):
         raise NotImplementedError()
 
@@ -204,7 +206,7 @@ class GoogleApi(BaseLoginApi):
         if engine.debug:
             # accept non-https for testing oauth (e.g. localhost)
             os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
+    
     def getAuthUrl(self):
         """ Generate google-URL to access in order to fetch data. """
         # create auth flow session
@@ -262,7 +264,8 @@ class GoogleApi(BaseLoginApi):
 class Auth0Api(BaseLoginApi):
 
     def __init__(self, engine, **data):
-        super().__init__('auth0', engine, **data)   
+        super().__init__('auth0', engine, **data)
+        self.login_caption   = 'Click to Login'
         self.auth_endpoint   = f'https://{data["domain"]}/authorize'
         self.logout_endpoint = f'https://{data["domain"]}/v2/logout'
         self.token_endpoint  = f'https://{data["domain"]}/oauth/token'
@@ -286,7 +289,7 @@ class Auth0Api(BaseLoginApi):
         self.saveSession(state, s)
         
         return uri
-
+    
     def getLogoutUrl(self):
         return f'{self.logout_endpoint}?client_id={self.client_id}&returnTo={self.logout_callback}'
      
@@ -304,27 +307,32 @@ class Auth0Api(BaseLoginApi):
         state = BaseLoginApi.parseStateFromUrl(request.url)
 
         # fetch token
-        s = self.loadSession(state)
+        try:
+            s = self.loadSession(state)
+        except KeyError:
+            return {'granted': False}
+        
         token = s.fetch_token(
             url=self.token_endpoint,
             authorization_response=request.url
         )
 
-        # fetch header from base64 ID-Token
-        raw = token['id_token']
-        l = len(raw) % 4
-        raw += '=' * l                  
-        raw = base64.b64decode(raw)
-        
-        data = raw.split(b'}')[1] + b'}'
+        # fetch payload from base64 ID-Token
+        id_token = token['id_token']                  
+        self.engine.logging.info(f'GM Login with {id_token}')
+        header, payload, signature = id_token.split('.')
+
+        payload += '=' * (4-len(payload) % 4)
+        data = base64.b64decode(payload)
         data = json.loads(data)
+        print(data)
 
         # create base64 userid from subscription
         userid = base64.urlsafe_b64encode(data['sub'].encode('utf-8')).decode('utf-8')
 
         # create login data
         result = {
-            'sid'  : str(uuid.uuid4()),
+            'sid'  : data['sid'],
             'provider': data['sub'].split('|')[0],
             'user' : {
                 'id'      : userid,
