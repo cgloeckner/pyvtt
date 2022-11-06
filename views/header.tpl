@@ -25,6 +25,7 @@ License: MIT (see LICENSE for details)
     <script src="/static/webcam.js?v={{engine.version}}"></script>
     <script src="/static/mobile-upload.js?v={{engine.version}}"></script>
     <script src="/static/drawing.js?v={{engine.version}}"></script>
+    <script src="/static/assets.js?v={{engine.version}}"></script>
     <script src="/static/constants.js?v={{engine.version}}"></script>
     <link rel="stylesheet" type="text/css" href="/static/normalize.css?v={{engine.version}}">
     <link rel="stylesheet" type="text/css" href="/static/layout.css?v={{engine.version}}">

@@ -35,6 +35,11 @@
         </span>
     </div>
 
+    <div id="assetsbrowser">
+        <img class="close" src="/static/delete.png" onClick="hideAssetsBrowser();" draggable="false" title="DISCARD" />
+        <div id="assets"></div>
+    </div>
+
     <!-- stays hidden -->
     <div id="uploadscreen">
         <form id="fileform" method="post" enctype="multipart/form-data">

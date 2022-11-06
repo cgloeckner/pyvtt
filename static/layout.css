@@ -491,10 +491,11 @@ div#drawing > span > button#upload:hover {
     background: #99ff66;
 }
 
-/* --- Webcam Controls ---------------------------------------------- */
+/* --- Tools -------------------------------------------------------- */
 
 div#uploadscreen,
-div#camerapreview {
+div#camerapreview,
+div#assetsbrowser {
     width: 700px;
     height: 300px;
 
@@ -510,6 +511,31 @@ div#camerapreview {
     z-index: 499;
 
     display: none;
+}
+
+div#assetsbrowser {
+    width: 50%;
+    height: 50%;
+    aspect-ratio: 16/9;
+}
+
+div#assetsbrowser > div#assets {
+    padding: 10px;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+}
+
+div#assetsbrowser > div#assets > img {
+    margin: 5px;
+    max-width: 96px;
+    max-height: 96px;
+
+    cursor: grab;
+    vertical-align: middle;
+}
+
+div#assetsbrowser > div#assets > img:hover {
 }
 
 div#uploadscreen > span {
@@ -531,6 +557,7 @@ div#uploadscreen > span > form > input[type=file] {
     text-transform: uppercase;
 }
 
+div#assetsbrowser img.close,
 div#uploadscreen > img.close,
 div#camerapreview > img.close,
 div#drawing > img.close {
@@ -557,7 +584,8 @@ div#camerapreview > span > .largepreview {
     top: 50%;
     transform: translate(-50%,-50%);
 }
-
+   
+div#assetsbrowser > p,
 div#uploadscreen > span > p,
 div#camerapreview > span > p,
 div#drawing > span > p {    

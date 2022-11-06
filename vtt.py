@@ -578,6 +578,8 @@ def setup_gm_routes(engine):
                 files['images'].append(fname)
             if fname.endswith('.mp3'):
                 files['audio'].append(fname)
+        files['images'].sort(key=lambda k: int(k.split('.')[0]))
+        files['audio'].sort()
         done = time.time()
 
         files['query_time'] = done-start

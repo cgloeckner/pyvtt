@@ -299,7 +299,6 @@ function onCountdown(hexstamp, finish_msg='') {
     // calculate time difference
     var now = new Date();
     var s = parseInt((date - now) / 1000);
-    console.log(s);
     if (s > 0) {
         var m = parseInt(s / 60);
         var s = s % 60;
