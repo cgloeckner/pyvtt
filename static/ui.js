@@ -653,7 +653,7 @@ function uploadFiles(gm_name, game_url, f, known_urls, x, y) {
     notifyUploadStart(f.length);
     
     $.ajax({
-        url: '/' + gm_name + '/' + game_url + '/upload',
+        url: '/game/' + gm_name + '/' + game_url + '/upload',
         type: 'POST',
         data: f,
         contentType: false,

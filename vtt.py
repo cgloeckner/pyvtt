@@ -286,7 +286,7 @@ def setup_gm_routes(engine):
         else:
             engine.logging.access('Game {0} created from "{1}" by {2}'.format(game.getUrl(), fname, engine.getClientIp(request)))
         
-        status['url'] = game.getUrl();
+        status['url'] = f'game/{game.getUrl()}';
         
         return status
 
@@ -653,8 +653,8 @@ def setup_player_routes(engine):
 
         redirect('/vtt/thumbnail/{0}/{1}/{2}'.format(gmurl, url, game.active))
 
-    @get('/<gmurl>/<url>')
-    @get('/<gmurl>/<url>/<timestamp>')
+    @get('/game/<gmurl>/<url>')
+    @get('/game/<gmurl>/<url>/<timestamp>')
     @view('battlemap')
     def get_player_battlemap(gmurl, url, timestamp=None):
         gm = engine.main_db.GM.loadFromSession(request)
@@ -697,7 +697,7 @@ def setup_player_routes(engine):
         # show battlemap with login screen ontop
         return dict(engine=engine, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, host=host, gm=gm, dice=supported_dice, timestamp=timestamp)
 
-    @post('/<gmurl>/<url>/login')
+    @post('/game/<gmurl>/<url>/login')
     def set_player_name(gmurl, url):
         result = {
             'uuid'        : '',
@@ -795,7 +795,7 @@ def setup_player_routes(engine):
                 # reraise greenlet's exception to trigger proper error reporting
                 raise error
 
-    @post('/<gmurl>/<url>/upload')
+    @post('/game/<gmurl>/<url>/upload')
     def post_image_upload(gmurl, url):
         # load GM from cache
         gm_cache = engine.cache.getFromUrl(gmurl)

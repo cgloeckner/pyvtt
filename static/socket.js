@@ -338,7 +338,7 @@ function login(event, gmname, url, websocket_url) {
     
     $.ajax({
         type: 'POST',
-        url:  '/' + gmname + '/' + url + '/login',
+        url:  '/game/' + gmname + '/' + url + '/login',
         dataType: 'json',
         data: {
             'playername'  : playername,
