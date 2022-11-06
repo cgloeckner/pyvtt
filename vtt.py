@@ -552,7 +552,7 @@ def setup_gm_routes(engine):
             'query_time': done-now
         }
 
-    @get('/vtt/api/asset-list/<gmurl>/<url>')
+    @get('/vtt/api/assets-list/<gmurl>/<url>')
     def api_asset_list(gmurl, url):
         start = time.time()
         
@@ -576,6 +576,8 @@ def setup_gm_routes(engine):
         for fname in os.listdir(root):
             if fname.endswith('.png'):
                 files['images'].append(fname)
+            if fname.endswith('.mp3'):
+                files['audio'].append(fname)
         done = time.time()
 
         files['query_time'] = done-start
