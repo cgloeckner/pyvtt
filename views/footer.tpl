@@ -3,9 +3,11 @@
 
 <span id="auth">
 %try:
-    GM <a href="/vtt/logout" draggable="false" title="CLICK TO LOGOUT">{{gm.name}}</a>
-    %if engine.login_api is not None:
+    %if gm is not None:
+        GM <a href="/vtt/logout" draggable="false" title="CLICK TO LOGOUT">{{gm.name}}</a>
+        %if engine.login_api is not None:
 {{!engine.login_api.getGmInfo(gm.url)}}
+        %end
     %end
 %except NameError:
     %pass

@@ -1,14 +1,16 @@
 %from orm import MAX_SCENE_WIDTH, MAX_SCENE_HEIGHT
 
+%you_are_host = gm is not None and gm.url == host.url
+
 %include("header", title=game.url.upper())
    
 <div id="popup"></div>
 <div id="hint"></div> 
 
-%include("login", timestamp=timestamp)
+%include("login", timestamp=timestamp, you_are_host=you_are_host)
 
 <div id="game">
-%if is_gm:
+%if you_are_host:
     <div class="horizdropdown" onClick="openGmDropdown();">
         <div id="gmdrop">
     %include("scenes")

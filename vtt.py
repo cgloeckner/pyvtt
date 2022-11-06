@@ -669,16 +669,18 @@ def setup_player_routes(engine):
     @get('/<gmurl>/<url>/<timestamp>')
     @view('battlemap')
     def get_player_battlemap(gmurl, url, timestamp=None):
+        gm = engine.main_db.GM.loadFromSession(request)
+        
         # try to load playername from cookie (or from GM name)
         playername = request.get_cookie('playername', default='')
         
         # query whether user is the hosting GM
-        session_gm = engine.main_db.GM.loadFromSession(request)
-        gm_is_host = session_gm is not None and session_gm.url == gmurl
+        session_gm   = engine.main_db.GM.loadFromSession(request)
+        you_are_host = session_gm is not None and session_gm.url == gmurl
         
         # query gm of that game
-        gm = engine.main_db.GM.select(lambda gm: gm.url == gmurl).first()
-        if gm is None:
+        host = engine.main_db.GM.select(lambda gm: gm.url == gmurl).first()
+        if host is None:
             abort(404)
         
         # try to load playercolor from cookieplayercolor = request.get_cookie('playercolor')
@@ -705,7 +707,7 @@ def setup_player_routes(engine):
         supported_dice.reverse()
         
         # show battlemap with login screen ontop
-        return dict(engine=engine, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, gm=gm, is_gm=gm_is_host, dice=supported_dice, timestamp=timestamp)
+        return dict(engine=engine, websocket_url=websocket_url, game=game, playername=playername, playercolor=playercolor, host=host, gm=gm, dice=supported_dice, timestamp=timestamp)
 
     @post('/<gmurl>/<url>/login')
     def set_player_name(gmurl, url):
