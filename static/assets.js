@@ -1,19 +1,31 @@
 function showAssetsBrowser() {
-    // ajax load browser
-    let url = window.location.pathname.replace('game', 'vtt/api/assets-list')
-    
+    loadGames(function() {
+        localStorage.setItem('load_from', game)
+        loadAssets()
+    })
+}
+
+function onReloadAssets() {
+    let game_url = $('#games').find(':selected').val()
+    localStorage.setItem('load_from', game_url)
+    loadAssets()
+}
+
+function loadAssets() {
+    // load images used in this game
+    let game_url = localStorage.getItem('load_from')
     $.ajax({
         type: 'GET',
-        url: url,
+        url: `/vtt/api/assets-list/${gm}/${game_url}`,
         dataType: 'json',
         success: function(response) {
-            let target = $('#assets');
+            let target = $('#assets')
             target.empty()
-            let base_url = window.location.pathname.replace('game', 'asset')
+            let base_url = `/asset/${gm}/${game_url}`
             
             $.each(response['images'], function(index, fname) {
-                var tmp = new Image();
-                tmp.src = base_url + '/' + fname;
+                var tmp = new Image()
+                tmp.src = base_url + '/' + fname
                 target.append(tmp)
                 
                 var node = $(target[0].lastChild)
@@ -21,18 +33,44 @@ function showAssetsBrowser() {
                     onDragAsset(fname, event)
                 })
                 node.on('dragend', onDropAsset)
-            });
+            })
             
             $('#assetsbrowser').fadeIn(100)
             
         }, error: function(response, msg) {
             if ('responseText' in response) {
-                handleError(response);
+                handleError(response)
             } else {
-                showError('SERVER NOT FOUND');
+                showError('SERVER NOT FOUND')
             }
         }
-    });
+    })
+}
+
+function loadGames(next) {
+    // load games of this gm
+    $.ajax({
+        type: 'GET',
+        url: `/vtt/api/games-list/${gm}`,
+        dataType: 'json',
+        success: function(response) {
+            let target = $('#games')
+            $.each(response['games'], function(index, fname) {
+                var tmp = new Option(fname, fname)
+                tmp.selected = (fname == game)
+                target.append(tmp)
+            })
+
+            next()
+            
+        }, error: function(response, msg) {
+            if ('responseText' in response) {
+                handleError(response)
+            } else {
+                showError('SERVER NOT FOUND')
+            }
+        }
+    })
 }
 
 function onDragAsset(fname, event) {
@@ -40,23 +78,34 @@ function onDragAsset(fname, event) {
 }
 
 function onDropAsset(event) {
+    let game_url = localStorage.getItem('load_from')
+    
     let x = mouse_x
     let y = mouse_y
-    let url = window.location.pathname.replace('game', 'asset')
+    let url = `/asset/${gm}/${game_url}`
     if (url == null) {
         return
     }
     url += '/' + localStorage.getItem('drag_data')
+    
+    if (game_url == game) {
+        // directly create token
+        writeSocket({
+            'OPID' : 'CREATE',
+            'posx' : x,  
+            'posy' : y,
+            'size' : default_token_size,
+            'urls' : [url]
+        })
 
-    writeSocket({
-        'OPID' : 'CREATE',
-        'posx' : x,  
-        'posy' : y,
-        'size' : default_token_size,
-        'urls' : [url]
-    })
+        localStorage.removeItem('drag_data')
+    
+    } else {
+        // TODO: re-upload it to this game
+        // TODO: create token with url local to this game
+    }
 
-    localStorage.removeItem('drag_data')
+    
 }
 
 function hideAssetsBrowser() {

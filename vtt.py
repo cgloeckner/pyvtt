@@ -540,6 +540,26 @@ def setup_gm_routes(engine):
             'query_time': done-now
         }
 
+    @get('/vtt/api/games-list/<gmurl>')
+    def api_games_list(gmurl):
+        start = time.time()
+        
+        # load GM from cache
+        gm_cache = engine.cache.getFromUrl(gmurl)
+        if gm_cache is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+
+        data = {
+            'games': []
+        }
+        for game in gm_cache.db.Game.select():
+            data['games'].append(game.url)
+        done = time.time()
+
+        data['query_time'] = done - start
+        return data
+
     @get('/vtt/api/assets-list/<gmurl>/<url>')
     def api_asset_list(gmurl, url):
         start = time.time()

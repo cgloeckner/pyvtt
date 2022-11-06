@@ -37,6 +37,7 @@
 
     <div id="assetsbrowser">
         <img class="close" src="/static/delete.png" onClick="hideAssetsBrowser();" draggable="false" title="DISCARD" />
+        <select id="games" onChange="onReloadAssets()"></select>
         <div id="assets"></div>
     </div>
 
