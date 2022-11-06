@@ -552,6 +552,36 @@ def setup_gm_routes(engine):
             'query_time': done-now
         }
 
+    @get('/vtt/api/asset-list/<gmurl>/<url>')
+    def api_asset_list(gmurl, url):
+        start = time.time()
+        
+        # load GM from cache
+        gm_cache = engine.cache.getFromUrl(gmurl)
+        if gm_cache is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+        
+        # load game from GM's database
+        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        if game is None:
+            # @NOTE: not logged because somebody may play around with this
+            abort(404)
+        
+        root = engine.paths.getGamePath(gmurl, url)
+        files = {
+            'images': [],
+            'audio': []
+        }
+        for fname in os.listdir(root):
+            if fname.endswith('.png'):
+                files['images'].append(fname)
+        done = time.time()
+
+        files['query_time'] = done-start
+
+        return files
+
     @get('/vtt/api/logins')
     def api_query_logins():
         """Count users locations based on IPs within past 30d."""
