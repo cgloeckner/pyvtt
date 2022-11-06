@@ -13,7 +13,7 @@
             %if s.backing is None:
                 %url = "/static/transparent.png"
             %else:
-                %url = "/thumbnail/" + '/'.join([game.gm_url, game.url, str(s.id)])
+                %url = "/vtt/thumbnail/" + '/'.join([game.gm_url, game.url, str(s.id)])
             %end
             %css  = "thumbnail"
             %hint = "SWITCH TO SCENE"

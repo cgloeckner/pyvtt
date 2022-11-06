@@ -1,7 +1,7 @@
 %import time
 %now = time.time()
 %for g in all_games.order_by(lambda g: g.id):
-    %url = "/thumbnail/" + '/'.join([g.gm_url, g.url])
+    %url = "/vtt/thumbnail/" + '/'.join([g.gm_url, g.url])
     <div class="element">
         <a href="{{server}}/{{gm.url}}/{{g.url}}" draggable="false" target="_blank"><img class="thumbnail" draggable="false" src="{{url}}" title="{{g.url.upper()}}" /></a>
         <div class="controls">

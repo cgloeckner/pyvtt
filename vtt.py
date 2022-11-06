@@ -634,7 +634,7 @@ def setup_resource_routes(engine):
 
 def setup_player_routes(engine):
 
-    @get('/thumbnail/<gmurl>/<url>/<scene_id:int>')
+    @get('/vtt/thumbnail/<gmurl>/<url>/<scene_id:int>')
     def get_scene_thumbnail(gmurl, url, scene_id):
         # load GM from cache
         gm_cache = engine.cache.getFromUrl(gmurl)
@@ -656,7 +656,7 @@ def setup_player_routes(engine):
 
         redirect(url)
 
-    @get('/thumbnail/<gmurl>/<url>')
+    @get('/vtt/thumbnail/<gmurl>/<url>')
     def get_game_thumbnail(gmurl, url):
         # load GM from cache
         gm_cache = engine.cache.getFromUrl(gmurl)
@@ -670,7 +670,7 @@ def setup_player_routes(engine):
             # @NOTE: not logged because somebody may play around with this
             abort(404)
 
-        redirect('/thumbnail/{0}/{1}/{2}'.format(gmurl, url, game.active))
+        redirect('/vtt/thumbnail/{0}/{1}/{2}'.format(gmurl, url, game.active))
 
     @get('/<gmurl>/<url>')
     @get('/<gmurl>/<url>/<timestamp>')
