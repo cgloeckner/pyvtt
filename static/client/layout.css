@@ -379,14 +379,23 @@ img.icon {
     width: 16px;
 }
 
-div#gmdrop > div.tools {
-    vertical-align: top;
-}
 
-div#gmdrop > div.tools > img.largeicon {
+img.largeicon {
     width: 28px;
     padding: 5px;
     display: inline-block;
+}
+
+img.largeicon:hover { 
+    cursor: pointer;
+    
+    filter: drop-shadow(0px 0px 10px white) 
+          drop-shadow(0px 0px 0 white);
+}
+
+
+div#gmdrop > div.tools {
+    vertical-align: top;
 }
 
 div#gmdrop > div {
@@ -409,7 +418,6 @@ div#gmdrop > div.element > img.active {
 }
 
 img.icon:hover,
-div#gmdrop > div.tools > img.largeicon:hover,
 div#gmdrop > div.element > img.thumbnail:hover,
 div#gmdrop > div.element > a > img.thumbnail:hover {
     cursor: pointer;
@@ -428,6 +436,13 @@ div#gmdrop > div.element > div.controls > span.warning {
     color: red;
     font-size: x-large;
     cursor: help;
+}
+
+img.schedule {
+    position: absolute;
+    top: 50%;
+    right: 0; 
+    transform: translate(0, -50%);
 }
 
 /* --- Drawing Controls --------------------------------------------- */
@@ -557,6 +572,7 @@ div#uploadscreen > span > form > input[type=file] {
     text-transform: uppercase;
 }
 
+div#schedule img.close,
 div#assetsbrowser img.close,
 div#uploadscreen > img.close,
 div#camerapreview > img.close,
@@ -570,6 +586,7 @@ div#drawing > img.close {
     display: block;
 }
 
+div#schedule img.browse,
 div#assetsbrowser img.browse,
 div#uploadscreen > img.close,
 div#camerapreview > img.close,
@@ -618,18 +635,6 @@ div#playertools {
     position: absolute;
     bottom: 20px;
     left: 5px;
-}
-
-div#playertools > img.largeicon {
-    width: 28px;
-    display: inline-block;
-}
-
-div#playertools > img.largeicon:hover {
-    cursor: pointer;
-    
-    filter: drop-shadow(0px 0px 10px white) 
-          drop-shadow(0px 0px 0 white);
 }
 
 /* --- Dicebox Layout ----------------------------------------------- */

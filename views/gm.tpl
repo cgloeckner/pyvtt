@@ -1,3 +1,5 @@
+<div onClick="closeGmDropdown(); hideSchedule()">
+
 %import calendar, datetime
 %include("header", title="GM {0}".format(gm.name))
 
@@ -12,39 +14,44 @@
 </div>
 %end
 
-<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.url}}');" onClick="closeGmDropdown();">  
+<img class="largeicon schedule" id="schedule_icon" src="/static/clock.png" onClick="showSchedule();" draggable="false" title="SCHEDULE" /> 
+
+<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.url}}');">  
 
 %today = datetime.date.today()
 %now = datetime.datetime.now().time()
 %number_formatter = lambda n: '0{0}'.format(n) if n < 10 else n
 <div id="schedule">
+    <img class="close" src="/static/delete.png" onClick="hideSchedule();" draggable="false" title="CANCEL" />
     <h1>SCHEDULE GAME</h1>
     <form>
+        <input type="hidden" id="gm_url" value="{{gm.url}}" />
+        <input type="hidden" id="server" value="{{server}}" />
         <p>DATE:
-            <select id="day">
+            <select id="day" onChange="updateCountdown()">
 %max_days = calendar.monthrange(today.year, today.month)[1]
 %for value in range(max_days):
     %selected = ' selected' if today.day == value+1 else ''
                 <option value="{{value+1}}"{{selected}}>{{number_formatter(value+1)}}</option>
 %end
             </select>
-            <select id="month" onChange="updateDays();">
+            <select id="month" onChange="updateDays(); updateCountdown()">
 %for value in range(12):
     %selected = ' selected' if today.month == value+1 else ''
                 <option value="{{value+1}}"{{selected}}>{{calendar.month_name[value+1].upper()}}</option>
 %end
             </select>
-            <input type="number" id="year" value="{{today.year}}" onChange="updateDays();" />
+            <input type="number" id="year" value="{{today.year}}" onChange="updateDays(); updateCountdown()" />
         </p>
 
         <p>TIME:
-            <select id="hour">
+            <select id="hour" onChange="updateCountdown()">
 %for hour in range(24): 
     %selected = ' selected' if now.hour == hour else ''
                 <option value="{{hour}}"{{selected}}>{{number_formatter(hour)}}</option>
 %end
             </select> :
-            <select id="minute">
+            <select id="minute" onChange="updateCountdown()">
 %for minute in range(60):   
     %selected = ' selected' if now.minute == minute else ''
                 <option value="{{minute}}"{{selected}}>{{number_formatter(minute)}}</option>
@@ -52,11 +59,10 @@
             </select>
         </p>
 
-        <p>
-            <input type="checkbox" id="global" /><label for="global" title="URL WITHOUT GAME">GAME-INDEPENDENT</label>
-        </p>
-        <input type="hidden" id="schedule_base_url" value="" />
-        <input type="button" onClick="createCountdown();" value="START COUNTDOWN" />
+        <select id="games" onChange="updateCountdown()">
+            <option value="null">GAME-INDEPENDENT</option>
+        </select>
+        <p>URL: <span id="schedule_url"></span></p>
     </form>
 </div>
 
@@ -94,3 +100,5 @@
 <div id="hint"></div>   
 
 %include("footer", gm=gm)
+
+</div>

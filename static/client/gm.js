@@ -40,31 +40,41 @@ function cleanUp(url) {
     $.post(url='/vtt/clean-up/' + url);
 }
 
-function showSchedule(gm, url) {
-    $('#schedule').show(500);
-    $('#schedule_base_url')[0].value = '/game/' + gm + '/' + url + '/';
+function showSchedule() {
+    let gm_url = $('#gm_url')[0].value 
+    
+    loadGames(gm_url, function() {
+        $('#schedule').show(500)
+        $('#schedule_icon').hide(500);
+        updateCountdown()
+    })
 }
 
-function createCountdown() {
-    var url = '';
+function hideSchedule() {
+    $('#schedule').hide(500)  
+    $('#schedule_icon').show(500)
+}
+
+function updateCountdown() { 
+    let url      = '/vtt/schedule/'
+    let server   = $('#server')[0].value 
+    let gm_url   = $('#gm_url')[0].value 
+    let game_url = $('#games option:selected').val()
     
-    var day    = parseInt($('#day>:selected')[0].value);
-    var month  = parseInt($('#month>:selected')[0].value);
-    var year   = $('#year')[0].valueAsNumber;   
-    var hour   = parseInt($('#hour>:selected')[0].value);
-    var minute = parseInt($('#minute>:selected')[0].value);
+    if (game_url != 'null') {
+        url = $('#schedule_url')[0].value = `/game/${gm_url}/${game_url}/`
+    }
+ 
+    var day    = parseInt($('#day>:selected')[0].value)
+    var month  = parseInt($('#month>:selected')[0].value)
+    var year   = $('#year')[0].valueAsNumber   
+    var hour   = parseInt($('#hour>:selected')[0].value)
+    var minute = parseInt($('#minute>:selected')[0].value)
     
     var d      = new Date(year, month-1, day, hour, minute)
+    url += d.getTime().toString(16)
 
-    if ($('#global')[0].checked) {
-        // generate link without game instance
-        url = '/vtt/schedule/' + d.getTime().toString(16);
-    } else {
-        // generate link with game instances
-        url = $('#schedule_base_url')[0].value + d.getTime().toString(16);
-    }
-    
-    window.location = url;
+    $('#schedule_url')[0].innerHTML = `<a href="${server}${url}" target="_blank">${server}${url}</a>`
 }
 
 function updateDays() {

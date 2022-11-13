@@ -1,5 +1,5 @@
 function showAssetsBrowser() {
-    loadGames(function() {
+    loadGames(gm, function() {
         localStorage.setItem('load_from', game)
         loadAssets()
     })
@@ -50,7 +50,7 @@ function loadAssets() {
     })
 }
 
-function loadGames(next) {
+function loadGames(gm, next) {
     // load games of this gm
     $.ajax({
         type: 'GET',

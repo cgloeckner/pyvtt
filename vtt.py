@@ -633,7 +633,6 @@ def setup_gm_routes(engine):
             total = 0
             provider = {}
             for gm in engine.main_db.GM.select():
-                print(gm.url)
                 p = engine.login_api.parseProvider(gm.url)
                 if p not in provider:
                     provider[p] = 0

@@ -38,8 +38,8 @@
     <div id="assetsbrowser">
         <img class="browse" src="/static/upload.png" onClick="initUpload();" draggable="false" title="FILE UPLOAD" />
         <img class="close" src="/static/delete.png" onClick="hideAssetsBrowser();" draggable="false" title="DISCARD" />
-        <select id="games" onChange="onReloadAssets()">
-            <span>IMPORT FROM:</span> <option value="null">{{engine.title}} Assets</option>
+        <span>IMPORT FROM:</span> <select id="games" onChange="onReloadAssets()">
+            <option value="null">{{engine.title}} Assets</option>
         </select>
         <div id="assets"></div>
     </div>
