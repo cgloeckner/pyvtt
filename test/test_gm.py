@@ -21,7 +21,7 @@ class GmTest(EngineBaseTest):
     @db_session
     def test_postSetup(self):
         # create demo GM
-        gm = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+        gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
         gm.postSetup()
         
         # test call of makeLock()
@@ -37,7 +37,7 @@ class GmTest(EngineBaseTest):
 
     @db_session
     def test_hasExpired(self):
-        gm = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+        gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
         gm.postSetup()    
         now = int(time.time())
 
@@ -52,7 +52,7 @@ class GmTest(EngineBaseTest):
     def test_cleanup(self):
         with db_session:
             # create demo GM
-            gm = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
             gm.postSetup()
         
         gm_cache = self.engine.cache.get(gm)
@@ -104,7 +104,7 @@ class GmTest(EngineBaseTest):
     def test_preDelete(self):
         with db_session:
             # create demo GM
-            gm = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
             gm.postSetup()
         
         gm_cache = self.engine.cache.get(gm)
@@ -145,7 +145,7 @@ class GmTest(EngineBaseTest):
     @db_session
     def test_refreshSession(self):
         # create demo GM
-        gm = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+        gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
         gm.postSetup()
         
         # setup session
@@ -169,7 +169,7 @@ class GmTest(EngineBaseTest):
     def test_loadFromSession(self):
         with db_session:
             # create demo GM
-            gm = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
             gm.postSetup()
             gm.sid = self.engine.main_db.GM.genSession()
         

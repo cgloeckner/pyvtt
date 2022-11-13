@@ -437,7 +437,8 @@ class Engine(object):
         with db_session:
             for gm_data in gms:
                 gm = self.main_db.GM(name=gm_data['name'], url=gm_data['url'],
-                                     sid=gm_data['sid'])
+                                     identity=gm_data['identity'], sid=gm_data['sid'],
+                                     metadata=gm_data['metadata'])
                 gm.postSetup() # NOTE: timeid is overwritten here
                 self.cache.insert(gm)
 

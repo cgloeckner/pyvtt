@@ -1,23 +1,20 @@
 %import requests, json
 %import bottle
 
-<span id="auth">
-%auth = False
 %try:
-    %if gm is not None:
-        GM <a href="/vtt/logout" draggable="false" title="CLICK TO LOGOUT">{{gm.name}}</a>
-        %if engine.login_api is not None:
-{{!engine.login_api.getGmInfo(gm.url)}}
-        %end
-        %auth = True
-    %end
+    %gm
 %except NameError:
-    %pass
+    %gm = None
+%end
+
+<span id="auth">
+%if gm is not None:
+    GM <a href="/vtt/logout" draggable="false" title="CLICK TO LOGOUT">{{gm.name}}</a> <span>{{gm.identity}} ({{gm.metadata}})</span>
 %end
 </span>
 
 <span class="links">
-%if auth:
+%if gm is not None:
     <a href="/vtt/logout" draggable="false">LOGOUT</a>
 %end
 %for data in engine.links:

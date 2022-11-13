@@ -19,7 +19,7 @@ class GmCacheTest(EngineBaseTest):
         super().setUp()
         
         with db_session:
-            gm = self.engine.main_db.GM(name='user123', url='foo', sid='123456')
+            gm = self.engine.main_db.GM(name='user123', url='foo', identity='user123', sid='123456')
             gm.postSetup()
             self.cache = self.engine.cache.get(gm)
         

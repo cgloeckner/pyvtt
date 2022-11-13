@@ -7,7 +7,7 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import os, pathlib, time, uuid, tempfile, shutil, zipfile, json, math
+import os, pathlib, time, uuid, tempfile, shutil, zipfile, json, math, base64
 
 from gevent import lock
 from PIL import Image, UnidentifiedImageError
@@ -632,6 +632,8 @@ def createMainDatabase(engine):
         name      = Required(str)
         url       = Required(str, unique=True)
         sid       = Required(str, unique=True)
+        identity  = Required(str, unique=True)
+        metadata  = Optional(str)
         timeid    = Optional(float) # used for cleanup
         
         def makeLock(self):
@@ -700,6 +702,11 @@ def createMainDatabase(engine):
         @staticmethod
         def genSession():
             return uuid.uuid4().hex
+
+        @staticmethod
+        def genUUID():
+            u = uuid.uuid4()
+            return base64.urlsafe_b64encode(u.bytes).decode("utf-8").strip('=')
         
     # -----------------------------------------------------------------
     

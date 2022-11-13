@@ -275,9 +275,9 @@ class EngineTest(EngineBaseTest):
         
         with db_session:
             # create GMs
-            gm1 = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+            gm1 = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
             gm1.postSetup()
-            gm2 = self.engine.main_db.GM(name='nobody', url='second', sid='5673')
+            gm2 = self.engine.main_db.GM(name='nobody', url='second', identity='nobody', sid='5673')
             gm2.postSetup()
             gm2.timeid = now - self.engine.expire - 10
         
@@ -346,9 +346,9 @@ class EngineTest(EngineBaseTest):
     def test_saveToDict(self):
         with db_session:
             # create GMs
-            gm1 = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+            gm1 = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
             gm1.postSetup()
-            gm2 = self.engine.main_db.GM(name='nobody', url='second', sid='5673')
+            gm2 = self.engine.main_db.GM(name='nobody', url='second', identity='nobody', sid='5673')
             gm2.postSetup()
         
         gm1_cache = self.engine.cache.get(gm1)
@@ -391,6 +391,8 @@ class EngineTest(EngineBaseTest):
             'name': 'otto',
             'url' : '12345',
             'sid' : 'foobar1234',
+            'identity' : 'foo@bar.com',
+            'metadata' : 'additional info',
             'games': {
                 'test': {
                     'tokens': [{'url': 5, 'posx': 12, 'posy': 34, 'zorder': 56, 'size': 120, 'rotate': 22.5, 'flipx': True, 'locked': True}],
@@ -406,8 +408,10 @@ class EngineTest(EngineBaseTest):
             all_gms = list(self.engine.main_db.GM.select())
         self.assertEqual(len(all_gms), 1)
         self.assertEqual(all_gms[0].name, 'otto')
-        self.assertEqual(all_gms[0].url,  '12345')
-        self.assertEqual(all_gms[0].sid,  'foobar1234')
+        self.assertEqual(all_gms[0].url, '12345')
+        self.assertEqual(all_gms[0].sid, 'foobar1234')
+        self.assertEqual(all_gms[0].identity, 'foo@bar.com')
+        self.assertEqual(all_gms[0].metadata, 'additional info')
 
         # check Games Data
         gm_cache = self.engine.cache.getFromUrl('12345')

@@ -37,18 +37,16 @@ def setup_gm_routes(engine):
         # query session from login auth
         session = engine.login_api.getSession(request)
         
-        if not session['granted']:
-            # not allowed, just redirect that poor soul
-            redirect('/vtt/join')
-        
         # test whether GM is already there
-        gm = engine.main_db.GM.select(lambda g: g.url == session['user']['id']).first()
+        gm = engine.main_db.GM.select(lambda g: g.identity == session['identity']).first()
         if gm is None:
             # create GM (username as display name, user-id as url)
             gm = engine.main_db.GM(
-                name=session['user']['username'],
-                url=str(session['user']['id']),
-                sid=session['sid']
+                name=session['name'],
+                identity=session['identity'],
+                metadata=session['metadata'],
+                url=engine.main_db.GM.genUUID(),
+                sid=engine.main_db.GM.genSession(),
             )
             gm.postSetup()
             engine.main_db.commit()
@@ -73,9 +71,9 @@ def setup_gm_routes(engine):
             
         else:
             # create new session for already existing GM
-            gm.sid = session['sid']
-            # update GM name
-            gm.name = session['user']['username']
+            gm.sid  = engine.main_db.GM.genSession()
+            gm.name = session['name']
+            gm.metadata = session['metadata']
             
         gm.refreshSession(response)
         
@@ -119,7 +117,7 @@ def setup_gm_routes(engine):
         
         # create new GM (use GM name as display name and URL)
         sid = engine.main_db.GM.genSession()
-        gm = engine.main_db.GM(name=name, url=name, sid=sid)
+        gm = engine.main_db.GM(name=name, identity=name, url=name, sid=sid)
         gm.postSetup()
         engine.main_db.commit()
         

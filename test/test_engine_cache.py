@@ -18,8 +18,8 @@ class EngineCacheTest(EngineBaseTest):
         
         # @NOTE: first insertion is trigged by postSetup()
         with db_session:
-            gm1 = self.engine.main_db.GM(name='foo', url='foo', sid='123')
-            gm2 = self.engine.main_db.GM(name='bar', url='bar', sid='456')
+            gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
+            gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
             gm1.postSetup()
             gm2.postSetup()
         
@@ -31,8 +31,8 @@ class EngineCacheTest(EngineBaseTest):
         cache = self.engine.cache
         
         with db_session:
-            gm1 = self.engine.main_db.GM(name='foo', url='foo', sid='123')
-            gm2 = self.engine.main_db.GM(name='bar', url='bar', sid='456')
+            gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
+            gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
             gm1.postSetup()
             gm2.postSetup()
         
@@ -45,8 +45,8 @@ class EngineCacheTest(EngineBaseTest):
         cache = self.engine.cache
         
         with db_session:
-            gm1 = self.engine.main_db.GM(name='foo', url='foo', sid='123')
-            gm2 = self.engine.main_db.GM(name='bar', url='bar', sid='456')
+            gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
+            gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
             gm1.postSetup()
             gm2.postSetup()
         
@@ -63,8 +63,8 @@ class EngineCacheTest(EngineBaseTest):
         cache = self.engine.cache
         
         with db_session:
-            gm1 = self.engine.main_db.GM(name='foo', url='foo', sid='123')
-            gm2 = self.engine.main_db.GM(name='bar', url='bar', sid='456')
+            gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
+            gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
             gm1.postSetup()
             gm2.postSetup()
         
@@ -95,7 +95,7 @@ class EngineCacheTest(EngineBaseTest):
 
         # create GM
         with db_session:
-            gm = self.engine.main_db.GM(name='foo', url='foo', sid='123')
+            gm = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
             gm.postSetup()
         gm_cache = cache.get(gm)
         gm_cache.connect_db()

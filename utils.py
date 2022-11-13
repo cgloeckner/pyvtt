@@ -297,7 +297,7 @@ class Auth0Api(BaseLoginApi):
         s = OAuth2Session(
             client_id=self.client_id,
             client_secret=self.client_secret,
-            scope='openid profile',
+            scope='openid profile email',
             redirect_uri=self.callback
         )
         uri, state = s.create_authorization_url(self.auth_endpoint)
@@ -308,26 +308,6 @@ class Auth0Api(BaseLoginApi):
     def getLogoutUrl(self):
         return f'{self.logout_endpoint}?client_id={self.client_id}&returnTo={self.logout_callback}'
 
-    def parseProvider(self, url):
-        # split username from url
-        raw = base64.b64decode(url).decode('utf-8')
-        provider = '-'.join(raw.split('|')[:-1])
-
-        # split 'oauth2'-section from provider
-        for s in ['-oauth2', 'oauth2-']:
-            provider = provider.replace(s, '')
-
-        return provider.lower()
-    
-    def getGmInfo(self, url):
-        """ Query identity provider from the base64 url.
-        Scene: <provider>|<id>
-        but <provider> may include more '|'.
-        """
-        provider = self.parseProvider(url)
-
-        return f'<img src="{self.favicons[provider]}" class="favicon" />'
-    
     def getSession(self, request):
         """ Query google to return required user data and infos."""
         state = BaseLoginApi.parseStateFromUrl(request.url)
@@ -336,7 +316,7 @@ class Auth0Api(BaseLoginApi):
         try:
             s = self.loadSession(state)
         except KeyError:
-            return {'granted': False}
+            return {}
         
         token = s.fetch_token(
             url=self.token_endpoint,
@@ -351,20 +331,17 @@ class Auth0Api(BaseLoginApi):
         payload += '=' * (4-len(payload) % 4)
         data = base64.b64decode(payload)
         data = json.loads(data)
-
-        # create base64 userid from subscription
-        userid = base64.urlsafe_b64encode(data['sub'].encode('utf-8')).decode('utf-8')
-
+        
         # create login data
         result = {
-            'sid'  : data['sid'],
-            'provider': data['sub'].split('|')[0],
-            'user' : {
-                'id'      : userid,
-                'username': data['name']
-            },
-            'granted': True # no reason for something else here
+            'name'     : data['name'],
+            'identity' : data['email'],
+            'metadata' : data['sub']
         }
+        if 'auth0' in data['sub']:
+            # split name from email login
+            result['name'] = data['name'].split('@')[0]
+        
         self.engine.logging.auth(result)
         
         return result

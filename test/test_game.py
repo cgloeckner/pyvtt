@@ -24,7 +24,7 @@ class GameTest(EngineBaseTest):
         
         # finish GM data
         with db_session:
-            gm = self.engine.main_db.GM(name='user123', url='url456', sid='123456')
+            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
             gm.postSetup()
         
         # create GM database
