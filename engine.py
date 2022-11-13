@@ -230,7 +230,7 @@ class Engine(object):
 
         # load version number
         bn = BuildNumber()
-        bn.loadFromFile(pathlib.Path('static') / 'version.js')
+        bn.loadFromFile(pathlib.Path('static') / 'client' / 'version.js')
         self.version = str(bn)
         
         # game cache

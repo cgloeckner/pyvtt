@@ -36,10 +36,14 @@ class PathApiTest(unittest.TestCase):
         self.assertDirectory(self.paths.getGmsPath()) 
         self.assertDirectory(self.paths.getFancyUrlPath())
         self.assertDirectory(self.paths.getStaticPath())
+        self.assertDirectory(self.paths.getAssetsPath())
+        self.assertDirectory(self.paths.getClientCodePath())
         
     def test_simple_path_getter(self):
         # @NOTE: actual value isn't tested but that they are not throwing
         self.paths.getStaticPath()
+        self.paths.getAssetsPath()
+        self.paths.getClientCodePath()
         self.paths.getSettingsPath() 
         self.paths.getMainDatabasePath() 
         self.paths.getSslPath()

@@ -52,6 +52,7 @@ class PathApi(object):
         self.ensure(self.getFancyUrlPath())
         self.ensure(self.getStaticPath())
         self.ensure(self.getAssetsPath())
+        self.ensure(self.getClientCodePath())
         
     def ensure(self, path):
         if not os.path.isdir(path):
@@ -64,6 +65,9 @@ class PathApi(object):
     
     def getAssetsPath(self):
         return self.getStaticPath() / 'assets'
+
+    def getClientCodePath(self):
+        return self.getStaticPath() / 'client'
  
     def getLogPath(self, fname):
         return self.root / '{0}.log'.format(fname)
@@ -75,7 +79,7 @@ class PathApi(object):
         return self.root / 'main.db'
 
     def getConstantsPath(self):
-        return self.getStaticPath() / 'constants.js'
+        return self.getClientCodePath() / 'constants.js'
  
     def getSslPath(self):
         return self.root / 'ssl'

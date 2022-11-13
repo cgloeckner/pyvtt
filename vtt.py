@@ -703,6 +703,11 @@ def setup_resource_routes(engine):
         root = './static/assets'
         return static_file(fname, root=root)
 
+    @get('/static/client/<fname>')
+    def static_client_code(fname):
+        root = './static/client'
+        return static_file(fname, root=root)
+
     @get('/asset/<gmurl>/<url>/<fname>')
     def game_asset(gmurl, url, fname):
         # load GM from cache

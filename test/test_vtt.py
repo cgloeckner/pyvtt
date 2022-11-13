@@ -747,12 +747,12 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.content_type, 'image/vnd.microsoft.icon')
         
         # can query existing javascript files
-        ret = self.app.get('/static/render.js')
+        ret = self.app.get('/static/client/render.js')
         self.assertEqual(ret.status_int, 200)
         self.assertEqual(ret.content_type, 'application/javascript')
         
         # can query existing css files
-        ret = self.app.get('/static/layout.css')
+        ret = self.app.get('/static/client/layout.css')
         self.assertEqual(ret.status_int, 200)
         self.assertEqual(ret.content_type, 'text/css')
 
@@ -760,7 +760,7 @@ class VttTest(EngineBaseTest):
         ret = self.app.get('/static/../README.md/0', expect_errors=True)  
         self.assertEqual(ret.status_int, 404)
 
-        # cannot query sub-directory
+        # cannot query non-supported sub-directory
         tmp_static = self.root / 'static'
         if not os.path.exists(tmp_static):
             os.mkdir(tmp_static)

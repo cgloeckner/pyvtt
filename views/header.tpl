@@ -11,23 +11,23 @@ License: MIT (see LICENSE for details)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="shortcut icon" href="/static/favicon.ico?v={{engine.version}}" type="image/x-icon">
-    <script src="/static/jquery-3.3.1.min.js?v={{engine.version}}"></script>
-    <script src="/static/md5.js?v={{engine.version}}"></script>
-    <script src="/static/version.js?v={{engine.version}}"></script>
-    <script src="/static/errors.js?v={{engine.version}}"></script>
-    <script src="/static/dropdown.js?v={{engine.version}}"></script>
-    <script src="/static/render.js?v={{engine.version}}"></script>
-    <script src="/static/ui.js?v={{engine.version}}"></script>
-    <script src="/static/socket.js?v={{engine.version}}"></script>
-    <script src="/static/gm.js?v={{engine.version}}"></script>
-    <script src="/static/music.js?v={{engine.version}}"></script>
-    <script src="/static/utils.js?v={{engine.version}}"></script>
-    <script src="/static/webcam.js?v={{engine.version}}"></script>
-    <script src="/static/drawing.js?v={{engine.version}}"></script>
-    <script src="/static/assets.js?v={{engine.version}}"></script>
-    <script src="/static/constants.js?v={{engine.version}}"></script>
-    <link rel="stylesheet" type="text/css" href="/static/normalize.css?v={{engine.version}}">
-    <link rel="stylesheet" type="text/css" href="/static/layout.css?v={{engine.version}}">
+    <script src="/static/client/jquery-3.3.1.min.js?v={{engine.version}}"></script>
+    <script src="/static/client/md5.js?v={{engine.version}}"></script>
+    <script src="/static/client/version.js?v={{engine.version}}"></script>
+    <script src="/static/client/errors.js?v={{engine.version}}"></script>
+    <script src="/static/client/dropdown.js?v={{engine.version}}"></script>
+    <script src="/static/client/render.js?v={{engine.version}}"></script>
+    <script src="/static/client/ui.js?v={{engine.version}}"></script>
+    <script src="/static/client/socket.js?v={{engine.version}}"></script>
+    <script src="/static/client/gm.js?v={{engine.version}}"></script>
+    <script src="/static/client/music.js?v={{engine.version}}"></script>
+    <script src="/static/client/utils.js?v={{engine.version}}"></script>
+    <script src="/static/client/webcam.js?v={{engine.version}}"></script>
+    <script src="/static/client/drawing.js?v={{engine.version}}"></script>
+    <script src="/static/client/assets.js?v={{engine.version}}"></script>
+    <script src="/static/client/constants.js?v={{engine.version}}"></script>
+    <link rel="stylesheet" type="text/css" href="/static/client/normalize.css?v={{engine.version}}">
+    <link rel="stylesheet" type="text/css" href="/static/client/layout.css?v={{engine.version}}">
     <title>{{engine.title}}: {{title}}</title>
 </head>
 
