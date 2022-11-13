@@ -98,12 +98,10 @@ function onDropAsset(event) {
     let game_url = localStorage.getItem('load_from')
 
     if (game_url == 'null' || game_url == game) {
-        console.log(game_url)
         let url = `/static/assets/${drag_data}`
         if (game_url == game) {
             let url = `/asset/${gm}/${game_url}/${drag_data}`
         }
-        console.log(url)
         // directly create token
         writeSocket({
             'OPID' : 'CREATE',
