@@ -10,7 +10,7 @@ License: MIT (see LICENSE for details)
 from gevent import monkey; monkey.patch_all()
 import gevent
 
-import os, json, time, sys, random, subprocess, requests, flag
+import os, json, time, sys, random, subprocess, requests, flag, pathlib
 
 from pony import orm
 from bottle import *
@@ -705,7 +705,10 @@ def setup_resource_routes(engine):
 
     @get('/static/client/<fname>')
     def static_client_code(fname):
-        root = './static/client'
+        root = engine.paths.getClientCodePath()
+        if not os.path.isdir(root) or not os.path.exists(root / fname):
+            root = pathlib.Path('./static/client')
+
         return static_file(fname, root=root)
 
     @get('/asset/<gmurl>/<url>/<fname>')
