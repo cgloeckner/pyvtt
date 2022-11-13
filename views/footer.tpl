@@ -9,7 +9,14 @@
 
 <span id="auth">
 %if gm is not None:
-    GM <a href="/vtt/logout" draggable="false" title="CLICK TO LOGOUT">{{gm.name}}</a> <span>{{gm.identity}} ({{gm.metadata}})</span>
+    %provider = ''
+    %url = ''
+    %if engine.login_api is not None:
+        %provider = engine.login_api.parseProvider(gm.metadata)
+        %url = engine.login_api.getIconUrl(provider)
+    %end
+    GM <a href="/vtt/logout" draggable="false" title="CLICK TO LOGOUT">{{gm.name}} <img src="{{url}}" class="icon" title="{{provider}}" /></a>
+    <span>{{gm.identity}}</span>
 %end
 </span>
 
