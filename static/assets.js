@@ -77,17 +77,26 @@ function onDragAsset(fname, event) {
     localStorage.setItem('drag_data', fname)
 }
 
+/// TODO: load blob from url to build file :)
+function urlToFile(url, resolve) {
+    fetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+            let file = new File([blob], 'upload.png', {type: blob.type})
+            resolve(file)
+        })
+}
+
 function onDropAsset(event) {
     let game_url = localStorage.getItem('load_from')
     
     let x = mouse_x
     let y = mouse_y
     let url = `/asset/${gm}/${game_url}`
-    if (url == null) {
-        return
-    }
-    url += '/' + localStorage.getItem('drag_data')
     
+    url += '/' + localStorage.getItem('drag_data')
+    localStorage.removeItem('drag_data')
+
     if (game_url == game) {
         // directly create token
         writeSocket({
@@ -97,43 +106,17 @@ function onDropAsset(event) {
             'size' : default_token_size,
             'urls' : [url]
         })
-
-        localStorage.removeItem('drag_data')
     
     } else {
-        // TODO: re-upload it to this game
-        // TODO: create token with url local to this game
+        // upload image to this game and proceed as usual
+        urlToFile(url, function(file) {
+            fetchMd5FromImages([file], function(md5s) {
+                uploadFilesViaMd5(gm_name, game, md5s, [file], mouse_x, mouse_y);
+            })
+        })
     }
-
-    
 }
 
 function hideAssetsBrowser() {
     $('#assetsbrowser').fadeOut(100);
 }
-
-/*
-function mobileUpload() {
-    // test upload data sizes
-    var queue = $('#fileupload')[0];
-
-    var error_msg = '';
-    $.each(queue.files, function(index, file) {
-        if (error_msg != '') {
-            return;
-        }
-
-        error_msg = checkFile(file, index);
-    });
-
-    if (error_msg != '') {
-        showError(error_msg);
-        return;
-    }
-    
-    // upload files
-    fetchMd5FromImages(queue.files, function(md5s) {
-        uploadFilesViaMd5(gm_name, game_url, md5s, queue.files, MAX_SCENE_WIDTH / 2, MAX_SCENE_WIDTH * canvas_ratio / 2);
-    });
-}
-*/
