@@ -42,7 +42,7 @@ function cleanUp(url) {
 
 function showSchedule() {
     let gm_url = $('#gm_url')[0].value 
-    
+
     loadGames(gm_url, function() {
         $('#schedule').show(500)
         $('#schedule_icon').hide(500);

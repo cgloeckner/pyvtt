@@ -1,19 +1,12 @@
 function showAssetsBrowser() {
     loadGames(gm, function() {
-        localStorage.setItem('load_from', game)
         loadAssets()
     })
 }
 
-function onReloadAssets() {
-    let game_url = $('#games').find(':selected').val()
-    localStorage.setItem('load_from', game_url)
-    loadAssets()
-}
-
 function loadAssets() {
     // load images used in this game
-    let game_url = localStorage.getItem('load_from')
+    let game_url = $('#games').find(':selected').val()
     $.ajax({
         type: 'GET',
         url: `/vtt/api/assets-list/${gm}/${game_url}`,
@@ -59,10 +52,14 @@ function loadGames(gm, next) {
         success: function(response) {
             let target = $('#games')
             $.each(response['games'], function(index, fname) {
-                var tmp = new Option(fname, fname)
-                tmp.selected = (fname == game)
-                target.append(tmp)
+                let o = $(`#games option[value="${fname}"]`)[0]
+                if (o == null) {
+                    var tmp = new Option(`Game: ${fname}`, fname)
+                    tmp.selected = (fname == game)
+                    target.append(tmp)
+                }
             })
+            $('#games option').first().prop('selected', true)
 
             next()
             
@@ -95,7 +92,7 @@ function onDropAsset(event) {
     let drag_data = localStorage.getItem('drag_data')
     localStorage.removeItem('drag_data')
     
-    let game_url = localStorage.getItem('load_from')
+    let game_url = $('#games').find(':selected').val()
 
     if (game_url == 'null' || game_url == game) {
         let url = `/static/assets/${drag_data}`

@@ -1,5 +1,3 @@
-<div onClick="closeGmDropdown(); hideSchedule()">
-
 %import calendar, datetime
 %include("header", title="GM {0}".format(gm.name))
 
@@ -16,7 +14,7 @@
 
 <img class="largeicon schedule" id="schedule_icon" src="/static/clock.png" onClick="showSchedule();" draggable="false" title="SCHEDULE" /> 
 
-<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.url}}');">  
+<div class="menu" ondragover="GmUploadDrag(event);" ondrop="GmUploadDrop(event, '{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.url}}');" onClick="closeGmDropdown()">  
 
 %today = datetime.date.today()
 %now = datetime.datetime.now().time()
@@ -101,4 +99,3 @@
 
 %include("footer", gm=gm)
 
-</div>
