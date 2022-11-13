@@ -572,19 +572,20 @@ def setup_gm_routes(engine):
         
         # try to load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-        root = './static/assets'
+        root = ['./static/assets', engine.paths.getAssetsPath()]
         if game is not None:
-            root = engine.paths.getGamePath(gmurl, url)
+            root = [engine.paths.getGamePath(gmurl, url)]
         
         files = {
             'images': [],
             'audio': []
         }
-        for fname in os.listdir(root):
-            if fname.endswith('.png'):
-                files['images'].append(fname)
-            if fname.endswith('.mp3'):
-                files['audio'].append(fname)
+        for subroot in root:
+            for fname in os.listdir(subroot):
+                if fname.endswith('.png'):
+                    files['images'].append(fname)
+                if fname.endswith('.mp3'):
+                    files['audio'].append(fname)
         if game is not None:
             files['images'].sort(key=lambda k: int(k.split('.')[0]))
         else:
@@ -700,7 +701,9 @@ def setup_resource_routes(engine):
 
     @get('/static/assets/<fname>')
     def static_assets(fname):
-        root = './static/assets'
+        root = engine.paths.getAssetsPath()
+        if not os.path.isdir(root) or not os.path.exists(root / fname):
+            root = pathlib.Path('./static/assets')
         return static_file(fname, root=root)
 
     @get('/static/client/<fname>')
