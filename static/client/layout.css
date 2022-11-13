@@ -171,15 +171,8 @@ input[type=color] {
     border-radius: 2px;
     border: 0px;
     padding: 10px 30px;
-    margin: 5px;
-    width: 250px;
-}
-
-input[type=color] {
+    margin: 5px; 
     width: 150px;
-}
-
-input[type=color] {
     height: 50px;
 }
 
@@ -449,7 +442,6 @@ img.schedule {
 
 div#drawing {
     width: 66%;
-    aspect-ratio: 16/9;
 
     position: absolute;
     left: 50%;
@@ -465,24 +457,33 @@ div#drawing {
     display: none;
 }
 
-div#drawing > span {
+div#drawing > div {
+    color: white;
     padding: 10px;
 }
 
-div#drawing > span > label {
+div#drawing > div > label {
     color: white;
 }
 
-div#drawing > span > canvas#doodle {
-    border: 3px solid black;
-    
+div#drawing > div > canvas#doodle {
+    background-image: url("/static/canvas_transparent.png");
+    background-repeat: repeat;
+
     max-width: 100%;
     max-height: 100%;
+
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-div#drawing > span > input#penwidth,
-div#drawing > span > input#pencolor,
-div#drawing > span > button#upload {
+canvas.border {
+    border: 3px solid black;
+}
+
+div#drawing > div > input#pencolor,
+div#drawing > div > button#upload {
     background: white;
     border-radius: 2px;
     border: 0px;
@@ -492,18 +493,38 @@ div#drawing > span > button#upload {
     height: 25px;
 }
 
-div#drawing > span > input#penwidth {
-    height: 0px;
+div#drawing > div > input#pencolor {
+    width: 50px;
 }
 
-div#drawing > span > button#upload {
+div#drawing > div > button#upload {
     position: absolute;
     right: 55px;
 }
 
-div#drawing > span > button#upload:hover {
+div#drawing > div > span > label {
+    padding-left: 10px;
+    color: white;
+}
+
+div#drawing > div > button#upload:hover {
     cursor: pointer;
     background: #99ff66;
+}
+
+div#drawing > div.options > span#pen {
+    position: relative;
+    left: 20px;
+}
+
+div#drawing > div.options > span#transparent {
+    position: relative;
+    left: 90px;
+}
+
+div#drawing > div.options > span#token {
+    position: relative;
+    left: 160px;
 }
 
 /* --- Tools -------------------------------------------------------- */
@@ -586,10 +607,7 @@ div#drawing > img.close {
 }
 
 div#schedule img.browse,
-div#assetsbrowser img.browse,
-div#uploadscreen > img.close,
-div#camerapreview > img.close,
-div#drawing > img.close {
+div#assetsbrowser img.browse {
     width: 32px;
     float: right;
     right: 47px;

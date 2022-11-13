@@ -54,13 +54,17 @@
 
     <div id="drawing">
         <img class="close" src="/static/delete.png" onClick="closeDrawing();" draggable="false" title="DISCARD" />
-        <span>
+        <div>
             <input type="color" name="pencolor" id="pencolor" value="#000000">
-            <input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN</label>
             <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
-              
-            <canvas id="doodle" width="1600" height="900" onmousedown="onMovePen(event);" onmouseup="onReleasePen(event);" onmousemove="onMovePen(event);" onwheel="onWheelPen(event);" ontouchstart="onMovePen(event);" ontouchmove="onMovePen(event);" ontouchend="onReleasePen(event);"></canvas>
-        </span>
+            <br />
+            <canvas id="doodle" width="1600" height="900" onmousedown="onMovePen(event)" onmouseup="onReleasePen(event)" onmousemove="onMovePen(event)" onwheel="onWheelPen(event)" ontouchstart="onMovePen(event)" ontouchmove="onMovePen(event)" ontouchend="onReleasePen(event)" onDrop="onDropTokenImage(event)"></canvas>
+        </div>
+        <div class="options">
+            <span id="pen" title="DRAW ONLY WITH PEN?"><input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN ONLY</label></span>
+            <span id="transparent" title="TRANSPARENT BACKGROUND?"><input type="checkbox" name="transparentenable" id="transparentenable" onChange="toggleTransparent()"><label for="transparentenable">TRANSPARENT</label></span>
+            <span id="token" title="TOKEN BORDER?"><input type="checkbox" name="tokenenable" id="tokenenable" onChange="toggleToken()"><label for="tokenenable">TOKEN</label></span>
+        </div>
     </div>
 
     <div id="dicebox">

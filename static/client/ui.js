@@ -579,8 +579,14 @@ function checkFile(file, index) {
     return '';
 }
 
-function onDrop(event) {
+function onDrop(event) { 
     event.preventDefault();
+    
+    if ($('#drawing').css('display') != 'none') {
+        // quit here, since dragging art is used on drawing right now
+        return
+    }
+    
     pickCanvasPos(event);
 
     if (localStorage.getItem('drag_data') != null) {

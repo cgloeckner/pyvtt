@@ -8,6 +8,11 @@ var edges = []
 var straight = null
 var drag = null
 
+var scale = 1.0
+var token_img = new Image()
+var token_background = new Image() 
+var token_border = new Image()
+
 /// Line constructor
 function Line(x1, y1, x2, y2, width, color) {
     this.x1 = x1 
@@ -54,10 +59,14 @@ function drawAll(target) {
         });
     }
 
-    // clear context
+    // clear context                
     var canvas = $('#doodle')[0]
-    target.fillStyle = '#FFFFFF'
-    target.fillRect(0, 0, canvas.width, canvas.height)
+    if ($('#transparentenable')[0].checked) {
+        target.clearRect(0, 0, canvas.width, canvas.height)
+    } else {
+        target.fillStyle = '#FFFFFF'
+        target.fillRect(0, 0, canvas.width, canvas.height)
+    }
     target.lineCap = "round"
 
     // load background if necessary
@@ -75,10 +84,33 @@ function drawAll(target) {
         )
     }
 
-    // draw all lines
-    $.each(edges, function(index, data) {
-        drawLine(data, target)
-    })
+    if (inTokenMode()) {
+        // draw token image and border
+        let s = card_height / 2
+        target.drawImage(token_background, 0, 0, s, s)
+        
+        target.globalCompositeOperation = 'source-atop'
+        let x = card_height / 2
+        let y = card_height / 2
+        if (drag != null) {
+            x = drag[0] * s
+            y = drag[1] * s
+        }
+        target.drawImage(token_img,
+            x - scale * token_img.width / 2,
+            y - scale * token_img.height / 2,
+            scale * token_img.width,
+            scale * token_img.height)
+        target.globalCompositeOperation = 'source-over'
+        
+        target.drawImage(token_border, 0, 0, s, s)
+        
+    } else {
+        // draw all lines
+        $.each(edges, function(index, data) {
+            drawLine(data, target)
+        })
+    }
 }
 
 function initDrawing(as_background) {
@@ -96,6 +128,9 @@ function initDrawing(as_background) {
     straight = null
     drag = null
     drawAll(context)
+    
+    token_background.src = '/static/token_background.png'
+    token_border.src = '/static/token_border.png'
 
     $('#drawing').fadeIn(500)
 }
@@ -175,25 +210,30 @@ function onMovePen(event) {
     var canvas = $('#doodle')[0]
     var context = canvas.getContext("2d")
     drawAll(context);
-
-    // grab relevant data
-    var width = detectPressure(event)
+    
     var pos = getDoodlePos(event)
-    var color = $('#pencolor')[0].value
-    drawDot(pos[0], pos[1], color, width, context)
+
+    if (!inTokenMode()) {
+        // grab relevant data
+        var width = detectPressure(event)
+        var color = $('#pencolor')[0].value
+        drawDot(pos[0], pos[1], color, width, context)
+    }
 
     if (event.buttons == 1 || event.type == "touchstart" || event.type == "touchmove") {
         // drag mode
-        if (drag != null) { 
-            straight = null
-            
-            // add segment
-            var line = new Line(
-                drag[0], drag[1],
-                pos[0], pos[1],
-                width, color
-            )
-            edges.push(line)
+        if (!inTokenMode()) {
+            if (drag != null) { 
+                straight = null
+                
+                // add segment
+                var line = new Line(
+                    drag[0], drag[1],
+                    pos[0], pos[1],
+                    width, color
+                )
+                edges.push(line)
+            }
         }
         
         // continue dragging
@@ -219,6 +259,11 @@ function onMovePen(event) {
 
 function onReleasePen(event) { 
     event.preventDefault()
+
+    if (inTokenMode()) {
+        // don't draw if in token mode
+        return
+    }
 
     // grab some data
     var width = detectPressure(event)
@@ -259,10 +304,18 @@ function onWheelPen(event) {
         if (pressure >= 100) {
             pressure = 100
         }
+        scale *= 1.05
+        if (scale > 10) {
+            scale = 10
+        }
     } else if (event.deltaY > 0) {
         pressure -= 3
         if (pressure <= 5) {
             pressure = 5
+        }    
+        scale /= 1.05
+        if (scale < 0.1) {
+            scale = 0.1
         }
     }
     localStorage.setItem('draw_pressure', pressure)
@@ -271,20 +324,24 @@ function onWheelPen(event) {
     var context = canvas.getContext("2d")
     drawAll(context)
 
-    var pos = getDoodlePos(event)
-    var color = $('#pencolor')[0].value
-    drawDot(pos[0], pos[1], color, pressure, context)
+    if (!inTokenMode()) {
+        var pos = getDoodlePos(event)
+        var color = $('#pencolor')[0].value
+        drawDot(pos[0], pos[1], color, pressure, context)
+    }
 }
 
 function onUploadDrawing() {
-    // fetch JPEG-data from canvas
     var preview = $('#doodle')[0];
-    var url = preview.toDataURL("image/jpeg");
+    drawAll(preview.getContext("2d"))
+    
+    // fetch PNG-data from canvas
+    var url = preview.toDataURL("image/png");
 
     // prepare upload form data
     var blob = getBlobFromDataURL(url);
     var f = new FormData();
-    f.append('file[]', blob, 'snapshot.jpeg');
+    f.append('file[]', blob, 'snapshot.png');
 
     if (doodle_on_background) {
         // upload for current scene
@@ -300,3 +357,54 @@ function onUploadDrawing() {
     closeDrawing();
 }
 
+function inTokenMode() {
+    return $('#tokenenable')[0].checked
+}
+
+function toggleToken() {
+    let target = $('#doodle')
+    
+    if (inTokenMode()) {
+        $('#transparentenable').prop('checked', true)
+        target[0].width  = card_height * 0.5
+        target[0].height = card_height * 0.5
+    } else {
+        target[0].width  = card_width
+        target[0].height = card_height
+    }
+
+    let ctx = target[0].getContext("2d")
+    drawAll(ctx)
+}
+
+function toggleTransparent() {  
+    let target = $('#doodle')
+    
+    if ($('#transparentenable').checked) {
+        target.addClass('border')
+        
+    } else {
+        target.removeClass('border')
+        if (inTokenMode()) {
+            $('#transparentenable').prop('checked', true)
+        }
+    }
+
+    let ctx = target[0].getContext("2d")
+    drawAll(ctx)
+}
+
+function onDropTokenImage(event) {
+    if (!inTokenMode()) {
+        return
+    }
+    
+    let file = event.dataTransfer.files[0]
+    
+    var filereader = new FileReader();
+    filereader.readAsDataURL(file);
+    
+    filereader.onload = function(event) {
+        token_img.src = filereader.result
+    }
+}
