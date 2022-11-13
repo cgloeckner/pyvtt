@@ -284,7 +284,7 @@ function logRoll(sides, result) {
         + 'ontouchmove="onDragRoll(event);" '
         + 'ontouchend="stopDragRoll(event, this);" '
         + 'onDragEnd="stopDragRoll(event, this);">'
-        + '<img src="/static/token_d' + sides + '.png" style="filter: ' + filter + ';"><span>' + result + '</span></div>';
+        + '<img src="/static/assets/token_d' + sides + '.png" style="filter: ' + filter + ';"><span>' + result + '</span></div>';
 
     tray.prepend(die);
     var dom_span = tray.children(':first-child');
@@ -1959,7 +1959,7 @@ function onDropTimerInScene(sides, r) {
         'posx' : x,  
         'posy' : y,
         'size' : default_token_size,
-        'urls' : ['/static/token_d' + sides + '.png'],
+        'urls' : ['/static/assets/token_d' + sides + '.png'],
         'labels' : ['#' + r]
     }); 
 }

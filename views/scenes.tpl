@@ -1,11 +1,10 @@
 %import time
     <div class="tools">
         <img class="largeicon" src="/static/add.png" onClick="addScene();" draggable="false" title="CREATE SCENE" />
-        <img class="largeicon" src="/static/upload.png" onClick="initUpload();" draggable="false" title="FILE UPLOAD" />
-        <img class="largeicon" src="/static/pen.png" onClick="initDrawing(true);" draggable="false" title="DRAW BACKGROUND" /><br />
+        <img class="largeicon" src="/static/upload.png" onClick="showAssetsBrowser();" draggable="false" title="ASSETS BROWSER" /><br />
+<!--    <img class="largeicon" src="/static/pen.png" onClick="initDrawing(true);" draggable="false" title="DRAW BACKGROUND" /><br />    -->
         <img class="largeicon" src="/static/camera.png" onClick="initWebcam();" draggable="false" title="PREVIEW WEBCAM" />
         <img class="largeicon" src="/static/screen.png" onClick="initScreenShare();" draggable="false" title="PREVIEW SCREENSHARE" />
-        <img class="largeicon" src="/static/browse.png" onClick="showAssetsBrowser();" draggable="false" title="SHOW ASSETS BROWSER" />
     </div>
     
 %for i, scene_id in enumerate(game.order):

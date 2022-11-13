@@ -567,6 +567,20 @@ div#drawing > img.close {
     position: absolute;
 
     cursor: pointer;
+    display: block;
+}
+
+div#assetsbrowser img.browse,
+div#uploadscreen > img.close,
+div#camerapreview > img.close,
+div#drawing > img.close {
+    width: 32px;
+    float: right;
+    right: 47px;
+    position: absolute;
+
+    cursor: pointer;
+    display: block;
 }
 
 div#camerapreview > span > video,

@@ -23,7 +23,6 @@ License: MIT (see LICENSE for details)
     <script src="/static/music.js?v={{engine.version}}"></script>
     <script src="/static/utils.js?v={{engine.version}}"></script>
     <script src="/static/webcam.js?v={{engine.version}}"></script>
-    <script src="/static/mobile-upload.js?v={{engine.version}}"></script>
     <script src="/static/drawing.js?v={{engine.version}}"></script>
     <script src="/static/assets.js?v={{engine.version}}"></script>
     <script src="/static/constants.js?v={{engine.version}}"></script>

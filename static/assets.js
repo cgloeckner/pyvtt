@@ -22,6 +22,9 @@ function loadAssets() {
             let target = $('#assets')
             target.empty()
             let base_url = `/asset/${gm}/${game_url}`
+            if (game_url == 'null') {
+                base_url = '/static/assets'
+            }
             
             $.each(response['images'], function(index, fname) {
                 var tmp = new Image()
@@ -77,7 +80,6 @@ function onDragAsset(fname, event) {
     localStorage.setItem('drag_data', fname)
 }
 
-/// TODO: load blob from url to build file :)
 function urlToFile(url, resolve) {
     fetch(url)
         .then(res => res.blob())
@@ -87,17 +89,21 @@ function urlToFile(url, resolve) {
         })
 }
 
-function onDropAsset(event) {
-    let game_url = localStorage.getItem('load_from')
-    
+function onDropAsset(event) {    
     let x = mouse_x
     let y = mouse_y
-    let url = `/asset/${gm}/${game_url}`
-    
-    url += '/' + localStorage.getItem('drag_data')
+    let drag_data = localStorage.getItem('drag_data')
     localStorage.removeItem('drag_data')
+    
+    let game_url = localStorage.getItem('load_from')
 
-    if (game_url == game) {
+    if (game_url == 'null' || game_url == game) {
+        console.log(game_url)
+        let url = `/static/assets/${drag_data}`
+        if (game_url == game) {
+            let url = `/asset/${gm}/${game_url}/${drag_data}`
+        }
+        console.log(url)
         // directly create token
         writeSocket({
             'OPID' : 'CREATE',
@@ -119,4 +125,62 @@ function onDropAsset(event) {
 
 function hideAssetsBrowser() {
     $('#assetsbrowser').fadeOut(100);
+}
+
+
+function initUpload() {
+    $('#fileupload')[0].click(); 
+    $('#assetsbrowser').fadeOut(100);
+}
+
+function browseUpload() {
+    // test upload data sizes
+    var queue = $('#fileupload')[0];
+
+    var error_msg = '';
+    $.each(queue.files, function(index, file) {
+        if (error_msg != '') {
+            return;
+        }
+
+        error_msg = checkFile(file, index);
+    });
+
+    if (error_msg != '') {
+        showError(error_msg);
+        return;
+    }
+    
+    // upload files
+    fetchMd5FromImages(queue.files, function(md5s) {
+        uploadFilesViaMd5(gm_name, game_url, md5s, queue.files, MAX_SCENE_WIDTH / 2, MAX_SCENE_WIDTH * canvas_ratio / 2);
+    });
+}
+
+function browseGmUpload(url_regex, gm_url) {
+    showInfo('LOADING');
+    
+    // test upload data sizes
+    var queue = $('#fileupload')[0];
+    
+    var sizes_ok = true;
+    if (queue.files.length != 1) {   
+        showError('USE A SINGLE FILE');
+        return;
+    }
+    var max_filesize = MAX_BACKGROUND_FILESIZE;
+    var file_type    = 'BACKGROUND';
+    if (queue.files[0].name.endsWith('.zip')) {
+        max_filesize = MAX_GAME_FILESIZE;
+        file_type    = 'GAME';
+    }
+    if (queue.files[0].size > max_filesize * 1024 * 1024) {
+        showError('TOO LARGE ' + file_type + ' (MAX ' + max_filesize + ' MiB)');
+        return;
+    }
+    
+    // fetch upload data
+    var f = new FormData($('#fileform')[0]);
+
+    tryGameCreation(f, url_regex);
 }

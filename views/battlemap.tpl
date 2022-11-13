@@ -36,15 +36,18 @@
     </div>
 
     <div id="assetsbrowser">
+        <img class="browse" src="/static/upload.png" onClick="initUpload();" draggable="false" title="FILE UPLOAD" />
         <img class="close" src="/static/delete.png" onClick="hideAssetsBrowser();" draggable="false" title="DISCARD" />
-        <select id="games" onChange="onReloadAssets()"></select>
+        <select id="games" onChange="onReloadAssets()">
+            <span>IMPORT FROM:</span> <option value="null">{{engine.title}} Assets</option>
+        </select>
         <div id="assets"></div>
     </div>
 
     <!-- stays hidden -->
     <div id="uploadscreen">
         <form id="fileform" method="post" enctype="multipart/form-data">
-            <input type="file" id="fileupload" name="file[]" accept="image/*, audio/*" multiple onChange="mobileUpload();">
+            <input type="file" id="fileupload" name="file[]" accept="image/*, audio/*" multiple onChange="browseUpload();">
         </form>
     </div>
 %end

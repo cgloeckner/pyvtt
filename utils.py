@@ -51,6 +51,7 @@ class PathApi(object):
         self.ensure(self.getGmsPath())
         self.ensure(self.getFancyUrlPath())
         self.ensure(self.getStaticPath())
+        self.ensure(self.getAssetsPath())
         
     def ensure(self, path):
         if not os.path.isdir(path):
@@ -60,7 +61,10 @@ class PathApi(object):
         
     def getStaticPath(self):
         return self.root / 'static'
-        
+    
+    def getAssetsPath(self):
+        return self.getStaticPath() / 'assets'
+ 
     def getLogPath(self, fname):
         return self.root / '{0}.log'.format(fname)
         

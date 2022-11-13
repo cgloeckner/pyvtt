@@ -81,7 +81,7 @@
         <!-- stays hidden -->
         <div id="uploadscreen">
             <form id="fileform" method="post" enctype="multipart/form-data">
-                <input type="file" id="fileupload" name="file" accept="image/*" multiple onChange="mobileGmUpload('{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.url}}');">
+                <input type="file" id="fileupload" name="file" accept="image/*" multiple onChange="browseGmUpload('{{!engine.url_regex.replace('\\', '\\\\')}}', '{{gm.url}}');">
             </form>
         </div> 
     </div>

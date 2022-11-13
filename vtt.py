@@ -570,13 +570,12 @@ def setup_gm_routes(engine):
             # @NOTE: not logged because somebody may play around with this
             abort(404)
         
-        # load game from GM's database
+        # try to load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-        if game is None:
-            # @NOTE: not logged because somebody may play around with this
-            abort(404)
+        root = './static/assets'
+        if game is not None:
+            root = engine.paths.getGamePath(gmurl, url)
         
-        root = engine.paths.getGamePath(gmurl, url)
         files = {
             'images': [],
             'audio': []
@@ -586,7 +585,10 @@ def setup_gm_routes(engine):
                 files['images'].append(fname)
             if fname.endswith('.mp3'):
                 files['audio'].append(fname)
-        files['images'].sort(key=lambda k: int(k.split('.')[0]))
+        if game is not None:
+            files['images'].sort(key=lambda k: int(k.split('.')[0]))
+        else:
+            files['images'].sort()
         files['audio'].sort()
         done = time.time()
 
@@ -694,6 +696,11 @@ def setup_resource_routes(engine):
         # @NOTE: no need to check file extension, this directory is
         # meant to be accessable as a whole
 
+        return static_file(fname, root=root)
+
+    @get('/static/assets/<fname>')
+    def static_assets(fname):
+        root = './static/assets'
         return static_file(fname, root=root)
 
     @get('/asset/<gmurl>/<url>/<fname>')
