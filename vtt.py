@@ -631,7 +631,10 @@ def setup_gm_routes(engine):
             total = 0
             provider = {}
             for gm in engine.main_db.GM.select():
-                p = engine.login_api.parseProvider(gm.url)
+                # fetch provider
+                p = '-'.join(gm.metadata.split('|')[:-1])
+                for k in ['-oauth2', 'oauth2-']:
+                    p = p.replace(k, '')
                 if p not in provider:
                     provider[p] = 0
                 provider[p] += 1
