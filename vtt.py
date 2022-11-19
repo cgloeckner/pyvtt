@@ -602,7 +602,7 @@ def setup_gm_routes(engine):
         when, until = engine.cleanup_worker.getNextUpdate()
         return {
             'server time': str(when),
-            'seconds left': str(until)
+            'time left': str(until)
         }
 
     @get('/vtt/api/logins')
