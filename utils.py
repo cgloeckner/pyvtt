@@ -79,6 +79,7 @@ def countDictSetLen(dictionary):
     for key in dictionary:
         dictionary[key] = len(dictionary[key])
 
+
 # ---------------------------------------------------------------------
 
 # API for providing local harddrive paths
@@ -178,42 +179,43 @@ class EmailApi(object):
         self.sender   = data['sender']
         self.user     = data['user']
         self.password = data['password']
+        self.lock = lock.RLock()
         self.login()
         
     def login(self):
-        self.smtp = smtplib.SMTP('{0}:{1}'.format(self.host, self.port))
-        self.smtp.starttls()
-        self.smtp.login(self.user, self.password)
-        
-    def notifyStart(self):
+        with self.lock:
+            self.smtp = smtplib.SMTP(f'{self.host}:{self.port}')
+            self.smtp.starttls()
+            self.smtp.login(self.user, self.password)
+
+    def send(self, subject, message):
         # create mail content
-        frm = 'From: pyvtt Server <{0}>'.format(self.sender)
-        to  = 'To: Developers <{0}>'.format(self.sender)
-        sub = 'Subject: [{0}/{1}] Server Online'.format(self.appname, self.engine.title)
-        plain = '{0}\n{1}\n{2}\nThe VTT server {3}/{4} on {5} is now online!'.format(frm, to, sub, self.appname, self.engine.title, self.engine.getDomain())
+        frm = f'From: pyvtt Server <{self.sender}>'
+        to  = f'To: Developers <{self.sender}>'
+        sub = f'Subject: [{self.appname}/{self.engine.title}] {subject}'
+        plain = f'{frm}\n{to}\n{sub}\n{message}'
         
         # send email
         try:
-            self.smtp.sendmail(self.sender, self.sender, plain)
+            with self.lock:
+                self.smtp.sendmail(self.sender, self.sender, plain)
         except smtplib.SMTPSenderRefused:
             # re-login and re-try
             self.login()
             self.smtp.sendmail(self.sender, self.sender, plain)
         
-    def __call__(self, error_id, message):
-        # create mail content
-        frm = 'From: pyvtt Server <{0}>'.format(self.sender)
-        to  = 'To: Developers <{0}>'.format(self.sender)
-        sub = 'Subject: [{1}/{2}] Exception Traceback #{0}'.format(error_id, self.appname, self.engine.title)
-        plain = '{0}\n{1}\n{2}\n{3}'.format(frm, to, sub, message)
-        
-        # send email
-        try:
-            self.smtp.sendmail(self.sender, self.sender, plain)
-        except smtplib.SMTPSenderRefused:
-            # re-login and re-try
-            self.login()
-            self.smtp.sendmail(self.sender, self.sender, plain)
+    def onStart(self):
+        msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.getDomain()} is now online!'
+        self.send('Server Online', msg)
+
+    def onCleanup(self, report):
+        report = json.dumps(report, indent=4)
+        msg = f'The VTT Server finished cleanup.\n: {report}'
+        self.send('Periodic Cleanup', msg)
+
+    def onError(self, error_id, message):
+        sub = f'Exception Traceback #{error_id}'
+        send(sub, message)
 
 
 # ---------------------------------------------------------------------
@@ -485,7 +487,7 @@ class ErrorReporter(object):
                 # log error and notify developer
                 self.engine.logging.error(message)
                 if self.engine.notify_api is not None:
-                    self.engine.notify_api(error_id, message)
+                    self.engine.notify_api.onError(error_id, message)
                 
                 # notify user about error
                 if bottle.request.is_ajax:

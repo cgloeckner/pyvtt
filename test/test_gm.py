@@ -42,11 +42,11 @@ class GmTest(EngineBaseTest):
         now = int(time.time())
 
         # has not expired yet
-        gm.timeid = int(now - self.engine.expire * 0.75)
+        gm.timeid = int(now - self.engine.cleanup['expire'] * 0.75)
         self.assertFalse(gm.hasExpired(now))
 
         # has expired
-        gm.timeid = int(now - self.engine.expire * 1.2)
+        gm.timeid = int(now - self.engine.cleanup['expire'] * 1.2)
         self.assertTrue(gm.hasExpired(now))
     
     def test_cleanup(self):
@@ -83,7 +83,12 @@ class GmTest(EngineBaseTest):
             self.assertEqual(len(all_rolls), 120)
             
             # trigger cleanup
-            gm.cleanup(gm_cache.db, now)
+            g, i, r, t, m = gm.cleanup(gm_cache.db, now)
+            self.assertEqual(g, ['url456/bar'])
+            self.assertEqual(i, 4096)
+            self.assertEqual(r, 45)
+            self.assertEqual(t, 0)
+            self.assertEqual(m, 0)
             
             # expect first game to still exist
             q1 = gm_cache.db.Game.select(lambda g: g.url == 'foo').first()
@@ -161,7 +166,7 @@ class GmTest(EngineBaseTest):
         cookies = [value for name, value in response.headerlist
             if name.title() == 'Set-Cookie']
         cookies.sort()
-        expire_date = gm.timeid + self.engine.expire
+        expire_date = gm.timeid + self.engine.cleanup['expire']
         time_str = datetime.datetime.fromtimestamp(expire_date).astimezone(datetime.timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT')
         self.assertIn('session={0}'.format(gm.sid), cookies[0])
         self.assertIn('expires={0}'.format(time_str), cookies[0])

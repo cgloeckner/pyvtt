@@ -43,7 +43,10 @@ class EngineTest(EngineBaseTest):
             },
             'playercolors' : ['#FF0000', '#00FF00'],
             'shards'  : list(),
-            'expire'  : 3600,
+            'cleanup': {
+                'expire'  : 3600,
+                'daytime' : '03:00'
+            },
             'hosting' : {
                 'domain'  : 'vtt.example.com',
                 'port'    : 80,
@@ -65,7 +68,7 @@ class EngineTest(EngineBaseTest):
             with open(fname, 'w') as h:
                 json.dump(settings, h)
         
-        # reload engine
+        # reload engine (without cleanup thread)
         argv.append('--quiet')
         self.engine = engine.Engine(argv=argv, pref_dir=self.root)
         
@@ -279,7 +282,7 @@ class EngineTest(EngineBaseTest):
             gm1.postSetup()
             gm2 = self.engine.main_db.GM(name='nobody', url='second', identity='nobody', sid='5673')
             gm2.postSetup()
-            gm2.timeid = now - self.engine.expire - 10
+            gm2.timeid = now - self.engine.cleanup['expire'] - 10
         
         gm1_cache = self.engine.cache.get(gm1)
         gm1_cache.connect_db()
@@ -291,7 +294,7 @@ class EngineTest(EngineBaseTest):
             g1 = gm1_cache.db.Game(url='foo', gm_url='url456')
             g1.postSetup()
             g2 = gm1_cache.db.Game(url='bar', gm_url='url456')
-            g2.timeid = time.time() - self.engine.expire - 10
+            g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
             g2.postSetup()
             
             # create some rolls
@@ -317,7 +320,14 @@ class EngineTest(EngineBaseTest):
             self.assertEqual(num_files, 2)
             
             # cleanup!
-            self.engine.cleanup()
+            gms, games, zips, b, r, t, m = self.engine.cleanupAll()
+            self.assertEqual(gms, ['second']) 
+            self.assertEqual(games, ['url456/bar'])
+            self.assertEqual(zips, 2)
+            self.assertEqual(b, 12288)
+            self.assertEqual(r, 0)
+            self.assertEqual(t, 0)
+            self.assertEqual(m, 0)
             
             # expect first game to still exist
             q1 = gm1_cache.db.Game.select(lambda g: g.url == 'foo').first()
@@ -361,10 +371,10 @@ class EngineTest(EngineBaseTest):
             g1 = gm1_cache.db.Game(url='foo', gm_url='second')
             g1.postSetup()
             g2 = gm1_cache.db.Game(url='bar', gm_url='second')
-            g2.timeid = time.time() - self.engine.expire - 10
+            g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
             g2.postSetup()
             g3 = gm2_cache.db.Game(url='bar', gm_url='url456')
-            g3.timeid = time.time() - self.engine.expire - 10
+            g3.timeid = time.time() - self.engine.cleanup['expire'] - 10
             g3.postSetup()
 
         export = self.engine.saveToDict()

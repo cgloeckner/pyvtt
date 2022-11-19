@@ -17,6 +17,7 @@ from bottle import *
 
 from engine import Engine
 from cache import PlayerCache
+from cleanup import CleanupThread
 from utils import addDictSet, countDictSetLen
 
 
@@ -138,7 +139,7 @@ def setup_gm_routes(engine):
             # reraise greenlet's exception to trigger proper error reporting
             raise
         
-        expires = time.time() + engine.expire
+        expires = time.time() + engine.cleanup['expire']
         response.set_cookie('session', sid, path='/', expires=expires, secure=engine.hasSsl())
         
         engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
@@ -512,7 +513,7 @@ def setup_gm_routes(engine):
 
         # query gms
         total_gms     = engine.main_db.GM.select().count()
-        abandoned_gms = engine.main_db.GM.select(lambda g: g.timeid < now - engine.expire).count()
+        abandoned_gms = engine.main_db.GM.select(lambda g: g.timeid < now - engine.cleanup['expire']).count()
 
         # query games
         threshold     = 10
@@ -595,6 +596,14 @@ def setup_gm_routes(engine):
         files['query_time'] = done-start
 
         return files
+
+    @get('/vtt/api/cleanup')
+    def api_next_cleanup():
+        when, until = engine.cleanup_worker.getNextUpdate()
+        return {
+            'server time': str(when),
+            'seconds left': str(until)
+        }
 
     @get('/vtt/api/logins')
     def api_query_logins():
@@ -905,7 +914,7 @@ def setup_player_routes(engine):
             return result
         
         # save playername in client cookie
-        expire = int(time.time() + engine.expire)
+        expire = int(time.time() + engine.cleanup['expire'])
         response.set_cookie('playername', playername, path=game.getUrl(), expires=expire, secure=engine.hasSsl())
         response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire, secure=engine.hasSsl())
         
@@ -1050,7 +1059,8 @@ if __name__ == '__main__':
         setup_gm_routes(engine)
         setup_player_routes(engine)
         setup_error_routes(engine)
-        
+
+        engine.cleanup_worker = CleanupThread(engine)
         engine.run()
     except KeyboardInterrupt:
         pass

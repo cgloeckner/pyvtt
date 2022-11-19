@@ -40,15 +40,15 @@ class GameTest(EngineBaseTest):
         now = int(time.time())
 
         # will expire soon
-        game.timeid = int(now - self.engine.expire * 0.75)
+        game.timeid = int(now - self.engine.cleanup['expire'] * 0.75)
         self.assertTrue(game.mayExpireSoon(now))
 
         # will not expire soon
-        game.timeid = int(now - self.engine.expire * 0.3)
+        game.timeid = int(now - self.engine.cleanup['expire'] * 0.3)
         self.assertFalse(game.mayExpireSoon(now))
         
         # even HAS expired
-        game.timeid = int(now - self.engine.expire * 1.2)
+        game.timeid = int(now - self.engine.cleanup['expire'] * 1.2)
         self.assertTrue(game.mayExpireSoon(now))
         
     @db_session
@@ -58,11 +58,11 @@ class GameTest(EngineBaseTest):
         now = int(time.time())
 
         # has not expired yet
-        game.timeid = int(now - self.engine.expire * 0.75)
+        game.timeid = int(now - self.engine.cleanup['expire'] * 0.75)
         self.assertFalse(game.hasExpired(now))
 
         # has expired
-        game.timeid = int(now - self.engine.expire * 1.2)
+        game.timeid = int(now - self.engine.cleanup['expire'] * 1.2)
         self.assertTrue(game.hasExpired(now))
         
     @db_session
@@ -411,7 +411,11 @@ class GameTest(EngineBaseTest):
                         self.assertIn(md5_2, checksums) 
                         
                         # cleanup to delete 1st file
-                        game.cleanup(0)
+                        b, r, t, m = game.cleanup(0)
+                        self.assertEqual(b, 82)
+                        self.assertEqual(r, 0)
+                        self.assertEqual(t, 0)
+                        self.assertEqual(m, 1)
                         checksums = self.engine.checksums[game.getUrl()]
                         self.assertNotIn(md5, checksums)
                         self.assertFalse(os.path.exists(p))
@@ -544,6 +548,7 @@ class GameTest(EngineBaseTest):
         for i in range(120):
             self.db.Roll(game=game, name='foo', color='red', sides=4, result=3)
             self.db.Roll(game=game, name='foo', color='red', sides=4, result=3, timeid=15)
+            self.db.Roll(game=game, name='foo', color='red', sides=4, result=3, timeid=15)
 
         # expect images to be hashed
         with open(p1, 'rb') as h:
@@ -564,12 +569,13 @@ class GameTest(EngineBaseTest):
         
         # expect outdated rolls to be deleted
         now = self.engine.latest_rolls + 1
-        game.cleanup(now)
+        b, r, t, m = game.cleanup(now)
+        self.assertEqual(r, 120)
         rolls_left = self.db.Roll.select(game=game)
-        self.assertEqual(len(rolls_left), 120)
+        self.assertEqual(len(rolls_left), 240)
         
         # expect unused files to be deleted
-        game.cleanup(now)
+        self.assertEqual(b, 6)
         self.assertFalse(os.path.exists(p1))
         self.assertTrue(os.path.exists(p2))
 
@@ -579,7 +585,7 @@ class GameTest(EngineBaseTest):
         # expect music to still be present
         p3 = img_path / '4.mp3'    
         p3.touch()
-        game.cleanup(now)
+        b, r, t, m = game.cleanup(now)
         self.assertTrue(os.path.exists(p3))
         
     @db_session

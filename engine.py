@@ -39,9 +39,10 @@ class Engine(object):
 
             elif arg.startswith('--loglevel='):
                 self.log_level = arg.split('--loglevel=')[1]
-        
-        self.paths     = utils.PathApi(appname=appname, root=pref_dir)
-        
+
+        self.paths = utils.PathApi(appname=appname, root=pref_dir)
+        self.paths.ensure(self.paths.getExportPath())
+
         self.app = bottle.default_app()
         
         # setup per-game stuff
@@ -81,7 +82,10 @@ class Engine(object):
         self.localhost      = False
         self.title          = appname
         self.links          = list()
-        self.expire         = 3600 * 24 * 30 # default: 30d
+        self.cleanup = {
+            'expire': 3600 * 24 * 30, # default: 30d
+            'daytime': '03:00'
+        }
         self.login          = dict() # login settings
         self.login['type']  = ''
         self.login_api      = None   # login api instance
@@ -124,11 +128,11 @@ class Engine(object):
             # create default settings
             settings = {
                 'title'        : self.title,
+                'cleanup'      : self.cleanup,
                 'links'        : self.links,
                 'file_limit'   : self.file_limit,
                 'playercolors' : self.playercolors,
                 'shards'       : self.shards,
-                'expire'       : self.expire,
                 'hosting'      : self.hosting,
                 'login'        : self.login,
                 'notify'       : self.notify
@@ -141,11 +145,11 @@ class Engine(object):
             with open(settings_path, 'r') as h:
                 settings = json.load(h)
                 self.title        = settings['title']
+                self.cleanup      = settings['cleanup']
                 self.links        = settings['links']
                 self.file_limit   = settings['file_limit']
                 self.playercolors = settings['playercolors']
                 self.shards       = settings['shards']
-                self.expire       = settings['expire']
                 self.hosting      = settings['hosting']
                 self.login        = settings['login']
                 self.notify       = settings['notify']
@@ -235,7 +239,7 @@ class Engine(object):
         
         # game cache
         self.cache = EngineCache(self)
-        
+
     def run(self):
         certfile = ''
         keyfile  = ''
@@ -250,8 +254,8 @@ class Engine(object):
         ssl_args = {'certfile': certfile, 'keyfile': keyfile} if self.hasSsl() else {}
         
         if self.notify_api is not None:
-            self.notify_api.notifyStart()
-        
+            self.notify_api.onStart()
+
         bottle.run(
             host       = self.listen,
             port       = self.hosting['port'],
@@ -373,34 +377,49 @@ class Engine(object):
     def getSupportedDice(self):
         return [2, 4, 6, 8, 10, 12, 20, 100]
         
-    def cleanup(self):
+    def cleanupAll(self):
         """ Deletes all export games' zip files, unused images and
         outdated dice roll results from all games.
-        Inactive games or even GMs are deleted (see engine.expired).
+        Inactive games or even GMs are deleted
+        (see engine.cleanup['expire']).
         """
         now = time.time()
+        gms   = list()
+        games = list()
+        num_bytes  = 0
+        num_rolls  = 0
+        num_tokens = 0
+        num_md5s   = 0
         
         with db_session:
             for gm in self.main_db.GM.select():
                 gm_cache = self.cache.get(gm)
-                
+
                 # check if GM expired
-                if gm.hasExpired(now):
+                if gm.hasExpired(now): 
                     # remove expired GM
-                    gm.preDelete()
-                    gm.delete() 
-                    
-                else:
-                    # cleanup GM's games
-                    gm.cleanup(gm_cache.db, now)
+                    num_bytes += gm.preDelete()
+                    gms.append(gm.url)
+                    gm.delete()
+                    continue
+
+                # cleanup GM's games
+                g, b, r, t, m = gm.cleanup(gm_cache.db, now)
+                games.extend(g)
+                num_bytes  += b
+                num_rolls  += r
+                num_tokens += t
+                num_md5s   += m
         
-        # remove all exported games' zip files 
+        # remove all exported games' zip files
         export_path = self.paths.getExportPath()
-        num_files = len(os.listdir(export_path))
-        if num_files > 0:
+        num_zips = len(os.listdir(export_path))
+        if num_zips > 0:
+            num_bytes += os.path.getsize(export_path)
             shutil.rmtree(export_path)
             self.paths.ensure(export_path)
-            self.logging.info('Removed {0} game ZIPs'.format(num_files))
+
+        return gms, games, num_zips, num_bytes, num_rolls, num_tokens, num_md5s
 
     def saveToDict(self):
         """ Export all GMs and their games (including scenes and tokens)

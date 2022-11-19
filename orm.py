@@ -161,7 +161,7 @@ def createGmDatabase(engine, filename):
 
         def hasExpired(self, now, scale=1.0):
             delta = now - self.timeid
-            return self.timeid > 0 and delta > engine.expire * scale
+            return self.timeid > 0 and delta > engine.cleanup['expire'] * scale
 
         def mayExpireSoon(self, now):
             return self.hasExpired(now, scale=0.5)
@@ -367,28 +367,34 @@ def createGmDatabase(engine, filename):
                         os.remove(fname)
         
         def cleanup(self, now):
-            """ Cleanup game's unused image and token data. """   
-            engine.logging.info('|--> Cleaning {0}'.format(self.url))
+            """ Cleanup game's unused image and token data. """
+            num_bytes  = 0
+            num_rolls  = 0
+            num_tokens = 0
             
             # query and remove all images that are not used as tokens
             relevant = self.getAbandonedImages()
             with engine.locks[self.gm_url]: # make IO access safe
                 for fname in relevant:
-                    engine.logging.info('     |--x Removing {0}'.format(fname))
+                    num_bytes += os.path.getsize(fname)
                     os.remove(fname)
                     # remove image's md5 hash from cache
                     self.removeMd5(self.getIdFromUrl(fname))
 
             # delete all outdated rolls
             rolls = db.Roll.select(lambda r: r.game == self and r.timeid < now - engine.latest_rolls)
-            if len(rolls) > 0:
-                engine.logging.info('     |--> {0} outdated rolls'.format(len(rolls)))
+            num_rolls = len(rolls)
             rolls.delete()
 
             # query and remove all tokens that have no image
             relevant = self.getBrokenTokens()
+            num_tokens = len(relevant)
             for t in relevant:
                 t.delete()
+
+            num_md5s = self.makeMd5s()
+
+            return num_bytes, num_rolls, num_tokens, num_md5s
             
         def preDelete(self):
             """ Remove this game from disk before removing it from
@@ -397,6 +403,8 @@ def createGmDatabase(engine, filename):
             
             # remove game directory (including all images)
             game_path = engine.paths.getGamePath(self.gm_url, self.url)
+            num_bytes = os.path.getsize(game_path)
+            
             with engine.locks[self.gm_url]: # make IO access safe
                 shutil.rmtree(game_path)
             
@@ -408,6 +416,8 @@ def createGmDatabase(engine, filename):
             for s in self.scenes:
                 s.preDelete()
                 s.delete()
+
+            return num_bytes
 
         def toDict(self):
             # collect all tokens in this game
@@ -638,7 +648,7 @@ def createMainDatabase(engine):
         
         def makeLock(self):
             engine.locks[self.url] = lock.RLock();
-        
+
         def postSetup(self):
             self.timeid = int(time.time())
             
@@ -655,22 +665,34 @@ def createMainDatabase(engine):
         
         def hasExpired(self, now):
             delta = now - self.timeid
-            return self.timeid > 0 and delta > engine.expire
+            return self.timeid > 0 and delta > engine.cleanup['expire']
 
         def cleanup(self, gm_db, now):
             """ Cleanup GM's games' outdated rolls, unused images or
-            event remove expired games (see engine.expire). """
-            engine.logging.info('Cleaning GM {0} <{1}>'.format(self.name, self.url))
+            event remove expired games (see engine.cleanup['expire']).
+            """
+            games = list()
+            num_bytes  = 0
+            num_rolls  = 0
+            num_tokens = 0
+            num_md5s   = 0
 
             for g in gm_db.Game.select():
-                if g.hasExpired(now):
+                if g.hasExpired(now):      
                     # remove this game
-                    g.preDelete()
+                    num_bytes += g.preDelete()
+                    games.append(f'{g.gm_url}/{g.url}')
                     g.delete()
-                    
-                else:
-                    # cleanup this game
-                    g.cleanup(now)
+                    continue
+                
+                # cleanup this game
+                b, r, t, m = g.cleanup(now)
+                num_bytes  += b
+                num_rolls  += r
+                num_tokens += t
+                num_md5s   += m
+
+            return games, num_bytes, num_rolls, num_tokens, num_md5s
             
         def preDelete(self):
             """ Remove this GM from disk to allow removing him from
@@ -680,18 +702,21 @@ def createMainDatabase(engine):
             
             # remove GM's directory (including his database, all games and images)
             root_path = engine.paths.getGmsPath(self.url)
+            num_bytes = os.path.getsize(root_path)
             
             with engine.locks[self.url]: # make IO access safe
                 shutil.rmtree(root_path)
             
             # remove GM from engine's cache
             engine.cache.remove(self)
+
+            return num_bytes
             
         def refreshSession(self, response):
             """ Refresh session id. """
             now = time.time()
             self.timeid = now
-            response.set_cookie('session', self.sid, path='/', expires=now + engine.expire)
+            response.set_cookie('session', self.sid, path='/', expires=now + engine.cleanup['expire'])
             
         @staticmethod
         def loadFromSession(request):
