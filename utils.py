@@ -210,7 +210,7 @@ class EmailApi(object):
 
     def onCleanup(self, report):
         report = json.dumps(report, indent=4)
-        msg = f'The VTT Server finished cleanup.\n: {report}'
+        msg = f'The VTT Server finished cleanup.\n{report}'
         self.send('Periodic Cleanup', msg)
 
     def onError(self, error_id, message):
