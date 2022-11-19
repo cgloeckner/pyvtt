@@ -15,8 +15,7 @@
         %provider = engine.login_api.parseProvider(gm.metadata)
         %url = engine.login_api.getIconUrl(provider)
     %end
-    GM <a href="/vtt/logout" draggable="false" title="CLICK TO LOGOUT">{{gm.name}} <img src="{{url}}" class="icon" title="{{provider}}" /></a>
-    <span>{{gm.identity}}</span>
+    <img src="{{url}}" class="icon info" title="{{provider.upper()}} via {{gm.identity.upper()}}" /> <a href="/vtt/logout" draggable="false" title="CLICK TO LOGOUT">{{gm.name}}</a>
 %end
 </span>
 

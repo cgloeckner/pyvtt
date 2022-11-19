@@ -372,7 +372,6 @@ img.icon {
     width: 16px;
 }
 
-
 img.largeicon {
     width: 28px;
     padding: 5px;
@@ -417,6 +416,10 @@ div#gmdrop > div.element > a > img.thumbnail:hover {
     
     filter: drop-shadow(0px 0px 10px white) 
           drop-shadow(0px 0px 0 white);
+}
+
+img.info:hover {
+    cursor: help;
 }
 
 div#gmdrop > div.element > div.controls {
