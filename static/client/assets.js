@@ -97,8 +97,9 @@ function onDropAsset(event) {
     if (game_url == 'null' || game_url == game) {
         let url = `/static/assets/${drag_data}`
         if (game_url == game) {
-            let url = `/asset/${gm}/${game_url}/${drag_data}`
+            url = `/asset/${gm}/${game_url}/${drag_data}`
         }
+        console.log(url)
         // directly create token
         writeSocket({
             'OPID' : 'CREATE',
@@ -109,6 +110,7 @@ function onDropAsset(event) {
         })
     
     } else {
+        let url = `/asset/${gm}/${game_url}/${drag_data}`
         // upload image to this game and proceed as usual
         urlToFile(url, function(file) {
             fetchMd5FromImages([file], function(md5s) {
