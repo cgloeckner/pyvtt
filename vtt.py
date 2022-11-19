@@ -10,13 +10,14 @@ License: MIT (see LICENSE for details)
 from gevent import monkey; monkey.patch_all()
 import gevent
 
-import os, json, time, sys, random, subprocess, requests, flag, pathlib
+import os, json, time, sys, random, subprocess, requests, flag, pathlib, httpagentparser
 
 from pony import orm
 from bottle import *
 
 from engine import Engine
 from cache import PlayerCache
+from utils import addDictSet, countDictSetLen
 
 
 __author__ = 'Christian Glöckner'
@@ -601,25 +602,33 @@ def setup_gm_routes(engine):
         start = time.time()
         
         logins    = engine.parseLoginLog()
-        locations  = dict()
+        locations = dict()
+        platforms = dict()
+        browsers  = dict()
         since = start - 30 * 24 * 3600 # past 30d
 
         # group IPs by country
         for record in logins:
             if record.timeid < since:
                 continue
-            if record.country not in locations:
-                locations[record.country] = set()
-            locations[record.country].add(record.ip)
+            data = httpagentparser.detect(record.agent)
 
-        # count IPs per country
-        for key in locations:
-            locations[key] = len(locations[key])
+            # save data
+            addDictSet(locations, record.country, record.ip)
+            addDictSet(platforms, data['platform']['name'], record.ip)
+            addDictSet(browsers, data['browser']['name'], record.ip)
+
+        # count IPs per country, platform and browser
+        countDictSetLen(locations)
+        countDictSetLen(platforms)
+        countDictSetLen(browsers)
         
         done = time.time()
 
         return {
             'locations': locations,
+            'platforms': platforms,
+            'browsers': browsers,
             'query_time': done-start
         }
     
@@ -636,8 +645,9 @@ def setup_gm_routes(engine):
                 for k in ['-oauth2', 'oauth2-']:
                     p = p.replace(k, '')
                 if p not in provider:
-                    provider[p] = 0
-                provider[p] += 1
+                    provider[p] = 1
+                else:
+                    provider[p] += 1
             done = time.time()
 
             provider['query_time'] = done-now

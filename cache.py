@@ -51,7 +51,7 @@ class PlayerCache(object):
         self.flag     = flag.flag(self.country) if self.country not in ['?', 'unknown'] else ''
         
         # add login to stats
-        login_data = [self.is_gm, time.time(), self.country, self.ip, PlayerCache.instance_count]
+        login_data = [time.time(), self.country, self.ip, self.agent]
         self.engine.logging.logins(json.dumps(login_data))
         
         self.lock     = lock.RLock()

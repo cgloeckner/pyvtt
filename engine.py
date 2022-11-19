@@ -335,12 +335,11 @@ class Engine(object):
     def parseLoginLog(self):
 
         class LoginRecord(object):
-            def __init__(self, is_gm, timeid, country, ip, num_players):
-                self.is_gm       = is_gm
-                self.timeid      = timeid
-                self.country     = country
-                self.ip          = ip
-                self.num_players = num_players
+            def __init__(self, timeid, country, ip, agent):
+                self.timeid  = timeid
+                self.country = country
+                self.ip      = ip
+                self.agent   = agent
         
         records = list()
         with open(self.paths.getLogPath('logins'), 'r') as h:

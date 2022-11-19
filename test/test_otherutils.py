@@ -9,7 +9,8 @@ License: MIT (see LICENSE for details)
 
 import unittest, tempfile, pathlib
 
-from buildnumber import BuildNumber
+from utils import BuildNumber, addDictSet, countDictSetLen
+
 
 class BuildNumberTest(unittest.TestCase):
     
@@ -78,3 +79,40 @@ class BuildNumberTest(unittest.TestCase):
         self.assertEqual( 23, v.version[0])
         self.assertEqual( 73, v.version[1])
         self.assertEqual(235, v.version[2])
+
+
+# ---------------------------------------------------------------------
+
+
+class OtherTests(unittest.TestCase):
+    
+    def setUp(self):
+        pass
+        
+    def tearDown(self):
+        pass
+
+    def test_addDictSet(self):
+        d = dict()
+        
+        addDictSet(d, 'foo', 'bar')
+        self.assertIn('bar', d['foo'])
+        
+        addDictSet(d, 'foo', 'bar')   
+        self.assertIn('bar', d['foo'])
+        
+        addDictSet(d, 'foo', 'test')  
+        self.assertIn('bar', d['foo'])
+        self.assertIn('test', d['foo'])
+
+    def test_countDictSetLen(self):
+        d = dict()
+        d['test'] = set()
+        addDictSet(d, 'foo', 'bar')  
+        addDictSet(d, 'foo', 'test')  
+        addDictSet(d, 'bar', 'test')
+
+        countDictSetLen(d)
+        self.assertEqual(d['test'], 0)
+        self.assertEqual(d['foo'], 2)
+        self.assertEqual(d['bar'], 1)
