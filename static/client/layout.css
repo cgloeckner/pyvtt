@@ -368,7 +368,8 @@ div.horizdropdown > div.gmhint > img#gmhint:hover {
           drop-shadow(0px 0px 0 white);
 }
 
-img.icon {
+img.icon,
+img.icon_only {
     width: 16px;
 }
 
@@ -418,7 +419,7 @@ div#gmdrop > div.element > a > img.thumbnail:hover {
           drop-shadow(0px 0px 0 white);
 }
 
-img.info:hover {
+.hint:hover {
     cursor: help;
 }
 
