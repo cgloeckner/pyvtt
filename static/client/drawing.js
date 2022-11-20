@@ -135,7 +135,7 @@ function initDrawing(as_background) {
     $('#drawing').fadeIn(500)
 }
 
-function closeDrawing() {
+function onCloseDrawing() {
     $('#drawing').fadeOut(500)
 }
 
@@ -329,6 +329,19 @@ function onWheelPen(event) {
         var color = $('#pencolor')[0].value
         drawDot(pos[0], pos[1], color, pressure, context)
     }
+}
+
+function onExportDrawing() {
+    var preview = $('#doodle')[0];
+    drawAll(preview.getContext("2d"))
+
+    // fetch PNG-data from canvas
+    var url = preview.toDataURL("image/png");
+
+    let link  = document.createElement('a')
+    link.href = url
+    link.download = ''
+    link.click()
 }
 
 function onUploadDrawing() {

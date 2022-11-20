@@ -53,10 +53,16 @@
 %end
 
     <div id="drawing">
-        <img class="close" src="/static/delete.png" onClick="closeDrawing();" draggable="false" title="DISCARD" />
         <div>
-            <input type="color" name="pencolor" id="pencolor" value="#000000">
-            <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
+            <div>
+                <input type="color" name="pencolor" id="pencolor" value="#000000">
+                <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
+
+                <span class="icons">
+                    <img class="largeicon" src="/static/export.png" onClick="onExportDrawing();" draggable="false" title="DOWNLOAD" />
+                    <img class="largeicon" src="/static/delete.png" onClick="onCloseDrawing();" draggable="false" title="DISCARD" />
+                </span>
+            </div>
             <br />
             <canvas id="doodle" width="1600" height="900" onmousedown="onMovePen(event)" onmouseup="onReleasePen(event)" onmousemove="onMovePen(event)" onwheel="onWheelPen(event)" ontouchstart="onMovePen(event)" ontouchmove="onMovePen(event)" ontouchend="onReleasePen(event)" onDrop="onDropTokenImage(event)"></canvas>
         </div>

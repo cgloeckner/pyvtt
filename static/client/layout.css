@@ -485,8 +485,8 @@ canvas.border {
     border: 3px solid black;
 }
 
-div#drawing > div > input#pencolor,
-div#drawing > div > button#upload {
+div#drawing > div > div > input#pencolor,
+div#drawing > div > div > button#upload {
     background: white;
     border-radius: 2px;
     border: 0px;
@@ -496,13 +496,12 @@ div#drawing > div > button#upload {
     height: 25px;
 }
 
-div#drawing > div > input#pencolor {
-    width: 50px;
+div#drawing span.icons {
+    float: right;
 }
 
-div#drawing > div > button#upload {
-    position: absolute;
-    right: 55px;
+div#drawing > div > div > input#pencolor {
+    width: 50px;
 }
 
 div#drawing > div > span > label {
@@ -510,7 +509,7 @@ div#drawing > div > span > label {
     color: white;
 }
 
-div#drawing > div > button#upload:hover {
+div#drawing > div > div > button#upload:hover {
     cursor: pointer;
     background: #99ff66;
 }
@@ -598,8 +597,7 @@ div#uploadscreen > span > form > input[type=file] {
 div#schedule img.close,
 div#assetsbrowser img.close,
 div#uploadscreen > img.close,
-div#camerapreview > img.close,
-div#drawing > img.close {
+div#camerapreview > img.close {
     width: 32px;
     float: right;
     right: 15px;
