@@ -7,7 +7,7 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import os, sys, hashlib, time, requests, json, re, shutil, pathlib
+import os, sys, hashlib, time, requests, json, re, shutil, pathlib, subprocess, uuid
 
 import bottle
 
@@ -44,7 +44,7 @@ class Engine(object):
         self.paths.ensure(self.paths.getExportPath())
 
         self.app = bottle.default_app()
-        
+
         # setup per-game stuff
         self.checksums = dict()
         self.locks     = dict()
@@ -150,10 +150,6 @@ class Engine(object):
         # add this server to the shards list
         self.shards.append(self.getUrl())
         
-        # export server constants to javascript-file
-        self.constants = utils.ConstantExport()
-        self.constants(self)
-
         # show argv help
         if '--help' in argv:
             print('Commandline options:')
@@ -224,6 +220,21 @@ class Engine(object):
         bn.loadFromFile(pathlib.Path('static') / 'client' / 'version.js')
         self.version = str(bn)
         
+        # query latest git hash
+        self.git_hash = None
+        p = subprocess.run('git rev-parse --short HEAD', shell=True, stdout=subprocess.PIPE)
+        if p.returncode == 0:
+            self.git_hash = p.stdout.decode('utf-8').split('\n')[0]
+
+        # generate debug hash
+        self.debug_hash = None
+        if self.debug:
+            self.debug_hash = uuid.uuid4().hex
+
+        # export server constants to javascript-file
+        self.constants = utils.ConstantExport()
+        self.constants(self)
+
         # game cache
         self.cache = EngineCache(self)
 
@@ -280,6 +291,14 @@ class Engine(object):
         protocol = 'https' if self.hasReverseProxy() or self.hasSsl() else 'http'
         port     = '' if self.hasReverseProxy() else f':{self.getPort()}'
         return f'{protocol}://{self.getDomain()}{port}/vtt/callback'
+
+    def getFullVersion(self):
+        v = self.version
+        if self.git_hash is not None:
+            v += '-' + self.git_hash
+        if self.debug_hash is not None:
+            v += '-' + self.debug_hash
+        return v
 
     def hasReverseProxy(self):
         return self.hosting['reverse']
