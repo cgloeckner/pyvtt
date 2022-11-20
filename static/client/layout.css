@@ -481,8 +481,8 @@ div#drawing > div > canvas#doodle {
     margin-right: auto;
 }
 
-canvas.border {
-    border: 3px solid black;
+img.border {
+    outline: 3px solid gold;
 }
 
 div#drawing > div > div > input#pencolor,

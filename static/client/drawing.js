@@ -1,14 +1,14 @@
 const gridsize = 32
 const card_width  = 1600
-const card_height = 900
-
-var doodle_on_background = true
+const card_height = 1200
+const token_size  = 900
 
 var edges = []
 var straight = null
 var drag = null
 
 var scale = 1.0
+var index_card = new Image()
 var token_img = new Image()
 var token_background = new Image() 
 var token_border = new Image()
@@ -46,55 +46,23 @@ function drawDot(x, y, color, width, target) {
 }
 
 function drawAll(target) {
-    // search for background token
-    if (doodle_on_background) {
-        // query background token
-        var background = null
-            $.each(tokens, function(index, token) {
-            if (token != null) {
-                if (token.size == -1) {
-                    background = token
-                }
-            }
-        });
-    }
-
-    // clear context                
+    // clear context   
     var canvas = $('#doodle')[0]
-    if ($('#transparentenable')[0].checked) {
-        target.clearRect(0, 0, canvas.width, canvas.height)
-    } else {
-        target.fillStyle = '#FFFFFF'
-        target.fillRect(0, 0, canvas.width, canvas.height)
-    }
+    target.clearRect(0, 0, canvas.width, canvas.height)
     target.lineCap = "round"
 
-    // load background if necessary
-    if (background != null && images[background.url] != null) {
-        // load background into canvas
-        var sizes = getActualSize(background, canvas.width, canvas.height)
-        sizes[0] *= canvas_scale
-        sizes[1] *= canvas_scale
-        
-        target.drawImage(
-            images[background.url],
-            0.5 * canvas.width - sizes[0] / 2,
-            0.5 * canvas.height - sizes[1] / 2,
-            sizes[0], sizes[1]
-        )
-    }
+    let mode = localStorage.getItem('drawmode')
 
-    if (inTokenMode()) {
+    if (mode == 'token') {
         // draw token image and border
-        let s = card_height / 2
-        target.drawImage(token_background, 0, 0, s, s)
+        target.drawImage(token_background, 0, 0, token_size, token_size)
         
         target.globalCompositeOperation = 'source-atop'
-        let x = card_height / 2
-        let y = card_height / 2
+        let x = token_size / 2
+        let y = token_size / 2
         if (drag != null) {
-            x = drag[0] * s
-            y = drag[1] * s
+            x = drag[0] * token_size
+            y = drag[1] * token_size
         }
         target.drawImage(token_img,
             x - scale * token_img.width / 2,
@@ -103,9 +71,14 @@ function drawAll(target) {
             scale * token_img.height)
         target.globalCompositeOperation = 'source-over'
         
-        target.drawImage(token_border, 0, 0, s, s)
+        target.drawImage(token_border, 0, 0, token_size, token_size)
         
     } else {
+        // load index card
+        if (mode == 'card') {
+            target.drawImage(index_card, 0, 0, card_width, card_height)
+        }
+        
         // draw all lines
         $.each(edges, function(index, data) {
             drawLine(data, target)
@@ -128,9 +101,12 @@ function initDrawing(as_background) {
     straight = null
     drag = null
     drawAll(context)
-    
+
+    index_card.src = '/static/index_card.jpg'
     token_background.src = '/static/token_background.png'
     token_border.src = '/static/token_border.png'
+
+    onToggleMode(null)
 
     $('#drawing').fadeIn(500)
 }
@@ -371,38 +347,38 @@ function onUploadDrawing() {
 }
 
 function inTokenMode() {
-    return $('#tokenenable')[0].checked
+    return localStorage.getItem('drawmode') == 'token'
 }
 
-function toggleToken() {
+function onToggleMode(mode=null) {
     let target = $('#doodle')
+
+    let old_mode = localStorage.getItem('drawmode')
+    if (mode == null) {
+        mode = old_mode
+    } else if (old_mode != null) {
+        $(`#${old_mode}mode`).removeClass('border')
+    }
     
-    if (inTokenMode()) {
-        $('#transparentenable').prop('checked', true)
-        target[0].width  = card_height * 0.5
-        target[0].height = card_height * 0.5
+    localStorage.setItem('drawmode', mode)
+    $(`#${mode}mode`).addClass('border')
+
+    if (mode == 'token') {
+        // enable token mode
+        target[0].width  = token_size
+        target[0].height = token_size
+        
+    } else if (mode == 'card') {
+        // enable index card mode
+        target[0].width  = card_width
+        target[0].height = card_height
+        
     } else {
+        // enable overlay mode
         target[0].width  = card_width
         target[0].height = card_height
     }
-
-    let ctx = target[0].getContext("2d")
-    drawAll(ctx)
-}
-
-function toggleTransparent() {  
-    let target = $('#doodle')
     
-    if ($('#transparentenable').checked) {
-        target.addClass('border')
-        
-    } else {
-        target.removeClass('border')
-        if (inTokenMode()) {
-            $('#transparentenable').prop('checked', true)
-        }
-    }
-
     let ctx = target[0].getContext("2d")
     drawAll(ctx)
 }

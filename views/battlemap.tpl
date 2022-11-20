@@ -59,17 +59,18 @@
                 <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
 
                 <span class="icons">
+                    <img class="largeicon" id="cardmode" src="/static/card-icon.png" onClick="onToggleMode('card')"draggable="false" title="CREATE INDEX CARD" />
+                    <img class="largeicon" id="overlaymode" src="/static/transparent-icon.png" onClick="onToggleMode('overlay')"draggable="false" title="CREATE OVERLAY" />
+                    <img class="largeicon" id="tokenmode" src="/static/token-icon.png" onClick="onToggleMode('token')" draggable="false" title="CREATE TOKEN" />
                     <img class="largeicon" src="/static/export.png" onClick="onExportDrawing();" draggable="false" title="DOWNLOAD" />
                     <img class="largeicon" src="/static/delete.png" onClick="onCloseDrawing();" draggable="false" title="DISCARD" />
                 </span>
             </div>
             <br />
-            <canvas id="doodle" width="1600" height="900" onmousedown="onMovePen(event)" onmouseup="onReleasePen(event)" onmousemove="onMovePen(event)" onwheel="onWheelPen(event)" ontouchstart="onMovePen(event)" ontouchmove="onMovePen(event)" ontouchend="onReleasePen(event)" onDrop="onDropTokenImage(event)"></canvas>
+            <canvas id="doodle" width="1600" height="1200" onmousedown="onMovePen(event)" onmouseup="onReleasePen(event)" onmousemove="onMovePen(event)" onwheel="onWheelPen(event)" ontouchstart="onMovePen(event)" ontouchmove="onMovePen(event)" ontouchend="onReleasePen(event)" onDrop="onDropTokenImage(event)"></canvas>
         </div>
         <div class="options">
             <span id="pen" title="DRAW ONLY WITH PEN?"><input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN ONLY</label></span>
-            <span id="transparent" title="TRANSPARENT BACKGROUND?"><input type="checkbox" name="transparentenable" id="transparentenable" onChange="toggleTransparent()"><label for="transparentenable">TRANSPARENT</label></span>
-            <span id="token" title="TOKEN BORDER?"><input type="checkbox" name="tokenenable" id="tokenenable" onChange="toggleToken()"><label for="tokenenable">TOKEN</label></span>
         </div>
     </div>
 
