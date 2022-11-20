@@ -33,10 +33,17 @@ function loadAssets() {
                 target.append(tmp)
                 
                 var node = $(target[0].lastChild)
+                
                 node.on('dragstart', function(event) {
                     onDragAsset(fname, event)
                 })
+                node.on('touchstart', function(event) {
+                    onDragAsset(fname, event)
+                })
+                
                 node.on('dragend', onDropAsset)
+                node.on('touchend', onDropAsset)
+                
                 node.on('dblclick', onQuickDropAsset)
                 node.on('contextmenu', function(event) {
                     onDownloadAsset(tmp.id, fname, event)
