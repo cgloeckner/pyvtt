@@ -1,3 +1,10 @@
+/**
+https://github.com/cgloeckner/pyvtt/
+
+Copyright (c) 2020-2022 Christian Glöckner
+License: MIT (see LICENSE for details)
+*/
+
 function showAssetsBrowser() {
     loadGames(gm, function() {
         loadAssets()
@@ -21,6 +28,7 @@ function loadAssets() {
             
             $.each(response['images'], function(index, fname) {
                 var tmp = new Image()
+                tmp.id  = `asset${index}`
                 tmp.src = base_url + '/' + fname
                 target.append(tmp)
                 
@@ -29,6 +37,10 @@ function loadAssets() {
                     onDragAsset(fname, event)
                 })
                 node.on('dragend', onDropAsset)
+                node.on('dblclick', onQuickDropAsset)
+                node.on('contextmenu', function(event) {
+                    onDownloadAsset(tmp.id, fname, event)
+                })
             })
             
             $('#assetsbrowser').fadeIn(100)
@@ -86,12 +98,13 @@ function urlToFile(url, resolve) {
         })
 }
 
-function onDropAsset(event) {    
-    let x = mouse_x
-    let y = mouse_y
+function onDropAsset(event, pos=null) {
+    if (pos == null) {
+        pos = [mouse_x, mouse_y]
+    }
     let drag_data = localStorage.getItem('drag_data')
     localStorage.removeItem('drag_data')
-    
+
     let game_url = $('#games').find(':selected').val()
 
     if (game_url == 'null' || game_url == game) {
@@ -103,8 +116,8 @@ function onDropAsset(event) {
         // directly create token
         writeSocket({
             'OPID' : 'CREATE',
-            'posx' : x,  
-            'posy' : y,
+            'posx' : pos[0],
+            'posy' : pos[1],
             'size' : default_token_size,
             'urls' : [url]
         })
@@ -114,16 +127,33 @@ function onDropAsset(event) {
         // upload image to this game and proceed as usual
         urlToFile(url, function(file) {
             fetchMd5FromImages([file], function(md5s) {
-                uploadFilesViaMd5(gm_name, game, md5s, [file], mouse_x, mouse_y);
+                uploadFilesViaMd5(gm_name, game, md5s, [file], pos[0], pos[1])
             })
         })
     }
 }
 
+function onQuickDropAsset(event) {
+    localStorage.setItem('drag_data', fname)
+    let center = [viewport['x'], viewport['y']]
+    onDropAsset(event, center)
+}
+
+function onDownloadAsset(id, fname, event) {
+    let asset = $(`#${id}`)
+    fetch(asset[0].src).then((image) => {
+        image.blob().then((blob) => {
+            let link  = document.createElement('a')
+            link.href = URL.createObjectURL(blob)
+            link.download = fname
+            link.click()
+        })
+    })
+}
+
 function hideAssetsBrowser() {
     $('#assetsbrowser').fadeOut(100);
 }
-
 
 function initUpload() {
     $('#fileupload')[0].click(); 
