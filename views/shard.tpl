@@ -10,7 +10,7 @@
     <tr>
         <th class="small"></th>
         <th class="small"></th>
-        <th class="medium"></th>
+        <th></th>
         <th>Link</th>
         <th>ACTIVE GAMES</th>
     </tr>

@@ -679,6 +679,12 @@ def setup_gm_routes(engine):
         data['title'] = engine.title 
         data['games'] = None
         data['flag']  = None
+        data['build'] = {}
+        try:
+            json = requests.get(host + '/vtt/api/build', timeout=3).json()
+            data['build'] = json
+        except Exception as e:
+            engine.logging.error('Server {0} seems to be offline'.format(host))
         
         # query server location (if possible)
         ip      = host.split('://')[1].split(':')[0]
