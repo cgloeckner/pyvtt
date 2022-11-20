@@ -52,11 +52,11 @@ class CleanupThread(object):
             future += datetime.timedelta(days=1)
         return future, (future-now)
 
-    def run(self):        
+    def run(self):
         while True:
+            # cleanup engine
+            self.cleanup()
+
             # schedule cleanup
             when, delta = self.getNextUpdate()
             time.sleep(delta.total_seconds())
-            
-            # cleanup engine
-            self.cleanup()
