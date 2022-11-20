@@ -1,3 +1,9 @@
+/**
+https://github.com/cgloeckner/pyvtt/
+
+Copyright (c) 2020-2022 Christian Glöckner
+License: MIT (see LICENSE for details)
+*/
 
 function brightnessByColor (color) {
   var color = "" + color, isHEX = color.indexOf("#") == 0, isRGB = color.indexOf("rgb") == 0;

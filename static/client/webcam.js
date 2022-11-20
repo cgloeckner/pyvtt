@@ -1,3 +1,10 @@
+/**
+https://github.com/cgloeckner/pyvtt/
+
+Copyright (c) 2020-2022 Christian Glöckner
+License: MIT (see LICENSE for details)
+*/
+
 /// Settings for webcam usage
 const webcam_constraints = {
     audio: false,
