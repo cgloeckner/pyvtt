@@ -1,4 +1,12 @@
 #!/bin/bash
-docker stop icvtt
-docker rm icvtt
-docker run -d -p 8080:8080 -v /opt/pyvtt/prod:/opt/pyvtt/prod --restart=on-failure --name icvtt pyvtt:latest
+if [ $1 = "-h" ]; then
+  echo "build.sh [TAG] [PORT] [MOUNT]
+  exit 0;
+fi
+
+TAG="${1:-latest}"
+PORT="${2:-8080}"
+MOUNT="${3:-/opt/pyvtt/prod"}
+docker stop icvtt-${TAG}
+docker rm icvtt-${TAG}
+docker run -d -p ${PORT}:${PORT} -v ${MOUNT}:${MOUNT} --restart=on-failure --name icvtt-${TAG} pyvtt:${TAG}

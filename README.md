@@ -9,6 +9,13 @@ This piece of software is the engine behind the [Index Card Virtual Tabletop (IC
 
 See the wiki for more details.
 
+# Docker
+This application includes a simple Dockerfile to build a runnable container.
+
+`./script/build.sh` will build an image for you. This script accepts one optional parameter: a tag to apply to the resultant image. If no tag is specified, `latest` will be used.
+
+`./script/run.sh` will (re)start the image. It takes three optional parameters: the tag to use, the port to use, and the path to the location to mount into the container. The default values are `latest`, `8080`, and `/opt/pyvtt/prod` respectively.
+
 ## Contributions
 
 Kane Driscol
