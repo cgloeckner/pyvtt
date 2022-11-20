@@ -63,7 +63,7 @@ class GmTest(EngineBaseTest):
             g1 = gm_cache.db.Game(url='foo', gm_url='url456')
             g1.postSetup()
             g2 = gm_cache.db.Game(url='bar', gm_url='url456')
-            g2.timeid = time.time() - self.engine.expire - 10
+            g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
             g2.postSetup()
             
             # create some rolls

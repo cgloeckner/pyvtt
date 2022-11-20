@@ -215,7 +215,7 @@ class EmailApi(object):
 
     def onError(self, error_id, message):
         sub = f'Exception Traceback #{error_id}'
-        send(sub, message)
+        self.send(sub, message)
 
 
 # ---------------------------------------------------------------------
