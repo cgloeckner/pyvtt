@@ -86,9 +86,16 @@ p {
     margin-bottom: 5px;
 }
 
-table.status > tbody > tr > th,
-table.status > tbody > tr > td {
+table.status > tbody > tr > th {
     width: 150px;
+}
+
+table.status > tbody > tr > th.medium {
+    width: 100px;
+}
+
+table.status > tbody > tr > th.small {
+    width: 25px;
 }
 
 a {

@@ -667,23 +667,22 @@ def setup_gm_routes(engine):
         except IndexError:
             abort(404)
         
-        data = dict()   
-        data['countryCode'] = None
-        data['status']      = None   
-        data['flag']        = None
+        data = dict()
+        data['title'] = engine.title 
+        data['games'] = None
+        data['flag']  = None
         
         # query server location (if possible)
         ip      = host.split('://')[1].split(':')[0]
         country = engine.getCountryFromIp(ip)
-        data['flag'] = flag.flag(country) if country not in ['?', 'unknown'] else ''
+        if country not in ['?', 'unknown']:
+            data['flag'] = flag.flag(country)
         
-        # query server status
+        # query server data
         try:
-            html = requests.get(host + '/vtt/api/users', timeout=3)
-            data['status'] = html.text;
-        except requests.exceptions.ReadTimeout as e:
-            engine.logging.error('Server {0} seems to be offline'.format(host))
-        except requests.exceptions.ConnectionError as e:
+            json = requests.get(host + '/vtt/api/users', timeout=3).json()
+            data['games'] = json['games']['running']
+        except Exception as e:
             engine.logging.error('Server {0} seems to be offline'.format(host))
         
         return data
