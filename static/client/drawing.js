@@ -83,6 +83,8 @@ function drawAll(target) {
     } else {
         // load index card
         if (mode == 'card') {
+            target.fillStyle = '#FFFFFF'
+            target.fillRect(0, 0, card_width, card_height)
             target.drawImage(index_card, 0, 0, card_width, card_height)
         }
         
@@ -109,7 +111,7 @@ function initDrawing(as_background) {
     drag = null
     drawAll(context)
 
-    index_card.src = '/static/index_card.jpg'
+    index_card.src = '/static/index_card.png'
     token_background.src = '/static/token_background.png'
     token_border.src = '/static/token_border.png'
 
