@@ -343,7 +343,7 @@ function onUploadDrawing() {
         uploadFiles(gm_name, game_url, f, [], x, y);
     }
 
-    closeDrawing();
+    onCloseDrawing();
 }
 
 function inTokenMode() {
