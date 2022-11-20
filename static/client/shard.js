@@ -15,20 +15,15 @@ function queryShard(index, host) {
                 $(`#flag${index}`)[0].innerHTML = response.flag
             }
 
-            if (response.title != null) {
+            if (response.build.version != null) {
                 let target = $(`#title${index}`)
-                let title = response.title
-
-                if (response.build.version != null) {
-                    title += ` v${response.build.version}`
-
-                    let build_hash = `git sha ${response.build.git_hash}`
-                    if (response.build.debug_hash) {
-                        build_hash += ' (debug)'
-                    }  
-                    target[0].title = build_hash
-                }
-
+                let title = `${response.build.title} v${response.build.version}`
+                let build_hash = `git sha ${response.build.git_hash}`
+                
+                if (response.build.debug_hash) {
+                    build_hash += ' (debug)'
+                }  
+                target[0].title = build_hash
                 target[0].innerHTML = title
             }
 

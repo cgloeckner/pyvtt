@@ -602,6 +602,7 @@ def setup_gm_routes(engine):
     @get('/vtt/api/build')
     def api_build():
         return {
+            'title'      : engine.title,
             'version'    : engine.version,
             'git_hash'   : engine.git_hash,
             'debug_hash' : engine.debug_hash
@@ -676,7 +677,6 @@ def setup_gm_routes(engine):
             abort(404)
         
         data = dict()
-        data['title'] = engine.title 
         data['games'] = None
         data['flag']  = None
         data['build'] = {}
