@@ -547,7 +547,7 @@ function fetchMd5FromImages(filelist, onfinished) {
     }
 }
 
-function checkFile(file, index) {
+function checkFile(file, index=null) {
     content = file.type.split('/')[0];
         
     var max_filesize = 0;

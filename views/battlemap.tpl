@@ -43,14 +43,18 @@
         </select>
         <div id="assets"></div>
     </div>
+%end
 
     <!-- stays hidden -->
     <div id="uploadscreen">
         <form id="fileform" method="post" enctype="multipart/form-data">
             <input type="file" id="fileupload" name="file[]" accept="image/*, audio/*" multiple onChange="browseUpload();">
         </form>
+
+        <form id="fileform" method="post" enctype="multipart/form-data">
+            <input type="file" id="tokenupload" name="file" accept="image/*" onChange="onPrepareToken();">
+        </form>
     </div>
-%end
 
     <div id="drawing">
         <div>
@@ -68,9 +72,7 @@
             </div>
             <br />
             <canvas id="doodle" width="1600" height="1200" onmousedown="onMovePen(event)" onmouseup="onReleasePen(event)" onmousemove="onMovePen(event)" onwheel="onWheelPen(event)" ontouchstart="onMovePen(event)" ontouchmove="onMovePen(event)" ontouchend="onReleasePen(event)" onDrop="onDropTokenImage(event)"></canvas>
-        </div>
-        <div class="options">
-            <span id="pen" title="DRAW ONLY WITH PEN?"><input type="checkbox" name="penenable" id="penenable"><label for="penenable">PEN ONLY</label></span>
+            <input type="range" id="token_scale" min="1" max="200" value="100" onInput="onChangeSize()" />
         </div>
     </div>
 

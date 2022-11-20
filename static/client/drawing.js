@@ -124,39 +124,33 @@ function onCloseDrawing() {
 
 function detectPressure(event) {
     // detect pen pressure
-    var use_pen = $('#penenable')[0].checked
-    var pressure = 1.0
-    
+    let pressure = 1.0
+    let use_pen = false
+
     if (event.type == "touchstart" || event.type == "touchmove") {
         // search all touches to use pen primarily
         var found = event.touches[0] // fallback: 1st touch
-        if (use_pen) {
-            found = null
-        }
         // search for device that causes non-extreme pressure
-        // @NOTE: extreme pressure mostly indicates a mouse
         for (var i = 0; i < event.touches.length; ++i) {
             if (!isExtremeForce(event.touches[i].force)) {
                 // found sensitive input, ignore previously found event
                 found = event.touches[i]
-                // @NOTE: pressure isn't working with a single path of lines (which uses a single width not handling multiple)
                 use_pen = true
+                // @NOTE: pressure isn't working with a single path of lines (which uses a single width not handling multiple)
                 pressure = parseInt(25 * event.touches[i].force)
                 break
-            } 
+            }
         }
         event = found
     }
-    $('#penenable')[0].checked = use_pen
 
-    if (!use_pen || pressure == 1.0) {
-        pressure = parseInt(localStorage.getItem('draw_pressure'))
-        if (isNaN(pressure)) {
-            localStorage.setItem('draw_pressure', 20)
-            pressure = 20
-        }
-    } else {
+    if (use_pen) {
+        // save pen pressure
         localStorage.setItem('draw_pressure', pressure)
+
+    } else {
+        // use last pen pressure
+        pressure = localStorage.getItem('draw_pressure')
     }
     
     return pressure
@@ -244,7 +238,11 @@ function onReleasePen(event) {
     event.preventDefault()
 
     if (inTokenMode()) {
-        // don't draw if in token mode
+        if (token_img.src == '') {
+            // upload token if not done yet
+            $('#tokenupload')[0].click();
+        }
+
         return
     }
 
@@ -279,6 +277,15 @@ function onReleasePen(event) {
     )
 }
 
+function onChangeSize() {
+    let slider = $('#token_scale')
+    scale = slider[0].value / 100.0
+
+    var canvas = $('#doodle')[0]
+    var context = canvas.getContext("2d")
+    drawAll(context)
+}
+
 /// Modify line width using the mouse wheel
 function onWheelPen(event) {
     var pressure = parseInt(localStorage.getItem('draw_pressure'))
@@ -287,19 +294,19 @@ function onWheelPen(event) {
         if (pressure >= 100) {
             pressure = 100
         }
-        scale *= 1.05
+        /*scale *= 1.05
         if (scale > 10) {
             scale = 10
-        }
+        }*/
     } else if (event.deltaY > 0) {
         pressure -= 3
         if (pressure <= 5) {
             pressure = 5
         }    
-        scale /= 1.05
+        /*scale /= 1.05
         if (scale < 0.1) {
             scale = 0.1
-        }
+        }*/
     }
     localStorage.setItem('draw_pressure', pressure)
     
@@ -311,6 +318,32 @@ function onWheelPen(event) {
         var pos = getDoodlePos(event)
         var color = $('#pencolor')[0].value
         drawDot(pos[0], pos[1], color, pressure, context)
+    }
+}
+
+function onPrepareToken() {
+    // test upload data sizes
+    var file = $('#tokenupload')[0].files[0]
+    error_msg = checkFile(file);
+
+    if (error_msg != '') {
+        showError(error_msg);
+        return;
+    }
+
+    var filereader = new FileReader();
+    filereader.readAsDataURL(file);
+
+    filereader.onload = function(event) {
+        token_img.onload = function() {
+            let target = $('#doodle')
+            $('#token_scale').show()
+
+            let ctx = target[0].getContext("2d")
+            drawAll(ctx)
+        }
+
+        token_img.src = filereader.result
     }
 }
 
@@ -374,16 +407,26 @@ function onToggleMode(mode=null) {
         // enable token mode
         target[0].width  = token_size
         target[0].height = token_size
-        
+
+        if (token_img.src != '') {
+            $('#token_scale').show()
+        } else {
+            $('#token_scale').hide()
+        }
+
     } else if (mode == 'card') {
         // enable index card mode
         target[0].width  = card_width
         target[0].height = card_height
-        
+
+        $('#token_scale').hide()
+
     } else {
         // enable overlay mode
         target[0].width  = card_width
-        target[0].height = card_height
+        target[0].height = card_height 
+
+        $('#token_scale').hide()
     }
     
     let ctx = target[0].getContext("2d")
@@ -396,11 +439,25 @@ function onDropTokenImage(event) {
     }
     
     let file = event.dataTransfer.files[0]
+    error_msg = checkFile(file);
+
+    if (error_msg != '') {
+        showError(error_msg);
+        return;
+    }
     
     var filereader = new FileReader();
     filereader.readAsDataURL(file);
     
     filereader.onload = function(event) {
+        token_img.onload = function() {
+            let target = $('#doodle')
+            $('#token_scale').show()
+
+            let ctx = target[0].getContext("2d")
+            drawAll(ctx)
+        }
+
         token_img.src = filereader.result
     }
 }
