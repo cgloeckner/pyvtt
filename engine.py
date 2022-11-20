@@ -222,9 +222,20 @@ class Engine(object):
         
         # query latest git hash
         self.git_hash = None
-        p = subprocess.run('git rev-parse --short HEAD', shell=True, stdout=subprocess.PIPE)
-        if p.returncode == 0:
-            self.git_hash = p.stdout.decode('utf-8').split('\n')[0]
+        try:
+            with open('sha.txt') as h:
+                self.git_hash = h.read()
+        except:
+            self.logging.warning('Cannot load git SHA from sha.txt.')
+            # fallback
+            p = subprocess.run('git rev-parse --short HEAD', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if p.returncode != 0:
+                error = p.stderr.decode('utf-8')
+                raise RuntimeError(f'Cannot query git SHa from commandline: {error}')
+
+            self.git_hash = p.stdout.decode('utf-8')
+
+        self.git_hash = self.git_hash.split('\n')[0]
 
         # generate debug hash
         self.debug_hash = None
@@ -292,12 +303,14 @@ class Engine(object):
         port     = '' if self.hasReverseProxy() else f':{self.getPort()}'
         return f'{protocol}://{self.getDomain()}{port}/vtt/callback'
 
-    def getFullVersion(self):
+    def getBuildSha(self):
+        if self.debug_hash is not None:
+            return self.debug_hash
+
         v = self.version
         if self.git_hash is not None:
             v += '-' + self.git_hash
-        if self.debug_hash is not None:
-            v += '-' + self.debug_hash
+        
         return v
 
     def hasReverseProxy(self):

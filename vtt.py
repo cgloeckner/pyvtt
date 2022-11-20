@@ -599,6 +599,14 @@ def setup_gm_routes(engine):
             'time left': str(until)
         }
 
+    @get('/vtt/api/build')
+    def api_build():
+        return {
+            'version'    : engine.version,
+            'git_hash'   : engine.git_hash,
+            'debug_hash' : engine.debug_hash
+        }
+
     @get('/vtt/api/logins')
     def api_query_logins():
         """Count users locations based on IPs within past 30d."""

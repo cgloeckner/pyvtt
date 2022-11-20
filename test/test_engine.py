@@ -180,23 +180,23 @@ class EngineTest(EngineBaseTest):
         self.reloadEngine(settings=settings)      
         self.assertEqual(self.engine.getWebsocketUrl(), 'ws://vtt.example.com:443/vtt/websocket')
 
-    def test_getFullVersion(self):
+    def test_getBuildSha(self):
         self.engine.git_hash = None
         self.engine.debug_hash = None
-        v = self.engine.getFullVersion()
+        v = self.engine.getBuildSha()
         self.assertEqual(v, self.engine.version)
 
         self.engine.git_hash = 'deadbeef'
-        v = self.engine.getFullVersion()
-        self.assertEqual(v, f'{self.engine.version}-deadbeef')
+        v = self.engine.getBuildSha()
+        self.assertEqual(v, f'{self.engine.version}-{self.engine.git_hash}')
 
         self.engine.debug_hash = 'abcdefghijklmnop'
-        v = self.engine.getFullVersion()
-        self.assertEqual(v, f'{self.engine.version}-deadbeef-abcdefghijklmnop')
+        v = self.engine.getBuildSha()
+        self.assertEqual(v, self.engine.debug_hash)
         
         self.engine.git_hash = None
-        v = self.engine.getFullVersion()
-        self.assertEqual(v, f'{self.engine.version}-abcdefghijklmnop')
+        v = self.engine.getBuildSha()
+        self.assertEqual(v, self.engine.debug_hash)
 
     def test_getAuthCallbackUrl(self):
         settings = EngineTest.defaultSettings()
