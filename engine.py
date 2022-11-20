@@ -224,18 +224,16 @@ class Engine(object):
         self.git_hash = None
         try:
             with open('sha.txt') as h:
-                self.git_hash = h.read()
+                self.git_hash = h.read().split('\n')[0]
         except:
             self.logging.warning('Cannot load git SHA from sha.txt.')
             # fallback
             p = subprocess.run('git rev-parse --short HEAD', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if p.returncode != 0:
                 error = p.stderr.decode('utf-8')
-                raise RuntimeError(f'Cannot query git SHa from commandline: {error}')
-
-            self.git_hash = p.stdout.decode('utf-8')
-
-        self.git_hash = self.git_hash.split('\n')[0]
+                self.logging.error(f'Cannot query git SHa from commandline: {error}')
+            else:
+                self.git_hash = p.stdout.decode('utf-8').split('\n')[0]
 
         # generate debug hash
         self.debug_hash = None
