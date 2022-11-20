@@ -41,7 +41,9 @@ class CleanupThread(object):
         }
 
         # notify about cleanup results
-        if self.engine.notify_api is not None:
+        if self.engine.notify_api is None:
+            self.engine.logging.info(results)
+        else:
             self.engine.notify_api.onCleanup(results)
 
     def getNextUpdate(self):      
