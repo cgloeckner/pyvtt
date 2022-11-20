@@ -84,69 +84,67 @@ def setup_gm_routes(engine):
         engine.main_db.commit()
         # redirect to GM's game overview
         redirect('/')
-    
-    # non-auth login
-    @post('/vtt/join')
-    def post_gm_login():
-        if engine.login['type'] != '':
-            abort(404)
-        
-        status = {
-            'url'   : None,
-            'error' : ''
-        }
-        
-        # test gm name (also as url)
-        gmname = request.forms.gmname
-        if not engine.verifyUrlSection(gmname):
-            # contains invalid characters   
-            status['error'] = 'NO SPECIAL CHARS OR SPACES'
-            engine.logging.warning('Failed GM login by {0}: invalid name "{1}".'.format(engine.getClientIp(request), gmname))
-            return status
+
+    if engine.localhost:
+        # non-auth login
+        @post('/vtt/join')
+        def post_gm_login():
+            status = {
+                'url'   : None,
+                'error' : ''
+            }
             
-        name = gmname[:20].lower().strip()
-        if name in engine.gm_blacklist:
-            # blacklisted name
-            status['error'] = 'RESERVED NAME'  
-            engine.logging.warning('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request), gmname))
+            # test gm name (also as url)
+            gmname = request.forms.gmname
+            if not engine.verifyUrlSection(gmname):
+                # contains invalid characters
+                status['error'] = 'NO SPECIAL CHARS OR SPACES'
+                engine.logging.warning('Failed GM login by {0}: invalid name "{1}".'.format(engine.getClientIp(request), gmname))
+                return status
+
+            name = gmname[:20].lower().strip()
+            if name in engine.gm_blacklist:
+                # blacklisted name
+                status['error'] = 'RESERVED NAME'
+                engine.logging.warning('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request), gmname))
+                return status
+
+            if len(engine.main_db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
+                # collision
+                status['error'] = 'ALREADY IN USE'
+                engine.logging.warning('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request), gmname))
+                return status
+
+            # create new GM (use GM name as display name and URL)
+            sid = engine.main_db.GM.genSession()
+            gm = engine.main_db.GM(name=name, identity=name, url=name, sid=sid)
+            gm.postSetup()
+            engine.main_db.commit()
+
+            # add to cache and initialize database
+            engine.cache.insert(gm)
+            gm_cache = engine.cache.get(gm)
+
+            # @NOTE: database creation NEEDS to be run from another
+            # thread, because every bottle route has an db_session
+            # active, but creating a database from within a db_session
+            # isn't possible
+            tmp = gevent.Greenlet(run=gm_cache.connect_db)
+            tmp.start()
+            try:
+                tmp.get()
+            except:
+                # reraise greenlet's exception to trigger proper error reporting
+                raise
+
+            expires = time.time() + engine.cleanup['expire']
+            response.set_cookie('session', sid, path='/', expires=expires, secure=engine.hasSsl())
+
+            engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
+
+            engine.main_db.commit()
+            status['url'] = gm.url
             return status
-            
-        if len(engine.main_db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
-            # collision
-            status['error'] = 'ALREADY IN USE'   
-            engine.logging.warning('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request), gmname))
-            return status
-        
-        # create new GM (use GM name as display name and URL)
-        sid = engine.main_db.GM.genSession()
-        gm = engine.main_db.GM(name=name, identity=name, url=name, sid=sid)
-        gm.postSetup()
-        engine.main_db.commit()
-        
-        # add to cache and initialize database
-        engine.cache.insert(gm)
-        gm_cache = engine.cache.get(gm)
-        
-        # @NOTE: database creation NEEDS to be run from another
-        # thread, because every bottle route has an db_session
-        # active, but creating a database from within a db_session
-        # isn't possible
-        tmp = gevent.Greenlet(run=gm_cache.connect_db)
-        tmp.start()
-        try:
-            tmp.get()
-        except:
-            # reraise greenlet's exception to trigger proper error reporting
-            raise
-        
-        expires = time.time() + engine.cleanup['expire']
-        response.set_cookie('session', sid, path='/', expires=expires, secure=engine.hasSsl())
-        
-        engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
-        
-        engine.main_db.commit()
-        status['url'] = gm.url
-        return status
 
     @get('/vtt/logout')
     def vtt_logout():  
@@ -180,8 +178,6 @@ def setup_gm_routes(engine):
         engine.logging.access('GM name="{0}" url={1} session refreshed by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
         
         server = ''
-        if engine.local_gm:
-            server = engine.getUrl()
         
         # load game from GM's database
         all_games = gm_cache.db.Game.select()
@@ -399,8 +395,6 @@ def setup_gm_routes(engine):
         all_games = gm_cache.db.Game.select()
         
         server = ''
-        if engine.local_gm:
-            server = engine.getUrl()
         
         return dict(gm=gm, server=server, all_games=all_games)
     

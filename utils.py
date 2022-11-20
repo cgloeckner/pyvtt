@@ -274,9 +274,9 @@ class Auth0Api(BaseLoginApi):
 
         self.logout_callback = engine.getUrl()
         
-        if engine.debug:
-            # accept non-https for testing oauth (e.g. localhost)
-            os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+        #if engine.debug:
+        #    # accept non-https for testing oauth (e.g. localhost)
+        #    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
     def getAuthUrl(self):
         """ Generate external oauth URL to access in order to fetch data. """
@@ -357,7 +357,7 @@ class LoggingApi(object):
         
         if not stdout_only:
             self.linkFile(self.info_logger, info_file)
-        elif not quiet:
+        if not quiet:
             self.linkStdout(self.info_logger)
         
         # setup error logger
@@ -375,7 +375,7 @@ class LoggingApi(object):
 
         if not stdout_only:
             self.linkFile(self.access_logger, access_file)
-        elif not quiet:
+        if not quiet:
             self.linkStdout(self.access_logger)
         
         # setup warning logger
@@ -384,7 +384,7 @@ class LoggingApi(object):
         
         if not stdout_only:
             self.linkFile(self.warning_logger, warning_file)
-        elif not quiet:
+        if not quiet:
             self.linkStdout(self.warning_logger)
         
         # setup logins logger
@@ -400,7 +400,7 @@ class LoggingApi(object):
         
         if not stdout_only:
             self.linkFile(self.auth_logger, auth_file)
-        elif not quiet:
+        if not quiet:
             self.linkStdout(self.auth_logger)
         
         # link logging handles

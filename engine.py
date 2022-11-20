@@ -58,8 +58,6 @@ class Engine(object):
             'ssl'     : False,
             'reverse' : False
         }
-        self.debug  = False
-        self.quiet  = False
         self.shards = list()
         
         self.main_db = None
@@ -78,8 +76,6 @@ class Engine(object):
         }
         self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF']
         
-        self.local_gm       = False
-        self.localhost      = False
         self.title          = appname
         self.links          = list()
         self.cleanup = {
@@ -96,15 +92,11 @@ class Engine(object):
         self.cache         = None   # later engine cache
 
         # handle commandline arguments
+        self.localhost = '--localhost' in argv
         self.debug     = '--debug' in argv
         self.quiet     = '--quiet' in argv
-        self.local_gm  = '--local-gm' in argv
-        self.localhost = '--localhost' in argv
         self.no_logs   = '--no-logs' in argv
         
-        if self.localhost:
-            assert(not self.local_gm)
-
         self.logging = utils.LoggingApi(
             quiet        = self.quiet,
             info_file    = self.paths.getLogPath('info'),
@@ -117,7 +109,7 @@ class Engine(object):
             loglevel     = self.log_level
         )
         
-        self.logging.info('Started Modes: debug={0}, quiet={1}, local_gm={2} localhost={3}'.format(self.debug, self.quiet, self.local_gm, self.localhost))
+        self.logging.info(f'Started Modes: {sys.argv}')
         
         # load fancy url generator api ... lol
         self.url_generator = utils.FancyUrlApi(self.paths)
@@ -161,55 +153,50 @@ class Engine(object):
         # export server constants to javascript-file
         self.constants = utils.ConstantExport()
         self.constants(self)
-        
+
         # show argv help
         if '--help' in argv:
-            print('Commandline args:')
-            print('    --debug       Starts in debug mode.')
-            print('    --quiet       Starts in quiet mode.')
-            print('    --local-gm    Starts in local-GM-mode.')
-            print('    --localhost   Starts in localhost mode.')
-            print('')
-            print('Debug Mode:     Enables debug level logging.')
-            print('Quiet Mode:     Disables verbose outputs.')
-            print('Local-GM Mode:  Replaces `localhost` in all created links by the public ip.')
-            print('Localhost Mode: Restricts server for being used via localhost only. CANNOT BE USED WITH --local-gm')
+            print('Commandline options:')
+            print('    --localhost  Restrict server to 127.0.0.1')
+            print('    --debug      Suppress notification API, enable catching all')
+            print('                 exceptions')
+            print('    --quiet      Suppress logging to stdout.')
+            print('    --no-logs    Suppress logging to files.')
+            print('    --appname=<title>')
+            print('                 Use <title> in html title and as foldername for')
+            print('                 preference directory, e.g. ~/.local/share/<title>')
+            print('    --prefdir=<path>')
+            print('                 Use <path> as root path for preference directory.')
+            print('                 Default ~/.local/share')
+            print('    --loglevel=<level>')
+            print('                 Use <level> as logging level')
             print('')
             print('See {0} for custom settings.'.format(settings_path))
             sys.exit(0)
 
-        self.logging.info('Loading domain...')
         if self.localhost:
-            # run via localhost
+            # use localhost as domain
             self.listen = '127.0.0.1'
             self.hosting['domain'] = 'localhost'
-            self.logging.info('Overwriting connections to localhost')
-        elif self.local_gm or self.hosting['domain'] == '':
-            # run via public ip
-            self.hosting['domain'] = self.getPublicIp()
-            self.logging.info('Overwriting Domain by Public IP: {0}'.format(self.hosting['domain']))
+            self.logging.info('Restricting to localhost')
 
-        self.logging.info('Loading login API...')
-        if self.local_gm:
-            self.login['type'] = ''
-            self.logging.info('Defaulting to dev-login for local-gm')
         else:
-            # load patreon API
-            if self.login['type'] == 'patreon':
-                # create patreon query API
-                self.login_api = utils.PatreonApi(engine=self, **self.login)
-            elif self.login['type'] == 'google':
-                # create google query API
-                self.login_api = utils.GoogleApi(engine=self, **self.login)
-            elif self.login['type'] == 'auth0':
+            if self.hosting['domain'] == '':
+                # run via public ip
+                ip = self.getPublicIp()
+                self.hosting['domain'] = ip
+                self.logging.info(f'Using Public IP {ip} as Domain')
+
+            if self.notify['type'] == 'email' and not self.debug:
+                # create email notify API
+                self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
+
+            if self.login['type'] == 'auth0':
                 # create auth0 query API
                 self.login_api = utils.Auth0Api(engine=self, **self.login)
+
             elif self.login['type'] not in [None, '']:
                 raise NotImplementedError(self.login['type'])
-            
-        if self.notify['type'] == 'email' and not self.debug:
-            # create email notify API
-            self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
 
         self.logging.info('Loading main database...')
         # create main database

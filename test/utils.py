@@ -29,7 +29,7 @@ class EngineBaseTest(unittest.TestCase):
                 h.write('demo')
         
         # load engine app into webtest
-        self.engine = Engine(argv=['--quiet'], pref_dir=self.root)
+        self.engine = Engine(argv=['--quiet', '--localhost'], pref_dir=self.root)
         self.engine.app.catchall = False
         self.app = webtest.TestApp(self.engine.app)
         
