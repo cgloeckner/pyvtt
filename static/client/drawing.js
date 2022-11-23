@@ -127,7 +127,7 @@ function initDrawing(as_background) {
 }
 
 function onCloseDrawing() {
-    token_img.src = null
+    token_img.src = ''
     edges = []
     
     $('#drawing').fadeOut(500)
@@ -162,8 +162,11 @@ function detectPressure(event) {
     } else {
         // use last pen pressure
         pressure = localStorage.getItem('draw_pressure')
+        if (pressure == null) {
+            pressure = 25.0
+        }
     }
-    
+
     return pressure
 }
 
