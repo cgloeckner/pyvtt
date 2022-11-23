@@ -125,6 +125,9 @@ function initDrawing(as_background) {
 }
 
 function onCloseDrawing() {
+    token_img.src = null
+    edges = []
+    
     $('#drawing').fadeOut(500)
 }
 
@@ -408,6 +411,8 @@ function onToggleMode(mode=null) {
     
     localStorage.setItem('drawmode', mode)
     $(`#${mode}mode`).addClass('border')
+
+    $('#pencolor')[0].value = '#000000'
 
     if (mode == 'token') {
         // enable token mode
