@@ -492,6 +492,10 @@ img.border {
     outline: 3px solid gold;
 }
 
+div.centered {
+    text-align: center
+}
+
 div#drawing > div > div > input#pencolor,
 div#drawing > div > div > button#upload {
     background: white;

@@ -71,11 +71,13 @@ function drawAll(target) {
             x = drag[0] * token_size
             y = drag[1] * token_size
         }
+        let w = scale * token_img.width * token_size / token_img.width
+        let h = scale * token_img.height * token_size / token_img.width
         target.drawImage(token_img,
-            x - scale * token_img.width / 2,
-            y - scale * token_img.height / 2,
-            scale * token_img.width * token_size / token_img.width,
-            scale * token_img.height * token_size / token_img.width)
+            x - w / 2,
+            y - h / 2,
+            w,
+            h)
         target.globalCompositeOperation = 'source-over'
 
         let hsl = getHsl($('#pencolor')[0].value)
@@ -421,6 +423,8 @@ function onToggleMode(mode=null) {
     $(`#${mode}mode`).addClass('border')
 
     $('#pencolor')[0].value = '#000000'
+    straight = null
+    drag = null
 
     if (mode == 'token') {
         // enable token mode
@@ -432,7 +436,8 @@ function onToggleMode(mode=null) {
         } else {
             $('#token_scale').hide()
         }
-        
+
+        $('#undo_button').hide()
         $('#pencolor')[0].value = '#FF0000'
 
     } else if (mode == 'card') {
@@ -440,14 +445,16 @@ function onToggleMode(mode=null) {
         target[0].width  = card_width
         target[0].height = card_height
 
-        $('#token_scale').hide()
+        $('#token_scale').hide() 
+        $('#undo_button').show()
 
     } else {
         // enable overlay mode
         target[0].width  = card_width
         target[0].height = card_height 
 
-        $('#token_scale').hide()
+        $('#token_scale').hide() 
+        $('#undo_button').show()
     }
     
     let ctx = target[0].getContext("2d")

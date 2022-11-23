@@ -60,7 +60,6 @@
         <div>
             <div>
                 <input type="color" name="pencolor" id="pencolor" value="#000000" onChange="onPickColor()">
-                <img class="icon" src="/static/undo.png" title="UNDO" onClick="onUndo()" />
                 <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
 
                 <span class="icons">
@@ -73,7 +72,11 @@
             </div>
             <br />
             <canvas id="doodle" width="1600" height="1200" onmousedown="onMovePen(event)" onmouseup="onReleasePen(event)" onmousemove="onMovePen(event)" onwheel="onWheelPen(event)" ontouchstart="onMovePen(event)" ontouchmove="onMovePen(event)" ontouchend="onReleasePen(event)" onDrop="onDropTokenImage(event)"></canvas>
-            <input type="range" id="token_scale" min="1" max="200" value="100" onInput="onChangeSize()" />
+
+            <img class="largeicon" id="undo_button" src="/static/undo.png" title="UNDO" onClick="onUndo()" />
+            <div class="centered">
+                <input type="range" id="token_scale" min="1" max="200" value="100" onInput="onChangeSize()" />
+            </div>
         </div>
     </div>
 
