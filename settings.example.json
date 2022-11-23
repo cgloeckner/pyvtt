@@ -29,7 +29,17 @@
     "type": "auth0",
     "domain": "YOUR_APP.us.auth0.com",
     "client_id": "YOUR_APP_ID",
-    "client_secret": "YOUR_APP_SECRET"
+    "client_secret": "YOUR_APP_SECRET",
+    "icons": {
+      "google": "https://www.google.com/favicon.ico",
+      "discord": "https://assets-global.website-files.com/6257adef93867e50d84d30e2/6266bc493fb42d4e27bb8393_847541504914fd33810e70a0ea73177e.ico",
+      "patreon": "https://c5.patreon.com/external/favicon/favicon.ico",
+      "auth0": "https://cdn.auth0.com/website/new-homepage/dark-favicon.png"
+    }
+  },
+  "cleanup": {
+    "expire": 2592000,
+    "daytime": "03:00"
   },
   "notify": {
     "type": "email",

@@ -1,4 +1,6 @@
 #!/bin/bash
+TAG="${1:-latest}"
 SHA=$(git rev-parse HEAD)
-docker build -t pyvtt:${SHA} .
-docker tag pyvtt:${SHA} pyvtt:latest
+echo ${SHA} > sha.txt
+echo docker build -t pyvtt:${SHA} .
+echo docker tag pyvtt:${SHA} pyvtt:${TAG}
