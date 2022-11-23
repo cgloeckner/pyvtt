@@ -7,6 +7,8 @@
         
         <img class="logo" src="/static/logo.png" />
         <div id="countdown"></div>
+        
+        <p>Ask your GM for the actual game link.</p>
     </div>
 </div>
 
