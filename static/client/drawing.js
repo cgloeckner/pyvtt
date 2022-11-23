@@ -74,8 +74,8 @@ function drawAll(target) {
         target.drawImage(token_img,
             x - scale * token_img.width / 2,
             y - scale * token_img.height / 2,
-            scale * token_img.width,
-            scale * token_img.height)
+            scale * token_img.width * token_size / token_img.width,
+            scale * token_img.height * token_size / token_img.width)
         target.globalCompositeOperation = 'source-over'
         
         target.drawImage(token_border, 0, 0, token_size, token_size)
