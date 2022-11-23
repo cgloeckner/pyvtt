@@ -1536,13 +1536,13 @@ function copySelectedTokens() {
 /// Event handle to paste copied tokens
 function pasteCopiedTokens() {
     event.preventDefault();
-    
+
     if (copy_tokens.length > 0) {
         writeSocket({
-            'OPID' : 'CLONE',
-            'ids'  : copy_tokens,
-            'posx' : mouse_x,
-            'posy' : mouse_y
+            'OPID'  : 'CLONE',
+            'ids'   : copy_tokens,
+            'posx'  : mouse_x,
+            'posy'  : mouse_y
         });
     }
 }

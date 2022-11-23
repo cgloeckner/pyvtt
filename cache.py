@@ -719,7 +719,21 @@ class GameCache(object):
         ids  = data['ids']
         posx = data['posx']
         posy = data['posy']
-        
+
+        # calculate tokens' center of mass
+        centerx = 0
+        centery = 0
+        with db_session: 
+            for k, tid in enumerate(ids):
+                t = self.parent.db.Token.select(lambda t: t.id == tid).first()
+                centerx += t.posx
+                centery += t.posy
+        centerx /= len(ids)
+        centery /= len(ids)
+
+        move_dx = posx - centerx
+        move_dy = posy - centery
+
         # create tokens
         tokens = list()
         now = time.time()
@@ -741,9 +755,11 @@ class GameCache(object):
                 if t is None:
                     # ignore, t was deleted in the meantime
                     continue
+                # keep relative distance
+                x = int(t.posx + move_dx)
+                y = int(t.posy + move_dy)
                 # clone token
-                pos = self.parent.db.Token.getPosByDegree((posx, posy), k, len(ids))
-                t = self.parent.db.Token(scene=s, url=t.url, posx=pos[0], posy=pos[1],
+                t = self.parent.db.Token(scene=s, url=t.url, posx=x, posy=y,
                     zorder=t.zorder, size=t.size, rotate=t.rotate, flipx=t.flipx,
                     timeid=now, text=t.text, color=t.color)
                 
