@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ $1 = "-h" ]; then
-  echo "build.sh [TAG] [PORT] [MOUNT]
+  echo "build.sh [TAG] [PORT] [MOUNT]"
   exit 0;
 fi
 
