@@ -296,19 +296,11 @@ function onWheelPen(event) {
         if (pressure >= 100) {
             pressure = 100
         }
-        /*scale *= 1.05
-        if (scale > 10) {
-            scale = 10
-        }*/
     } else if (event.deltaY > 0) {
         pressure -= 3
         if (pressure <= 5) {
             pressure = 5
-        }    
-        /*scale /= 1.05
-        if (scale < 0.1) {
-            scale = 0.1
-        }*/
+        }  
     }
     localStorage.setItem('draw_pressure', pressure)
     
@@ -350,6 +342,8 @@ function onPrepareToken() {
 }
 
 function onExportDrawing() {
+    let mode = localStorage.getItem('drawmode')
+    
     var preview = $('#doodle')[0];
     drawAll(preview.getContext("2d"))
 
@@ -358,7 +352,7 @@ function onExportDrawing() {
 
     let link  = document.createElement('a')
     link.href = url
-    link.download = ''
+    link.download = `${mode}.png`
     link.click()
 }
 
