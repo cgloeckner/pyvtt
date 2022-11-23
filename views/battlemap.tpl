@@ -60,6 +60,7 @@
         <div>
             <div>
                 <input type="color" name="pencolor" id="pencolor" value="#000000" onChange="onPickColor()">
+                <img class="icon" src="/static/undo.png" title="UNDO" onClick="onUndo()" />
                 <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
 
                 <span class="icons">

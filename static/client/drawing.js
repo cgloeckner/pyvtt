@@ -286,6 +286,14 @@ function onReleasePen(event) {
     )
 }
 
+function onUndo() {
+    edges.pop()
+
+    var canvas = $('#doodle')[0]
+    var context = canvas.getContext("2d")
+    drawAll(context)
+}
+
 function onChangeSize() {
     let slider = $('#token_scale')
     scale = slider[0].value / 100.0
