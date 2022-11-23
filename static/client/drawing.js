@@ -77,8 +77,12 @@ function drawAll(target) {
             scale * token_img.width * token_size / token_img.width,
             scale * token_img.height * token_size / token_img.width)
         target.globalCompositeOperation = 'source-over'
-        
+
+        let hsl = getHsl($('#pencolor')[0].value)
+        let filter = target.filter
+        target.filter = `hue-rotate(${hsl[0]}turn) saturate(${hsl[1]}) brightness(${5*hsl[2]})`
         target.drawImage(token_border, 0, 0, token_size, token_size)
+        target.filter = filter
         
     } else {
         // load index card
@@ -382,6 +386,12 @@ function onUploadDrawing() {
     onCloseDrawing();
 }
 
+function onPickColor() {
+    let target = $('#doodle')
+    let ctx = target[0].getContext("2d")
+    drawAll(ctx)
+}
+
 function inTokenMode() {
     return localStorage.getItem('drawmode') == 'token'
 }
@@ -409,6 +419,8 @@ function onToggleMode(mode=null) {
         } else {
             $('#token_scale').hide()
         }
+        
+        $('#pencolor')[0].value = '#FF0000'
 
     } else if (mode == 'card') {
         // enable index card mode

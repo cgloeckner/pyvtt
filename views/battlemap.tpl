@@ -59,7 +59,7 @@
     <div id="drawing">
         <div>
             <div>
-                <input type="color" name="pencolor" id="pencolor" value="#000000">
+                <input type="color" name="pencolor" id="pencolor" value="#000000" onChange="onPickColor()">
                 <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
 
                 <span class="icons">
