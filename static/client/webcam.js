@@ -23,7 +23,7 @@ const screenshare_constraints = {
 
 
 function initWebcam() {
-    closeDrawing();
+    onCloseDrawing();
     
     navigator.mediaDevices.getUserMedia(webcam_constraints)
     .then(function(stream) { onStreamReady(stream); })
@@ -35,7 +35,7 @@ function initWebcam() {
 
 function initScreenShare() {
     closeWebcam();
-    closeDrawing();
+    onCloseDrawing();
     
     navigator.mediaDevices.getDisplayMedia(screenshare_constraints)
     .then(function(stream) { onStreamReady(stream); })
