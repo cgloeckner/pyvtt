@@ -25,6 +25,6 @@ shift $((OPTIND-1))
 # get the tag, and remove it from arguments
 TAG=$1; shift;
 
-docker stop icvtt-${TAG}
-docker rm icvtt-${TAG}
-docker run -d -p ${PORT}:8080 -v ${VOLUME}:/opt/pyvtt/prod --restart=on-failure --name icvtt-${TAG} pyvtt:${TAG} "$@"
+docker stop icvtt-"${TAG}"
+docker rm icvtt-"${TAG}"
+docker run -d -p "${PORT}":8080 -v "${VOLUME}":/opt/pyvtt/prod --restart=on-failure --name icvtt-"${TAG}" pyvtt:"${TAG}" "$@"
