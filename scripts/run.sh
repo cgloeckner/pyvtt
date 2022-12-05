@@ -27,4 +27,4 @@ TAG=$1; shift;
 
 docker stop icvtt-${TAG}
 docker rm icvtt-${TAG}
-docker run -d -p ${PORT}:${PORT} -v ${VOLUME}:${VOLUME} --restart=on-failure --name icvtt-${TAG} pyvtt:${TAG} "$@"
+docker run -d -p ${PORT}:8080 -v ${VOLUME}:/opt/pyvtt/prod --restart=on-failure --name icvtt-${TAG} pyvtt:${TAG} "$@"
