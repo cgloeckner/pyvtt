@@ -544,6 +544,11 @@ def setup_gm_routes(engine):
             # @NOTE: not logged because somebody may play around with this
             abort(404)
 
+        # query whether user is the hosting GM
+        session_gm = engine.main_db.GM.loadFromSession(request)
+        if session_gm is None or session_gm.url != gmurl:
+            abort(404)
+
         data = {
             'games': []
         }
@@ -564,6 +569,11 @@ def setup_gm_routes(engine):
             # @NOTE: not logged because somebody may play around with this
             abort(404)
         
+        # query whether user is the hosting GM
+        session_gm = engine.main_db.GM.loadFromSession(request)
+        if session_gm is None or session_gm.url != gmurl:
+            abort(404)
+
         # try to load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
         root = ['./static/assets', engine.paths.getAssetsPath()]

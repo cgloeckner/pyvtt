@@ -666,6 +666,15 @@ class VttTest(EngineBaseTest):
         self.app.reset()
         
         ret = self.app.get('/vtt/api/games-list/arthur', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        ret = self.app.get('/vtt/api/assets-list/arthur/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+        # login as arthur
+        self.app.set_cookie('session', gm_sid)
+
+        ret = self.app.get('/vtt/api/games-list/arthur', expect_errors=True)
         self.assertEqual(ret.status_int, 200)
 
         ret = self.app.get('/vtt/api/assets-list/arthur/test-game-1', expect_errors=True)
