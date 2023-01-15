@@ -20,7 +20,7 @@
 %now = datetime.datetime.now().time()
 %number_formatter = lambda n: '0{0}'.format(n) if n < 10 else n
 <div id="schedule">
-    <img class="close" src="/static/delete.png" onClick="hideSchedule();" draggable="false" title="CANCEL" />
+    <img class="close" src="/static/close.png" onClick="hideSchedule();" draggable="false" title="CANCEL" />
     <h1>SCHEDULE GAME</h1>
     <form>
         <input type="hidden" id="gm_url" value="{{gm.url}}" />

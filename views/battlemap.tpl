@@ -21,7 +21,7 @@
     </div>
 
     <div id="camerapreview">
-        <img class="close" src="/static/delete.png" onClick="closeWebcam();" draggable="false" title="CLOSE CAMERA" />
+        <img class="close" src="/static/close.png" onClick="closeWebcam();" draggable="false" title="CLOSE CAMERA" />
         <span>
             <p>LIVESTREAM</p>
             <video id="video" playsinline autoplay onClick="togglePreview(this);" title="CLICK TO ENLARGE"></video><br />
@@ -37,7 +37,7 @@
 
     <div id="assetsbrowser">
         <img class="browse" src="/static/upload.png" onClick="initUpload();" draggable="false" title="FILE UPLOAD" />
-        <img class="close" src="/static/delete.png" onClick="hideAssetsBrowser();" draggable="false" title="DISCARD" />
+        <img class="close" src="/static/close.png" onClick="hideAssetsBrowser();" draggable="false" title="DISCARD" />
         <select id="games" onChange="loadAssets()">
             <option value="null">{{engine.title}} Assets</option>
         </select>
@@ -67,7 +67,7 @@
                     <img class="largeicon" id="overlaymode" src="/static/transparent-icon.png" onClick="onToggleMode('overlay')"draggable="false" title="CREATE OVERLAY" />
                     <img class="largeicon" id="tokenmode" src="/static/token-icon.png" onClick="onToggleMode('token')" draggable="false" title="CREATE TOKEN" />
                     <img class="largeicon" src="/static/export.png" onClick="onExportDrawing();" draggable="false" title="DOWNLOAD" />
-                    <img class="largeicon" src="/static/delete.png" onClick="onCloseDrawing();" draggable="false" title="DISCARD" />
+                    <img class="largeicon" src="/static/close.png" onClick="onCloseDrawing();" draggable="false" title="DISCARD" />
                 </span>
             </div>
             <br />
