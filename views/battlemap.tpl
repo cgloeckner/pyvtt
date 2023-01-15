@@ -71,7 +71,7 @@
                 </span>
             </div>
             <br />
-            <canvas id="doodle" width="1600" height="1200" onmousedown="onMovePen(event)" onmouseup="onReleasePen(event)" onmousemove="onMovePen(event)" onwheel="onWheelPen(event)" ontouchstart="onMovePen(event)" ontouchmove="onMovePen(event)" ontouchend="onReleasePen(event)" onDrop="onDropTokenImage(event)"></canvas>
+            <canvas id="doodle" width="1600" height="1200" onpointerdown="onMovePen(event)" onpointerup="onReleasePen(event)" onpointermove="onMovePen(event)" onwheel="onWheelPen(event)" onDrop="onDropTokenImage(event)"></canvas>
 
             <img class="largeicon" id="undo_button" src="/static/undo.png" title="UNDO" onClick="onUndo()" />
             <div class="centered">

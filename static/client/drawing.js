@@ -135,41 +135,19 @@ function onCloseDrawing() {
 
 function detectPressure(event) {
     // detect pen pressure
-    let pressure = 1.0
-    let use_pen = false
+    let pressure = event.pressure
 
-    console.log(event)
+    // @NOTE pointerType seems to default to 'touch' when using a pen
+    //let use_pen  = event.pointerType == 'pen'
 
-    if (event.type == "touchstart" || event.type == "touchmove") {
-        // search all touches to use pen primarily
-        var found = event.touches[0] // fallback: 1st touch
-        // search for device that causes non-extreme pressure
-        for (var i = 0; i < event.touches.length; ++i) {
-            if (!isExtremeForce(event.touches[i].force)) {
-                // found sensitive input, ignore previously found event
-                found = event.touches[i]
-                use_pen = true
-                // @NOTE: pressure isn't working with a single path of lines (which uses a single width not handling multiple)
-                pressure = parseInt(25 * event.touches[i].force)
-                break
-            }
-        }
-        event = found
-    }
-
-    if (use_pen) {
-        // save pen pressure
-        localStorage.setItem('draw_pressure', pressure)
-
-    } else {
-        // use last pen pressure
-        pressure = localStorage.getItem('draw_pressure')
-        if (pressure == null) {
-            pressure = 25.0
-        }
-    }
+    // @NOTE not used right now (wheel-change disabled)
+    //localStorage.setItem('draw_pressure', pressure)
 
     return pressure
+}
+
+function isPenPressure(pressure) {
+    return pressure != 0.5 && pressure != 1.0
 }
 
 function getDoodlePos(event) {
@@ -210,10 +188,10 @@ function onMovePen(event) {
         // grab relevant data
         var width = detectPressure(event)
         var color = $('#pencolor')[0].value
-        drawDot(pos[0], pos[1], color, width, context)
+        drawDot(pos[0], pos[1], color, parseInt(25 * width), context)
     }
 
-    if (event.buttons == 1 || event.type == "touchstart" || event.type == "touchmove") {
+    if (event.buttons == 1) {
         // drag mode
         if (!inTokenMode()) {
             if (drag != null) { 
@@ -223,7 +201,7 @@ function onMovePen(event) {
                 var line = new Line(
                     drag[0], drag[1],
                     pos[0], pos[1],
-                    width, color
+                    parseInt(25 * width), color
                 )
                 edges.push(line)
             }
@@ -274,7 +252,7 @@ function onReleasePen(event) {
         // straight mode:
         if (straight != null && straight.x2 != null) {
             // finish line
-            straight.width = width
+            straight.width = parseInt(25 * width)
             straight.color = color
             edges.push(straight)
 
@@ -289,7 +267,7 @@ function onReleasePen(event) {
     straight = new Line(
         pos[0], pos[1],
         null, null,
-        width, color
+        parseInt(25 * width), color
     )
 }
 
@@ -312,19 +290,21 @@ function onChangeSize() {
 
 /// Modify line width using the mouse wheel
 function onWheelPen(event) {
-    var pressure = parseInt(localStorage.getItem('draw_pressure'))
+    /*
+    var pressure = parseFloat(localStorage.getItem('draw_pressure'))
     if (event.deltaY < 0) {
-        pressure += 3
-        if (pressure >= 100) {
-            pressure = 100
+        pressure += 0.1
+        if (pressure >= 1.0) {
+            pressure = 1.0
         }
     } else if (event.deltaY > 0) {
-        pressure -= 3
-        if (pressure <= 5) {
-            pressure = 5
+        pressure -= 0.1
+        if (pressure <= 0.0) {
+            pressure = 0.0
         }  
     }
     localStorage.setItem('draw_pressure', pressure)
+    */
     
     var canvas = $('#doodle')[0]
     var context = canvas.getContext("2d")
@@ -333,7 +313,7 @@ function onWheelPen(event) {
     if (!inTokenMode()) {
         var pos = getDoodlePos(event)
         var color = $('#pencolor')[0].value
-        drawDot(pos[0], pos[1], color, pressure, context)
+        drawDot(pos[0], pos[1], color, parseInt(25 * pressure), context)
     }
 }
 
