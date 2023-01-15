@@ -1315,7 +1315,7 @@ function onMove(event) {
         if (primary_id != 0 && grabbed) {
             onMoveToken(event);
             
-        } else if (is_single_touch) {
+        } else if (is_single_touch && touch_start != null) {
             if (isExtremeForce(touch_force)) {
                 // only handle hard pressure (finger) as movement
                 var dx = mouse_x - touch_start[0];
@@ -1820,7 +1820,6 @@ function onLabelStep(delta) {
                 'text'  : token.text
             });
         }
-        console.log(id, 'from', prev, 'to', token.text);
     });
 
     writeSocket({

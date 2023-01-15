@@ -142,8 +142,6 @@
     </div>
 
     <div id="rollhistory" onClick="toggleRollHistory();"></div>
-
-    <!-- <div id="debuglog" style="position: absolute; z-index: 100; width: 150px; height: 400px; left: 0px; background-color: white; overflow-y: scroll"> -->
     </div>
 </div>
 

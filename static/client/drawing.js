@@ -138,6 +138,8 @@ function detectPressure(event) {
     let pressure = 1.0
     let use_pen = false
 
+    console.log(event)
+
     if (event.type == "touchstart" || event.type == "touchmove") {
         // search all touches to use pen primarily
         var found = event.touches[0] // fallback: 1st touch
