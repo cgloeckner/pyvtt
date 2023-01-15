@@ -119,7 +119,6 @@ function onDropAsset(event, pos=null) {
         if (game_url == game) {
             url = `/asset/${gm}/${game_url}/${drag_data}`
         }
-        console.log(url)
         // directly create token
         writeSocket({
             'OPID' : 'CREATE',
