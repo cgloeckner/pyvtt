@@ -333,7 +333,7 @@ function onPrepareToken() {
     filereader.onload = function(event) {
         token_img.onload = function() {
             let target = $('#doodle')
-            $('#token_scale').show()
+            $('#token_scale_box').show()
 
             let ctx = target[0].getContext("2d")
             drawAll(ctx)
@@ -417,9 +417,9 @@ function onToggleMode(mode=null) {
         target[0].height = token_size
 
         if (token_img.src != '') {
-            $('#token_scale').show()
+            $('#token_scale_box').show()
         } else {
-            $('#token_scale').hide()
+            $('#token_scale_box').hide()
         }
 
         $('#undo_button').hide()
@@ -430,7 +430,7 @@ function onToggleMode(mode=null) {
         target[0].width  = card_width
         target[0].height = card_height
 
-        $('#token_scale').hide() 
+        $('#token_scale_box').hide() 
         $('#undo_button').show()
 
     } else {
@@ -438,7 +438,7 @@ function onToggleMode(mode=null) {
         target[0].width  = card_width
         target[0].height = card_height 
 
-        $('#token_scale').hide() 
+        $('#token_scale_box').hide() 
         $('#undo_button').show()
     }
     
@@ -465,7 +465,7 @@ function onDropTokenImage(event) {
     filereader.onload = function(event) {
         token_img.onload = function() {
             let target = $('#doodle')
-            $('#token_scale').show()
+            $('#token_scale_box').show()
 
             let ctx = target[0].getContext("2d")
             drawAll(ctx)

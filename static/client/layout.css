@@ -540,7 +540,7 @@ div#drawing > div.options > span#token {
     left: 160px;
 }
 
-input#token_scale {
+input#token_scale_box {
     display: none;
 }
 
