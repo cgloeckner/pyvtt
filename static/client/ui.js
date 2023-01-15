@@ -1791,8 +1791,7 @@ function onLabelStep(delta) {
         var number = token.text.match(/\d+/)
         
         // click token's number
-        var next_number = parseInt(number) + delta;
-        console.log(number, delta, next_number)
+        var next_number = parseInt(number) + delta
         if (next_number <= 0) {
             next_number = 0;
         }
