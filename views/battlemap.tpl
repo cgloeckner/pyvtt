@@ -74,8 +74,9 @@
             <canvas id="doodle" width="1600" height="1200" onpointerdown="onMovePen(event)" onpointerup="onReleasePen(event)" onpointermove="onMovePen(event)" onwheel="onWheelPen(event)" onDrop="onDropTokenImage(event)"></canvas>
 
             <img class="largeicon" id="undo_button" src="/static/undo.png" title="UNDO" onClick="onUndo()" />
-            <div class="centered" id="token_scale_box">
+            <div class="centered" id="token_toolbox">
                 ZOOM: <input type="range" id="token_scale" min="1" max="200" value="100" onInput="onChangeSize()" />
+                <input type="checkbox" id="token_pop" checked="" onChange="onChangePop()" /><label for="token_pop">MAKE IT POP</label>
             </div>
         </div>
     </div>
