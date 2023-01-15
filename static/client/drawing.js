@@ -183,7 +183,7 @@ function onMovePen(event) {
     drawAll(context);
     
     var pos = getDoodlePos(event)
-
+    
     if (!inTokenMode()) {
         // grab relevant data
         var width = detectPressure(event)
@@ -208,7 +208,12 @@ function onMovePen(event) {
         }
         
         // continue dragging
-        drag = pos
+        if (drag == null) {
+            drag = pos
+        } else {
+            drag[0] += event.movementX * 0.001
+            drag[1] += event.movementY * 0.001
+        }
     
     } else if (event.shiftKey) {
         // straight line mode
