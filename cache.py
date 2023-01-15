@@ -629,30 +629,6 @@ class GameCache(object):
                     tmp['uuid'] = player.uuid
                     update.append(tmp)
 
-            """
-            for data in changes:
-                t = self.parent.db.Token.select(lambda t: t.id == data['id']).first()
-                if t is None:
-                    # ignore deleted token
-                    continue
-                # fetch changed data (accepting None)
-                posx   = data.get('posx')
-                posy   = data.get('posy')
-                pos    = None if posx is None or posy is None else (posx, posy)
-                zorder = data.get('zorder')
-                size   = data.get('size')
-                rotate = data.get('rotate')
-                flipx  = data.get('flipx')
-                locked = data.get('locked')
-                text   = data.get('text')
-                label  = None if text is None else (text, player.color)
-                t.update(timeid=now, pos=pos, zorder=zorder, size=size,
-                    rotate=rotate, flipx=flipx, locked=locked, label=label)
-            """
-            
-        # broadcast tokens
-        # self.broadcastTokenUpdate(player, tokens)
-        
         self.broadcast({
             'OPID'    : 'UPDATE',
             'tokens'  : update
@@ -764,6 +740,8 @@ class GameCache(object):
                 t = self.parent.db.Token(scene=s, url=t.url, posx=x, posy=y,
                     zorder=t.zorder, size=t.size, rotate=t.rotate, flipx=t.flipx,
                     timeid=now, text=t.text, color=t.color)
+                # enforce position to be within bounds
+                t.update(pos=[x, y], timeid=now)
                 
                 self.parent.db.commit()
                 tokens.append(t.to_dict())
