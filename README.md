@@ -23,7 +23,7 @@ Kane Driscol
 - Community Manager for ICVTT over on the [Runehammer Forums](https://forums.runehammer.online/) and [ICRPG Discord Community](https://discord.gg/H76tfBZZEX)
 
 Coyote
-- Default Map Assets
+- Majority of default assets
 
 Ryan C. Scott
 - help on setting up `nginx` reverse proxy
