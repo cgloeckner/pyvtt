@@ -60,7 +60,7 @@
         <div>
             <div>
                 <input type="color" name="pencolor" id="pencolor" value="#000000" onChange="onPickColor()">
-                <button id="upload" onClick="onUploadDrawing();">UPLOAD</button>
+                <button id="upload" onClick="onUploadDrawing();">ADD TO SCENE</button>
 
                 <span class="icons">
                     <img class="largeicon" id="cardmode" src="/static/card-icon.png" onClick="onToggleMode('card')"draggable="false" title="CREATE INDEX CARD" />
