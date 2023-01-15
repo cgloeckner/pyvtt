@@ -477,5 +477,11 @@ function onDropTokenImage(event) {
         }
 
         token_img.src = filereader.result
+
+        // reset position and scaling
+        drag = null
+        $('#token_scale')[0].value = 100
+
+        onChangeSize()
     }
 }
