@@ -1467,6 +1467,30 @@ class PlayerCacheTest(EngineBaseTest):
         min_dist = min(distances)
         max_dist = max(distances)
         self.assertLess(max_dist - min_dist, 10)
+
+        # cannot clone non-existing token
+        # can clone multiple tokens
+        with db_session:
+            scene = self.active_scene()
+            self.purge_scene(scene)
+            t1 = gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
+            t2 = gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
+            t3 = gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
+            t4 = gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
+        data = {
+            'ids': [t1.id, 4563574575678, t4.id],
+            'posx': 100,
+            'posy': 80
+        }
+        game_cache.onCloneToken(player_cache1, data) 
+        # expect CREATE broadcast
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'CREATE')
+
     
     def test_onCreateScene(self):
         socket1 = SocketDummy()

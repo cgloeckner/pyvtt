@@ -726,6 +726,8 @@ class GameCache(object):
         with db_session: 
             for k, tid in enumerate(ids):
                 t = self.parent.db.Token.select(lambda t: t.id == tid).first()
+                if t is None:
+                    continue
                 centerx += t.posx
                 centery += t.posy
         centerx /= len(ids)
