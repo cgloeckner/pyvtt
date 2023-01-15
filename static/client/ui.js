@@ -791,7 +791,7 @@ function updateTokenbar() {
         var padding = 20;
 
         var icons = [token_icons];
-        var isInt = token.text.startsWith('#') || (!isNaN(token.text) && token.text != '');
+        var isInt = (token.text.match(/\d+/) != null) || (!isNaN(token.text) && token.text != '');
             
         if (isInt) {
             icons.push(['LabelInc', 'LabelDec']);
@@ -853,7 +853,7 @@ function updateTokenbar() {
             $('#tokenDelete').css('visibility', '');
             $('#tokenLabel').css('visibility', '');
 
-            var isInt = token.text.startsWith('#') || (!isNaN(token.text) && token.text != '');
+            var isInt = (token.text.match(/\d+/) != null) || (!isNaN(token.text) && token.text != '');
             
             if (isInt) {
                 $('#tokenLabelDec').css('visibility', '');
@@ -1780,7 +1780,7 @@ function onLabelStep(delta) {
             return;
         }
         var isTimer = token.text.startsWith('#');
-        var isInt   = isTimer || (!isNaN(token.text) && token.text != '');
+        var isInt   = (token.text.match(/\d+/) != null) || (!isNaN(token.text) && token.text != '');
         
         if (token == null || token.locked || !isInt) {
             // ignore if locked
@@ -1788,31 +1788,23 @@ function onLabelStep(delta) {
         }
 
         var prev = token.text;
+        var number = token.text.match(/\d+/)
         
         // click token's number
-        if (isTimer) {
-            var number = parseInt(token.text.substr(1));
-        } else {
-            var number = parseInt(token.text);
+        var next_number = parseInt(number) + delta;
+        console.log(number, delta, next_number)
+        if (next_number <= 0) {
+            next_number = 0;
         }
-        number += delta;
-        if (number <= 0) {
-            number = 0;
-        }
-        if (isTimer) {
-            token.text = '#';
-        } else {
-            token.text = '';
-        }
-        if (number > 0) {
-            token.text += number;
+        if (!isTimer || next_number > 0) {
+            token.text = token.text.replace(number, next_number)
         }
         
         // trigger buffer redraw
         token.label_canvas = null;
         token.hue_canvas   = null;
 
-        if (number == 0 && isTimer) {
+        if (next_number == 0 && isTimer) {
             deleted.push(id);
         } else {
             changes.push({
