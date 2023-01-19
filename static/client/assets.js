@@ -44,7 +44,9 @@ function loadAssets() {
                 node.on('dragend', onDropAsset)
                 node.on('touchend', onDropAsset)
                 
-                node.on('dblclick', onQuickDropAsset)
+                node.on('dblclick', function(event) {
+                    onQuickDropAsset(event, fname)
+                })
                 node.on('contextmenu', function(event) {
                     onDownloadAsset(tmp.id, fname, event)
                 })
@@ -139,7 +141,7 @@ function onDropAsset(event, pos=null) {
     }
 }
 
-function onQuickDropAsset(event) {
+function onQuickDropAsset(event, fname) {
     localStorage.setItem('drag_data', fname)
     let center = [viewport['x'], viewport['y']]
     onDropAsset(event, center)
