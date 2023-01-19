@@ -261,11 +261,15 @@ function onMovePen(event) {
         }
         
         // continue dragging
-        if (drag == null) {
-            drag = pos
+        if (inTokenMode()) {
+            if (drag == null) {
+                drag = pos
+            } else {
+                drag[0] += event.movementX * 0.001
+                drag[1] += event.movementY * 0.001
+            }
         } else {
-            drag[0] += event.movementX * 0.001
-            drag[1] += event.movementY * 0.001
+            drag = pos
         }
     
     } else if (event.shiftKey) {
