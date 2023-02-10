@@ -315,8 +315,7 @@ class Auth0Api(BaseLoginApi):
         self.engine.logging.info(f'GM Login with {id_token}')
         header, payload, signature = id_token.split('.')
 
-        payload += '=' * (4-len(payload) % 4)
-        data = base64.b64decode(payload)
+        data = base64.b64decode(payload + '===').decode('utf-8')
         data = json.loads(data)
         
         # create login data
