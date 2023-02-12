@@ -38,6 +38,8 @@ def setup_gm_routes(engine):
     def gm_login_callback():
         # query session from login auth
         session = engine.login_api.getSession(request)
+        if 'identity' not in session:
+            redirect('/vtt/join')
         
         # test whether GM is already there
         gm = engine.main_db.GM.select(lambda g: g.identity == session['identity']).first()
