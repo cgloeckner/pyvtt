@@ -310,13 +310,16 @@ class Auth0Api(BaseLoginApi):
             authorization_response=request.url
         )
 
-        # fetch payload from base64 ID-Token
+        # split ID-Token
         id_token = token['id_token']
-        self.engine.logging.info(f'GM Login with {id_token}')
         header, payload, signature = id_token.split('.')
 
-        data = base64.b64decode(payload + '===').decode('utf-8')
-        data = json.loads(data)
+        # enlarge payload with '='s
+        payload += '=' * (4 - len(payload) % 4)
+
+        # NOTE: gravatar data inside must be read urlsafe(!)
+        payload = base64.urlsafe_b64decode(payload)
+        data = json.loads(payload)
         
         # create login data
         result = {
