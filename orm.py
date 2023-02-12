@@ -540,9 +540,9 @@ def createGmDatabase(engine, filename):
                     if isinstance(url, int):
                         # regular token
                         newurl = self.getImageUrl(url)
-                    else:                             
+                    else:
                         # timer token
-                        newurl = '/static/{0}.png'.format(url)
+                        newurl = '/static/assets/{0}.png'.format(url)
                     # create token
                     t = db.Token(
                         scene  = scene,
