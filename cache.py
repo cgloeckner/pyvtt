@@ -164,9 +164,13 @@ class GameCache(object):
         self.players = dict() # name => player
         self.next_id = 0 # used for player indexing in UI
 
-        self.playback = [None] * engine.file_limit['num_music']
+        self.playback = list()
+        for slot_id in range(engine.file_limit['num_music']):
+            if self.isMusicSlotUsed(slot_id):
+                self.playback.append(False) # exists but not playing
+            else:
+                self.playback.append(None) # empty slot
 
-        #self.engine.logging.info('GameCache {0} for GM {1} created'.format(self.url, self.parent.url))
         if num_generated > 0:
             self.engine.logging.info('{0} MD5 hashes generated'.format(num_generated))
         
@@ -214,6 +218,13 @@ class GameCache(object):
                 handle.save(destination=str(fname), overwrite=True)
 
         return next_slot
+
+    def isMusicSlotUsed(self, slot_id):
+        root = self.engine.paths.getGamePath(self.parent.url, self.url)
+
+        with self.engine.locks[self.parent.url]: # make IO access safe
+            fname = root / '{0}.mp3'.format(int(slot_id))
+            return os.path.exists(fname)
 
     def deleteMusic(self, slots):
         root = self.engine.paths.getGamePath(self.parent.url, self.url)
@@ -798,7 +809,7 @@ class GameCache(object):
         elif data['action'] == 'remove': 
             self.playback[slot_id] = None
             self.deleteMusic([slot_id])
-        
+
         # broadcast notification
         self.broadcast(data)
         
