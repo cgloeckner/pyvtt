@@ -107,7 +107,11 @@ function onAccept(data) {
         addMusicSlot(slot);
     });
     if (data.playback != null) {
-        playMusicSlot(data.playback);
+        $.each(data.playback, function(i, v) {
+            if (v) {
+                playMusicSlot(i)
+            }
+        })
     }
     
     onRefresh(data);
@@ -217,15 +221,15 @@ function onBeacon(data) {
 function onMusic(data) {
     switch (data['action']) {
         case 'play':
-            playMusicSlot(data['slot']);
+            playMusicSlot(data['slot_id']);
             break;
 
         case 'pause':
-            pauseMusic();
+            pauseMusic(data['slot_id']);
             break;
             
         case 'add':
-            $.each(data['slots'], function(index, slot) {
+            $.each(data['slot_id'], function(index, slot) {
                 if (slot != null) {
                     addMusicSlot(slot, data['update_id']);
                 }
@@ -233,9 +237,7 @@ function onMusic(data) {
             break;
 
         case 'remove':
-            $.each(data['slots'], function(index, slot) {
-                removeMusicSlot(data['slots']);
-            });
+            removeMusicSlot(data['slot_id']);
             break;
     }
 }
@@ -404,7 +406,10 @@ function login(event, gmname, url, websocket_url) {
                     running = false;
                     
                     // reset audio
-                    $('#audioplayer')[0].pause();
+                    for (var n = 0; n < MAX_MUSIC_SLOTS; ++n) {
+                        var player = $(`#audioplayer${n}`)[0]
+                        player.pause()
+                    }
                     $('#musicslots')[0].innerHTML = ''
                     
                     $('#game').fadeOut(1000, 0.0);

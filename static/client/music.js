@@ -8,7 +8,6 @@ License: MIT (see LICENSE for details)
 var gm   = '';
 var game = '';
 
-var playback = null;
 var num_slots = 0;
 
 const volume_scale = 0.25;
@@ -36,7 +35,7 @@ function addMusicSlot(slot_id) {
         // create container
         var div_id     = 'id="musicslot' + slot_id + '"';
         var div_title  = 'title="MUSIC SLOT ' + (slot_id+1) + '"';
-        var div_events = 'onClick="onPlayMusicSlot(' + slot_id + ');" onContextMenu="onRemoveMusicSlot(' + slot_id + ');"';
+        var div_events = 'onClick="onToggleMusicSlot(' + slot_id + ');" onContextMenu="onRemoveMusicSlot(' + slot_id + ');"';
         var container  = '<div class="slot" ' + div_id + ' ' + div_title + ' ' + div_events + '>' + (slot_id+1) + '</div>';
         
         // pick previous container
@@ -57,19 +56,19 @@ function addMusicSlot(slot_id) {
 }
 
 /// Event handle to play a music slot
-function onPlayMusicSlot(slot_id) {
-    var player = $('#audioplayer')[0];
+function onToggleMusicSlot(slot_id) {
+    var player = $(`#audioplayer${slot_id}`)[0];
 
     // check if track was already selected
     var action = 'play';
-    if (slot_id == playback) {
+    if (!player.paused) {
         action = 'pause';
     }
     
     writeSocket({
-        'OPID'   : 'MUSIC',
-        'action' : action,
-        'slot'   : slot_id
+        'OPID'    : 'MUSIC',
+        'action'  : action,
+        'slot_id' : slot_id
     });
 }
 
@@ -89,12 +88,14 @@ function onRemoveMusicSlot(slot_id) {
         default:
             fancy_slot += 'TH';
     }
+    
     if (confirm('CLEAR ' + fancy_slot + ' MUSIC SLOT?')) {
         num_slots -= 1;
+
         writeSocket({
-            'OPID'   : 'MUSIC',
-            'action' : 'remove',
-            'slots'  : [slot_id]
+            'OPID'    : 'MUSIC',
+            'action'  : 'remove',
+            'slot_id' : slot_id
         });
 
         if (num_slots == 0) {
@@ -105,7 +106,7 @@ function onRemoveMusicSlot(slot_id) {
 
 /// Play a music slot
 function playMusicSlot(slot_id, update_id) {
-    var player = $('#audioplayer')[0];
+    var player = $(`#audioplayer${slot_id}`)[0];
     var was_paused = player.paused;
 
     // update player
@@ -116,29 +117,34 @@ function playMusicSlot(slot_id, update_id) {
     player.src = '/asset/' + gm + '/' + game + '/' + slot_id + '.mp3?update=' + update_ids[slot_id];
     player.play();
 
-    updateSlotHighlight(slot_id);
     updateMusicUi();
 }
 
-function updateSlotHighlight(slot_id) {
-    if (playback != null) {
-        $('#musicslot' + playback).removeClass('playback');
+function updateMusicUi() {
+    // handle UI highlighting and count actual playbacks
+    var num_playing = 0
+    for (var n = 0; n < MAX_MUSIC_SLOTS; ++n) {
+        var player = $(`#audioplayer${n}`)[0] 
+        var slot = $(`#musicslot${n}`)  
+        var playbackShown = slot.hasClass('playback')
+
+        if (!player.paused) { // is playing
+            num_playing += 1
+
+            if (!playbackShown) {
+                slot.addClass('playback')
+            }
+        } else {
+            if (playbackShown) {
+                slot.removeClass('playback')
+            }
+        }
     }
-
-    playback = slot_id;
-
-    if (playback != null) {
-        $('#musicslot' + playback).addClass('playback');
-    }
-}
-
-function updateMusicUi() {   
-    var player = $('#audioplayer')[0];
     
-    // update play button and volume display
-    var raw_volume = getAudioVolume(player)
+    // update volume UI
+    var raw_volume = parseFloat(localStorage.getItem('volume'))
     var vol_str = parseInt(raw_volume * 100) + '%'
-    if (player.paused || raw_volume == 0.0) {
+    if (num_playing == 0 || raw_volume == 0.0) {
         vol_str = '<img src="/static/muted.png" class="icon" />';
     }
     $('#musicvolume')[0].innerHTML = vol_str;
@@ -148,27 +154,20 @@ function updateMusicUi() {
 }
 
 /// Pause a music slot
-function pauseMusic() {       
-    var player = $('#audioplayer')[0];
+function pauseMusic(slot_id) {       
+    var player = $(`#audioplayer${slot_id}`)[0];
     
     // pause player
     player.pause();
 
-    updateSlotHighlight(null);
     updateMusicUi();
 }
 
 /// Remove a music slot
 function removeMusicSlot(slot_id) {
-    $('#musicslot' + slot_id).remove();
-
-    if (playback == slot_id) {        
-        playback = null;
-        var player = $('#audioplayer')[0];
-        player.pause();
-        
-        update_ids[slot_id] = null;
-    }
+    $(`#musicslot${slot_id}`).remove()
+    $(`#audioplayer${slot_id}`)[0].pause()
+    update_ids[slot_id] = null;
 }
 
 /// Get delta for stepping music volume up or down, based on the current volume
@@ -185,49 +184,45 @@ function getMusicVolumeDelta(v) {
 }
 
 /// Change music volume
-function onStepMusic(direction) {   
-    var player = $('#audioplayer')[0];
-
+function onStepMusic(direction) {  
     // modify volume
-    var raw_volume = getAudioVolume(player);
-    delta = getMusicVolumeDelta(raw_volume);
-    raw_volume += direction * delta;
-    raw_volume = Math.round(raw_volume * 100) / 100.0;
-    
-    // fix bounding issues
+    let raw_volume = parseFloat(localStorage.getItem('volume'))
+    let delta = getMusicVolumeDelta(raw_volume)
+    raw_volume += direction * delta
+    raw_volume = Math.round(raw_volume * 100) / 100.0
+
+    // lock volume to [0.0; 1.0]
     if (raw_volume < 0.01) {
-        // stop playback
-        raw_volume = 0.0;
-        player.pause();
+        raw_volume = 0.0
     } else if (raw_volume > 1.0) {
-        // cap at 100%
-        raw_volume = 1.0;
-    }
-    
-    // continue playback if suitable
-    if (raw_volume > 0.0 && player.paused && direction > 0) {
-        player.play();
+        raw_volume = 1.0
     }
 
-    // apply volume
-    setAudioVolume(player, raw_volume);
+    // adjust volume for all tracks
+    for (var n = 0; n < MAX_MUSIC_SLOTS; ++n) { 
+        var player = $(`#audioplayer${n}`)[0];
+        setAudioVolume(player, raw_volume)
+    }
+    localStorage.setItem('volume', raw_volume)
     
     updateMusicUi();
 }
 
-function onInitMusicPlayer(gmurl, url) {
+function onInitMusicPlayer(gmurl, url) {    
+    // setup audio source
+    gm   = gmurl
+    game = url
+
     // setup default volume
-    var raw = localStorage.getItem('volume');
+    var raw = localStorage.getItem('volume')
     if (raw != null) {
-        default_volume = parseFloat(raw);
+        default_volume = parseFloat(raw)
     } else {
-        default_volume = 0.10;
+        default_volume = 0.10
     }
 
-    // setup audio source
-    gm   = gmurl;
-    game = url;
-    
-    var player = $('#audioplayer')[0];
-    setAudioVolume(player, default_volume);
+    for (var n = 0; n < MAX_MUSIC_SLOTS; ++n) {
+        var player = $(`#audioplayer${n}`)[0]
+        setAudioVolume(player, default_volume)
+    }
 }

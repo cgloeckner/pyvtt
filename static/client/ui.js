@@ -704,9 +704,9 @@ function uploadFiles(gm_name, game_url, f, known_urls, x, y) {
                 } else {
                     // broadcast music upload
                     writeSocket({
-                        'OPID'   : 'MUSIC',
-                        'action' : 'add',
-                        'slots'  : response['music']
+                        'OPID'    : 'MUSIC',
+                        'action'  : 'add',
+                        'slot_id' : response['music']
                     });
                 }
             }

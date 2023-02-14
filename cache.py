@@ -164,7 +164,7 @@ class GameCache(object):
         self.players = dict() # name => player
         self.next_id = 0 # used for player indexing in UI
 
-        self.playback  = None
+        self.playback = [None] * engine.file_limit['num_music']
 
         #self.engine.logging.info('GameCache {0} for GM {1} created'.format(self.url, self.parent.url))
         if num_generated > 0:
@@ -781,15 +781,24 @@ class GameCache(object):
 
     def onMusic(self, player, data):
         """ Handle player uploaded music. """
-        if data['action'] == 'play':
-            self.playback = data['slot']
+        slot_id = data['slot_id']
+
+        if data['action'] == 'add':
+            for i in slot_id:
+                self.playback[i] = False
+            
+        elif data['action'] == 'play':
+            if self.playback[slot_id] is not None:
+                self.playback[slot_id] = True
             
         elif data['action'] == 'pause':
-            self.playback = None
+            if self.playback[slot_id] is not None:
+                self.playback[slot_id] = False
             
-        elif data['action'] == 'remove':
-            self.deleteMusic(data['slots'])
-            
+        elif data['action'] == 'remove': 
+            self.playback[slot_id] = None
+            self.deleteMusic([slot_id])
+        
         # broadcast notification
         self.broadcast(data)
         

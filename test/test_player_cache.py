@@ -1333,11 +1333,14 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache3 = game_cache.insert('carlos', 'green', False)
         player_cache3.socket = socket3
 
-        beacon_data = {'OPID': 'MUSIC', 'action': 'add', 'slots': [1, 2, 3]}
-        self.assertIsNone(game_cache.playback)
+        beacon_data = {'OPID': 'MUSIC', 'action': 'add', 'slot_id': [0, 2, 3, 4]}          
+        expected = [None] * self.engine.file_limit['num_music']
+        self.assertEqual(game_cache.playback, expected)
         game_cache.onMusic(player_cache3, beacon_data)
-        # expect MUSIC add-slots broadcast
-        self.assertIsNone(game_cache.playback)
+        # expect MUSIC add-slots broadcast              
+        for i in beacon_data['slot_id']:
+            expected[i] = False
+        self.assertEqual(game_cache.playback, expected)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1345,12 +1348,13 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1, answer3)
         self.assertEqual(answer1['OPID'], 'MUSIC')
         self.assertEqual(answer1['action'], 'add')
-        self.assertEqual(answer1['slots'], [1, 2, 3])
+        self.assertEqual(answer1['slot_id'], [0, 2, 3, 4])
         
-        beacon_data = {'OPID': 'MUSIC', 'action': 'remove', 'slots': [2, 3]}
+        beacon_data = {'OPID': 'MUSIC', 'action': 'remove', 'slot_id': 3}
         game_cache.onMusic(player_cache3, beacon_data)
         # expect MUSIC remove-slots broadcast
-        self.assertIsNone(game_cache.playback)
+        expected[3] = None
+        self.assertEqual(game_cache.playback, expected)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1358,12 +1362,13 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1, answer3)
         self.assertEqual(answer1['OPID'], 'MUSIC')  
         self.assertEqual(answer1['action'], 'remove')
-        self.assertEqual(answer1['slots'], [2, 3])
+        self.assertEqual(answer1['slot_id'], 3)
         
-        beacon_data = {'OPID': 'MUSIC', 'action': 'play', 'slot': 2}
+        beacon_data = {'OPID': 'MUSIC', 'action': 'play', 'slot_id': 2}
         game_cache.onMusic(player_cache3, beacon_data)
         # expect MUSIC play broadcast
-        self.assertEqual(game_cache.playback, 2)
+        expected[2] = True
+        self.assertEqual(game_cache.playback, expected)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1371,12 +1376,27 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1, answer3)
         self.assertEqual(answer1['OPID'], 'MUSIC')  
         self.assertEqual(answer1['action'], 'play')
-        self.assertEqual(answer1['slot'], 2)
+        self.assertEqual(answer1['slot_id'], 2)
         
-        beacon_data = {'OPID': 'MUSIC', 'action': 'pause'}
+        beacon_data = {'OPID': 'MUSIC', 'action': 'play', 'slot_id': 4}
+        game_cache.onMusic(player_cache3, beacon_data)
+        # expect MUSIC play broadcast
+        expected[4] = True
+        self.assertEqual(game_cache.playback, expected)
+        answer1 = socket1.pop_send()
+        answer2 = socket2.pop_send()
+        answer3 = socket3.pop_send()
+        self.assertEqual(answer1, answer2)
+        self.assertEqual(answer1, answer3)
+        self.assertEqual(answer1['OPID'], 'MUSIC')  
+        self.assertEqual(answer1['action'], 'play')
+        self.assertEqual(answer1['slot_id'], 4)
+        
+        beacon_data = {'OPID': 'MUSIC', 'action': 'pause', 'slot_id': 2}
         game_cache.onMusic(player_cache3, beacon_data)
         # expect MUSIC pause broadcast
-        self.assertIsNone(game_cache.playback)
+        expected[2] = False
+        self.assertEqual(game_cache.playback, expected)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
