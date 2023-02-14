@@ -17,11 +17,6 @@ function setAudioVolume(audio, volume) {
     audio.volume = volume * volume_scale;
 }
 
-/// Get music volume from audio object
-function getAudioVolume(audio) {
-    return audio.volume / volume_scale;
-}
-
 /// Each slots has a timestamp assign indicating when it was set. This will help to ignore cache in case a music slot got updated
 var update_ids = [];
 
@@ -106,18 +101,21 @@ function onRemoveMusicSlot(slot_id) {
 
 /// Play a music slot
 function playMusicSlot(slot_id, update_id) {
-    var player = $(`#audioplayer${slot_id}`)[0];
+    var player = $(`#audioplayer${slot_id}`);
     var was_paused = player.paused;
 
     // update player
     $('#musicStatus').hide();
-    player.oncanplay = function(event) {  
+    player.on('canplay', function() {  
         $('#musicStatus').show();
-    };
-    player.src = '/asset/' + gm + '/' + game + '/' + slot_id + '.mp3?update=' + update_ids[slot_id];
-    player.play();
 
-    updateMusicUi();
+        let volume = parseFloat(localStorage.getItem('volume'))
+        player.animate({volume: volume * volume_scale}, 1000)
+        player[0].play();
+        updateMusicUi();
+    })
+    player[0].src = '/asset/' + gm + '/' + game + '/' + slot_id + '.mp3?update=' + update_ids[slot_id];
+
 }
 
 function updateMusicUi() {
@@ -155,12 +153,14 @@ function updateMusicUi() {
 
 /// Pause a music slot
 function pauseMusic(slot_id) {       
-    var player = $(`#audioplayer${slot_id}`)[0];
+    var player = $(`#audioplayer${slot_id}`);
     
-    // pause player
-    player.pause();
-
-    updateMusicUi();
+    // fade and pause player
+    let slot = $(`#musicslot${slot_id}`)
+    player.animate({volume: 0}, 1000, function() {
+        player[0].pause()
+        updateMusicUi();
+    })
 }
 
 /// Remove a music slot
