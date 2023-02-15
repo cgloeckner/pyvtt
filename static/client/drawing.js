@@ -22,6 +22,9 @@ var token_border = new Image()
 
 var token_pops = false
 
+var offscreen_token_canvas = null
+
+
 /// Line constructor
 function Line(x1, y1, x2, y2, width, color) {
     this.x1 = x1 
@@ -54,6 +57,58 @@ function drawDot(x, y, color, width, target) {
     target.stroke();
 }
 
+function drawUpperTokenBackground(target) {
+    target.drawImage(token_background,
+        0, 0, token_size, token_size/2,
+        0, 0, token_size, token_size/2)
+}
+
+function drawLowerTokenBackground(target) {
+    target.drawImage(token_background,
+        0, token_size/2, token_size, token_size/2,
+        0, token_size/2, token_size, token_size/2)
+}
+
+function colorizeTarget(target, hsl) {
+    var old = target.filter
+    target.filter = `hue-rotate(${hsl[0]}turn) saturate(${hsl[1]}) brightness(${5*hsl[2]})`
+    return old
+}
+
+function drawUpperTokenBorder(target) {
+    var hsl = getHsl($('#pencolor')[0].value)
+    var filter = colorizeTarget(target, hsl)
+    target.drawImage(token_border, 0, 0, token_size, token_size/2, 0, 0, token_size, token_size/2)
+    // reset filter
+    target.filter = filter
+}
+
+function drawLowerTokenBorder(target) {
+    var hsl = getHsl($('#pencolor')[0].value)
+    var filter = colorizeTarget(target, hsl)
+    target.drawImage(token_border, 0, token_size / 2, token_size, token_size/2, 0, token_size / 2, token_size, token_size/2)
+    // reset filter
+    target.filter = filter
+}
+
+function drawTokenArt(target) {
+    var x = token_size / 2
+    var y = token_size / 2
+    var w = scale * token_img.width * token_size / token_img.width
+    var h = scale * token_img.height * token_size / token_img.width
+
+    if (drag != null) {
+        x = drag[0] * token_size
+        y = drag[1] * token_size
+    }
+
+    target.drawImage(token_img,
+        x - w / 2,
+        y - h / 2,
+        w,
+        h)
+}
+
 function drawAll(target) {
     // clear context   
     var canvas = $('#doodle')[0]
@@ -63,82 +118,53 @@ function drawAll(target) {
     let mode = localStorage.getItem('drawmode')
 
     if (mode == 'token') {
-        // draw token background
-        target.drawImage(token_background, 0, 0, token_size, token_size)
-
-        if (!token_pops) {
-            // entire token art
-            target.globalCompositeOperation = 'source-atop'
-            var x = token_size / 2
-            var y = token_size / 2
-            if (drag != null) {
-                x = drag[0] * token_size
-                y = drag[1] * token_size
-            }
-
-            var w = scale * token_img.width * token_size / token_img.width
-            var h = scale * token_img.height * token_size / token_img.width
-            target.drawImage(token_img,
-                x - w / 2,
-                y - h / 2,
-                w,
-                h)
-            target.globalCompositeOperation = 'source-over'
-        }
-        
-        // upper half of token border
-        var hsl = getHsl($('#pencolor')[0].value)
-        var filter = target.filter
-        target.filter = `hue-rotate(${hsl[0]}turn) saturate(${hsl[1]}) brightness(${5*hsl[2]})`
-        target.drawImage(token_border, 0, 0, token_size, token_size/2, 0, 0, token_size, token_size/2)
-        target.filter = filter
-
         if (token_pops) {
-            // upper half of token art
-            var x = token_size / 2
-            var y = token_size / 2
-            if (drag != null) {
-                x = drag[0] * token_size
-                y = drag[1] * token_size
+            // prepare offscreen buffer
+            var canvas = $('#doodle')[0]
+            var w = canvas.width
+            var h = canvas.height
+            if (offscreen_token_canvas == null) {
+                offscreen_token_canvas = document.createElement('canvas')
+
+                offscreen_token_canvas.width  = w
+                offscreen_token_canvas.height = h
             }
+            var ctx = offscreen_token_canvas.getContext('2d');
+            ctx.clearRect(0, 0, w, h)
 
-            var w = scale * token_img.width * token_size / token_img.width
-            var h = scale * token_img.height * token_size / token_img.width
-            target.drawImage(token_img,
-                0,
-                0,
-                token_img.width,
-                token_img.height / 2,
-                x - w / 2,
-                y - h / 2,
-                w,
-                h / 2)
-            //target.globalCompositeOperation = 'source-over'
+            // draw lower part of the token
+            drawLowerTokenBackground(ctx)
+            ctx.globalCompositeOperation = 'source-atop'
+            drawTokenArt(ctx)
+            ctx.globalCompositeOperation = 'source-over'
+            drawLowerTokenBorder(ctx)
 
-            // lower half of token art    
+            // copy to actual canvas
+            target.drawImage(offscreen_token_canvas, 0, h/2, w, h/2, 0, h/2, w, h/2)
+            var ctx = offscreen_token_canvas.getContext('2d');
+            ctx.clearRect(0, 0, w, h)
+
+            // draw upper part of the token
+            drawUpperTokenBackground(ctx)
+            drawUpperTokenBorder(ctx)
+            drawTokenArt(ctx)
+
+            // copy to actual canvas
+            target.drawImage(offscreen_token_canvas, 0, 0, w, h/2, 0, 0, w, h/2)
+
+        } else {
+            // draw token background
+            drawLowerTokenBackground(target)
+            drawUpperTokenBackground(target)
+            // restrict token art to background area
             target.globalCompositeOperation = 'source-atop'
-            if (drag != null) {
-                x = drag[0] * token_size
-                y = drag[1] * token_size
-            }
-            target.drawImage(token_img,
-                0,
-                token_img.height / 2,
-                token_img.width,
-                token_img.height / 2,
-                x - w / 2,
-                y - 1,
-                w,
-                h / 2)
-            //target.globalCompositeOperation = 'source-over'
+            drawTokenArt(target)
+            target.globalCompositeOperation = 'source-over'
+            // place token border ontop
+            drawLowerTokenBorder(target)
+            drawUpperTokenBorder(target)
         }
 
-        // lower half of token border
-        target.globalCompositeOperation = 'source-over'
-        target.filter = `hue-rotate(${hsl[0]}turn) saturate(${hsl[1]}) brightness(${5*hsl[2]})`
-        target.drawImage(token_border, 0, token_size / 2, token_size, token_size/2, 0, token_size / 2, token_size, token_size/2)
-        target.filter = filter
-        
     } else {
         // load index card
         if (mode == 'card') {
