@@ -33,61 +33,62 @@ def setup_gm_routes(engine):
     def gm_login():
         return dict(engine=engine)
 
-    # login callback
-    @get('/vtt/callback')
-    def gm_login_callback():
-        # query session from login auth
-        session = engine.login_api.getSession(request)
-        if 'identity' not in session:
-            redirect('/vtt/join')
-        
-        # test whether GM is already there
-        gm = engine.main_db.GM.select(lambda g: g.identity == session['identity']).first()
-        if gm is None:
-            # create GM (username as display name, user-id as url)
-            gm = engine.main_db.GM(
-                name=session['name'],
-                identity=session['identity'],
-                metadata=session['metadata'],
-                url=engine.main_db.GM.genUUID(),
-                sid=engine.main_db.GM.genSession(),
-            )
-            gm.postSetup()
+    if engine.login_api is not None:
+        # login callback
+        @get('/vtt/callback')
+        def gm_login_callback():
+            # query session from login auth
+            session = engine.login_api.getSession(request)
+            if 'identity' not in session:
+                redirect('/vtt/join')
+            
+            # test whether GM is already there
+            gm = engine.main_db.GM.select(lambda g: g.identity == session['identity']).first()
+            if gm is None:
+                # create GM (username as display name, user-id as url)
+                gm = engine.main_db.GM(
+                    name=session['name'],
+                    identity=session['identity'],
+                    metadata=session['metadata'],
+                    url=engine.main_db.GM.genUUID(),
+                    sid=engine.main_db.GM.genSession(),
+                )
+                gm.postSetup()
+                engine.main_db.commit()
+                
+                # add to cache and initialize database
+                engine.cache.insert(gm)
+                gm_cache = engine.cache.get(gm)
+                
+                # @NOTE: database creation NEEDS to be run from another
+                # thread, because every bottle route has an db_session
+                # active, but creating a database from within a db_session
+                # isn't possible
+                tmp = gevent.Greenlet(run=gm_cache.connect_db)
+                tmp.start()
+                try:
+                    tmp.get()
+                except:
+                    # reraise greenlet's exception to trigger proper error reporting
+                    raise
+                
+                engine.logging.access('GM created using external auth with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
+                
+            else:
+                # create new session for already existing GM
+                gm.sid  = engine.main_db.GM.genSession()
+                gm.name = session['name']
+                gm.metadata = session['metadata']
+                
+            gm.refreshSession(response)
+            
+            engine.logging.access('GM name="{0}" url={1} session refreshed using external auth by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
+            
             engine.main_db.commit()
-            
-            # add to cache and initialize database
-            engine.cache.insert(gm)
-            gm_cache = engine.cache.get(gm)
-            
-            # @NOTE: database creation NEEDS to be run from another
-            # thread, because every bottle route has an db_session
-            # active, but creating a database from within a db_session
-            # isn't possible
-            tmp = gevent.Greenlet(run=gm_cache.connect_db)
-            tmp.start()
-            try:
-                tmp.get()
-            except:
-                # reraise greenlet's exception to trigger proper error reporting
-                raise
-            
-            engine.logging.access('GM created using external auth with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
-            
-        else:
-            # create new session for already existing GM
-            gm.sid  = engine.main_db.GM.genSession()
-            gm.name = session['name']
-            gm.metadata = session['metadata']
-            
-        gm.refreshSession(response)
-        
-        engine.logging.access('GM name="{0}" url={1} session refreshed using external auth by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
-        
-        engine.main_db.commit()
-        # redirect to GM's game overview
-        redirect('/')
+            # redirect to GM's game overview
+            redirect('/')
 
-    if engine.localhost:
+    else:
         # non-auth login
         @post('/vtt/join')
         def post_gm_login():

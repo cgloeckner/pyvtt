@@ -9,7 +9,7 @@
 <img class="logo" src="/static/logo.png" />
  
 <div class="form">
-       <form onsubmit="registerGm(event);">
+    <form onsubmit="registerGm(event);">
 %if engine.login_api is None:
         <p>GM NAME</p>
         <input type="text" id="gmname" maxlength="20" autocomplete="off" />
