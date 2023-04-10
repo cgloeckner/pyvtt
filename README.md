@@ -1,4 +1,4 @@
-![Python application](https://github.com/cgloeckner/pyvtt/workflows/Python%20application/badge.svg?branch=master)
+![Python application](https://github.com/cgloeckner/pyvtt/actions/workflows/python-app.yml/badge.svg?branch=master)
 
 # pyvvt
 Python-based Virtual Tabletop Tool
