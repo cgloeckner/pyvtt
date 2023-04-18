@@ -199,6 +199,11 @@ class EmailApi(object):
         try:
             with self.lock:
                 self.smtp.sendmail(self.sender, self.sender, plain)
+        except smtplib.SMTPServerDisconnected:
+            # re-login and re-try
+            self.connect(f'{self.host}:{self.port}')
+            self.login()
+            self.smtp.sendmail(self.sender, self.sender, plain)
         except smtplib.SMTPSenderRefused:
             # re-login and re-try
             self.login()
