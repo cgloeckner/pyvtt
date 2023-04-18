@@ -640,8 +640,14 @@ def setup_gm_routes(engine):
 
             # save data
             addDictSet(locations, record.country, record.ip)
-            addDictSet(platforms, data['platform']['name'], record.ip)
-            addDictSet(browsers, data['browser']['name'], record.ip)
+            if 'platform' in data:
+                addDictSet(platforms, data['platform']['name'], record.ip)
+            else:
+                addDictSet(platforms, 'unknown', record.ip)
+            if 'browser' in data:
+                addDictSet(browsers, data['browser']['name'], record.ip)
+            else:
+                addDictSet(browsers, 'unknown', record.ip)
 
         # count IPs per country, platform and browser
         countDictSetLen(locations)
