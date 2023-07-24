@@ -91,7 +91,7 @@ def createGmDatabase(engine, filename):
                 updated = True
 
             if label != None:
-                self.text   = label[0][:15]
+                self.text   = label[0][:100]
                 self.color  = label[1]
                 self.timeid = timeid
                 updated = True

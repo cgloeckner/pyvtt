@@ -1846,13 +1846,13 @@ function onLabel() {
     }
     
     var primary = tokens[select_ids[0]];
-    var text = window.prompt('TOKEN LABEL (MAX LENGTH 15)', primary.text);
+    var text = window.prompt('TOKEN LABEL (MAX LENGTH: 100)', primary.text);
     if (text == null) {
         return;
     }
 
     // apply text
-    text = text.substr(0, 15);
+    text = text.substr(0, 100);
     var changes = [];
 
     $.each(select_ids, function(index, id) {
