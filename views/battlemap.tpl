@@ -11,38 +11,7 @@
 
 <div id="game">
 %if you_are_host:
-    <div class="horizdropdown" onClick="openGmDropdown();">
-        <div id="gmdrop">
-    %include("scenes")
-        </div>
-        <div class="gmhint">
-            <img id="gmhint" src="/static/bottom.png" draggable="false" title="SHOW SCENES" />
-        </div>
-    </div>
-
-    <div id="camerapreview">
-        <img class="close" src="/static/close.png" onClick="closeWebcam();" draggable="false" title="CLOSE CAMERA" />
-        <span>
-            <p>LIVESTREAM</p>
-            <video id="video" playsinline autoplay onClick="togglePreview(this);" title="CLICK TO ENLARGE"></video><br />
-            <input type="button" id="snapshotWebcam" onClick="onTakeSnapshot();" value="TAKE SNAPSHOT" />
-        </span>
-
-        <span>  
-            <p>SNAPSHOT</p>
-            <canvas id="snapshot" onClick="togglePreview(this);" title="CLICK TO ENLARGE"></canvas><br />
-            <input type="button" id="applySnapshot" onClick="onApplyBackground();" value="APPLY BACKGROUND" />
-        </span>
-    </div>
-
-    <div id="assetsbrowser">
-        <img class="browse" src="/static/upload.png" onClick="initUpload();" draggable="false" title="FILE UPLOAD" />
-        <img class="close" src="/static/close.png" onClick="hideAssetsBrowser();" draggable="false" title="DISCARD" />
-        <select id="games" onChange="loadAssets()">
-            <option value="null">{{engine.title}} Assets</option>
-        </select>
-        <div id="assets"></div>
-    </div>
+    %include("gm_drawer")
 %end
 
     <!-- stays hidden -->
@@ -56,30 +25,7 @@
         </form>
     </div>
 
-    <div id="drawing">
-        <div>
-            <div>
-                <input type="color" name="pencolor" id="pencolor" value="#000000" onChange="onPickColor()">
-                <button id="upload" onClick="onUploadDrawing();">ADD TO SCENE</button>
-
-                <span class="icons">
-                    <img class="largeicon" id="cardmode" src="/static/card-icon.png" onClick="onToggleMode('card')"draggable="false" title="CREATE INDEX CARD" />
-                    <img class="largeicon" id="overlaymode" src="/static/transparent-icon.png" onClick="onToggleMode('overlay')"draggable="false" title="CREATE OVERLAY" />
-                    <img class="largeicon" id="tokenmode" src="/static/token-icon.png" onClick="onToggleMode('token')" draggable="false" title="CREATE TOKEN" />
-                    <img class="largeicon" src="/static/export.png" onClick="onExportDrawing();" draggable="false" title="DOWNLOAD" />
-                    <img class="largeicon" src="/static/close.png" onClick="onCloseDrawing();" draggable="false" title="DISCARD" />
-                </span>
-            </div>
-            <br />
-            <canvas id="doodle" width="1600" height="1200" onpointerdown="onMovePen(event)" onpointerup="onReleasePen(event)" onpointermove="onMovePen(event)" onwheel="onWheelPen(event)" onDrop="onDropTokenImage(event)"></canvas>
-
-            <img class="largeicon" id="undo_button" src="/static/undo.png" title="UNDO" onClick="onUndo()" />
-            <div class="centered" id="token_toolbox">
-                ZOOM: <input type="range" id="token_scale" min="1" max="200" value="100" onInput="onChangeSize()" />
-                <input type="checkbox" id="token_pop" checked="" onChange="onChangePop()" /><label for="token_pop">MAKE IT POP</label>
-            </div>
-        </div>
-    </div>
+    %include("game_drawing")
 
     <div id="dicebox">
 %for d in dice:
@@ -93,24 +39,7 @@
 %end
     </div>
 
-    <div class="battlemap" id="gamecontent">
-        <div id="draghint"><span onClick="initUpload();">DRAG AN IMAGE AS BACKGROUND</span><br /><br /><span onClick="ignoreBackground();">OR CLICK TO SKIP</span></div>
-        <canvas id="battlemap" width="{{MAX_SCENE_WIDTH}}" height="{{MAX_SCENE_HEIGHT}}"></canvas>
-            
-        <div id="tokenbar">
-            <img src="/static/flipx.png" id="tokenFlipX" draggable="false" onClick="onFlipX();" ontouchstart="onFlipX();" title="HORIZONTAL FLIP" />
-            <img src="/static/locked.png" id="tokenLock" draggable="false" onClick="onLock();" ontouchstart="onLock();" title="LOCK/UNLOCK" />
-            <img src="/static/top.png" id="tokenTop" draggable="false" onClick="onTop();" ontouchstart="onTop();" title="MOVE TO TOP" />
-            <img src="/static/copy.png" id="tokenClone" draggable="false" onClick="onClone();" ontouchstart="onClone();" title="CLONE TOKEN" />
-            <img src="/static/delete.png" id="tokenDelete" draggable="false" onClick="onTokenDelete();" ontouchstart="onTokenDelete();" title="DELETE TOKEN" />
-            <img src="/static/bottom.png" id="tokenBottom" draggable="false" onClick="onBottom();" ontouchstart="onBottom();" title="MOVE TO BOTTOM" />
-            <img src="/static/louder.png" id="tokenLabelInc" draggable="false" onClick="onLabelStep(1);" ontouchstart="onLabelStep(1);" title="INCREASE NUMBER" />
-            <img src="/static/label.png" id="tokenLabel" draggable="false" onClick="onLabel();" ontouchstart="onLabel();" title="ENTER LABEL" />
-            <img src="/static/quieter.png" id="tokenLabelDec" draggable="false" onClick="onLabelStep(-1);" ontouchstart="onLabelStep(-1);" title="DECREASE LABEL" />
-            <img src="/static/resize.png" id="tokenResize" onDragStart="onStartResize();" onDragEnd="onQuitAction(event);" ontouchmove="onTokenResize(event);" ontouchend="onQuitResize(event);" title="DRAG TO RESIZE" onClick="showTip('DRAG TO RESIZE');" />
-            <img src="/static/rotate.png" id="tokenRotate" onDragStart="onStartRotate();" onDragEnd="onQuitAction(event);" ontouchmove="onTokenRotate(event);" ontouchend="onQuitRotate(event);" title="DRAG TO ROTATE" onClick="showTip('DRAG TO ROTATE');" />
-        </div>
-    </div>
+    %include("game_board")
 
     <div id="players" onDragStart="onStartDragPlayers(event);" onMouseDown="onResetPlayers(event);" onDragEnd="onEndDragPlayers(event);" onWheel="onWheelPlayers();" ontouchmove="onDragPlayers(event);"></div>
     
