@@ -7,6 +7,8 @@ License: MIT (see LICENSE for details)
   
 var mouse_x = 0; // relative to canvas
 var mouse_y = 0;
+var grab_x = 0; // relative to token center
+var grab_y = 0;
 
 var copy_tokens   = [];    // determines copy-selected token (CTRL+C)
 var select_ids    = [];    // contains selected tokens' ids
@@ -955,7 +957,7 @@ function onGrab(event) {
         touch_start = [mouse_x, mouse_y];
         touch_force = event.touches[0].force;
     }
-    
+
     if (event.buttons == 1 || is_single_touch) {
         // trigger check for holding the click
         now = Date.now();
@@ -969,7 +971,8 @@ function onGrab(event) {
         // Left Click: select token
         var token = selectToken(mouse_x, mouse_y);
         
-        if (primary_id > 0 && event.shiftKey) {
+        if (primary_id> 0 && event.shiftKey) {
+            // CASE 1: RANGE-SELECT TOKENS
             // trigger range query from primary token to mouse pos or next token
             var pt = tokens[primary_id];
             var x1 = pt.posx;
@@ -998,6 +1001,7 @@ function onGrab(event) {
             });
 
         } else if (token != null) {
+            // CASE 2: CLICK-SELECT TOKEN
             $('#battlemap').css('cursor', 'move');
     
             var modified = false;
@@ -1026,6 +1030,11 @@ function onGrab(event) {
                 }
                 modified = true;
                 grabbed  = true;
+
+                // memorize where the token was grabbed
+                grab_x = mouse_x - tokens[primary_id].posx;
+                grab_y = mouse_y - tokens[primary_id].posy;
+                console.log('grabbed at ', grab_x, '/', grab_y)
             }
 
             if (modified) {
@@ -1037,6 +1046,7 @@ function onGrab(event) {
             }
             
         } else if (!space_bar) {
+            // CASE 3: RANGE-CLICK SINGLE TOKEN
             if (is_single_touch && !isExtremeForce(touch_force)) {
                 // Clear selection
                 select_ids = [];
@@ -1069,6 +1079,7 @@ function onGrab(event) {
         }
         
     } else if (event.buttons == 2 && !is_single_touch) {
+        // CASE 4: RIGHT-CLICK SELECTED TOKEN
         // Right click: reset token scale, flip-x & rotation
         var changes = [];
         $.each(select_ids, function(index, id) {
@@ -1239,8 +1250,8 @@ function onMoveToken(event) {
             var dx = t.posx - prev_posx;
             var dy = t.posy - prev_posy;
             // move relative to primary token
-            var tx = mouse_x + dx;
-            var ty = mouse_y + dy;
+            var tx = mouse_x + dx - grab_x;
+            var ty = mouse_y + dy - grab_y;
             
             // limit pos to screen (half size as padding)
             // @NOTE: padding isn't enough (see: resize, rotation), maybe it's even desired not do pad it
