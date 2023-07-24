@@ -13,16 +13,16 @@ function showAssetsBrowser() {
 
 function loadAssets() {
     // load images used in this game
-    let game_url = $('#games').find(':selected').val()
+    let picked_url = $('#games').find(':selected').val()
     $.ajax({
         type: 'GET',
-        url: `/vtt/api/assets-list/${gm}/${game_url}`,
+        url: `/vtt/api/assets-list/${gm}/${picked_url}`,
         dataType: 'json',
         success: function(response) {
             let target = $('#assets')
             target.empty()
-            let base_url = `/asset/${gm}/${game_url}`
-            if (game_url == 'null') {
+            let base_url = `/asset/${gm}/${picked_url}`
+            if (picked_url == 'null') {
                 base_url = '/static/assets'
             }
             
@@ -80,7 +80,8 @@ function loadGames(gm, next) {
                     target.append(tmp)
                 }
             })
-            $('#games option').first().prop('selected', true)
+            // select THIS game
+            $('#games option[value="sdf"]').prop("selected", true)
 
             next()
             
@@ -114,12 +115,12 @@ function onDropAsset(event, pos=null) {
     let drag_data = localStorage.getItem('drag_data')
     localStorage.removeItem('drag_data')
 
-    let game_url = $('#games').find(':selected').val()
+    let picked_url = $('#games').find(':selected').val()
 
-    if (game_url == 'null' || game_url == game) {
+    if (picked_url == 'null' || picked_url == game) {
         let url = `/static/assets/${drag_data}`
-        if (game_url == game) {
-            url = `/asset/${gm}/${game_url}/${drag_data}`
+        if (picked_url == game) {
+            url = `/asset/${gm}/${picked_url}/${drag_data}`
         }
         // directly create token
         writeSocket({
@@ -131,7 +132,7 @@ function onDropAsset(event, pos=null) {
         })
     
     } else {
-        let url = `/asset/${gm}/${game_url}/${drag_data}`
+        let url = `/asset/${gm}/${picked_url}/${drag_data}`
         // upload image to this game and proceed as usual
         urlToFile(url, function(file) {
             fetchMd5FromImages([file], function(md5s) {
