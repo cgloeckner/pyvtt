@@ -370,7 +370,7 @@ def setup_gm_routes(engine):
         engine.logging.access('Player {0} ({1}) kicked from {2} by {3}'.format(name, uuid, game.getUrl(), engine.getClientIp(request)))
 
     @post('/vtt/delete-game/<url>')
-    @view('games')
+    @view('gms/games')
     def delete_game(url):
         gm = engine.main_db.GM.loadFromSession(request)
         if gm is None:
@@ -484,7 +484,7 @@ def setup_gm_routes(engine):
         return img_url
 
     @post('/vtt/query-scenes/<url>')
-    @view('game_scenes')
+    @view('game/scenes')
     def post_create_scene(url):
         gm = engine.main_db.GM.loadFromSession(request)
         if gm is None:
@@ -824,7 +824,7 @@ def setup_player_routes(engine):
         redirect('/vtt/thumbnail/{0}/{1}/{2}'.format(gmurl, url, game.active))
 
     @get('/vtt/schedule/<timestamp>')
-    @view('countdown')
+    @view('gms/countdown')
     def vtt_countdown(timestamp):
         return dict(engine=engine, timestamp=timestamp)
 
@@ -1073,7 +1073,6 @@ def setup_error_routes(engine):
     @view('error500')
     def caught_error(error_id):
         return dict(engine=engine, error_id=error_id)
-
 
 
 if __name__ == '__main__':

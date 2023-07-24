@@ -77,7 +77,6 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.status_int, 302)
         self.assertEqual(self.app.cookies['session'], '""')
 
-    
     # -----------------------------------------------------------------
     
     def joinPlayer(self, gm_url, game_url, playername, playercolor):
@@ -91,7 +90,6 @@ class VttTest(EngineBaseTest):
         s.push_receive({'name': playername, 'gm_url': gm_url, 'game_url': game_url})
         # listen to the faked websocket
         return ret, self.engine.cache.listen(s)
-    
 
     # -----------------------------------------------------------------
 
@@ -112,7 +110,7 @@ class VttTest(EngineBaseTest):
 
         # can create a GM account
         args = {
-            'gmname' : 'arthur'
+            'gmname': 'arthur'
         }
         ret = self.app.post('/vtt/join', args, xhr=True)
         self.assertEqual(ret.status_int, 200)
@@ -134,7 +132,7 @@ class VttTest(EngineBaseTest):
         # can create GM but name is cut
         self.app.reset()
         args = {
-            'gmname' : 'arthurhasaverylongnamethatiscutafter20chars'
+            'gmname': 'arthurhasaverylongnamethatiscutafter20chars'
         } 
         ret = self.app.post('/vtt/join', args, xhr=True)
         self.assertEqual(ret.status_int, 200) 
@@ -161,7 +159,21 @@ class VttTest(EngineBaseTest):
         self.assertEqual(ret.json['error'], 'RESERVED NAME')
         self.assertEqual(ret.json['url'], None)
         self.assertNotIn('session', self.app.cookies)
-    
+
+    def test_vtt_post_join_root(self):
+        # can create a GM account
+        args = {
+            'gmname': 'arthur'
+        }
+        ret = self.app.post('/vtt/join', args, xhr=True)
+        self.assertIn('session', self.app.cookies)
+
+        # expect landing page
+        ret = self.app.get('/', args)
+        self.assertEqual(ret.status_int, 200)
+        self.assertEqual(ret.content_type, 'text/html')
+        self.assertNotEqual(ret.location, 'http://localhost:80/vtt/join')
+
     def test_vtt_fancyurl(self):
         ret = self.app.get('/vtt/fancy-url')
         self.assertEqual(ret.status_int, 200)  

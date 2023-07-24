@@ -11,7 +11,7 @@
 
 <div id="game">
 %if you_are_host:
-    %include("game_gmtools")
+    %include("game/gmtools")
 %end
 
     <!-- stays hidden -->
@@ -25,7 +25,7 @@
         </form>
     </div>
 
-    %include("game_drawing")
+    %include("game/drawing")
 
     <div id="dicebox">
 %for d in dice:
@@ -39,7 +39,7 @@
 %end
     </div>
 
-    %include("game_board")
+    %include("game/board")
 
     <div id="players" onDragStart="onStartDragPlayers(event);" onMouseDown="onResetPlayers(event);" onDragEnd="onEndDragPlayers(event);" onWheel="onWheelPlayers();" ontouchmove="onDragPlayers(event);"></div>
     
@@ -78,4 +78,3 @@
 </div>
 
 %include("footer", gm=gm)
-
