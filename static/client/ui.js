@@ -1034,7 +1034,6 @@ function onGrab(event) {
                 // memorize where the token was grabbed
                 grab_x = mouse_x - tokens[primary_id].posx;
                 grab_y = mouse_y - tokens[primary_id].posy;
-                console.log('grabbed at ', grab_x, '/', grab_y)
             }
 
             if (modified) {

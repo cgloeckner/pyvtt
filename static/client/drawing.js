@@ -519,7 +519,7 @@ function onToggleMode(mode=null) {
         }
 
         $('#undo_button').hide()
-        $('#pencolor')[0].value = '#FF0000'
+        $('#pencolor')[0].value = my_color
 
     } else if (mode == 'card') {
         // enable index card mode
