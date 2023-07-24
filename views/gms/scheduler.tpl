@@ -43,5 +43,8 @@
             <option value="null">GAME-INDEPENDENT</option>
         </select>
         <p>URL: <span id="schedule_url"></span></p>
+        <p>Discord Time: <span id="discord_prompt"></span>
+            <img class="icon" src="/static/copy.png" title="COPY TO CLIPBOARD" onClick="copyDiscordPrompt()" />
+        </p>
     </form>
 </div>

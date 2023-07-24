@@ -55,26 +55,46 @@ function hideSchedule() {
     $('#schedule_icon').show(500)
 }
 
-function updateCountdown() { 
-    let url      = '/vtt/schedule/'
-    let server   = $('#server')[0].value 
-    let gm_url   = $('#gm_url')[0].value 
+function getSchedulerDate() {
+
+    var day    = parseInt($('#day>:selected')[0].value)
+    var month  = parseInt($('#month>:selected')[0].value)
+    var year   = $('#year')[0].valueAsNumber
+    var hour   = parseInt($('#hour>:selected')[0].value)
+    var minute = parseInt($('#minute>:selected')[0].value)
+
+    return new Date(year, month-1, day, hour, minute)
+}
+
+function getDiscordPrompt(d) {
+    let timestamp = parseInt(d.getTime() / 1000)
+    return `<t:${timestamp}:F> (<t:${timestamp}:R>)`
+}
+
+function updateCountdown() {
+    let url = '/vtt/schedule/'
+    let server = $('#server')[0].value
+    let gm_url = $('#gm_url')[0].value
     let game_url = $('#games option:selected').val()
-    
+
     if (game_url != 'null') {
         url = $('#schedule_url')[0].value = `/game/${gm_url}/${game_url}/`
     }
- 
-    var day    = parseInt($('#day>:selected')[0].value)
-    var month  = parseInt($('#month>:selected')[0].value)
-    var year   = $('#year')[0].valueAsNumber   
-    var hour   = parseInt($('#hour>:selected')[0].value)
-    var minute = parseInt($('#minute>:selected')[0].value)
-    
-    var d      = new Date(year, month-1, day, hour, minute)
+
+    let d = getSchedulerDate()
     url += d.getTime().toString(16)
 
     $('#schedule_url')[0].innerHTML = `<a href="${server}${url}" target="_blank">${server}${url}</a>`
+    // note: escape some chars
+    $('#discord_prompt')[0].innerHTML = getDiscordPrompt(d).replace(/<|>/g, e => e === '<' ? '&lt;' : '&gt;')
+}
+
+/// more scheduling stuff
+function copyDiscordPrompt() {
+    let d = getSchedulerDate()
+    let prompt = getDiscordPrompt(d)
+    navigator.clipboard.writeText(prompt)
+    showTip('Copied to clipboard')
 }
 
 function updateDays() {
