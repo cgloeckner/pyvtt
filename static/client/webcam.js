@@ -5,6 +5,9 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 */
 
+var webcam_stream = null;
+
+
 /// Settings for webcam usage
 const webcam_constraints = {
     audio: false,
@@ -24,29 +27,44 @@ const screenshare_constraints = {
 
 function initWebcam() {
     onCloseDrawing();
-    
+
+    if (webcam_stream === null) {
+        onNewWebcamStream()
+    } else {
+        // re-use existing stream
+        onStreamReady(webcam_stream)
+    }
+}
+
+function onNewWebcamStream() {
+    showTip('WAITING FOR WEBCAM')
+
     navigator.mediaDevices.getUserMedia(webcam_constraints)
-    .then(function(stream) { onStreamReady(stream); })
+    .then(function(stream) {
+        onStreamReady(stream);
+    })
     .catch(function(err) {
-        console.error(err.toString());
-        showError('NO WEBCAM FOUND');
-    });
+        console.error(err.toString())
+        showError('WEBCAM DENIED')
+    })
 }
 
 function initScreenShare() {
-    closeWebcam();
+    hideWebcam();
     onCloseDrawing();
-    
+
     navigator.mediaDevices.getDisplayMedia(screenshare_constraints)
     .then(function(stream) { onStreamReady(stream); })
     .catch(function(err) {
         console.error(err.toString());
-        showError('SCREENSHARE NOT AVAILABLE');
+        showError('SCREENSHARE DENIED');
     });
 }
 
 function onStreamReady(stream) {
-    window.stream = stream;
+    hidePopup()
+
+    webcam_stream = stream;
     $('#video')[0].srcObject = stream;
     $('#camerapreview').fadeIn(500);
     
@@ -83,14 +101,30 @@ function onApplyBackground() {
     uploadBackground(gm_name, game_url, f);
 }
 
-function closeWebcam() {
-    $('#camerapreview').fadeOut(500);
+function hideWebcam() {
+    $('#camerapreview').fadeOut(500)
     
-    $('#video')[0] = null;
-    window.stream  = null;    
-    var preview = $('#snapshot')[0];
-    var context = preview.getContext('2d');
-    context.clearRect(0, 0, preview.width, preview.height);
+    $('#video')[0] = null
+    var preview = $('#snapshot')[0]
+    var context = preview.getContext('2d')
+    context.clearRect(0, 0, preview.width, preview.height)
+
+    // NOTE: webcam stream stays active unless explicitly hidden
+
+    showTip('WEBCAM HIDDEN')
+}
+
+function closeWebcam() {
+    webcam_stream = null
+
+    $('#camerapreview').fadeOut(500)
+
+    $('#video')[0] = null
+    var preview = $('#snapshot')[0]
+    var context = preview.getContext('2d')
+    context.clearRect(0, 0, preview.width, preview.height)
+
+    showTip('WEBCAM DISABLED')
 }
 
 function togglePreview(id) {

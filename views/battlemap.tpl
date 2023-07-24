@@ -11,7 +11,7 @@
 
 <div id="game">
 %if you_are_host:
-    %include("gm_drawer")
+    %include("game_gmtools")
 %end
 
     <!-- stays hidden -->

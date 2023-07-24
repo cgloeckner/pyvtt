@@ -21,7 +21,12 @@ function showPopup(msg, color, timeout, fadeout) {
         popup.delay(timeout).fadeOut(fadeout, 0.0);
     }
 }
-  
+
+function hidePopup() {
+    var popup = $('#popup');
+    popup.hide()
+}
+
 function showError(msg) {
     console.warn(msg);
     showPopup(msg, 'red', 1000, 1000);

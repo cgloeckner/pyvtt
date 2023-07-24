@@ -622,6 +622,16 @@ div#camerapreview > img.close {
     display: block;
 }
 
+div#camerapreview > img.hide {
+    width: 32px;
+    float: right;
+    left: 15px;
+    position: absolute;
+
+    cursor: pointer;
+    display: block;
+}
+
 div#schedule img.browse,
 div#assetsbrowser img.browse {
     width: 32px;
