@@ -161,15 +161,17 @@ class VttTest(EngineBaseTest):
         self.assertNotIn('session', self.app.cookies)
 
     def test_vtt_post_join_root(self):
-        # can create a GM account
-        args = {
-            'gmname': 'arthur'
-        }
-        ret = self.app.post('/vtt/join', args, xhr=True)
-        self.assertIn('session', self.app.cookies)
+        # register arthur
+        ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
+        self.assertEqual(ret.status_int, 200)
+        arthur_sid = self.app.cookies['session']
 
+        # create a game
+        img_small = makeImage(512, 512)
+        ret = self.app.post('/vtt/import-game/test-exportgame-1',
+                            upload_files=[('file', 'test.png', img_small)], xhr=True)
         # expect landing page
-        ret = self.app.get('/', args)
+        ret = self.app.get('/')
         self.assertEqual(ret.status_int, 200)
         self.assertEqual(ret.content_type, 'text/html')
         self.assertNotEqual(ret.location, 'http://localhost:80/vtt/join')
