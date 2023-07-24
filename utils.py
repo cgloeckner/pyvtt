@@ -595,16 +595,17 @@ class ConstantExport(object):
 
     def __call__(self, engine):
         import orm
-        self['MAX_SCENE_WIDTH']  = orm.MAX_SCENE_WIDTH
+        self['MAX_SCENE_WIDTH'] = orm.MAX_SCENE_WIDTH
         self['MAX_SCENE_HEIGHT'] = orm.MAX_SCENE_HEIGHT
-        self['MIN_TOKEN_SIZE']   = orm.MIN_TOKEN_SIZE
-        self['MAX_TOKEN_SIZE']   = orm.MAX_TOKEN_SIZE
+        self['MIN_TOKEN_SIZE'] = orm.MIN_TOKEN_SIZE
+        self['MAX_TOKEN_SIZE'] = orm.MAX_TOKEN_SIZE
+        self['MAX_TOKEN_LABEL_SIZE'] = orm.MAX_TOKEN_LABEL_SIZE
         
-        self['MAX_TOKEN_FILESIZE']      = engine.file_limit['token']
+        self['MAX_TOKEN_FILESIZE'] = engine.file_limit['token']
         self['MAX_BACKGROUND_FILESIZE'] = engine.file_limit['background']
-        self['MAX_GAME_FILESIZE']       = engine.file_limit['game']
-        self['MAX_MUSIC_FILESIZE']      = engine.file_limit['music']
-        self['MAX_MUSIC_SLOTS']         = engine.file_limit['num_music']
+        self['MAX_GAME_FILESIZE'] = engine.file_limit['game']
+        self['MAX_MUSIC_FILESIZE'] = engine.file_limit['music']
+        self['MAX_MUSIC_SLOTS'] = engine.file_limit['num_music']
 
         self['SUGGESTED_PLAYER_COLORS'] = engine.playercolors
         

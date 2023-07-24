@@ -1852,7 +1852,7 @@ function onLabel() {
     }
 
     // apply text
-    text = text.substr(0, 100);
+    text = text.substr(0, MAX_TOKEN_LABEL_SIZE);
     var changes = [];
 
     $.each(select_ids, function(index, id) {

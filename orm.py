@@ -20,11 +20,14 @@ __licence__ = 'MIT'
 
 
 # NOTE: screen is exactly 16:9
-MAX_SCENE_WIDTH  = 1008                               
+MAX_SCENE_WIDTH = 1008
 MAX_SCENE_HEIGHT = 567
 
-MIN_TOKEN_SIZE   = 1
-MAX_TOKEN_SIZE   = 1000
+MIN_TOKEN_SIZE = 1
+MAX_TOKEN_SIZE = 1000
+
+MAX_TOKEN_LABEL_SIZE = 100
+
 
 def createGmDatabase(engine, filename):
     """ Creates a new database for with GM entities such as Tokens,
@@ -91,7 +94,7 @@ def createGmDatabase(engine, filename):
                 updated = True
 
             if label != None:
-                self.text   = label[0][:100]
+                self.text   = label[0][:MAX_TOKEN_LABEL_SIZE]
                 self.color  = label[1]
                 self.timeid = timeid
                 updated = True

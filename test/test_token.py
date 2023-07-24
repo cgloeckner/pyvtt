@@ -164,6 +164,11 @@ class TokenTest(unittest.TestCase):
 
         # update without data does nothing
         self.assertFalse(t.update(timeid=132))
+
+        # very long token labels are cut to length
+        self.assertTrue(t.update(timeid=132, label=('X' * (orm.MAX_TOKEN_LABEL_SIZE+1), 'white')))
+        self.assertEqual(len(t.text), orm.MAX_TOKEN_LABEL_SIZE)
+        self.assertFalse(t.update(timeid=132))
         
     def test_getPosByDegree(self):
         # calc position of three tokens in "circle"
