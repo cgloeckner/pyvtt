@@ -1787,41 +1787,41 @@ function onLabelStep(delta) {
 
     $.each(select_ids, function(index, id) {
         var token   = tokens[id];
-        if (token == null) {
-            return;
-        }
-        var isTimer = token.text.startsWith('#');
-        var isInt   = (token.text.match(/\d+/) != null) || (!isNaN(token.text) && token.text != '');
-        
-        if (token == null || token.locked || !isInt) {
-            // ignore if locked
+        if (token == null || token.locked) {
             return;
         }
 
-        var prev = token.text;
-        var number = token.text.match(/\d+/)
-        
-        // click token's number
-        var next_number = parseInt(number) + delta
-        if (next_number <= 0) {
-            next_number = 0;
+        var hasInt = (token.text.match(/\d+/) != null) || (!isNaN(token.text) && token.text != '');
+        if (!hasInt) {
+            // nothing to do
+            return
         }
-        if (!isTimer || next_number > 0) {
-            token.text = token.text.replace(number, next_number)
+
+        let prev_number = parseInt(token.text.match(/\d+/)[0])
+        let number = prev_number + delta
+        let is_timer = token.text.startsWith('#')
+        if (is_timer) {
+            if (number == 0) {
+                deleted.push(id);
+                return;
+            }
+        } else {
+            if (number < 0) {
+                // cap at 0
+                number = 0
+            }
         }
-        
+        token.text = token.text.replace(prev_number, number)
+
         // trigger buffer redraw
         token.label_canvas = null;
+        token.timer_canvas = null;
         token.hue_canvas   = null;
 
-        if (next_number == 0 && isTimer) {
-            deleted.push(id);
-        } else {
-            changes.push({
-                'id'    : id,
-                'text'  : token.text
-            });
-        }
+        changes.push({
+            'id'    : id,
+            'text'  : token.text
+        });
     });
 
     writeSocket({

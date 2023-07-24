@@ -478,6 +478,87 @@ function loadImage(url) {
     }
 }
 
+/// Helper function
+function renderTokenText(context, token) {
+    // handle meta-characters
+    let is_timer = token.text.startsWith('#')
+    let is_centered = token.text.startsWith('*')
+    let text = token.text
+    if (is_timer || is_centered) {
+        // remove meta-character
+        text = token.text.slice(1)
+    }
+
+    if (token.label_canvas === null) {
+        // determine optional fontsize and width
+        var fontsize = 30 * canvas_scale / Math.sqrt(Math.sqrt(viewport.zoom));
+        if (is_centered) {
+            fontsize = parseInt(fontsize * 1.5)
+        }
+        if (is_timer) {
+            fontsize = 20 * canvas_scale * 3 * token.size / default_token_size;
+        }
+
+        // figure out canvas size based on fontsize etc.
+        context.font = fontsize + 'px sans';
+        var metrics = context.measureText(text);
+        var padding = 14; // to allow for line width
+        var width   = metrics.width + padding;
+        var height  = fontsize * 96 / 72 + padding;
+
+        // create buffer context
+        token.label_canvas = document.createElement('canvas');
+        token.label_canvas.width  = width;
+        token.label_canvas.height = height;
+        ctx = token.label_canvas.getContext('2d');
+
+        // prepare buffer context
+        ctx.textAlign  = "center";
+        ctx.fillStyle  = token.color;
+        ctx.font       = context.font;
+        ctx.lineWidth  = 12 / Math.sqrt(viewport.zoom);
+        ctx.lineJoin   = "round";
+        ctx.miterLimit = 2;
+        if (brightnessByColor(token.color) > 60) {
+            ctx.strokeStyle = '#000000';
+        } else {
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth   = 8 / Math.sqrt(viewport.zoom);
+        }
+        if (is_timer || is_centered) {
+            ctx.lineJoin    = "miter";
+            ctx.fillStyle   = '#FFFFFF';
+            if (is_timer) {
+                ctx.strokeStyle = '#FFFFFF';
+            }
+            if (is_centered) {
+                ctx.strokeStyle = '#000000';
+            }
+        }
+        if (is_timer) {
+            ctx.lineWidth = 6 / Math.sqrt(viewport.zoom)
+        }
+        if (is_centered) {
+            ctx.lineWidth = 16 / Math.sqrt(viewport.zoom)
+        }
+
+        // render label
+        ctx.strokeText(text, width/2, height*3/4);
+        ctx.fillText(text, width/2, height*3/4);
+    }
+
+    var left = -token.label_canvas.width/2;
+    var top  = token.label_canvas.height/4;
+    if (is_timer || is_centered) {
+        // vertical center it
+        top = -token.label_canvas.height/2;
+    }
+    var scale = Math.sqrt(1/viewport.zoom) / 2.0;
+
+    context.scale(scale, scale)
+    context.drawImage(token.label_canvas, left, top);
+}
+
 /// Draws a single token (show_ui will show the selection box around it)
 function drawToken(token, color, is_background) {
     var canvas = $('#battlemap');
@@ -579,7 +660,7 @@ function drawToken(token, color, is_background) {
             context.shadowBlur = 25;
         }
 
-        var is_timer = token.text.startsWith('#');
+        var is_timer = token.text.startsWith('#')
 
         /*if (token.hue_canvas == null && images[token.url].complete) {
             if (token.text != null && is_timer) {
@@ -623,66 +704,12 @@ function drawToken(token, color, is_background) {
             // required to avoid Chrome choking from missing images
         }
         context.restore();
-        
+
         // draw token label
         if (token.text != null) {
-            if (token.label_canvas == null) {
-                // determine optional fontsize and width
-                var fontsize = 30 * canvas_scale / Math.sqrt(Math.sqrt(viewport.zoom));
-                if (is_timer) {
-                    fontsize = 20 * canvas_scale * 3 * token.size / default_token_size;
-                }
-                context.font = fontsize + 'px sans';
-                var metrics = context.measureText(token.text);
-                var padding = 14; // to allow for line width
-                var width   = metrics.width + padding;
-                var height  = fontsize * 96 / 72 + padding;
-
-                // create buffer context
-                token.label_canvas = document.createElement('canvas');
-                token.label_canvas.width  = width;
-                token.label_canvas.height = height;
-                ctx = token.label_canvas.getContext('2d');
-
-                // prepare buffer context
-                ctx.textAlign  =  "center";
-                ctx.fillStyle  = token.color;
-                ctx.font       = context.font;
-                ctx.lineWidth  = 12 / Math.sqrt(viewport.zoom);
-                ctx.lineJoin   = "round";
-                ctx.miterLimit = 2;
-                if (brightnessByColor(token.color) > 60) {
-                    ctx.strokeStyle = '#000000';
-                } else {
-                    ctx.strokeStyle = '#FFFFFF'; 
-                    ctx.lineWidth   = 8 / Math.sqrt(viewport.zoom);
-                }
-                var text = token.text;
-                if (is_timer) {   
-                    ctx.lineWidth   = 6 / Math.sqrt(viewport.zoom);
-                    ctx.lineJoin    = "miter";
-                    ctx.fillStyle   = '#FFFFFF';
-                    ctx.strokeStyle = '#FFFFFF';
-                    text = text.substr(1);
-                }
-
-                // render label
-                ctx.strokeText(text, width/2, height*3/4);
-                ctx.fillText(text, width/2, height*3/4);
-            }
-            
-            try {
-                var left = -token.label_canvas.width/2;
-                var top  = token.label_canvas.height/4;
-                if (is_timer) {
-                    // vertical center it
-                    top = -token.label_canvas.height/2;
-                }
-                var scale = Math.sqrt(1/viewport.zoom) / 2.0;
-                context.scale(scale, scale);
-                context.drawImage(token.label_canvas, left, top);
-            } catch (error) {
-            }
+            context.save();
+            renderTokenText(context, token)
+            context.restore()
         }
     }
     
