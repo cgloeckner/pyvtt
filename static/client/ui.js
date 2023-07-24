@@ -963,6 +963,7 @@ function onGrab(event) {
         initial_click = now;
         if (time_delta <= double_click_limit) {
             onDoubleClick();
+            return;
         }
         
         // Left Click: select token
