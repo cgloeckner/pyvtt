@@ -215,11 +215,11 @@ function onInitMusicPlayer(gmurl, url) {
 
     // setup default volume
     var raw = localStorage.getItem('volume')
-    if (!isNaN(raw)) {
-        default_volume = parseFloat(raw)
-    } else {
+    if (raw === null) {
         default_volume = 0.10
         localStorage.setItem('volume', default_volume)
+    } else {
+        default_volume = parseFloat(raw)
     }
 
     for (var n = 0; n < MAX_MUSIC_SLOTS; ++n) {
