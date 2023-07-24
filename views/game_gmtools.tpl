@@ -1,6 +1,6 @@
     <div class="horizdropdown" onClick="openGmDropdown();">
         <div id="gmdrop">
-    %include("scenes")
+    %include("game_scenes")
         </div>
         <div class="gmhint">
             <img id="gmhint" src="/static/bottom.png" draggable="false" title="SHOW SCENES" />

@@ -484,7 +484,7 @@ def setup_gm_routes(engine):
         return img_url
 
     @post('/vtt/query-scenes/<url>')
-    @view('scenes')
+    @view('game_scenes')
     def post_create_scene(url):
         gm = engine.main_db.GM.loadFromSession(request)
         if gm is None:

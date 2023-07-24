@@ -277,11 +277,14 @@ function cloneScene(scene_id) {
 }
 
 function deleteScene(scene_id) {
-    writeSocket({
-        'OPID'  : 'GM-DELETE',
-        'scene' : scene_id
-    });  
-    reloadScenesDropdown();
+    var remove = confirm("DELETE THIS SCENE?");
+        if (remove) {
+            writeSocket({
+            'OPID'  : 'GM-DELETE',
+            'scene' : scene_id
+        });
+        reloadScenesDropdown();
+    }
 }
 
 /*
