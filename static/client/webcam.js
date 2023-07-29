@@ -101,30 +101,19 @@ function onApplyBackground() {
     uploadBackground(gm_name, game_url, f);
 }
 
-function hideWebcam() {
-    $('#camerapreview').fadeOut(500)
-    
-    $('#video')[0] = null
-    var preview = $('#snapshot')[0]
-    var context = preview.getContext('2d')
-    context.clearRect(0, 0, preview.width, preview.height)
-
-    // NOTE: webcam stream stays active unless explicitly hidden
-
-    showTip('WEBCAM HIDDEN')
+function reloadWebcam() {
+    closeWebcam()
+    webcam_stream = null
+    initWebcam()
 }
 
 function closeWebcam() {
-    webcam_stream = null
-
     $('#camerapreview').fadeOut(500)
 
     $('#video')[0] = null
     var preview = $('#snapshot')[0]
     var context = preview.getContext('2d')
     context.clearRect(0, 0, preview.width, preview.height)
-
-    showTip('WEBCAM DISABLED')
 }
 
 function togglePreview(id) {

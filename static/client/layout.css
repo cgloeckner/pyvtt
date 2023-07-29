@@ -622,7 +622,7 @@ div#camerapreview > img.close {
     display: block;
 }
 
-div#camerapreview > img.hide {
+div#camerapreview > img.reload {
     width: 32px;
     float: right;
     left: 15px;

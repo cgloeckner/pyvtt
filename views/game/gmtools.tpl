@@ -8,7 +8,7 @@
     </div>
 
     <div id="camerapreview">
-        <img class="hide" src="/static/top.png" onClick="hideWebcam();" draggable="false" title="HIDE CAMERA" />
+        <img class="reload" src="/static/rotate.png" onClick="reloadWebcam();" draggable="false" title="RELOAD CAMERA" />
         <img class="close" src="/static/close.png" onClick="closeWebcam();" draggable="false" title="CLOSE CAMERA" />
         <span>
             <p>LIVESTREAM</p>
