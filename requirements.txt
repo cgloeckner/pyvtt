@@ -5,7 +5,7 @@ cachetools==5.2.0
 certifi==2023.7.22
 cffi==1.15.1
 charset-normalizer==2.1.1
-cryptography==38.0.3
+cryptography
 emoji-country-flag==1.3.1
 gevent==22.10.2
 gevent-websocket==0.10.1
