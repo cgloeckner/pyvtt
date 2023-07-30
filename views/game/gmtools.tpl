@@ -8,8 +8,8 @@
     </div>
 
     <div id="camerapreview">
-        <img class="reload" src="/static/rotate.png" onClick="reloadWebcam();" draggable="false" title="RELOAD CAMERA" />
-        <img class="close" src="/static/close.png" onClick="closeWebcam();" draggable="false" title="CLOSE CAMERA" />
+        <img class="reload" src="/static/rotate.png" onClick="reloadWebcam();" id="reload_webcam" draggable="false" title="RELOAD" />
+        <img class="close" src="/static/close.png" onClick="closeWebcam();" draggable="false" title="CLOSE" />
         <span>
             <p>LIVESTREAM</p>
             <video id="video" playsinline autoplay onClick="togglePreview(this);" title="CLICK TO ENLARGE"></video><br />

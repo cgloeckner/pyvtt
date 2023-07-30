@@ -27,6 +27,7 @@ const screenshare_constraints = {
 
 function initWebcam() {
     onCloseDrawing();
+    $('#reload_webcam').show()
 
     if (webcam_stream === null) {
         onNewWebcamStream()
@@ -50,7 +51,8 @@ function onNewWebcamStream() {
 }
 
 function initScreenShare() {
-    hideWebcam();
+    closeWebcam();
+    $('#reload_webcam').hide()
     onCloseDrawing();
 
     navigator.mediaDevices.getDisplayMedia(screenshare_constraints)
