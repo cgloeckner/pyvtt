@@ -123,23 +123,6 @@ class EngineTest(EngineBaseTest):
         self.reloadEngine(settings=settings)   
         self.assertTrue(self.engine.hasSsl())
 
-    def test_cannotCreateEngineWithUnsupportedLoginMethod(self):
-        self.assertTrue(self.engine.hasSupportedLogin())
-
-        # reload with unsupported api   
-        settings = EngineTest.defaultSettings()
-        settings['login']['type'] = 'random-crap'
-        with self.assertRaises(NotImplementedError):
-            self.reloadEngine(settings=settings)
-
-        # reload with auth0 api
-        settings = EngineTest.defaultSettings()
-        settings['login']['type'] = 'auth0'
-        settings['login']['client_id'] = 'foobar'
-        settings['login']['client_secret'] = 'secret123'
-        settings['login']['domain'] = 'dummy.us.auth0.com' 
-        self.reloadEngine(settings=settings)  
-
     def test_getUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)

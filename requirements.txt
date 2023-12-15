@@ -16,7 +16,7 @@ idna==3.4
 oauthlib==3.2.2
 packaging==21.3
 Pillow==9.3.0
-pony==0.7.16
+pony==0.7.17
 protobuf==4.21.9
 psutil==5.9.4
 pyasn1==0.4.8
@@ -34,3 +34,5 @@ urllib3==1.26.13
 zope.event==4.5.0
 zope.interface==5.5.2
 httpx~=0.25.2
+google-auth==2.25.2
+google-auth-oauthlib==1.2.0

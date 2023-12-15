@@ -19,11 +19,18 @@ import tempfile
 import traceback
 import uuid
 import httpx
+import requests
 import typing
+import abc
+
+from google.oauth2 import id_token
+from google_auth_oauthlib.flow import InstalledAppFlow
+import google.auth.transport.requests
 
 import bottle
 from authlib.integrations.requests_client import OAuth2Session
 from gevent import lock
+
 
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
@@ -275,28 +282,22 @@ class DiscordWebhookNotifier(Notifier):
 
 # ---------------------------------------------------------------------
 
-# @NOTE: this class is not covered in the unit tests because it depends too much on external resources
-class BaseLoginApi(object):
+class OAuthLogin:
+    def __init__(self, engine, **kwargs):
+        self.engine = engine
 
-    def __init__(self, api, engine, **data):
-        self.api           = api
-        self.engine        = engine
-        self.callback      = engine.getAuthCallbackUrl() # https://example.com/my/callback/path
-        self.client_id     = data['client_id']     # ID of API key
-        self.client_secret = data['client_secret'] # Secret of API key
+        # register all oauth providers
+        self.providers = {}
+        for provider in kwargs['providers']:
+            if provider == 'google':
+                self.providers['google'] = GoogleLogin(engine, self, **kwargs['providers'][provider])
+            if provider == 'discord':
+                self.providers['discord'] = DiscordLogin(engine, self, **kwargs['providers'][provider])
 
-        self.login_caption = f'Login with {api}'
-        
         # thread-safe structure to hold login sessions
         self.sessions = dict()
-        self.lock     = lock.RLock()
+        self.lock = lock.RLock()
 
-    def getLogoutUrl(self):
-        raise NotImplementedError()
-
-    def getGmInfo(self, url):
-        return ''
-    
     def loadSession(self, state):
         """Query session via state but remove it from the cache"""
         with self.lock:
@@ -307,12 +308,143 @@ class BaseLoginApi(object):
             self.sessions[state] = session
 
     @staticmethod
-    def parseStateFromUrl(url):
-        # query state from url (which contains '&state=foo')
-        return url.split('&state=')[1].split('&')[0]
+    def parseProvider(s: str) -> str:
+        provider = '-'.join(s.split('|')[:-1])
+
+        # split 'oauth2'-section from provider
+        for s in ['-oauth2', 'oauth2-']:
+            provider = provider.replace(s, '')
+
+        return provider.lower()
 
     def getIconUrl(self, key):
-        return self.engine.login['icons'][key]
+        return self.providers[key].icon_url
+
+
+# @NOTE: this class is not covered in the unit tests because it depends too much on external resources
+class BaseLoginApi(abc.ABC):
+
+    def __init__(self, api, engine, **data):
+        self.api = api
+        self.engine = engine
+        self.callback = f'{engine.getAuthCallbackUrl()}/{api}'  # https://example.com/my/callback/path/api_name
+        self.client_id = data['client_id']  # ID of API key
+        self.client_secret = data['client_secret']  # Secret of API key
+
+        self.login_caption = f'Login with {api}'
+
+    def getLogoutUrl(self): ...
+
+    def getGmInfo(self, url):
+        return ''
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class GoogleLogin(BaseLoginApi):
+
+    def __init__(self, engine, parent, **data):
+        super().__init__('google', engine, **data)
+        self.parent = parent
+        self.icon_url = data['icon']
+
+        if engine.debug:
+            # accept non-https for testing oauth (e.g. localhost)
+            os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
+    def getAuthUrl(self):
+        """ Generate google-URL to access in order to fetch data. """
+        # create auth flow session
+        f = InstalledAppFlow.from_client_config(
+            client_config={
+                'web': {
+                    'client_id': self.client_id,
+                    'client_secret': self.client_secret,
+                    'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
+                    'token_uri': 'https://oauth2.googleapis.com/token'
+                }
+            },
+            scopes=[
+                'https://www.googleapis.com/auth/userinfo.email',
+                'https://www.googleapis.com/auth/userinfo.profile',
+                'openid'
+            ],
+            redirect_uri=self.callback)
+
+        auth_url, state = f.authorization_url()
+        self.parent.saveSession(state, f)
+
+        return auth_url
+
+    def getSession(self, request):
+        """ Query google to return required user data and infos."""
+        state = request.url.split('state=')[1].split('&')[0]
+
+        # fetch token
+        f = self.parent.loadSession(state)
+        f.fetch_token(authorization_response=bottle.request.url)
+        creds = f.credentials
+        token_request = google.auth.transport.requests.Request()
+
+        id_info = id_token.verify_oauth2_token(
+            id_token=creds._id_token,
+            request=token_request,
+            audience=self.client_id
+        )
+
+        result = {
+            'name': id_info.get('name'),
+            'identity': id_info.get('email'),
+            'metadata': f'google-oauth2|{id_info.get("sub")}'
+        }
+
+        self.engine.logging.auth(result)
+
+        return result
+
+
+class DiscordLogin(BaseLoginApi):
+
+    def __init__(self, engine, parent, **data):
+        super().__init__('discord', engine, **data)
+        self.parent = parent
+        self.icon_url = data['icon']
+        self.scopes = '+'.join(['identify', 'email'])
+
+    def getAuthUrl(self):
+        return f'https://discord.com/oauth2/authorize?client_id={self.client_id}&redirect_uri={self.callback}&scope={self.scopes}&response_type=code'
+
+    def getSession(self, request):
+        code = request.url.split('code=')[1].split('&')[0]
+
+        # query access token
+        data = {
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': self.callback
+        }
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+        token = requests.post('https://discord.com/api/v8/oauth2/token', data=data, headers=headers).json()
+
+        # query user data
+        headers = {
+            "Authorization": f'Bearer {token["access_token"]}'
+        }
+        user_data = requests.get('https://discordapp.com/api/users/@me', headers=headers).json()
+
+        result = {
+            'name': user_data['global_name'],
+            'identity': user_data['email'],
+            'metadata': f'discord-oauth2|{user_data["email"]}'
+        }
+
+        self.engine.logging.auth(result)
+
+        return result
 
 
 # ---------------------------------------------------------------------

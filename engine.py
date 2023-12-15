@@ -183,7 +183,8 @@ class Engine(object):
                 self.hosting['domain'] = ip
                 self.logging.info(f'Using Public IP {ip} as Domain')
 
-            if self.notify['type'] == 'webhook':
+            # FIXME: use factory pattern
+            if self.notify['type'] == 'webhook' and not self.debug:
                 if self.notify['provider'] == 'discord':
                     self.notify_api = utils.DiscordWebhookNotifier(self, appname=appname, **self.notify)
 
@@ -191,12 +192,8 @@ class Engine(object):
                 # create email notify API
                 self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
 
-            if self.login['type'] == 'auth0':
-                # create auth0 query API
-                self.login_api = utils.Auth0Api(engine=self, **self.login)
-
-            elif self.login['type'] not in [None, '']:
-                raise NotImplementedError(self.login['type'])
+            if self.login['type'] == 'oauth':
+                self.login_api = utils.OAuthLogin(engine=self, **self.login)
 
         self.logging.info('Loading main database...')
         # create main database
@@ -321,11 +318,6 @@ class Engine(object):
     def hasSsl(self):
         return self.hosting['ssl']
 
-    def hasSupportedLogin(self):
-        if self.login_api is None:
-            return True
-        return self.login_api.api in ['patreon', 'google', 'auth0']
-        
     def verifyUrlSection(self, s):
         return bool(re.match(self.url_regex, s))
         

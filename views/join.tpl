@@ -16,7 +16,9 @@
         
         <p><input type="submit" value="CREATE GM ACCOUNT" /></p>
 %else:
-        <p><a href="{{engine.login_api.getAuthUrl()}}"><input type="button" value="{{engine.login_api.login_caption.upper()}}" /></a></p>
+    %for provider in engine.login_api.providers:
+        <p><a href="{{engine.login_api.providers[provider].getAuthUrl()}}"><input type="button" class="login_button" value="LOGIN WITH {{provider.upper()}}" /></a></p>
+    %end
 %end  
     </form>  
 </div>

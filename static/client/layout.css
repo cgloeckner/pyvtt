@@ -183,6 +183,10 @@ input[type=color] {
     height: 50px;
 }
 
+input[type=button].login_button {
+    width: 250px;
+}
+
 input[type=file] {
     border: 1px solid white; 
     outline: 1px solid white;

@@ -27,21 +27,14 @@ __licence__ = 'MIT'
 
 def setup_gm_routes(engine):
 
-    # shared login page
-    @get('/vtt/join')
-    @view('join')
-    def gm_login():
-        return dict(engine=engine)
-
-    if engine.login_api is not None:
-        # login callback
-        @get('/vtt/callback')
+    def setup_login_callback(engine, provider):
+        @get(f'/vtt/callback/{provider}')
         def gm_login_callback():
             # query session from login auth
-            session = engine.login_api.getSession(request)
+            session = engine.login_api.providers[provider].getSession(request)
             if 'identity' not in session:
                 redirect('/vtt/join')
-            
+
             # test whether GM is already there
             gm = engine.main_db.GM.select(lambda g: g.identity == session['identity']).first()
             if gm is None:
@@ -55,11 +48,11 @@ def setup_gm_routes(engine):
                 )
                 gm.postSetup()
                 engine.main_db.commit()
-                
+
                 # add to cache and initialize database
                 engine.cache.insert(gm)
                 gm_cache = engine.cache.get(gm)
-                
+
                 # @NOTE: database creation NEEDS to be run from another
                 # thread, because every bottle route has an db_session
                 # active, but creating a database from within a db_session
@@ -71,22 +64,39 @@ def setup_gm_routes(engine):
                 except:
                     # reraise greenlet's exception to trigger proper error reporting
                     raise
-                
-                engine.logging.access('GM created using external auth with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
-                
+
+                engine.logging.access(
+                    'GM created using external auth with name="{0}" url={1} by {2}.'.format(gm.name, gm.url,
+                                                                                            engine.getClientIp(
+                                                                                                request)))
+
             else:
                 # create new session for already existing GM
-                gm.sid  = engine.main_db.GM.genSession()
+                gm.sid = engine.main_db.GM.genSession()
                 gm.name = session['name']
                 gm.metadata = session['metadata']
-                
+
             gm.refreshSession(response)
-            
-            engine.logging.access('GM name="{0}" url={1} session refreshed using external auth by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
-            
+
+            engine.logging.access(
+                'GM name="{0}" url={1} session refreshed using external auth by {2}'.format(gm.name, gm.url,
+                                                                                            engine.getClientIp(
+                                                                                                request)))
+
             engine.main_db.commit()
             # redirect to GM's game overview
             redirect('/')
+
+    # shared login page
+    @get('/vtt/join')
+    @view('join')
+    def gm_login():
+        return dict(engine=engine)
+
+    if engine.login_api is not None:
+        for provider in engine.login_api.providers:
+            # login callback
+            setup_login_callback(engine, provider)
 
     else:
         # non-auth login
@@ -150,12 +160,11 @@ def setup_gm_routes(engine):
             return status
 
     @get('/vtt/logout')
-    def vtt_logout():  
-        url = engine.login_api.getLogoutUrl()
+    def vtt_logout():
         # remove cookie
         response.set_cookie('session', '', path='/', max_age=1, secure=engine.hasSsl())
-        # redirect to external logout
-        redirect(url)
+        # redirect default index
+        redirect('/')
 
     @get('/')
     @view('gm')
@@ -163,10 +172,10 @@ def setup_gm_routes(engine):
         gm = engine.main_db.GM.loadFromSession(request)
         if gm is None:
             # remove cookie
+            # FIXME: setting cookie is ignored on redirect
             response.set_cookie('session', '', path='/', max_age=1, secure=engine.hasSsl())
-            # redirect to login screen
             redirect('/vtt/join')
-        
+
         # load GM from cache
         gm_cache = engine.cache.get(gm)
         if gm_cache is None:
@@ -663,9 +672,9 @@ def setup_gm_routes(engine):
             'query_time': done-start
         }
     
-    if engine.login['type'] == 'auth0':
-        @get('/vtt/api/auth0')
-        def api_query_auth0():
+    if engine.login['type'] == 'google':
+        @get('/vtt/api/google')
+        def api_query_google():
             # query gms and how many accounts do idle
             now   = time.time()
             total = 0
