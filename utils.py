@@ -7,16 +7,23 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import sys, os, logging, smtplib, pathlib, tempfile, traceback, uuid, random, base64, json
+import base64
+import json
+import logging
+import os
+import pathlib
+import random
+import smtplib
+import sys
+import tempfile
+import traceback
+import uuid
+import httpx
+import typing
 
-import bottle       
-
-from gevent import lock
-
+import bottle
 from authlib.integrations.requests_client import OAuth2Session
-from authlib.oidc.core import CodeIDToken
-from authlib.jose import jwt
-
+from gevent import lock
 
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
@@ -167,21 +174,28 @@ class PathApi(object):
 
 # ---------------------------------------------------------------------
 
+class Notifier(typing.Protocol):
+    def login(self) -> None: ...
+    def onStart(self) -> None: ...
+    def onCleanup(self, report: str) -> None: ...
+    def onError(self, error_id: str, message: str) -> None: ...
+
+
 # Email API for error notification
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
-class EmailApi(object):
-    
+class EmailApi(Notifier):
+
     def __init__(self, engine, **data):
-        self.engine   = engine
-        self.appname  = data['appname']
-        self.host     = data['host']
-        self.port     = data['port']
-        self.sender   = data['sender']
-        self.user     = data['user']
+        self.engine = engine
+        self.appname = data['appname']
+        self.host = data['host']
+        self.port = data['port']
+        self.sender = data['sender']
+        self.user = data['user']
         self.password = data['password']
         self.lock = lock.RLock()
         self.login()
-        
+
     def login(self):
         with self.lock:
             self.smtp = smtplib.SMTP(f'{self.host}:{self.port}')
@@ -191,24 +205,24 @@ class EmailApi(object):
     def send(self, subject, message):
         # create mail content
         frm = f'From: pyvtt Server <{self.sender}>'
-        to  = f'To: Developers <{self.sender}>'
+        to = f'To: Developers <{self.sender}>'
         sub = f'Subject: [{self.appname}/{self.engine.title}] {subject}'
         plain = f'{frm}\n{to}\n{sub}\n{message}'
-        
+
         # send email
         try:
             with self.lock:
                 self.smtp.sendmail(self.sender, self.sender, plain)
         except smtplib.SMTPServerDisconnected:
             # re-login and re-try
-            self.connect(f'{self.host}:{self.port}')
+            self.smtp.connect(f'{self.host}:{self.port}')
             self.login()
             self.smtp.sendmail(self.sender, self.sender, plain)
         except smtplib.SMTPSenderRefused:
             # re-login and re-try
             self.login()
             self.smtp.sendmail(self.sender, self.sender, plain)
-        
+
     def onStart(self):
         msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.getDomain()} is now online!'
         self.send('Server Online', msg)
@@ -221,6 +235,42 @@ class EmailApi(object):
     def onError(self, error_id, message):
         sub = f'Exception Traceback #{error_id}'
         self.send(sub, message)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class DiscordWebhookNotifier(Notifier):
+    """Send notifications to a discord webhook"""
+
+    def __init__(self, engine, **data):
+        self.engine = engine
+        self.appname = data['appname']
+        self.alias = data['alias']
+        self.url = data['url']
+        self.roles = data['roles']
+        self.users = data['users']
+
+    def get_mentions(self) -> str:
+        """Get mentioning string for relevant roles and users."""
+        roles = [f'<@&{role}>' for role in self.roles]
+        users = [f'<@{user}>' for user in self.users]
+        return f' '.join(roles + users)
+
+    def send(self, message: str) -> None:
+        content = f'{self.get_mentions()}: {message}'
+        httpx.post(self.url, json={'username': self.alias, 'content': content})
+
+    def onStart(self):
+        msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.getDomain()} is now online!'
+        self.send(msg)
+
+    def onCleanup(self, report):
+        report = json.dumps(report, indent=4)
+        msg = f'The VTT Server finished cleanup.\n```{report}```'
+        self.send(msg)
+
+    def onError(self, error_id, message):
+        self.send(message)
 
 
 # ---------------------------------------------------------------------

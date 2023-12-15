@@ -33,3 +33,4 @@ uritemplate==4.1.1
 urllib3==1.26.13
 zope.event==4.5.0
 zope.interface==5.5.2
+httpx~=0.25.2

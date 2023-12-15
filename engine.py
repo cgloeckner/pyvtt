@@ -183,6 +183,10 @@ class Engine(object):
                 self.hosting['domain'] = ip
                 self.logging.info(f'Using Public IP {ip} as Domain')
 
+            if self.notify['type'] == 'webhook':
+                if self.notify['provider'] == 'discord':
+                    self.notify_api = utils.DiscordWebhookNotifier(self, appname=appname, **self.notify)
+
             if self.notify['type'] == 'email' and not self.debug:
                 # create email notify API
                 self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
