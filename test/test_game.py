@@ -13,7 +13,7 @@ from bottle import FileUpload
 from pony.orm import db_session
 from PIL import Image
 
-import orm
+from vtt import orm
 
 from test.utils import EngineBaseTest
 

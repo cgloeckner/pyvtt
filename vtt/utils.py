@@ -99,9 +99,10 @@ def countDictSetLen(dictionary):
 # API for providing local harddrive paths
 class PathApi(object):
     
-    def __init__(self, appname, root=None):
+    def __init__(self, appname, pref_root=None, app_root=pathlib.Path('.')) -> None:
         """ Uses given root or pick standard preference directory. """
-        if root is None:
+        self.app_root = app_root
+        if pref_root is None:
             # get preference dir
             p = pathlib.Path.home()
             if sys.platform.startswith('linux'):
@@ -109,12 +110,13 @@ class PathApi(object):
             else:
                 raise NotImplementedError('only linux supported yet')
             
-            self.root = p / appname
-        else:
-            self.root = pathlib.Path(root) / appname
-        
+            pref_root = p
+
+
+        self.pref_root = pref_root / appname
+
         # make sure paths exists
-        self.ensure(self.root)
+        self.ensure(self.pref_root)
         self.ensure(self.getExportPath())
         self.ensure(self.getGmsPath())
         self.ensure(self.getFancyUrlPath())
@@ -122,60 +124,61 @@ class PathApi(object):
         self.ensure(self.getAssetsPath())
         self.ensure(self.getClientCodePath())
         
-    def ensure(self, path):
+    def ensure(self, path) -> None:
         if not os.path.isdir(path):
             os.mkdir(path)
         
     # Engine paths
-        
-    def getStaticPath(self):
-        return self.root / 'static'
-    
-    def getAssetsPath(self):
-        return self.getStaticPath() / 'assets'
 
-    def getClientCodePath(self):
+    def getStaticPath(self, default: bool = False) -> pathlib.Path:
+        root = self.app_root if default else self.pref_root
+        return root / 'static'
+
+    def getAssetsPath(self, default: bool = False) -> pathlib.Path:
+        return self.getStaticPath(default=default) / 'assets'
+
+    def getClientCodePath(self) -> pathlib.Path:
         return self.getStaticPath() / 'client'
- 
-    def getLogPath(self, fname):
-        return self.root / '{0}.log'.format(fname)
-        
-    def getSettingsPath(self):
-        return self.root / 'settings.json'
-        
-    def getMainDatabasePath(self):
-        return self.root / 'main.db'
 
-    def getConstantsPath(self):
+    def getLogPath(self, fname: str) -> pathlib.Path:
+        return self.pref_root / '{0}.log'.format(fname)
+
+    def getSettingsPath(self) -> pathlib.Path:
+        return self.pref_root / 'settings.json'
+
+    def getMainDatabasePath(self) -> pathlib.Path:
+        return self.pref_root / 'main.db'
+
+    def getConstantsPath(self) -> pathlib.Path:
         return self.getClientCodePath() / 'constants.js'
- 
-    def getSslPath(self):
-        return self.root / 'ssl'
-           
-    def getExportPath(self):
-        return self.root / 'export'
-        
-    def getGmsPath(self, gm=None):
-        p = self.root / 'gms'
+
+    def getSslPath(self) -> pathlib.Path:
+        return self.pref_root / 'ssl'
+
+    def getExportPath(self) -> pathlib.Path:
+        return self.pref_root / 'export'
+
+    def getGmsPath(self, gm=None) -> pathlib.Path:
+        p = self.pref_root / 'gms'
         if gm is not None:
             p /= gm
         return p
-        
-    def getFancyUrlPath(self, fname=None):
-        p = self.root / 'fancyurl'
+
+    def getFancyUrlPath(self, fname=None) -> pathlib.Path:
+        p = self.pref_root / 'fancyurl'
         if fname is not None:
             p /= '{0}.txt'.format(fname)
         return p
-        
-    # GM- and Game-relevant paths
-        
-    def getDatabasePath(self, gm):
-        return self.getGmsPath(gm) / 'gm.db'
-        
-    def getGamePath(self, gm, game):
-        return self.getGmsPath(gm) / game 
 
-    def getMd5Path(self, gm, game):
+    # GM- and Game-relevant paths
+
+    def getDatabasePath(self, gm) -> pathlib.Path:
+        return self.getGmsPath(gm) / 'gm.db'
+
+    def getGamePath(self, gm, game) -> pathlib.Path:
+        return self.getGmsPath(gm) / game
+
+    def getMd5Path(self, gm, game) -> pathlib.Path:
         return self.getGamePath(gm, game) / 'gm.md5'
 
 
@@ -776,7 +779,7 @@ class ConstantExport(object):
             h.write(content)
 
     def __call__(self, engine):
-        import orm
+        import vtt.orm as orm
         self['MAX_SCENE_WIDTH'] = orm.MAX_SCENE_WIDTH
         self['MAX_SCENE_HEIGHT'] = orm.MAX_SCENE_HEIGHT
         self['MIN_TOKEN_SIZE'] = orm.MIN_TOKEN_SIZE

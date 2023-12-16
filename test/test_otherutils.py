@@ -7,9 +7,9 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import unittest, tempfile, pathlib
+import unittest, tempfile
 
-from utils import BuildNumber, addDictSet, countDictSetLen
+from vtt.utils import BuildNumber, addDictSet, countDictSetLen
 
 
 class BuildNumberTest(unittest.TestCase):

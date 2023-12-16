@@ -7,28 +7,34 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import os, sys, hashlib, time, requests, json, re, shutil, pathlib, subprocess, uuid
+import hashlib
+import json
+import os
+import pathlib
+import re
+import requests
+import shutil
+import subprocess
+import sys
+import time
+import uuid
 
 import bottle
 
-from orm import db_session, createMainDatabase
-from server import VttServer
-from cache import EngineCache
-
-from buildnumber import BuildNumber
-
-import utils 
-
+import vtt.utils as utils
+from vtt.buildnumber import BuildNumber
+from vtt.cache import EngineCache
+from vtt.orm import db_session, createMainDatabase
+from vtt.server import VttServer
 
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 
-
 class Engine(object):
 
-    def __init__(self, argv=list(), pref_dir=None):
-        appname   = 'pyvtt'
+    def __init__(self, app_root=pathlib.Path('.'), argv=list(), pref_dir=None):
+        appname = 'pyvtt'
         self.log_level = 'INFO'
         for arg in argv:
             if arg.startswith('--appname='):
@@ -40,14 +46,14 @@ class Engine(object):
             elif arg.startswith('--loglevel='):
                 self.log_level = arg.split('--loglevel=')[1]
 
-        self.paths = utils.PathApi(appname=appname, root=pref_dir)
+        self.paths = utils.PathApi(appname=appname, pref_root=pref_dir, app_root=app_root)
         self.paths.ensure(self.paths.getExportPath())
 
         self.app = bottle.default_app()
 
         # setup per-game stuff
         self.checksums = dict()
-        self.locks     = dict()
+        self.locks = dict()
         
         # webserver stuff
         self.listen = '0.0.0.0'
@@ -218,7 +224,7 @@ class Engine(object):
 
         # load version number
         bn = BuildNumber()
-        bn.loadFromFile(pathlib.Path('static') / 'client' / 'version.js')
+        bn.loadFromFile(self.paths.getStaticPath(default=True) / 'client' / 'version.js')
         self.version = str(bn)
         
         # query latest git hash

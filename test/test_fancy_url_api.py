@@ -9,18 +9,18 @@ License: MIT (see LICENSE for details)
 
 import unittest, tempfile, pathlib
 
-import utils
+from vtt import utils
+
 
 class FancyUrlApiTest(unittest.TestCase):
     
     def setUp(self):            
         # create temporary directory
         self.tmpdir = tempfile.TemporaryDirectory()
-        root = pathlib.Path(self.tmpdir.name)
-        
-        self.paths = utils.PathApi(appname='unittest', root=root)
+        self.paths = utils.PathApi(appname='unittest', app_root=pathlib.Path('.'),
+                                   pref_root=pathlib.Path(self.tmpdir.name))
         self.urls = utils.FancyUrlApi(self.paths)
-        
+
     def tearDown(self):
         del self.urls
         del self.paths

@@ -9,7 +9,7 @@ License: MIT (see LICENSE for details)
 
 from pony.orm import db_session
 
-import cache, orm
+from vtt import orm
 
 from test.utils import EngineBaseTest
 

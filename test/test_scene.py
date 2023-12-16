@@ -10,7 +10,8 @@ License: MIT (see LICENSE for details)
 import unittest
 from pony.orm import db_session
 
-import orm
+from vtt import orm
+
 
 class SceneTest(unittest.TestCase):
     

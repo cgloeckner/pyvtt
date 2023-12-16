@@ -10,7 +10,8 @@ License: MIT (see LICENSE for details)
 import unittest
 from pony.orm import db_session
 
-import orm
+from vtt import orm
+
 
 class TokenTest(unittest.TestCase):
     
@@ -44,7 +45,7 @@ class TokenTest(unittest.TestCase):
         self.assertTrue(t.update(timeid=110, pos=(-1, -1)))
         self.assertEqual(t.posx, 0)
         self.assertEqual(t.posy, 0)
-        t.update(timeid=111, pos=(orm.MAX_SCENE_WIDTH+1, orm.MAX_SCENE_HEIGHT+1))
+        t.update(timeid=111, pos=(orm.MAX_SCENE_WIDTH + 1, orm.MAX_SCENE_HEIGHT + 1))
         self.assertEqual(t.posx, orm.MAX_SCENE_WIDTH)
         self.assertEqual(t.posy, orm.MAX_SCENE_HEIGHT)
         # move back to regular position
@@ -64,9 +65,9 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.color, 'red')
         
         # cannot resize token with too small or too large value
-        self.assertTrue(t.update(timeid=114, size=orm.MIN_TOKEN_SIZE-1))
+        self.assertTrue(t.update(timeid=114, size=orm.MIN_TOKEN_SIZE - 1))
         self.assertEqual(t.size, orm.MIN_TOKEN_SIZE)
-        self.assertTrue(t.update(timeid=115, size=orm.MAX_TOKEN_SIZE+1))
+        self.assertTrue(t.update(timeid=115, size=orm.MAX_TOKEN_SIZE + 1))
         self.assertEqual(t.size, orm.MAX_TOKEN_SIZE)
         self.assertTrue(t.update(timeid=116, size=-1))
         self.assertEqual(t.size, orm.MIN_TOKEN_SIZE)
@@ -166,7 +167,7 @@ class TokenTest(unittest.TestCase):
         self.assertFalse(t.update(timeid=132))
 
         # very long token labels are cut to length
-        self.assertTrue(t.update(timeid=132, label=('X' * (orm.MAX_TOKEN_LABEL_SIZE+1), 'white')))
+        self.assertTrue(t.update(timeid=132, label=('X' * (orm.MAX_TOKEN_LABEL_SIZE + 1), 'white')))
         self.assertEqual(len(t.text), orm.MAX_TOKEN_LABEL_SIZE)
         self.assertFalse(t.update(timeid=132))
         

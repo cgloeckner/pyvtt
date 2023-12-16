@@ -7,13 +7,13 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import unittest, webtest, sys, tempfile, pathlib, json, time
+import unittest, webtest, tempfile, pathlib, json, time
 
 import bottle
 from geventwebsocket.exceptions import WebSocketError
 
-from utils import PathApi
-from engine import Engine
+from vtt.utils import PathApi
+from vtt.engine import Engine
 
 class EngineBaseTest(unittest.TestCase):
         
@@ -23,7 +23,7 @@ class EngineBaseTest(unittest.TestCase):
         self.root   = pathlib.Path(self.tmpdir.name)
         
         # pregenerate paths api for dummyfiles            
-        paths = PathApi(appname='unittest', root=self.root)
+        paths = PathApi(appname='unittest', pref_root=self.root)
         for w in ['verbs', 'adjectives', 'nouns']:
             with open(paths.getFancyUrlPath() / '{0}.txt'.format(w), 'w') as h:
                 h.write('demo')

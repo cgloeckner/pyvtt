@@ -7,18 +7,18 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-from gevent import monkey; monkey.patch_all()
 import gevent
 
-import os, json, time, sys, random, subprocess, requests, flag, pathlib, httpagentparser
+import flag
+import json
+import random
+import requests
+import pathlib
+import httpagentparser
 
-from pony import orm
 from bottle import *
 
-from engine import Engine
-from cache import PlayerCache
-from cleanup import CleanupThread
-from utils import addDictSet, countDictSetLen
+from vtt.utils import addDictSet, countDictSetLen
 
 
 __author__ = 'Christian Glöckner'
@@ -757,14 +757,16 @@ def setup_resource_routes(engine):
     def static_assets(fname):
         root = engine.paths.getAssetsPath()
         if not os.path.isdir(root) or not os.path.exists(root / fname):
-            root = pathlib.Path('./static/assets')
+            # use default root
+            root = engine.paths.getAssetsPath(default=True)
         return static_file(fname, root=root)
 
     @get('/static/client/<fname>')
     def static_client_code(fname):
         root = engine.paths.getClientCodePath()
         if not os.path.isdir(root) or not os.path.exists(root / fname):
-            root = pathlib.Path('./static/client')
+            # use default root
+            root = engine.paths.getStaticPath(default=True) / 'client'
 
         return static_file(fname, root=root)
 
@@ -1082,20 +1084,3 @@ def setup_error_routes(engine):
     @view('error500')
     def caught_error(error_id):
         return dict(engine=engine, error_id=error_id)
-
-
-if __name__ == '__main__':
-    try:
-        argv = sys.argv
-        
-        engine = Engine(argv)   
-        setup_resource_routes(engine)
-        setup_gm_routes(engine)
-        setup_player_routes(engine)
-        setup_error_routes(engine)
-
-        engine.cleanup_worker = CleanupThread(engine)
-        engine.run()
-    except KeyboardInterrupt:
-        pass
-

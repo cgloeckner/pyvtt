@@ -7,16 +7,19 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import time, requests, uuid, json, random, os, flag
+import flag
+import json
+import os
+import random
+import time
+import uuid
 
-from bottle import request
 import gevent
-
+from bottle import request
 from gevent import lock
 from geventwebsocket.exceptions import WebSocketError
 
-from orm import db_session, createGmDatabase
-
+from vtt.orm import db_session, createGmDatabase
 
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'

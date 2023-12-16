@@ -9,7 +9,7 @@ License: MIT (see LICENSE for details)
 
 import pathlib, os, sys
   
-from utils import BuildNumber
+from vtt.utils import BuildNumber
 
 
 __author__ = 'Christian Glöckner'
@@ -17,7 +17,7 @@ __licence__ = 'MIT'
 
 
 if __name__ == '__main__':
-    path = pathlib.Path('static') / 'client' / 'version.js'
+    path = pathlib.Path('../static') / 'client' / 'version.js'
     version = BuildNumber()
     
     if os.path.exists(path):

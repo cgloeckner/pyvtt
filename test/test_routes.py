@@ -7,14 +7,18 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import tempfile, json, os, zipfile, gevent, requests, shutil, hashlib
+import gevent
+import json
+import os
+import requests
+import shutil
+import tempfile
+import zipfile
 
 from PIL import Image
 
-import vtt
-
 from test.utils import EngineBaseTest, SocketDummy
-
+from vtt import routes
 
 
 def makeImage(w, h):
@@ -23,6 +27,7 @@ def makeImage(w, h):
         pil_img.save(wh.name, 'BMP')
         with open(wh.name, 'rb') as rh:
             return rh.read()
+
 
 def makeZip(fname, data, n):
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -51,9 +56,9 @@ class VttTest(EngineBaseTest):
 
     def setUp(self):
         super().setUp()        
-        vtt.setup_resource_routes(self.engine)
-        vtt.setup_gm_routes(self.engine)
-        vtt.setup_player_routes(self.engine)
+        routes.setup_resource_routes(self.engine)
+        routes.setup_gm_routes(self.engine)
+        routes.setup_player_routes(self.engine)
         # @NOTE: custom errorpages are not routed here
     
     def test_get_root(self):

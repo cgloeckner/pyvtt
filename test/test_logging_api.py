@@ -7,9 +7,10 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import unittest, tempfile, pathlib, os
+import unittest, tempfile, pathlib
 
-import utils
+from vtt import utils
+
 
 class LoggingApiTest(unittest.TestCase):
     

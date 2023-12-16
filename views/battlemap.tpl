@@ -1,4 +1,4 @@
-%from orm import MAX_SCENE_WIDTH, MAX_SCENE_HEIGHT
+%from vtt.orm import MAX_SCENE_WIDTH, MAX_SCENE_HEIGHT
 
 %you_are_host = gm is not None and gm.url == host.url
 

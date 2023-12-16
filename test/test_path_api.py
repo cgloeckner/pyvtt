@@ -9,7 +9,8 @@ License: MIT (see LICENSE for details)
 
 import unittest, tempfile, pathlib, os
 
-import utils
+from vtt import utils
+
 
 class PathApiTest(unittest.TestCase):
     
@@ -18,7 +19,7 @@ class PathApiTest(unittest.TestCase):
         self.tmpdir = tempfile.TemporaryDirectory()
         root        = pathlib.Path(self.tmpdir.name)
         
-        self.paths = utils.PathApi(appname='unittest', root=root)
+        self.paths = utils.PathApi(appname='unittest', pref_root=root)
         
     def tearDown(self):
         del self.paths
@@ -31,7 +32,7 @@ class PathApiTest(unittest.TestCase):
         # @NOTE: ensure() is called by the constructpr
         
         # test required paths
-        self.assertDirectory(self.paths.root)
+        self.assertDirectory(self.paths.pref_root)
         self.assertDirectory(self.paths.getExportPath()) 
         self.assertDirectory(self.paths.getGmsPath()) 
         self.assertDirectory(self.paths.getFancyUrlPath())
@@ -42,7 +43,9 @@ class PathApiTest(unittest.TestCase):
     def test_simple_path_getter(self):
         # @NOTE: actual value isn't tested but that they are not throwing
         self.paths.getStaticPath()
+        self.paths.getStaticPath(default=True)
         self.paths.getAssetsPath()
+        self.paths.getAssetsPath(default=True)
         self.paths.getClientCodePath()
         self.paths.getSettingsPath() 
         self.paths.getMainDatabasePath() 
