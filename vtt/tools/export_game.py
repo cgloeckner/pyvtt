@@ -7,13 +7,13 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import sys
-
-import engine
-from vtt.orm.register import db_session
-
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
+
+import sys
+
+from vtt.orm.register import db_session
+from vtt import engine
 
 
 if __name__ == '__main__':

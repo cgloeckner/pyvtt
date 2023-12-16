@@ -7,17 +7,18 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import pathlib, os, sys
-  
-from vtt.utils import BuildNumber
-
-
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 
+import os
+import pathlib
+import sys
+
+from vtt.utils import BuildNumber
+
 if __name__ == '__main__':
-    path = pathlib.Path('../static') / 'client' / 'version.js'
+    path = pathlib.Path('../../static') / 'client' / 'version.js'
     version = BuildNumber()
     
     if os.path.exists(path):

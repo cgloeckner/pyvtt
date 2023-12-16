@@ -7,11 +7,12 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import sys, requests, json
-
-
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
+
+import json
+import requests
+import sys
 
 
 def main():

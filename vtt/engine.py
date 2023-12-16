@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*- 
 """
 https://github.com/cgloeckner/pyvtt/
 
@@ -9,7 +7,6 @@ License: MIT (see LICENSE for details)
 
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
-
 
 import hashlib
 import json
@@ -26,7 +23,7 @@ import uuid
 import bottle
 
 import vtt.utils as utils
-from vtt.buildnumber import BuildNumber
+from vtt.tools.buildnumber import BuildNumber
 from vtt.cache import EngineCache
 from vtt.orm.register import db_session, createMainDatabase
 from vtt.server import VttServer

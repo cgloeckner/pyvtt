@@ -7,14 +7,13 @@ Copyright (c) 2020-2021 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import json, sys, os
-
-from engine import Engine
-from vtt.utils.common import PathApi
-
-
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
+
+import json, sys, os
+
+from vtt.engine import Engine
+from vtt.utils import PathApi
 
 
 def rename_backup(fname):
