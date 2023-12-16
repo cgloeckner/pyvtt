@@ -10,7 +10,7 @@ License: MIT (see LICENSE for details)
 import sys
 
 import engine
-from orm import db_session
+from vtt.orm.register import db_session
 
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'

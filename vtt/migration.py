@@ -10,7 +10,7 @@ License: MIT (see LICENSE for details)
 import json, sys, os
 
 from engine import Engine
-from utils import PathApi
+from vtt.utils.common import PathApi
 
 
 __author__ = 'Christian Glöckner'

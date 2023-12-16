@@ -12,8 +12,7 @@ import time, copy
 from pony.orm import db_session
 
 from vtt import orm
-
-from test.utils import EngineBaseTest, SocketDummy
+from test.common import EngineBaseTest, SocketDummy
 
 class PlayerCacheTest(EngineBaseTest):
     

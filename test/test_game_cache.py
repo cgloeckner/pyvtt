@@ -10,8 +10,8 @@ License: MIT (see LICENSE for details)
 from pony.orm import db_session
 
 from vtt import orm
+from test.common import EngineBaseTest, SocketDummy
 
-from test.utils import EngineBaseTest, SocketDummy
 
 class GameCacheTest(EngineBaseTest):
         

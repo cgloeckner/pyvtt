@@ -3,8 +3,8 @@ from gevent import monkey; monkey.patch_all()
 import sys
 
 from vtt.engine import Engine
-from vtt.routes import setup_resource_routes, setup_gm_routes, setup_player_routes, setup_error_routes
 from vtt.cleanup import CleanupThread
+from vtt import routes
 
 
 if __name__ == '__main__':
@@ -12,10 +12,11 @@ if __name__ == '__main__':
         argv = sys.argv
 
         engine = Engine(argv=argv)
-        setup_resource_routes(engine)
-        setup_gm_routes(engine)
-        setup_player_routes(engine)
-        setup_error_routes(engine)
+        routes.register_gm(engine)
+        routes.register_player(engine)
+        routes.register_api(engine)
+        routes.register_resources(engine)
+        routes.register_error(engine)
 
         engine.cleanup_worker = CleanupThread(engine)
         engine.run()

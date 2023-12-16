@@ -17,7 +17,7 @@ import zipfile
 
 from PIL import Image
 
-from test.utils import EngineBaseTest, SocketDummy
+from test.common import EngineBaseTest, SocketDummy
 from vtt import routes
 
 
@@ -55,12 +55,13 @@ def makeZip(fname, data, n):
 class VttTest(EngineBaseTest):
 
     def setUp(self):
-        super().setUp()        
-        routes.setup_resource_routes(self.engine)
-        routes.setup_gm_routes(self.engine)
-        routes.setup_player_routes(self.engine)
+        super().setUp()
+        routes.register_gm(self.engine)
+        routes.register_player(self.engine)
+        routes.register_resources(self.engine)
+        routes.register_api(self.engine)
         # @NOTE: custom errorpages are not routed here
-    
+
     def test_get_root(self):
         # expect redirect to login
         ret = self.app.get('/')

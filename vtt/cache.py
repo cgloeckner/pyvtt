@@ -19,7 +19,7 @@ from bottle import request
 from gevent import lock
 from geventwebsocket.exceptions import WebSocketError
 
-from vtt.orm import db_session, createGmDatabase
+from vtt.orm.register import db_session, createGmDatabase
 
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'

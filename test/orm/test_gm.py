@@ -12,7 +12,8 @@ import os, time, random, datetime
 from bottle import response
 from pony.orm import db_session
 
-from test.utils import EngineBaseTest
+from test.common import EngineBaseTest
+
 
 class GmTest(EngineBaseTest):
     

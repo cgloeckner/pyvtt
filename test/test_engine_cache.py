@@ -9,7 +9,8 @@ License: MIT (see LICENSE for details)
 
 from pony.orm import db_session
 
-from test.utils import EngineBaseTest, SocketDummy
+from test.common import EngineBaseTest, SocketDummy
+
 
 class EngineCacheTest(EngineBaseTest):
         

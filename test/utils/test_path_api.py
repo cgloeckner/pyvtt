@@ -7,7 +7,10 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import unittest, tempfile, pathlib, os
+import os
+import pathlib
+import tempfile
+import unittest
 
 from vtt import utils
 

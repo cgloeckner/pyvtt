@@ -7,15 +7,20 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import os, pathlib, tempfile, zipfile, json , time
+import json
+import os
+import pathlib
+import tempfile
+import time
+import zipfile
 
+from PIL import Image
 from bottle import FileUpload
 from pony.orm import db_session
-from PIL import Image
 
+from test.common import EngineBaseTest
 from vtt import orm
 
-from test.utils import EngineBaseTest
 
 class GameTest(EngineBaseTest):
     

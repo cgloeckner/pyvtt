@@ -7,6 +7,10 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
+__author__ = 'Christian Glöckner'
+__licence__ = 'MIT'
+
+
 import hashlib
 import json
 import os
@@ -24,11 +28,8 @@ import bottle
 import vtt.utils as utils
 from vtt.buildnumber import BuildNumber
 from vtt.cache import EngineCache
-from vtt.orm import db_session, createMainDatabase
+from vtt.orm.register import db_session, createMainDatabase
 from vtt.server import VttServer
-
-__author__ = 'Christian Glöckner'
-__licence__ = 'MIT'
 
 
 class Engine(object):

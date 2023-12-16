@@ -7,7 +7,9 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import unittest, tempfile, pathlib
+import pathlib
+import tempfile
+import unittest
 
 from vtt import utils
 
@@ -17,7 +19,7 @@ class FancyUrlApiTest(unittest.TestCase):
     def setUp(self):            
         # create temporary directory
         self.tmpdir = tempfile.TemporaryDirectory()
-        self.paths = utils.PathApi(appname='unittest', app_root=pathlib.Path('.'),
+        self.paths = utils.PathApi(appname='unittest', app_root=pathlib.Path('..'),
                                    pref_root=pathlib.Path(self.tmpdir.name))
         self.urls = utils.FancyUrlApi(self.paths)
 

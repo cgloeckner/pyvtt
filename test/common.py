@@ -7,13 +7,19 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import unittest, webtest, tempfile, pathlib, json, time
+import json
+import pathlib
+import tempfile
+import time
+import unittest
+import webtest
 
 import bottle
 from geventwebsocket.exceptions import WebSocketError
 
-from vtt.utils import PathApi
 from vtt.engine import Engine
+from vtt.utils import PathApi
+
 
 class EngineBaseTest(unittest.TestCase):
         

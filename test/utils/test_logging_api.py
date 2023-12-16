@@ -7,7 +7,9 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import unittest, tempfile, pathlib
+import pathlib
+import tempfile
+import unittest
 
 from vtt import utils
 
@@ -17,16 +19,16 @@ class LoggingApiTest(unittest.TestCase):
     def setUp(self):            
         # create temporary directory
         self.tmpdir = tempfile.TemporaryDirectory()
-        self.root   = pathlib.Path(self.tmpdir.name)
+        self.root = pathlib.Path(self.tmpdir.name)
         
         self.logging = utils.LoggingApi(
-            quiet        = True, # writing to sys.stdout not tested here
-            info_file    = self.root / 'info.log',
-            error_file   = self.root / 'error.log',
-            access_file  = self.root / 'access.log',
-            warning_file = self.root / 'warning.log',
-            logins_file  = self.root / 'logins.log',
-            auth_file    = self.root / 'auth.log'
+            quiet=True,  # writing to sys.stdout not tested here
+            info_file=self.root / 'info.log',
+            error_file=self.root / 'error.log',
+            access_file=self.root / 'access.log',
+            warning_file=self.root / 'warning.log',
+            logins_file=self.root / 'logins.log',
+            auth_file=self.root / 'auth.log'
         )
         
     def tearDown(self):

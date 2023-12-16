@@ -18,7 +18,7 @@ import gevent
 from bottle import FileUpload
 from pony.orm import db_session
 
-from test.utils import EngineBaseTest
+from test.common import EngineBaseTest
 from vtt import engine
 
 
