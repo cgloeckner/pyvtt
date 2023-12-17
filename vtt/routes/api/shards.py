@@ -14,15 +14,17 @@ import requests
 from bottle import *
 
 
-def register(engine):
+def register(engine: any):
+
     @get('/vtt/query/<index:int>')
-    def status_query(index):
+    def status_query(index: int):
         if len(engine.shards) == 0:
             abort(404)
 
         # ask server
+        game_host = ''
         try:
-            host = engine.shards[index]
+            game_host = engine.shards[index]
         except IndexError:
             abort(404)
 
@@ -31,23 +33,23 @@ def register(engine):
         data['flag'] = None
         data['build'] = {}
         try:
-            json = requests.get(host + '/vtt/api/build', timeout=3).json()
+            json = requests.get(f'{game_host}/vtt/api/build', timeout=3).json()
             data['build'] = json
-        except Exception as e:
-            engine.logging.error('Server {0} seems to be offline'.format(host))
+        except requests.exceptions.RequestException:
+            engine.logging.error(f'Server {game_host} seems to be offline')
 
         # query server location (if possible)
-        ip = host.split('://')[1].split(':')[0]
+        ip = game_host.split('://')[1].split(':')[0]
         country = engine.get_country_from_ip(ip)
         if country not in ['?', 'unknown']:
             data['flag'] = flag.flag(country)
 
         # query server data
         try:
-            json = requests.get(host + '/vtt/api/users', timeout=3).json()
+            json = requests.get(f'{game_host}/vtt/api/users', timeout=3).json()
             data['games'] = json['games']['running']
-        except Exception as e:
-            engine.logging.error('Server {0} seems to be offline'.format(host))
+        except requests.exceptions.RequestException:
+            engine.logging.error(f'Server {game_host} seems to be offline')
 
         return data
 
@@ -58,4 +60,3 @@ def register(engine):
             abort(404)
 
         return dict(engine=engine, own=engine.get_url())
-

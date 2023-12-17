@@ -11,6 +11,6 @@ __licence__ = 'MIT'
 from . import shards, json_api
 
 
-def register(engine):
+def register(engine: any):
     shards.register(engine)
     json_api.register(engine)

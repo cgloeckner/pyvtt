@@ -11,7 +11,7 @@ __licence__ = 'MIT'
 from pony.orm import *
 
 
-def register(_, db):
+def register(_: any, db: Database):
 
     class Scene(db.Entity):
         id = PrimaryKey(int, auto=True)

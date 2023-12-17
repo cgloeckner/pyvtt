@@ -11,7 +11,7 @@ __licence__ = 'MIT'
 from . import login, importer, drawer, scenes
 
 
-def register(engine):
+def register(engine: any):
     login.register(engine)
     importer.register(engine)
     drawer.register(engine)

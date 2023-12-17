@@ -11,14 +11,17 @@ __licence__ = 'MIT'
 from bottle import *
 
 
-def register(engine):
+def register(engine: any):
+
     @get('/vtt/schedule/<timestamp>')
     @view('countdown')
-    def vtt_countdown(timestamp):
+    def vtt_countdown(timestamp: str):
         return dict(engine=engine, timestamp=timestamp)
 
-    @post('/game/<gmurl>/<url>/login')
-    def set_player_name(gmurl, url):
+    @post('/game/<gm_url>/<game_url>/login')
+    def set_player_name(gm_url: str, game_url: str):
+        client_ip = engine.get_client_ip(request)
+
         result = {
             'uuid': '',
             'is_gm': False,
@@ -27,80 +30,57 @@ def register(engine):
             'error': ''
         }
 
-        playername = template('{{value}}', value=format(request.forms.playername))
-        playercolor = request.forms.get('playercolor')
+        player_name = template('{{value}}', value=format(request.forms.playername))
+        player_color = request.forms.get('playercolor')
 
         # load GM from cache
-        gm_cache = engine.cache.get_from_url(gmurl)
+        gm_cache = engine.cache.get_from_url(gm_url)
         if gm_cache is None:
-            engine.logging.warning(
-                'Player tried to login {0} by {1}, but GM was not found.'.format(gmurl, engine.get_client_ip(request)))
+            engine.logging.warning(f'Player tried to login {gm_url} by {client_ip}, but GM was not found.')
             result['error'] = 'GAME NOT FOUND'
             return result
 
         # load game from GM's database
-        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
         if game is None:
-            engine.logging.warning('Player tried to login {0}/{1} by {2}, but game was not found.'.format(gmurl, url,
-                                                                                                          engine.get_client_ip(
-                                                                                                              request)))
+            engine.logging.warning(f'Player tried to login {gm_url}/{game_url} by {client_ip}, but game was not found.')
             result['error'] = 'GAME NOT FOUND'
             return result
 
-        if playername == '':
-            engine.logging.warning(
-                'Player tried to login {0} by {1}, but did not provide a username.'.format(game.get_url(),
-                                                                                           engine.get_client_ip(request)))
+        if player_name == '':
+            engine.logging.warning(f'Player tried to login {game_url} by {client_ip}, but did not provide a username.')
             result['error'] = 'PLEASE ENTER A NAME'
             return result
 
         # limit length, trim whitespaces
-        playername = playername[:30].strip()
-
-        # @NOTE: this feature isn't really required anymore
-        """
-        # make player color less bright
-        parts       = [int(playercolor[1:3], 16), int(playercolor[3:5], 16), int(playercolor[5:7], 16)]
-        playercolor = '#'
-        for c in parts:
-            if c > 200:
-                c = 200
-            if c < 16:
-                playercolor += '0'
-            playercolor += hex(c)[2:]
-        """
+        player_name = player_name[:30].strip()
 
         # check for player name collision
         game_cache = gm_cache.get(game)
         if game_cache is None:
-            engine.logging.warning(
-                'Player tried to login {0} by {1}, but game was not in the cache.'.format(game.get_url(),
-                                                                                          engine.get_client_ip(request)))
+            engine.logging.warning(f'Player tried to login {game_url} by {client_ip}, but game was not in the cache.')
             result['error'] = 'GAME NOT FOUND'
             return result
 
         # query whether user is the hosting GM
         session_gm = engine.main_db.GM.load_from_session(request)
-        gm_is_host = session_gm is not None and session_gm.url == gmurl
+        gm_is_host = session_gm is not None and session_gm.url == gm_url
 
         # kill all timeout players and login this new player
         try:
-            player_cache = game_cache.insert(playername, playercolor, is_gm=gm_is_host)
+            player_cache = game_cache.insert(player_name, player_color, is_gm=gm_is_host)
         except KeyError:
-            engine.logging.warning(
-                'Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.get_url(),
-                                                                                                 engine.get_client_ip(
-                                                                                                     request),
-                                                                                                 playername))
+            engine.logging.warning(f'Player tried to login {game_url} by {client_ip}, but username "{player_name}"'
+                                   f' is already in use.')
             result['error'] = 'ALREADY IN USE'
             return result
 
         # save playername in client cookie
         expire = int(time.time() + engine.cleanup['expire'])
-        response.set_cookie('playername', playername, path=game.get_url(), expires=expire, secure=engine.has_ssl())
-        response.set_cookie('playercolor', playercolor, path=game.get_url(), expires=expire, secure=engine.has_ssl())
+        response.set_cookie('playername', player_name, path=game.get_url(), expires=expire, secure=engine.has_ssl())
+        response.set_cookie('playercolor', player_color, path=game.get_url(), expires=expire, secure=engine.has_ssl())
 
-        engine.logging.access('Player logged in to {0} by {1}.'.format(game.get_url(), engine.get_client_ip(request)))
+        engine.logging.access(f'Player logged in to {game_url} by {client_ip}.')
 
         result['playername'] = player_cache.name
         result['playercolor'] = player_cache.color

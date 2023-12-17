@@ -11,7 +11,7 @@ __licence__ = 'MIT'
 from . import login, thumbnail, play
 
 
-def register(engine):
+def register(engine: any):
     login.register(engine)
     thumbnail.register(engine)
     play.register(engine)

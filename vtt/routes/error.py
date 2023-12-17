@@ -11,16 +11,16 @@ __licence__ = 'MIT'
 from bottle import *
 
 
-def register(engine):
+def register(engine: any):
 
     @error(401)
     @view('error401')
-    def error401(error):
+    def error401(_):
         return dict(engine=engine)
 
     @error(404)
     @view('error404')
-    def error404(error):
+    def error404(_):
         return dict(engine=engine)
 
     @get('/vtt/error/<error_id>')

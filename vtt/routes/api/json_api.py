@@ -15,7 +15,8 @@ from bottle import *
 from vtt.utils.common import add_dict_set, count_dict_set_len
 
 
-def register(engine):
+def register(engine: any):
+
     @get('/vtt/api/users')
     def api_query_users():
         now = time.time()
@@ -49,19 +50,19 @@ def register(engine):
             'query_time': done - now
         }
 
-    @get('/vtt/api/games-list/<gmurl>')
-    def api_games_list(gmurl):
+    @get('/vtt/api/games-list/<gm_url>')
+    def api_games_list(gm_url: str):
         start = time.time()
 
         # load GM from cache
-        gm_cache = engine.cache.get_from_url(gmurl)
+        gm_cache = engine.cache.get_from_url(gm_url)
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
 
         # query whether user is the hosting GM
         session_gm = engine.main_db.GM.load_from_session(request)
-        if session_gm is None or session_gm.url != gmurl:
+        if session_gm is None or session_gm.url != gm_url:
             abort(404)
 
         data = {
@@ -74,37 +75,37 @@ def register(engine):
         data['query_time'] = done - start
         return data
 
-    @get('/vtt/api/assets-list/<gmurl>/<url>')
-    def api_asset_list(gmurl, url):
+    @get('/vtt/api/assets-list/<gm_url>/<game_url>')
+    def api_asset_list(gm_url: str, game_url: str):
         start = time.time()
 
         # load GM from cache
-        gm_cache = engine.cache.get_from_url(gmurl)
+        gm_cache = engine.cache.get_from_url(gm_url)
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
 
         # query whether user is the hosting GM
         session_gm = engine.main_db.GM.load_from_session(request)
-        if session_gm is None or session_gm.url != gmurl:
+        if session_gm is None or session_gm.url != gm_url:
             abort(404)
 
         # try to load game from GM's database
-        game = gm_cache.db.Game.select(lambda g: g.url == url).first()
+        game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
         root = ['./static/assets', engine.paths.get_assets_path()]
         if game is not None:
-            root = [engine.paths.get_game_path(gmurl, url)]
+            root = [engine.paths.get_game_path(gm_url, game_url)]
 
         files = {
             'images': [],
             'audio': []
         }
-        for subroot in root:
-            for fname in os.listdir(subroot):
-                if fname.endswith('.png'):
-                    files['images'].append(fname)
-                if fname.endswith('.mp3'):
-                    files['audio'].append(fname)
+        for sub_root in root:
+            for filename in os.listdir(sub_root):
+                if filename.endswith('.png'):
+                    files['images'].append(filename)
+                if filename.endswith('.mp3'):
+                    files['audio'].append(filename)
         if game is not None:
             files['images'].sort(key=lambda k: int(k.split('.')[0]))
         else:
@@ -180,7 +181,6 @@ def register(engine):
         def api_query_google():
             # query gms and how many accounts do idle
             now = time.time()
-            total = 0
             provider = {}
             for gm in engine.main_db.GM.select():
                 # fetch provider

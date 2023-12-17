@@ -15,7 +15,7 @@ from pony.orm import *
 from .constants import *
 
 
-def register(_, db):
+def register(_: any, db: Database):
 
     class Token(db.Entity):
         id = PrimaryKey(int, auto=True)

@@ -13,11 +13,13 @@ import gevent
 from bottle import *
 
 
-def _login_callback(engine, provider):
+def _login_callback(engine: any, provider: str):
     """Registers a callback url for oauth-login with the given provider."""
 
     @get(f'/vtt/callback/{provider}')
     def gm_login_callback():
+        client_ip = engine.get_client_ip(request)
+
         # query session from login auth
         session = engine.login_api.providers[provider].get_session(request)
         if 'identity' not in session:
@@ -49,14 +51,11 @@ def _login_callback(engine, provider):
             tmp.start()
             try:
                 tmp.get()
-            except:
-                # reraise greenlet's exception to trigger proper error reporting
+            except gevent.Timeout:
+                # reraise greenlet Timeout exception to trigger proper error reporting
                 raise
 
-            engine.logging.access(
-                'GM created using external auth with name="{0}" url={1} by {2}.'.format(gm.name, gm.url,
-                                                                                        engine.get_client_ip(
-                                                                                            request)))
+            engine.logging.access(f'GM created using external auth with name="{gm.name}" url={gm.url} by {client_ip}.')
 
         else:
             # create new session for already existing GM
@@ -66,17 +65,14 @@ def _login_callback(engine, provider):
 
         gm.refresh_session(response)
 
-        engine.logging.access(
-            'GM name="{0}" url={1} session refreshed using external auth by {2}'.format(gm.name, gm.url,
-                                                                                        engine.get_client_ip(
-                                                                                            request)))
+        engine.logging.access(f'GM name="{gm.name}" url={gm.url} session refreshed using external auth by {client_ip}')
 
         engine.main_db.commit()
         # redirect to GM's game overview
         redirect('/')
 
 
-def register(engine):
+def register(engine: any):
 
     # shared login page
     @get('/vtt/join')
@@ -92,30 +88,32 @@ def register(engine):
         # non-auth login (fallback)
         @post('/vtt/join')
         def post_gm_login():
+            client_ip = engine.get_client_ip(request)
+
             status = {
-                'url'   : None,
-                'error' : ''
+                'url': None,
+                'error': ''
             }
 
             # test gm name (also as url)
-            gmname = request.forms.gmname
-            if not engine.verify_url_section(gmname):
+            gm_name = request.forms.gmname
+            if not engine.verify_url_section(gm_name):
                 # contains invalid characters
                 status['error'] = 'NO SPECIAL CHARS OR SPACES'
-                engine.logging.warning('Failed GM login by {0}: invalid name "{1}".'.format(engine.get_client_ip(request), gmname))
+                engine.logging.warning(f'Failed GM login by {client_ip}: invalid name "{gm_name}".')
                 return status
 
-            name = gmname[:20].lower().strip()
+            name = gm_name[:20].lower().strip()
             if name in engine.gm_blacklist:
                 # blacklisted name
                 status['error'] = 'RESERVED NAME'
-                engine.logging.warning('Failed GM login by {0}: reserved name "{1}".'.format(engine.get_client_ip(request), gmname))
+                engine.logging.warning(f'Failed GM login by {client_ip}: reserved name "{gm_name}".')
                 return status
 
             if len(engine.main_db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
                 # collision
                 status['error'] = 'ALREADY IN USE'
-                engine.logging.warning('Failed GM login by {0}: name collision "{1}".'.format(engine.get_client_ip(request), gmname))
+                engine.logging.warning(f'Failed GM login by {client_ip}: name collision "{gm_name}".')
                 return status
 
             # create new GM (use GM name as display name and URL)
@@ -136,14 +134,14 @@ def register(engine):
             tmp.start()
             try:
                 tmp.get()
-            except:
-                # reraise greenlet's exception to trigger proper error reporting
+            except gevent.Timeout:
+                # reraise greenlet Timeout exception to trigger proper error reporting
                 raise
 
             expires = time.time() + engine.cleanup['expire']
             response.set_cookie('session', sid, path='/', expires=expires, secure=engine.has_ssl())
 
-            engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.get_client_ip(request)))
+            engine.logging.access(f'GM created with name="{gm.name}" url={gm.url} by {client_ip}.')
 
             engine.main_db.commit()
             status['url'] = gm.url
