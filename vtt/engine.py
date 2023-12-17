@@ -23,7 +23,7 @@ import uuid
 import bottle
 
 import vtt.utils as utils
-from vtt.tools.buildnumber import BuildNumber
+from buildnumber import BuildNumber
 from vtt.cache import EngineCache
 from vtt.orm.register import db_session, createMainDatabase
 from vtt.server import VttServer

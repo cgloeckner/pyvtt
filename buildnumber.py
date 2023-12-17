@@ -1,9 +1,7 @@
-#!/usr/bin/python3 
-# -*- coding: utf-8 -*- 
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
@@ -17,10 +15,11 @@ import sys
 
 from vtt.utils import BuildNumber
 
-if __name__ == '__main__':
-    path = pathlib.Path('../../static') / 'client' / 'version.js'
+
+def main() -> None:
+    path = pathlib.Path('static') / 'client' / 'version.js'
     version = BuildNumber()
-    
+
     if os.path.exists(path):
         version.load_from_file(path)
     print('Current version is {0}'.format(version))
@@ -38,3 +37,6 @@ if __name__ == '__main__':
     version.save_to_file(path)
     print('New version is {0}'.format(version))
 
+
+if __name__ == '__main__':
+    main()
