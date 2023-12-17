@@ -42,8 +42,8 @@ def register(engine, db):
             return '{0}/{1}'.format(self.gm_url, self.url)
 
         def makeMd5s(self):
-            md5_path = engine.paths.getMd5Path(self.gm_url, self.url)
-            root = engine.paths.getGamePath(self.gm_url, self.url)
+            md5_path = engine.paths.get_md5_path(self.gm_url, self.url)
+            root = engine.paths.get_game_path(self.gm_url, self.url)
             all_images = self.getAllImages()
 
             # load md5 hashes from json-file
@@ -93,7 +93,7 @@ def register(engine, db):
         def postSetup(self):
             """ Adds the game's directory and prepare the md5 cache.
             """
-            img_path = engine.paths.getGamePath(self.gm_url, self.url)
+            img_path = engine.paths.get_game_path(self.gm_url, self.url)
 
             with engine.locks[self.gm_url]:  # make IO access safe
                 if not os.path.isdir(img_path):
@@ -116,7 +116,7 @@ def register(engine, db):
 
         def getAllImages(self):
             """Note: needs to be called from a threadsafe context."""
-            root = engine.paths.getGamePath(self.gm_url, self.url)
+            root = engine.paths.get_game_path(self.gm_url, self.url)
             return [f for f in os.listdir(root) if f.endswith('.png')]
 
         def getNextId(self):
@@ -133,7 +133,7 @@ def register(engine, db):
             return '/asset/{0}/{1}/{2}.png'.format(self.gm_url, self.url, image_id)
 
         def getFileSize(self, url):
-            game_root = engine.paths.getGamePath(self.gm_url, self.url)
+            game_root = engine.paths.get_game_path(self.gm_url, self.url)
             img_fname = url.split('/')[-1]
             local_path = os.path.join(game_root, img_fname)
             return os.path.getsize(local_path)
@@ -156,7 +156,7 @@ def register(engine, db):
                 # create md5 checksum for duplication test
                 new_md5 = engine.getMd5(tmpfile.file)
 
-                game_root = engine.paths.getGamePath(self.gm_url, self.url)
+                game_root = engine.paths.get_game_path(self.gm_url, self.url)
                 image_id = self.getNextId()
                 local_path = game_root / '{0}.png'.format(image_id)
                 with engine.locks[self.gm_url]:  # make IO access safe
@@ -191,7 +191,7 @@ def register(engine, db):
 
         def getAbandonedImages(self):
             # check all existing images
-            game_root = engine.paths.getGamePath(self.gm_url, self.url)
+            game_root = engine.paths.get_game_path(self.gm_url, self.url)
             all_images = list()
             with engine.locks[self.gm_url]:  # make IO access safe
                 all_images = self.getAllImages()
@@ -232,7 +232,7 @@ def register(engine, db):
 
         def removeMusic(self):
             """ Remove music. """
-            root = engine.paths.getGamePath(self.gm_url, self.url)
+            root = engine.paths.get_game_path(self.gm_url, self.url)
             with engine.locks[self.gm_url]:  # make IO access safe
                 for n in range(engine.file_limit['num_music']):
                     fname = root / '{0}.mp3'.format(n)
@@ -275,7 +275,7 @@ def register(engine, db):
             engine.logging.info('|--x Removing {0}'.format(self.url))
 
             # remove game directory (including all images)
-            game_path = engine.paths.getGamePath(self.gm_url, self.url)
+            game_path = engine.paths.get_game_path(self.gm_url, self.url)
             num_bytes = os.path.getsize(game_path)
 
             with engine.locks[self.gm_url]:  # make IO access safe
@@ -350,7 +350,7 @@ def register(engine, db):
             data = self.toDict()
 
             # build zip file
-            zip_path = engine.paths.getExportPath()
+            zip_path = engine.paths.get_export_path()
             zip_file = '{0}_{1}.zip'.format(self.gm_url, self.url)
 
             with zipfile.ZipFile(zip_path / zip_file, "w") as h:
@@ -362,7 +362,7 @@ def register(engine, db):
                     h.write(tmp.name, 'game.json')
 
                 # add images to the zip, too
-                p = engine.paths.getGamePath(self.gm_url, self.url)
+                p = engine.paths.get_game_path(self.gm_url, self.url)
                 for img in self.getAllImages():
                     h.write(p / img, img)
 
@@ -477,7 +477,7 @@ def register(engine, db):
                 db.commit()
 
                 # copy images to game directory
-                img_path = engine.paths.getGamePath(gm.url, url)
+                img_path = engine.paths.get_game_path(gm.url, url)
                 for fname in os.listdir(tmp_dir):
                     if fname.endswith('.png'):
                         src_path = os.path.join(tmp_dir, fname)

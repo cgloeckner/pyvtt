@@ -44,7 +44,7 @@ class CleanupThread(object):
         if self.engine.notify_api is None:
             self.engine.logging.info(results)
         else:
-            self.engine.notify_api.onCleanup(results)
+            self.engine.notify_api.on_cleanup(results)
 
     def getNextUpdate(self):      
         h, m   = self.engine.cleanup['daytime'].split(':')

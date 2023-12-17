@@ -82,13 +82,13 @@ class GameTest(EngineBaseTest):
         game.postSetup()
 
         # create empty files (to mimic uploaded images)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
 
         # assume md5 file to be empty 
-        md5_path = self.engine.paths.getMd5Path(game.gm_url, game.url)
+        md5_path = self.engine.paths.get_md5_path(game.gm_url, game.url)
         with open(md5_path, 'r') as handle:
             data = json.load(handle)
             self.assertEqual(len(data), 0)
@@ -150,7 +150,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create empty files (to mimic uploaded images)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         with open(p1, 'w') as h: # write different content because of hashing
@@ -190,7 +190,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create empty files (to mimic uploaded images)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         with open(p1, 'w') as h: # write different content because of hashing
@@ -228,10 +228,10 @@ class GameTest(EngineBaseTest):
     def test_postSetup(self):
         game = self.db.Game(url='foo', gm_url='url456')
         
-        game_path = self.engine.paths.getGamePath(gm=game.gm_url, game=game.url)
+        game_path = self.engine.paths.get_game_path(gm=game.gm_url, game=game.url)
 
         # assume no md5 file yet
-        md5_path = self.engine.paths.getMd5Path(game.gm_url, game.url)
+        md5_path = self.engine.paths.get_md5_path(game.gm_url, game.url)
         self.assertFalse(os.path.exists(md5_path))
         
         # test game setup
@@ -267,7 +267,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create empty files (to mimic uploaded images)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
@@ -302,7 +302,7 @@ class GameTest(EngineBaseTest):
         self.assertEqual(i, 0)
         
         # gaps ignored for next_id
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         for i in [0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 12]:
             p = img_path / '{0}.png'.format(i)
             p.touch()
@@ -329,7 +329,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create empty files (to mimic uploaded images)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
@@ -379,7 +379,7 @@ class GameTest(EngineBaseTest):
                 self.assertEqual(url, game.getImageUrl(old_id))
                 
                 # test file exists   
-                img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+                img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
                 p = img_path / '{0}.png'.format(old_id)
                 self.assertTrue(os.path.exists(p))
                 
@@ -406,7 +406,7 @@ class GameTest(EngineBaseTest):
                         url2 = game.upload(fupload2)
                         
                         # test 2nd file exists   
-                        img_path2 = self.engine.paths.getGamePath(game.gm_url, game.url)
+                        img_path2 = self.engine.paths.get_game_path(game.gm_url, game.url)
                         p2 = img_path2 / '{0}.png'.format(new_id)
                         self.assertTrue(os.path.exists(p2))
                         
@@ -460,7 +460,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create empty files (to mimic uploaded images)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
@@ -494,7 +494,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create empty file (to mimic uploaded image)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
@@ -520,7 +520,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # expect music to be deleted on cleanup
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         p3 = img_path / '3.mp3'
         p3.touch()
         game.removeMusic()
@@ -532,7 +532,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create three empty files (to mimic uploaded images)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         with open(p1, 'w') as h: # write different content because of hashing
@@ -599,7 +599,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create an empty file (to make sure it isn't blocking removing the directory)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
@@ -684,7 +684,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create an empty file (to make sure it isn't blocking removing the directory)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
@@ -793,7 +793,7 @@ class GameTest(EngineBaseTest):
                 self.assertEqual(tokens.first().size, -1)
                 
                 # assert token's image exist
-                img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+                img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
                 img_id = tokens.first().url.split('/')[-1]
                 img_fname = img_path / img_id
                 self.assertTrue(os.path.exists(img_fname))
@@ -804,7 +804,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create an empty file (to make sure it isn't blocking removing the directory)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
@@ -885,7 +885,7 @@ class GameTest(EngineBaseTest):
         game.postSetup()
         
         # create an empty file (to make sure it isn't blocking removing the directory)
-        img_path = self.engine.paths.getGamePath(game.gm_url, game.url)
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.getNextId()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
@@ -928,7 +928,7 @@ class GameTest(EngineBaseTest):
             self.assertEqual(set([4, 8]), set([len(query1), len(query2)]))
             
             # assert all images being there
-            new_img_path = self.engine.paths.getGamePath(game2.gm_url, game2.url)
+            new_img_path = self.engine.paths.get_game_path(game2.gm_url, game2.url)
             for t in query1:
                 img_id = t.url.split('/')[-1]
                 img_fname = new_img_path / img_id

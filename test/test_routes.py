@@ -819,7 +819,7 @@ class VttTest(EngineBaseTest):
         self.app.reset()
 
         # create more images
-        img_path = self.engine.paths.getGamePath('arthur', 'test-game-1')
+        img_path = self.engine.paths.get_game_path('arthur', 'test-game-1')
         shutil.copyfile(img_path / '0.png', img_path / '1.png')
 
         # can query this image
@@ -1148,7 +1148,7 @@ class VttTest(EngineBaseTest):
         self.assertEqual(id_from_url(data['urls'][5]), 2)
 
         # cannot upload another background image (other uploads are ignored during this request)
-        images = os.listdir(self.engine.paths.getGamePath('arthur', 'test-game-1'))
+        images = os.listdir(self.engine.paths.get_game_path('arthur', 'test-game-1'))
         self.assertEqual(len(images), 4) # 3 + md5-file
         ret = self.app.post('/game/arthur/test-game-1/upload',
             upload_files=[
@@ -1158,7 +1158,7 @@ class VttTest(EngineBaseTest):
             ], xhr=True, expect_errors=True)
         self.assertEqual(ret.status_int, 403)
         # expect no new images in directory
-        images = os.listdir(self.engine.paths.getGamePath('arthur', 'test-game-1'))
+        images = os.listdir(self.engine.paths.get_game_path('arthur', 'test-game-1'))
         self.assertEqual(len(images), 4) # 3 + md5-file
         self.assertIn('0.png', images)
         self.assertIn('1.png', images)
@@ -1220,7 +1220,7 @@ class VttTest(EngineBaseTest):
             ], xhr=True, expect_errors=True)
         self.assertEqual(ret.status_int, 403)
         
-        root = self.engine.paths.getGamePath('arthur', 'test-game-1')
+        root = self.engine.paths.get_game_path('arthur', 'test-game-1')
         count_mp3s = lambda: len([f for f in os.listdir(root) if f.endswith('.mp3')])
         
         # can upload music

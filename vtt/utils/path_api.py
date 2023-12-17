@@ -13,87 +13,85 @@ import pathlib
 import sys
 
 
-# API for providing local harddrive paths
-class PathApi(object):
+# API for providing local hard drive paths
+class PathApi:
 
-    def __init__(self, appname, pref_root=None, app_root=pathlib.Path('..')) -> None:
+    def __init__(self, appname: str, pref_root: pathlib.Path | None = None, app_root=pathlib.Path('..')) -> None:
         """ Uses given root or pick standard preference directory. """
         self.app_root = app_root
         if pref_root is None:
             # get preference dir
-            p = pathlib.Path.home()
+            pref_root = pathlib.Path.home()
             if sys.platform.startswith('linux'):
-                p = p / ".local" / "share"
+                pref_root = pref_root / ".local" / "share"
             else:
                 raise NotImplementedError('only linux supported yet')
-
-            pref_root = p
 
         self.pref_root = pref_root / appname
 
         # make sure paths exists
         self.ensure(self.pref_root)
-        self.ensure(self.getExportPath())
-        self.ensure(self.getGmsPath())
-        self.ensure(self.getFancyUrlPath())
-        self.ensure(self.getStaticPath())
-        self.ensure(self.getAssetsPath())
-        self.ensure(self.getClientCodePath())
+        self.ensure(self.get_export_path())
+        self.ensure(self.get_gms_path())
+        self.ensure(self.get_fancy_url_path())
+        self.ensure(self.get_static_path())
+        self.ensure(self.get_assets_path())
+        self.ensure(self.get_client_code_path())
 
-    def ensure(self, path) -> None:
+    @staticmethod
+    def ensure(path: pathlib.Path) -> None:
         if not os.path.isdir(path):
             os.mkdir(path)
 
     # Engine paths
 
-    def getStaticPath(self, default: bool = False) -> pathlib.Path:
+    def get_static_path(self, default: bool = False) -> pathlib.Path:
         root = self.app_root if default else self.pref_root
         return root / 'static'
 
-    def getAssetsPath(self, default: bool = False) -> pathlib.Path:
-        return self.getStaticPath(default=default) / 'assets'
+    def get_assets_path(self, default: bool = False) -> pathlib.Path:
+        return self.get_static_path(default=default) / 'assets'
 
-    def getClientCodePath(self) -> pathlib.Path:
-        return self.getStaticPath() / 'client'
+    def get_client_code_path(self) -> pathlib.Path:
+        return self.get_static_path() / 'client'
 
-    def getLogPath(self, fname: str) -> pathlib.Path:
-        return self.pref_root / '{0}.log'.format(fname)
+    def get_log_path(self, filename: str) -> pathlib.Path:
+        return self.pref_root / '{0}.log'.format(filename)
 
-    def getSettingsPath(self) -> pathlib.Path:
+    def get_settings_path(self) -> pathlib.Path:
         return self.pref_root / 'settings.json'
 
-    def getMainDatabasePath(self) -> pathlib.Path:
+    def get_main_database_path(self) -> pathlib.Path:
         return self.pref_root / 'main.db'
 
-    def getConstantsPath(self) -> pathlib.Path:
-        return self.getClientCodePath() / 'constants.js'
+    def get_constants_path(self) -> pathlib.Path:
+        return self.get_client_code_path() / 'constants.js'
 
-    def getSslPath(self) -> pathlib.Path:
+    def get_ssl_path(self) -> pathlib.Path:
         return self.pref_root / 'ssl'
 
-    def getExportPath(self) -> pathlib.Path:
+    def get_export_path(self) -> pathlib.Path:
         return self.pref_root / 'export'
 
-    def getGmsPath(self, gm=None) -> pathlib.Path:
+    def get_gms_path(self, gm: str | None = None) -> pathlib.Path:
         p = self.pref_root / 'gms'
         if gm is not None:
             p /= gm
         return p
 
-    def getFancyUrlPath(self, fname=None) -> pathlib.Path:
+    def get_fancy_url_path(self, filename: str | None = None) -> pathlib.Path:
         p = self.pref_root / 'fancyurl'
-        if fname is not None:
-            p /= '{0}.txt'.format(fname)
+        if filename is not None:
+            p /= '{0}.txt'.format(filename)
         return p
 
     # GM- and Game-relevant paths
 
-    def getDatabasePath(self, gm) -> pathlib.Path:
-        return self.getGmsPath(gm) / 'gm.db'
+    def get_database_path(self, gm: str) -> pathlib.Path:
+        return self.get_gms_path(gm) / 'gm.db'
 
-    def getGamePath(self, gm, game) -> pathlib.Path:
-        return self.getGmsPath(gm) / game
+    def get_game_path(self, gm: str, game: str) -> pathlib.Path:
+        return self.get_gms_path(gm) / game
 
-    def getMd5Path(self, gm, game) -> pathlib.Path:
-        return self.getGamePath(gm, game) / 'gm.md5'
-
+    def get_md5_path(self, gm: str, game: str) -> pathlib.Path:
+        return self.get_game_path(gm, game) / 'gm.md5'

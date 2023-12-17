@@ -65,7 +65,7 @@ class GameCache(object):
                 self.players[n].index = new_index
 
     def getAllSlots(self):
-        root = self.engine.paths.getGamePath(self.parent.url, self.url)
+        root = self.engine.paths.get_game_path(self.parent.url, self.url)
         slots = list()
         for slot_id in range(self.engine.file_limit['num_music']):
             if os.path.exists(root / '{0}.mp3'.format(slot_id)):
@@ -73,7 +73,7 @@ class GameCache(object):
         return slots
 
     def uploadMusic(self, handle):
-        root = self.engine.paths.getGamePath(self.parent.url, self.url)
+        root = self.engine.paths.get_game_path(self.parent.url, self.url)
 
         with self.engine.locks[self.parent.url]:  # make IO access safe
             # search for next free slot
@@ -91,14 +91,14 @@ class GameCache(object):
         return next_slot
 
     def isMusicSlotUsed(self, slot_id):
-        root = self.engine.paths.getGamePath(self.parent.url, self.url)
+        root = self.engine.paths.get_game_path(self.parent.url, self.url)
 
         with self.engine.locks[self.parent.url]:  # make IO access safe
             fname = root / '{0}.mp3'.format(int(slot_id))
             return os.path.exists(fname)
 
     def deleteMusic(self, slots):
-        root = self.engine.paths.getGamePath(self.parent.url, self.url)
+        root = self.engine.paths.get_game_path(self.parent.url, self.url)
 
         # delete these tracks
         with self.engine.locks[self.parent.url]:  # make IO access safe

@@ -12,7 +12,7 @@ import httpagentparser
 
 from bottle import *
 
-from vtt.utils.common import addDictSet, countDictSetLen
+from vtt.utils.common import add_dict_set, count_dict_set_len
 
 
 def register(engine):
@@ -91,9 +91,9 @@ def register(engine):
 
         # try to load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
-        root = ['./static/assets', engine.paths.getAssetsPath()]
+        root = ['./static/assets', engine.paths.get_assets_path()]
         if game is not None:
-            root = [engine.paths.getGamePath(gmurl, url)]
+            root = [engine.paths.get_game_path(gmurl, url)]
 
         files = {
             'images': [],
@@ -151,20 +151,20 @@ def register(engine):
             data = httpagentparser.detect(record.agent)
 
             # save data
-            addDictSet(locations, record.country, record.ip)
+            add_dict_set(locations, record.country, record.ip)
             if 'platform' in data:
-                addDictSet(platforms, data['platform']['name'], record.ip)
+                add_dict_set(platforms, data['platform']['name'], record.ip)
             else:
-                addDictSet(platforms, 'unknown', record.ip)
+                add_dict_set(platforms, 'unknown', record.ip)
             if 'browser' in data:
-                addDictSet(browsers, data['browser']['name'], record.ip)
+                add_dict_set(browsers, data['browser']['name'], record.ip)
             else:
-                addDictSet(browsers, 'unknown', record.ip)
+                add_dict_set(browsers, 'unknown', record.ip)
 
         # count IPs per country, platform and browser
-        countDictSetLen(locations)
-        countDictSetLen(platforms)
-        countDictSetLen(browsers)
+        count_dict_set_len(locations)
+        count_dict_set_len(platforms)
+        count_dict_set_len(browsers)
 
         done = time.time()
 

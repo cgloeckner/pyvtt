@@ -33,6 +33,6 @@ def createMainDatabase(engine):
 
     gm.register(engine, db)
 
-    db.bind('sqlite', str(engine.paths.getMainDatabasePath()), create_db=True)
+    db.bind('sqlite', str(engine.paths.get_main_database_path()), create_db=True)
     db.generate_mapping(create_tables=True)
     return db

@@ -50,9 +50,9 @@ if __name__ == '__main__':
         # rename all databases to like gm.db.1 etc.
         print('Rename database files')
         paths = PathApi(appname='pyvtt')
-        rename_backup(paths.getMainDatabasePath())
-        for gmname in os.listdir(paths.getGmsPath()):
-            fname = paths.getDatabasePath(gmname)
+        rename_backup(paths.get_main_database_path())
+        for gmname in os.listdir(paths.get_gms_path()):
+            fname = paths.get_database_path(gmname)
             rename_backup(fname)
 
         # boot engine (create tables etc.)  
@@ -74,14 +74,14 @@ if __name__ == '__main__':
         print('Rename music files')
         paths = PathApi(appname='pyvtt')
         n = 0
-        for gmname in os.listdir(paths.getGmsPath()):
-            gm_root = paths.getGmsPath(gmname)
+        for gmname in os.listdir(paths.get_gms_path()):
+            gm_root = paths.get_gms_path(gmname)
             for gameurl in os.listdir(gm_root):
                 if not os.path.isdir(gm_root / gameurl):
                     continue
                 # check for file to rename
-                old_fname = paths.getGamePath(gmname, gameurl) / 'music.mp3'
-                new_fname = paths.getGamePath(gmname, gameurl) / '0.mp3'
+                old_fname = paths.get_game_path(gmname, gameurl) / 'music.mp3'
+                new_fname = paths.get_game_path(gmname, gameurl) / '0.mp3'
                 if os.path.exists(old_fname):
                     os.rename(old_fname, new_fname)
                     n += 1

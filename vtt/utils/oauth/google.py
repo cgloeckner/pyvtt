@@ -1,33 +1,31 @@
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
-
 import os
-
-from google.oauth2 import id_token
-from google_auth_oauthlib.flow import InstalledAppFlow
-import google.auth.transport.requests
+import typing
 
 import bottle
+import google.auth.transport.requests
+from google.oauth2 import id_token
+from google_auth_oauthlib.flow import InstalledAppFlow
 
-from .common import BaseLoginApi
+from .common import BaseLoginApi, LoginClient, Session
 
 
 class GoogleLogin(BaseLoginApi):
 
-    def __init__(self, engine, parent, **data):
+    def __init__(self, engine: typing.Any, client: LoginClient, **data):
         super().__init__('google', engine, **data)
-        self.parent = parent
-        self.icon_url = data['icon']
+        self.client = client
 
         if engine.debug:
             # accept non-https for testing oauth (e.g. localhost)
             os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-    def getAuthUrl(self):
+    def get_auth_url(self) -> str:
         """ Generate google-URL to access in order to fetch data. """
         # create auth flow session
         f = InstalledAppFlow.from_client_config(
@@ -47,16 +45,16 @@ class GoogleLogin(BaseLoginApi):
             redirect_uri=self.callback)
 
         auth_url, state = f.authorization_url()
-        self.parent.saveSession(state, f)
+        self.client.save_session(state, f)
 
         return auth_url
 
-    def getSession(self, request):
+    def get_session(self, request: bottle.Request) -> Session:
         """ Query google to return required user data and infos."""
         state = request.url.split('state=')[1].split('&')[0]
 
         # fetch token
-        f = self.parent.loadSession(state)
+        f = self.client.load_session(state)
         f.fetch_token(authorization_response=bottle.request.url)
         creds = f.credentials
         token_request = google.auth.transport.requests.Request()

@@ -12,6 +12,9 @@ from authlib.integrations.requests_client import OAuth2Session
 from .common import BaseLoginApi
 
 
+# FIXME: deprecated implementation
+
+
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class Auth0Api(BaseLoginApi):
 
@@ -42,7 +45,7 @@ class Auth0Api(BaseLoginApi):
 
         return uri
 
-    def getLogoutUrl(self):
+    def get_logout_url(self):
         return f'{self.logout_endpoint}?client_id={self.client_id}&returnTo={self.logout_callback}'
 
     def getSession(self, request):

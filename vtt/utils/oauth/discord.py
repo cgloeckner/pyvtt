@@ -1,27 +1,32 @@
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
 import requests
 
-from .common import BaseLoginApi
+import bottle
+
+from .common import BaseLoginApi, LoginClient, Session
 
 
 class DiscordLogin(BaseLoginApi):
 
-    def __init__(self, engine, parent, **data):
+    def __init__(self, engine: any, client: LoginClient, **data):
         super().__init__('discord', engine, **data)
-        self.parent = parent
-        self.icon_url = data['icon']
+        self.client = client
         self.scopes = '+'.join(['identify', 'email'])
 
-    def getAuthUrl(self):
-        return f'https://discord.com/oauth2/authorize?client_id={self.client_id}&redirect_uri={self.callback}&scope={self.scopes}&response_type=code'
+    def get_auth_url(self) -> str:
+        return (f'https://discord.com/oauth2/authorize?'
+                f'client_id={self.client_id}&'
+                f'redirect_uri={self.callback}&'
+                f'scope={self.scopes}&'
+                f'response_type=code')
 
-    def getSession(self, request):
+    def get_session(self, request: bottle.Request) -> Session:
         code = request.url.split('code=')[1].split('&')[0]
 
         # query access token

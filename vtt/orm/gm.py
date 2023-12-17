@@ -37,7 +37,7 @@ def register(engine, db):
 
             self.makeLock()
 
-            root_path = engine.paths.getGmsPath(self.url)
+            root_path = engine.paths.get_gms_path(self.url)
 
             with engine.locks[self.url]:  # make IO access safe
                 if not os.path.isdir(root_path):
@@ -84,7 +84,7 @@ def register(engine, db):
             engine.logging.info('Removing GM {0} <{1}>'.format(self.name, self.url))
 
             # remove GM's directory (including his database, all games and images)
-            root_path = engine.paths.getGmsPath(self.url)
+            root_path = engine.paths.get_gms_path(self.url)
             num_bytes = os.path.getsize(root_path)
 
             with engine.locks[self.url]:  # make IO access safe

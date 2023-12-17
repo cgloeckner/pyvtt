@@ -31,7 +31,7 @@ class EngineBaseTest(unittest.TestCase):
         # pregenerate paths api for dummyfiles            
         paths = PathApi(appname='unittest', pref_root=self.root)
         for w in ['verbs', 'adjectives', 'nouns']:
-            with open(paths.getFancyUrlPath() / '{0}.txt'.format(w), 'w') as h:
+            with open(paths.get_fancy_url_path() / '{0}.txt'.format(w), 'w') as h:
                 h.write('demo')
         
         # load engine app into webtest

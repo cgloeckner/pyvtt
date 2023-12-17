@@ -8,39 +8,40 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
+import pathlib
+import typing
+
 
 # Exports Constants to a JavaScript-File to allow their use client-side, too
-class ConstantExport(object):
+class ConstantExport:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.data = dict()
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: any) -> None:
         """ @NOTE: key will be the javascript-identifier. But there
         is no syntax test here, this is up to the caller.
         """
         self.data[key] = value
 
-    def saveToMemory(self):
-        out = '';
+    def save_to_memory(self) -> str:
+        out = ''
         for key in self.data:
             raw = self.data[key]
             if isinstance(raw, str):
                 raw = '"{0}"'.format(raw)
-            elif raw == True:
-                raw = 'true'
-            elif raw == False:
-                raw = 'false'
-            out += 'var {0} = {1};\n'.format(key, raw)
+            elif isinstance(raw, bool):
+                raw = 'true' if raw else 'false'
+            out += f'var {key} = {raw};\n'
         return out
 
-    def saveToFile(self, fname):
+    def save_to_file(self, path: pathlib.Path) -> None:
         content = '/** DO NOT MODIFY THIS FILE. IT WAS CREATED AUTOMATICALLY. */\n'
-        content += self.saveToMemory()
-        with open(fname, 'w') as h:
+        content += self.save_to_memory()
+        with open(path, 'w') as h:
             h.write(content)
 
-    def __call__(self, engine):
+    def __call__(self, engine: typing.Any) -> None:
         import vtt.orm as orm
         self['MAX_SCENE_WIDTH'] = orm.MAX_SCENE_WIDTH
         self['MAX_SCENE_HEIGHT'] = orm.MAX_SCENE_HEIGHT
@@ -56,5 +57,4 @@ class ConstantExport(object):
 
         self['SUGGESTED_PLAYER_COLORS'] = engine.playercolors
 
-        self.saveToFile(engine.paths.getConstantsPath())
-
+        self.save_to_file(engine.paths.get_constants_path())

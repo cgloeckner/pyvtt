@@ -1,21 +1,22 @@
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
-
 import os
 import random
 
+from .path_api import PathApi
 
-class FancyUrlApi(object):
 
-    def __init__(self, paths):
+class FancyUrlApi:
+
+    def __init__(self, paths: PathApi) -> None:
         self.paths = paths
         self.parts = dict()
 
@@ -24,7 +25,7 @@ class FancyUrlApi(object):
         a = ['able', 'bad', 'best', 'better', 'big', 'black', 'certain', 'clear', 'different', 'early', 'easy']
         n = ['area', 'book', 'business', 'case', 'child', 'company', 'country', 'day', 'eye', 'fact']
         for t in [('verbs', v), ('adjectives', a), ('nouns', n)]:
-            p = self.paths.getFancyUrlPath(t[0])
+            p = self.paths.get_fancy_url_path(t[0])
             if not os.path.exists(p):
                 with open(p, mode='w') as h:
                     h.write('\n'.join(t[1]))
@@ -33,10 +34,10 @@ class FancyUrlApi(object):
         for p in ['verbs', 'adjectives', 'nouns']:
             self.parts[p] = self.load(p)
 
-    def load(self, fname):
+    def load(self, filename: str) -> list[str]:
         # load words
-        p = self.paths.getFancyUrlPath(fname)
-        with open(p, mode='r') as h:
+        path = self.paths.get_fancy_url_path(filename)
+        with open(path, mode='r') as h:
             content = h.read()
         words = content.split('\n')
         if words[-1] == '':
@@ -44,22 +45,17 @@ class FancyUrlApi(object):
             words.pop()
 
         # test words not being empty
-        for w in words:
-            assert (w != '')
+        for word in words:
+            assert (word != '')
 
         return words
 
-    @staticmethod
-    def pick(src):
-        index = random.randrange(0, len(src) - 1)
-        return src[index]
-
-    def __call__(self):
+    def __call__(self) -> str:
         """ Generate a random url using <verb>-<adverb>-<noun>.
         """
         results = []
-        for p in self.parts:
-            l = self.parts[p]
-            w = FancyUrlApi.pick(l)
-            results.append(w)
+        for part in self.parts:
+            line = self.parts[part]
+            word = random.choice(line)
+            results.append(word)
         return '-'.join(results)

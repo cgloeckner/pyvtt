@@ -19,7 +19,7 @@ def _login_callback(engine, provider):
     @get(f'/vtt/callback/{provider}')
     def gm_login_callback():
         # query session from login auth
-        session = engine.login_api.providers[provider].getSession(request)
+        session = engine.login_api.providers[provider].get_session(request)
         if 'identity' not in session:
             redirect('/vtt/join')
 

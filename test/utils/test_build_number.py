@@ -1,14 +1,13 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
 import tempfile
 import unittest
+import pathlib
 
 from vtt import utils
 
@@ -39,7 +38,7 @@ class BuildNumberTest(unittest.TestCase):
             h.write('const version = "15.624.115";')
 
         v = utils.BuildNumber()
-        v.loadFromFile(self.file.name)
+        v.load_from_file(pathlib.Path(self.file.name))
         self.assertEqual(15, v.version[0])
         self.assertEqual(624, v.version[1])
         self.assertEqual(115, v.version[2])
@@ -47,7 +46,7 @@ class BuildNumberTest(unittest.TestCase):
     def test_saveToFile(self):
         v = utils.BuildNumber()
         v.version = [23, 73, 234]
-        v.saveToFile(self.file.name)
+        v.save_to_file(pathlib.Path(self.file.name))
 
         # load js version file
         with open(self.file.name, 'r') as h:

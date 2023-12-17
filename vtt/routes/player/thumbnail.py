@@ -30,7 +30,7 @@ def register(engine):
             # @NOTE: not logged because somebody may play around with this
             abort(404)
 
-        engine.paths.getGamePath(gmurl, url)
+        engine.paths.get_game_path(gmurl, url)
         if scene.backing != None:
             url = scene.backing.url
         else:

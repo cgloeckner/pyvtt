@@ -1,14 +1,13 @@
-#!/usr/bin/python3 
-# -*- coding: utf-8 -*- 
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
 import tempfile
 import unittest
+import pathlib
 
 from vtt import utils
 
@@ -17,10 +16,10 @@ class ConstantExportTest(unittest.TestCase):
     
     def setUp(self):            
         # create temporary directory
-        self.tmpfile = tempfile.NamedTemporaryFile()
+        self.tmp_file = tempfile.NamedTemporaryFile()
         
     def tearDown(self):
-        del self.tmpfile
+        del self.tmp_file
 
     def test_setitem(self):
         e = utils.ConstantExport()
@@ -45,8 +44,12 @@ class ConstantExportTest(unittest.TestCase):
         e['thing'] = True
         e['other'] = False
 
-        dumped = e.saveToMemory()
-        expected = 'var test = "foo";\nvar bar = 42;\nvar number = 3.14;\nvar thing = true;\nvar other = false;\n'
+        dumped = e.save_to_memory()
+        expected = ('var test = "foo";\n'
+                    'var bar = 42;\n'
+                    'var number = 3.14;\n'
+                    'var thing = true;\n'
+                    'var other = false;\n')
         self.assertEqual(dumped, expected)
 
     def test_saveToFile(self):
@@ -57,12 +60,10 @@ class ConstantExportTest(unittest.TestCase):
         e['thing'] = True
         e['other'] = False
 
-        e.saveToFile(self.tmpfile.name)
+        e.save_to_file(pathlib.Path(self.tmp_file.name))
 
-        expected = '/** DO NOT MODIFY THIS FILE. IT WAS CREATED AUTOMATICALLY. */\n' + e.saveToMemory()
-        with open(self.tmpfile.name, 'r') as h:
+        expected = ('/** DO NOT MODIFY THIS FILE. IT WAS CREATED AUTOMATICALLY. */'
+                    '\n') + e.save_to_memory()
+        with open(self.tmp_file.name, 'r') as h:
             content = h.read()
         self.assertEqual(content, expected)
-
-        
-        

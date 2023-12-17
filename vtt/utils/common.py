@@ -9,7 +9,7 @@ __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 
-def addDictSet(dictionary, key, value):
+def add_dict_set(dictionary: dict[str, set[str]], key: str, value: str) -> None:
     """ Add the value to a set inside the dictionary, specified by the
     key. If the set does not exist yet, it will be added.
     """
@@ -18,9 +18,8 @@ def addDictSet(dictionary, key, value):
     dictionary[key].add(value)
 
 
-def countDictSetLen(dictionary):
+def count_dict_set_len(dictionary: dict) -> None:
     """ Override each set in the dict with its length.
     """
     for key in dictionary:
         dictionary[key] = len(dictionary[key])
-

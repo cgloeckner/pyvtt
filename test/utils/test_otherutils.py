@@ -1,9 +1,7 @@
-#!/usr/bin/python3 
-# -*- coding: utf-8 -*- 
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
@@ -23,24 +21,24 @@ class OtherTests(unittest.TestCase):
     def test_addDictSet(self):
         d = dict()
         
-        utils.addDictSet(d, 'foo', 'bar')
+        utils.add_dict_set(d, 'foo', 'bar')
         self.assertIn('bar', d['foo'])
         
-        utils.addDictSet(d, 'foo', 'bar')
+        utils.add_dict_set(d, 'foo', 'bar')
         self.assertIn('bar', d['foo'])
         
-        utils.addDictSet(d, 'foo', 'test')
+        utils.add_dict_set(d, 'foo', 'test')
         self.assertIn('bar', d['foo'])
         self.assertIn('test', d['foo'])
 
     def test_countDictSetLen(self):
         d = dict()
         d['test'] = set()
-        utils.addDictSet(d, 'foo', 'bar')
-        utils.addDictSet(d, 'foo', 'test')
-        utils.addDictSet(d, 'bar', 'test')
+        utils.add_dict_set(d, 'foo', 'bar')
+        utils.add_dict_set(d, 'foo', 'test')
+        utils.add_dict_set(d, 'bar', 'test')
 
-        utils.countDictSetLen(d)
+        utils.count_dict_set_len(d)
         self.assertEqual(d['test'], 0)
         self.assertEqual(d['foo'], 2)
         self.assertEqual(d['bar'], 1)

@@ -1,9 +1,7 @@
-#!/usr/bin/python3 
-# -*- coding: utf-8 -*- 
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
@@ -35,15 +33,15 @@ class LoggingApiTest(unittest.TestCase):
         del self.logging
         del self.tmpdir
         
-    def assertLastLine(self, logname, line):
-        with open(self.root / '{0}.log'.format(logname), 'r') as h:
+    def assertLastLine(self, log_name: str, line):
+        with open(self.root / f'{log_name}.log', 'r') as h:
             content = h.read()
-        last_line = content.split('\n')[-2] # note: last line is empty
-        self.assertTrue(last_line.endswith(line)) # ignore line's beginning (time etc.)
+        last_line = content.split('\n')[-2]  # note: last line is empty
+        self.assertTrue(last_line.endswith(line))  # ignore line's beginning (time etc.)
 
-    def assertFileNotFound(self, logname):
+    def assertFileNotFound(self, log_name: str):
         with self.assertRaises(FileNotFoundError):
-            with open(self.root / f'{logname}.log', 'r') as h:
+            with open(self.root / f'{log_name}.log', 'r') as _:
                 pass
         
     def test_info(self):
@@ -75,17 +73,17 @@ class LoggingApiTest(unittest.TestCase):
         
         # create temporary directory
         self.tmpdir = tempfile.TemporaryDirectory()
-        self.root   = pathlib.Path(self.tmpdir.name)
+        self.root = pathlib.Path(self.tmpdir.name)
         
         self.logging = utils.LoggingApi(
-            quiet        = False,
-            info_file    = self.root / 'info.log',
-            error_file   = self.root / 'error.log',
-            access_file  = self.root / 'access.log',
-            warning_file = self.root / 'warning.log',
-            logins_file  = self.root / 'logins.log',
-            auth_file    = self.root / 'auth.log',
-            stdout_only  = True
+            quiet=False,
+            info_file=self.root / 'info.log',
+            error_file=self.root / 'error.log',
+            access_file=self.root / 'access.log',
+            warning_file=self.root / 'warning.log',
+            logins_file=self.root / 'logins.log',
+            auth_file=self.root / 'auth.log',
+            stdout_only=True
         )
 
         # regular logs are empty
@@ -108,5 +106,3 @@ class LoggingApiTest(unittest.TestCase):
         data = {'id': '123', 'username': 'foobar'}
         self.logging.logins(data)
         self.assertLastLine('logins', str(data))
-
-

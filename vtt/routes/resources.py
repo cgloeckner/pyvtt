@@ -15,7 +15,7 @@ def register(engine):
 
     @get('/static/<fname>')
     def static_files(fname):
-        root = engine.paths.getStaticPath()
+        root = engine.paths.get_static_path()
         if not os.path.isdir(root) or not os.path.exists(root / fname):
             root = './static'
 
@@ -26,18 +26,18 @@ def register(engine):
 
     @get('/static/assets/<fname>')
     def static_assets(fname):
-        root = engine.paths.getAssetsPath()
+        root = engine.paths.get_assets_path()
         if not os.path.isdir(root) or not os.path.exists(root / fname):
             # use default root
-            root = engine.paths.getAssetsPath(default=True)
+            root = engine.paths.get_assets_path(default=True)
         return static_file(fname, root=root)
 
     @get('/static/client/<fname>')
     def static_client_code(fname):
-        root = engine.paths.getClientCodePath()
+        root = engine.paths.get_client_code_path()
         if not os.path.isdir(root) or not os.path.exists(root / fname):
             # use default root
-            root = engine.paths.getStaticPath(default=True) / 'client'
+            root = engine.paths.get_static_path(default=True) / 'client'
 
         return static_file(fname, root=root)
 
@@ -60,6 +60,6 @@ def register(engine):
             abort(404)
 
         # try to load asset file from disk
-        root = engine.paths.getGamePath(gmurl, url)
+        root = engine.paths.get_game_path(gmurl, url)
         return static_file(fname, root)
 

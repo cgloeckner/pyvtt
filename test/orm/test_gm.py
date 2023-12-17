@@ -27,7 +27,7 @@ class GmTest(EngineBaseTest):
         self.assertIn(gm.url, self.engine.locks)
         
         # test GM's Path
-        p = self.engine.paths.getGmsPath(gm.url)
+        p = self.engine.paths.get_gms_path(gm.url)
         self.assertTrue(os.path.exists(p))
         
         # test GM being in engine's cache
@@ -136,7 +136,7 @@ class GmTest(EngineBaseTest):
         gm.preDelete()
         
         # expect directory and cache instance being removed  
-        p = self.engine.paths.getGmsPath(gm.url)
+        p = self.engine.paths.get_gms_path(gm.url)
         self.assertFalse(os.path.exists(p))
         gm_cache = self.engine.cache.get(gm)
         self.assertIsNone(gm_cache)

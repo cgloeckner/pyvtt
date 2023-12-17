@@ -22,7 +22,7 @@ if __name__ == '__main__':
     version = BuildNumber()
     
     if os.path.exists(path):
-        version.loadFromFile(path)
+        version.load_from_file(path)
     print('Current version is {0}'.format(version))
     
     if '--major' in sys.argv:
@@ -35,6 +35,6 @@ if __name__ == '__main__':
         print('Arguments: Use "--major", "--minor" or "--fix" to increase version number')
         sys.exit(0)
 
-    version.saveToFile(path)
+    version.save_to_file(path)
     print('New version is {0}'.format(version))
 

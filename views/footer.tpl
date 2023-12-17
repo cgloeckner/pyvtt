@@ -12,8 +12,8 @@
     %provider = ''
     %url = ''
     %if engine.login_api is not None:
-        %provider = engine.login_api.parseProvider(gm.metadata)
-        %url = engine.login_api.getIconUrl(provider)
+        %provider = engine.login_api.parse_provider(gm.metadata)
+        %url = engine.login_api.get_icon_url(provider)
     %end
     <span title="{{provider.upper()}} via {{gm.identity.upper()}}" class="hint"><img src="{{url}}" class="icon_only" /> {{gm.name}}</span>
 %end

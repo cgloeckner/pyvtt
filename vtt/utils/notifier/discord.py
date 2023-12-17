@@ -1,7 +1,7 @@
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
@@ -11,13 +11,11 @@ __licence__ = 'MIT'
 import json
 import httpx
 
-from .common import Notifier
 
-
-class DiscordWebhookNotifier(Notifier):
+class DiscordWebhookNotifier:
     """Send notifications to a discord webhook"""
 
-    def __init__(self, engine, **data):
+    def __init__(self, engine: any, **data):
         self.engine = engine
         self.appname = data['appname']
         self.alias = data['alias']
@@ -35,15 +33,16 @@ class DiscordWebhookNotifier(Notifier):
         content = f'{self.get_mentions()}: {message}'
         httpx.post(self.url, json={'username': self.alias, 'content': content})
 
-    def onStart(self):
+    def on_start(self) -> None:
         msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.getDomain()} is now online!'
         self.send(msg)
 
-    def onCleanup(self, report):
+    def on_cleanup(self, report: any) -> None:
         report = json.dumps(report, indent=4)
-        msg = f'The VTT Server finished cleanup.\n```{report}```'
+        msg = (f'The VTT Server finished cleanup.\n'
+               f'```{report}```')
         self.send(msg)
 
-    def onError(self, error_id, message):
-        self.send(message)
-
+    def on_error(self, error_id: str, message: str):
+        self.send(f'Exception Traceback #{error_id}\n'
+                  f'{message}')

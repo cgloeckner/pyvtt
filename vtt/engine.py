@@ -45,7 +45,7 @@ class Engine(object):
                 self.log_level = arg.split('--loglevel=')[1]
 
         self.paths = utils.PathApi(appname=appname, pref_root=pref_dir, app_root=app_root)
-        self.paths.ensure(self.paths.getExportPath())
+        self.paths.ensure(self.paths.get_export_path())
 
         self.app = bottle.default_app()
 
@@ -103,12 +103,12 @@ class Engine(object):
         
         self.logging = utils.LoggingApi(
             quiet        = self.quiet,
-            info_file    = self.paths.getLogPath('info'),
-            error_file   = self.paths.getLogPath('error'),
-            access_file  = self.paths.getLogPath('access'),
-            warning_file = self.paths.getLogPath('warning'),
-            logins_file  = self.paths.getLogPath('logins'),
-            auth_file    = self.paths.getLogPath('auth'),
+            info_file    = self.paths.get_log_path('info'),
+            error_file   = self.paths.get_log_path('error'),
+            access_file  = self.paths.get_log_path('access'),
+            warning_file = self.paths.get_log_path('warning'),
+            logins_file  = self.paths.get_log_path('logins'),
+            auth_file    = self.paths.get_log_path('auth'),
             stdout_only  = self.no_logs,
             loglevel     = self.log_level
         )
@@ -119,7 +119,7 @@ class Engine(object):
         self.url_generator = utils.FancyUrlApi(self.paths)
 
         # handle settings
-        settings_path = self.paths.getSettingsPath()
+        settings_path = self.paths.get_settings_path()
         if not os.path.exists(settings_path):
             # create default settings
             settings = {
@@ -222,7 +222,7 @@ class Engine(object):
 
         # load version number
         bn = BuildNumber()
-        bn.loadFromFile(self.paths.getStaticPath(default=True) / 'client' / 'version.js')
+        bn.load_from_file(self.paths.get_static_path(default=True) / 'client' / 'version.js')
         self.version = str(bn)
         
         # query latest git hash
@@ -257,7 +257,7 @@ class Engine(object):
         keyfile  = ''
         if self.hasSsl():
             # enable SSL
-            ssl_dir = self.paths.getSslPath()
+            ssl_dir = self.paths.get_ssl_path()
             certfile = ssl_dir / 'cacert.pem'
             keyfile  = ssl_dir / 'privkey.pem'
             assert(os.path.exists(certfile))
@@ -266,7 +266,7 @@ class Engine(object):
         ssl_args = {'certfile': certfile, 'keyfile': keyfile} if self.hasSsl() else {}
         
         if self.notify_api is not None:
-            self.notify_api.onStart()
+            self.notify_api.on_start()
 
         bottle.run(
             host       = self.listen,
@@ -363,7 +363,7 @@ class Engine(object):
                 self.agent   = agent
         
         records = list()
-        with open(self.paths.getLogPath('logins'), 'r') as h:
+        with open(self.paths.get_log_path('logins'), 'r') as h:
             content = h.read()
             for line in content.split('\n'):
                 if line == '':
@@ -429,7 +429,7 @@ class Engine(object):
                 num_md5s   += m
         
         # remove all exported games' zip files
-        export_path = self.paths.getExportPath()
+        export_path = self.paths.get_export_path()
         num_zips = len(os.listdir(export_path))
         if num_zips > 0:
             num_bytes += os.path.getsize(export_path)

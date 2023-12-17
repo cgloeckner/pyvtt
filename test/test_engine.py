@@ -25,7 +25,7 @@ from vtt import engine
 class EngineTest(EngineBaseTest):
         
     def tearDown(self):
-        fname = self.engine.paths.getSettingsPath()
+        fname = self.engine.paths.get_settings_path()
         if os.path.exists(fname):
             os.remove(fname)
         
@@ -69,7 +69,7 @@ class EngineTest(EngineBaseTest):
     def reloadEngine(self, argv=list(), settings=None):
         if settings is not None:
             # change settings
-            fname = self.engine.paths.getSettingsPath()
+            fname = self.engine.paths.get_settings_path()
             with open(fname, 'w') as h:
                 json.dump(settings, h)
         
@@ -321,7 +321,7 @@ class EngineTest(EngineBaseTest):
             # export both games
             g1.toZip()
             g2.toZip()
-            export_path = self.engine.paths.getExportPath()
+            export_path = self.engine.paths.get_export_path()
             num_files = len(os.listdir(export_path))
             self.assertEqual(num_files, 2)
             

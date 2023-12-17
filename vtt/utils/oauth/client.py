@@ -1,40 +1,19 @@
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import base64
-import json
-import logging
-import os
-import pathlib
-import random
-import smtplib
-import sys
-import tempfile
-import traceback
-import uuid
-import httpx
-import requests
-import typing
-import abc
-
-from google.oauth2 import id_token
-from google_auth_oauthlib.flow import InstalledAppFlow
-import google.auth.transport.requests
-
-import bottle
-from authlib.integrations.requests_client import OAuth2Session
 from gevent import lock
 
-from .google import GoogleLogin
+from .common import LoginClient
 from .discord import DiscordLogin
+from .google import GoogleLogin
 
 
-class OAuthLogin:
-    def __init__(self, engine, **kwargs):
+class OAuthLogin(LoginClient):
+    def __init__(self, engine: any, **kwargs):
         self.engine = engine
 
         # register all oauth providers
@@ -46,27 +25,27 @@ class OAuthLogin:
                 self.providers['discord'] = DiscordLogin(engine, self, **kwargs['providers'][provider])
 
         # thread-safe structure to hold login sessions
-        self.sessions = dict()
+        self.sessions: dict[str, any] = {}
         self.lock = lock.RLock()
 
-    def loadSession(self, state):
+    def load_session(self, state: str) -> any:
         """Query session via state but remove it from the cache"""
         with self.lock:
             return self.sessions.pop(state)
 
-    def saveSession(self, state, session):
+    def save_session(self, state: str, session: any) -> None:
+        """Save session via state."""
         with self.lock:
             self.sessions[state] = session
 
-    @staticmethod
-    def parseProvider(s: str) -> str:
-        provider = '-'.join(s.split('|')[:-1])
+    def parse_provider(self, data: str) -> str:
+        provider = '-'.join(data.split('|')[:-1])
 
         # split 'oauth2'-section from provider
-        for s in ['-oauth2', 'oauth2-']:
-            provider = provider.replace(s, '')
+        for part in ['-oauth2', 'oauth2-']:
+            provider = provider.replace(part, '')
 
         return provider.lower()
 
-    def getIconUrl(self, key):
+    def get_icon_url(self, key: str) -> str:
         return self.providers[key].icon_url

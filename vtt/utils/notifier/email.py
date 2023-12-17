@@ -17,6 +17,9 @@ from gevent import lock
 from .common import Notifier
 
 
+# FIXME: deprecated implementation
+
+
 # Email API for error notification
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class EmailApi(Notifier):
@@ -59,15 +62,15 @@ class EmailApi(Notifier):
             self.login()
             self.smtp.sendmail(self.sender, self.sender, plain)
 
-    def onStart(self):
+    def on_start(self):
         msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.getDomain()} is now online!'
         self.send('Server Online', msg)
 
-    def onCleanup(self, report):
+    def on_cleanup(self, report):
         report = json.dumps(report, indent=4)
         msg = f'The VTT Server finished cleanup.\n{report}'
         self.send('Periodic Cleanup', msg)
 
-    def onError(self, error_id, message):
+    def on_error(self, error_id, message):
         sub = f'Exception Traceback #{error_id}'
         self.send(sub, message)

@@ -8,42 +8,42 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
+import pathlib
 
-class BuildNumber(object):
 
-    def __init__(self):
+class BuildNumber:
+
+    def __init__(self) -> None:
         self.version = [0, 0, 1]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '{0}.{1}.{2}'.format(*self.version)
 
-    def loadFromFile(self, fname):
+    def load_from_file(self, path: pathlib.Path) -> None:
         """ Load version number from single-line javascript file. """
-        with open(fname, 'r') as h:
+        with open(path, 'r') as h:
             line = h.read()
         version = line.split('"')[1].split('.')
-        for i in [0, 1, 2]:
-            version[i] = int(version[i])
+        self.version = [int(num) for num in version]
 
-        self.version = version
-
-    def saveToFile(self, fname):
+    def save_to_file(self, path: pathlib.Path) -> None:
         """ Rewrite javascript file for new version number. """
         raw = 'const version = "{0}";'.format(self)
-        with open(fname, 'w') as h:
+        with open(path, 'w') as h:
             h.write(raw)
 
-    def inc(self, k):
-        self.version[k] += 1
-        for i in range(k+1, len(self.version)):
-            self.version[i] = 0
+    def inc(self, category: int) -> None:
+        self.version[category] += 1
 
-    def major(self):
+        # set sub-categories to 0
+        for sub_category in range(category+1, len(self.version)):
+            self.version[sub_category] = 0
+
+    def major(self) -> None:
         self.inc(0)
 
-    def minor(self):
+    def minor(self) -> None:
         self.inc(1)
 
-    def fix(self):
+    def fix(self) -> None:
         self.inc(2)
-
