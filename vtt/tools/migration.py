@@ -16,6 +16,8 @@ from vtt.engine import Engine
 from vtt.utils import PathApi
 
 
+# FIXME: deprecated implementation
+
 def rename_backup(fname):
     if not os.path.exists(fname):
         return

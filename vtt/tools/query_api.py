@@ -15,6 +15,8 @@ import requests
 import sys
 
 
+# FIXME: deprecated implementation
+
 def main():
     if len(sys.argv) < 3:
         print(f'Usage:\t{sys.argv[0]} <server_domain> <filename>')

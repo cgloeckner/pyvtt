@@ -16,6 +16,9 @@ from vtt.orm.register import db_session
 from vtt import engine
 
 
+# FIXME: deprecated implementation
+
+
 if __name__ == '__main__':
     e = engine.Engine(sys.argv)
 
