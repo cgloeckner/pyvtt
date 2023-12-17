@@ -65,20 +65,23 @@ class EngineTest(EngineBaseTest):
                 'type' : None
             }
         }
-        
+
     def reloadEngine(self, argv=list(), settings=None):
         if settings is not None:
             # change settings
             fname = self.engine.paths.get_settings_path()
             with open(fname, 'w') as h:
                 json.dump(settings, h)
-        
+
         # reload engine (without cleanup thread)
         argv.append('--quiet')
         self.engine = engine.Engine(argv=argv, pref_dir=self.root)
-        
+
         self.monkeyPatch()
-        
+
+    def test_run_engine_with_custom_prefdir(self):
+        engine.Engine(argv=['--prefdir=/tmp'])
+
     def test_run(self): 
         # confirm server is offline
         with self.assertRaises(requests.exceptions.ConnectionError):

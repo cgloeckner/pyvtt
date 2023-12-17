@@ -39,7 +39,7 @@ class Engine(object):
                 appname = arg.split('--appname=')[1]
 
             elif arg.startswith('--prefdir='):
-                pref_dir = arg.split('--prefdir=')[1]
+                pref_dir = pathlib.Path(arg.split('--prefdir=')[1])
 
             elif arg.startswith('--loglevel='):
                 self.log_level = arg.split('--loglevel=')[1]
