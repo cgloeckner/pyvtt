@@ -31,10 +31,10 @@ def register(engine):
         playercolor = request.forms.get('playercolor')
 
         # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
+        gm_cache = engine.cache.get_from_url(gmurl)
         if gm_cache is None:
             engine.logging.warning(
-                'Player tried to login {0} by {1}, but GM was not found.'.format(gmurl, engine.getClientIp(request)))
+                'Player tried to login {0} by {1}, but GM was not found.'.format(gmurl, engine.get_client_ip(request)))
             result['error'] = 'GAME NOT FOUND'
             return result
 
@@ -42,15 +42,15 @@ def register(engine):
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
         if game is None:
             engine.logging.warning('Player tried to login {0}/{1} by {2}, but game was not found.'.format(gmurl, url,
-                                                                                                          engine.getClientIp(
+                                                                                                          engine.get_client_ip(
                                                                                                               request)))
             result['error'] = 'GAME NOT FOUND'
             return result
 
         if playername == '':
             engine.logging.warning(
-                'Player tried to login {0} by {1}, but did not provide a username.'.format(game.getUrl(),
-                                                                                           engine.getClientIp(request)))
+                'Player tried to login {0} by {1}, but did not provide a username.'.format(game.get_url(),
+                                                                                           engine.get_client_ip(request)))
             result['error'] = 'PLEASE ENTER A NAME'
             return result
 
@@ -74,13 +74,13 @@ def register(engine):
         game_cache = gm_cache.get(game)
         if game_cache is None:
             engine.logging.warning(
-                'Player tried to login {0} by {1}, but game was not in the cache.'.format(game.getUrl(),
-                                                                                          engine.getClientIp(request)))
+                'Player tried to login {0} by {1}, but game was not in the cache.'.format(game.get_url(),
+                                                                                          engine.get_client_ip(request)))
             result['error'] = 'GAME NOT FOUND'
             return result
 
         # query whether user is the hosting GM
-        session_gm = engine.main_db.GM.loadFromSession(request)
+        session_gm = engine.main_db.GM.load_from_session(request)
         gm_is_host = session_gm is not None and session_gm.url == gmurl
 
         # kill all timeout players and login this new player
@@ -88,8 +88,8 @@ def register(engine):
             player_cache = game_cache.insert(playername, playercolor, is_gm=gm_is_host)
         except KeyError:
             engine.logging.warning(
-                'Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.getUrl(),
-                                                                                                 engine.getClientIp(
+                'Player tried to login {0} by {1}, but username "{2}" is already in use.'.format(game.get_url(),
+                                                                                                 engine.get_client_ip(
                                                                                                      request),
                                                                                                  playername))
             result['error'] = 'ALREADY IN USE'
@@ -97,10 +97,10 @@ def register(engine):
 
         # save playername in client cookie
         expire = int(time.time() + engine.cleanup['expire'])
-        response.set_cookie('playername', playername, path=game.getUrl(), expires=expire, secure=engine.hasSsl())
-        response.set_cookie('playercolor', playercolor, path=game.getUrl(), expires=expire, secure=engine.hasSsl())
+        response.set_cookie('playername', playername, path=game.get_url(), expires=expire, secure=engine.has_ssl())
+        response.set_cookie('playercolor', playercolor, path=game.get_url(), expires=expire, secure=engine.has_ssl())
 
-        engine.logging.access('Player logged in to {0} by {1}.'.format(game.getUrl(), engine.getClientIp(request)))
+        engine.logging.access('Player logged in to {0} by {1}.'.format(game.get_url(), engine.get_client_ip(request)))
 
         result['playername'] = player_cache.name
         result['playercolor'] = player_cache.color

@@ -21,12 +21,12 @@ from vtt.orm.register import db_session
 from .player import PlayerCache
 
 
-class GameCache(object):
+class GameCache:
     """ Thread-safe player dict using name as key. """
 
-    def __init__(self, engine, parent, game):
+    def __init__(self, engine: any, parent: any, game: any) -> None:
         # prepare MD5 hashes for all images
-        num_generated = game.makeMd5s()
+        num_generated = game.make_md5s()
 
         self.engine = engine
         self.parent = parent
@@ -37,7 +37,7 @@ class GameCache(object):
 
         self.playback = list()
         for slot_id in range(engine.file_limit['num_music']):
-            if self.isMusicSlotUsed(slot_id):
+            if self.is_music_slot_used(slot_id):
                 self.playback.append(False)  # exists but not playing
             else:
                 self.playback.append(None)  # empty slot
@@ -45,13 +45,13 @@ class GameCache(object):
         if num_generated > 0:
             self.engine.logging.info('{0} MD5 hashes generated'.format(num_generated))
 
-    def getNextId(self):
+    def get_next_id(self):
         with self.lock:
             ret = self.next_id
             self.next_id += 1
             return ret
 
-    def rebuildIndices(self):
+    def rebuild_indices(self):
         """ This one fixes the player indices by removing gaps.
         This is run when a player is inserted or removed (including
         kicked).
@@ -64,7 +64,7 @@ class GameCache(object):
             for new_index, n in enumerate(tmp):
                 self.players[n].index = new_index
 
-    def getAllSlots(self):
+    def get_all_slots(self):
         root = self.engine.paths.get_game_path(self.parent.url, self.url)
         slots = list()
         for slot_id in range(self.engine.file_limit['num_music']):
@@ -72,12 +72,12 @@ class GameCache(object):
                 slots.append(slot_id)
         return slots
 
-    def uploadMusic(self, handle):
+    def upload_music(self, handle):
         root = self.engine.paths.get_game_path(self.parent.url, self.url)
 
         with self.engine.locks[self.parent.url]:  # make IO access safe
             # search for next free slot
-            slots = self.getAllSlots()
+            slots = self.get_all_slots()
             next_slot = None
             for slot_id in range(self.engine.file_limit['num_music']):
                 if slot_id not in slots:
@@ -90,14 +90,14 @@ class GameCache(object):
 
         return next_slot
 
-    def isMusicSlotUsed(self, slot_id):
+    def is_music_slot_used(self, slot_id):
         root = self.engine.paths.get_game_path(self.parent.url, self.url)
 
         with self.engine.locks[self.parent.url]:  # make IO access safe
             fname = root / '{0}.mp3'.format(int(slot_id))
             return os.path.exists(fname)
 
-    def deleteMusic(self, slots):
+    def delete_music(self, slots):
         root = self.engine.paths.get_game_path(self.parent.url, self.url)
 
         # delete these tracks
@@ -111,10 +111,10 @@ class GameCache(object):
 
     def insert(self, name, color, is_gm):
         with self.lock:
-            if name in self.players and self.players[name].isOnline():
+            if name in self.players and self.players[name].is_online():
                 raise KeyError(name)
             self.players[name] = PlayerCache(self.engine, self, name, color, is_gm)
-            self.rebuildIndices()
+            self.rebuild_indices()
             return self.players[name]
 
     def get(self, name):
@@ -124,7 +124,7 @@ class GameCache(object):
             except KeyError:
                 return None
 
-    def getData(self):
+    def get_data(self):
         result = list()
         with self.lock:
             for name in self.players:
@@ -143,7 +143,7 @@ class GameCache(object):
         result.sort(key=lambda i: i['index'])
         return result
 
-    def getSelections(self):
+    def get_selections(self):
         result = dict()
         with self.lock:
             for name in self.players:
@@ -153,7 +153,7 @@ class GameCache(object):
     def remove(self, name):
         with self.lock:
             del self.players[name]
-            self.rebuildIndices()
+            self.rebuild_indices()
 
     # --- websocket implementation ------------------------------------
 
@@ -172,7 +172,7 @@ class GameCache(object):
                 self.engine.logging.warning(
                     'Player {0} tried to login to {1} by {2}, but the game was not found'.format(player.name, self.url,
                                                                                                  player.ip))
-                return;
+                return
 
             for r in self.parent.db.Roll.select(lambda r: r.game == g and r.timeid >= since).order_by(
                     lambda r: r.timeid):
@@ -190,14 +190,14 @@ class GameCache(object):
 
         player.write({
             'OPID': 'ACCEPT',
-            'players': self.getData(),
+            'players': self.get_data(),
             'rolls': rolls,
             'urls': list(set(urls)),  # drop duplicates
-            'slots': self.getAllSlots(),  # music slots
+            'slots': self.get_all_slots(),  # music slots
             'playback': self.playback
-        });
+        })
 
-        player.write(self.fetchRefresh(g.active))
+        player.write(self.fetch_refresh(g.active))
 
         # broadcast join to all players
         self.broadcast({
@@ -258,7 +258,7 @@ class GameCache(object):
         with self.lock:
             for name in self.players:
                 p = self.players[name]
-                if p.socket != None and not p.socket.closed:
+                if p.socket is not None and not p.socket.closed:
                     p.socket.close()
             self.players.clear()
 
@@ -279,7 +279,7 @@ class GameCache(object):
                 except WebSocketError:
                     pass
 
-    def broadcastTokenUpdate(self, player, since):
+    def broadcast_token_update(self, player, since):
         """ Broadcast updated tokens. """
         # fetch all changed tokens
         all_data = list()
@@ -290,7 +290,7 @@ class GameCache(object):
             if g is None:
                 self.engine.logging.warning(
                     'A token update broadcast could not be performed at {0}/{1} by {2}, because the game was not found'.format(
-                        self.parent.url, self.url, self.engine.getClientIp(request)))
+                        self.parent.url, self.url, self.engine.get_client_ip(request)))
                 return;
             g.timeid = now
 
@@ -305,15 +305,15 @@ class GameCache(object):
             'tokens': all_data
         });
 
-    def broadcastSceneSwitch(self, game):
+    def broadcast_scene_switch(self, game):
         """ Broadcast scene switch. """
         # collect all tokens for the given scene
-        refresh_data = self.fetchRefresh(game.active)
+        refresh_data = self.fetch_refresh(game.active)
 
         # broadcast switch
         self.broadcast(refresh_data);
 
-    def fetchRefresh(self, scene_id):
+    def fetch_refresh(self, scene_id):
         """ Performs a full refresh on all tokens. """
         tokens = list()
         background_id = 0
@@ -339,7 +339,7 @@ class GameCache(object):
             'background': background_id
         }
 
-    def onPing(self, player, data):
+    def on_ping(self, player, data):
         """ Handle player pinging the server. """
         # pong!
         try:
@@ -351,7 +351,7 @@ class GameCache(object):
             # player quit (broken socket or invalid JSON data)
             self.logout(player)
 
-    def onRoll(self, player, data):
+    def on_roll(self, player, data):
         """ Handle player rolling a dice. """
         # roll dice
         now = time.time()
@@ -359,7 +359,7 @@ class GameCache(object):
         result = random.randrange(1, sides + 1)
         roll_id = None
 
-        if sides not in self.engine.getSupportedDice():
+        if sides not in self.engine.get_supported_dice():
             # ignore unsupported dice
             return
 
@@ -391,7 +391,7 @@ class GameCache(object):
             'name': player.name
         })
 
-    def onSelect(self, player, data):
+    def on_select(self, player, data):
         """ Handle player selecting a token. """
         # store selection
         player.selected = data['selected']
@@ -401,9 +401,9 @@ class GameCache(object):
             'OPID': 'SELECT',
             'color': player.color,
             'selected': player.selected,
-        });
+        })
 
-    def onRange(self, player, data):
+    def on_range(self, player, data):
         """ Handle player selecting multiple tokens. """
         # fetch rectangle data
         adding = data['adding']
@@ -450,9 +450,9 @@ class GameCache(object):
             'OPID': 'SELECT',
             'color': player.color,
             'selected': player.selected,
-        });
+        })
 
-    def onOrder(self, player, data):
+    def on_order(self, player, data):
         """ Handle reordering a player box. """
         # fetch name and direction
         name = data['name']
@@ -487,7 +487,7 @@ class GameCache(object):
             'indices': update
         });
 
-    def onUpdateToken(self, player, data):
+    def on_update_token(self, player, data):
         """ Handle player changing token data. """
         # fetch changes' data
         changes = data['changes']
@@ -526,7 +526,7 @@ class GameCache(object):
                 text = data.get('text')
                 label = None if text is None else (text, player.color)
                 if token.update(timeid=now, pos=pos, zorder=zorder, size=size,
-                                rotate=rotate, flipx=flipx, locked=locked, label=label):
+                                rotate=rotate, flipx=flipx, locked=locked, text=label):
                     # add to broadcast data
                     tmp = token.to_dict()
                     tmp['uuid'] = player.uuid
@@ -537,7 +537,7 @@ class GameCache(object):
             'tokens': update
         });
 
-    def onCreateToken(self, player, data):
+    def on_create_token(self, player, data):
         """ Handle player creating tokens. """
         # fetch token data
         posx = data['posx']
@@ -573,7 +573,7 @@ class GameCache(object):
 
             for k, url in enumerate(urls):
                 # create tokens in circle
-                x, y = self.parent.db.Token.getPosByDegree((posx, posy), k, n)
+                x, y = self.parent.db.Token.get_pos_by_degree((posx, posy), k, n)
                 t = self.parent.db.Token(scene=s.id, timeid=now, url=url,
                                          size=size, posx=x, posy=y, text=labels[k], color=color)
 
@@ -597,7 +597,7 @@ class GameCache(object):
             'tokens': tokens
         })
 
-    def onCloneToken(self, player, data):
+    def on_clone_token(self, player, data):
         """ Handle player cloning tokens. """
         # fetch clone data
         ids = data['ids']
@@ -666,7 +666,7 @@ class GameCache(object):
             'tokens': tokens
         })
 
-    def onDeleteToken(self, player, data):
+    def on_delete_token(self, player, data):
         """ Handle player deleting tokens. """
         # delete tokens
         tokens = data['tokens']
@@ -685,7 +685,7 @@ class GameCache(object):
                 'tokens': ids
             })
 
-    def onBeacon(self, player, data):
+    def on_beacon(self, player, data):
         """ Handle player pinging with the mouse. """
         # add player identification
         data['color'] = player.color
@@ -693,7 +693,7 @@ class GameCache(object):
         # broadcast beacon
         self.broadcast(data)
 
-    def onMusic(self, player, data):
+    def on_music(self, player, data):
         """ Handle player uploaded music. """
         slot_id = data['slot_id']
 
@@ -711,12 +711,12 @@ class GameCache(object):
 
         elif data['action'] == 'remove':
             self.playback[slot_id] = None
-            self.deleteMusic([slot_id])
+            self.delete_music([slot_id])
 
         # broadcast notification
         self.broadcast(data)
 
-    def onCreateScene(self, player, data):
+    def on_create_scene(self, player, data):
         """ GM: Create new scene. """
         if not player.is_gm:
             self.engine.logging.warning('Player tried to create a scene but was not the GM by {0}'.format(player.ip))
@@ -738,9 +738,9 @@ class GameCache(object):
             g.order.append(scene.id)
 
             # broadcast scene switch
-            self.broadcastSceneSwitch(g)
+            self.broadcast_scene_switch(g)
 
-    def onMoveScene(self, player, data):
+    def on_move_scene(self, player, data):
         """ GM: Move a given scene one step (either left or right). """
         if not player.is_gm:
             self.engine.logging.warning('Player tried to move a scene but was not the GM by {0}'.format(player.ip))
@@ -768,7 +768,7 @@ class GameCache(object):
 
             # build initial order if not created yet
             if len(g.order) == 0:
-                g.reorderScenes()
+                g.reorder_scenes()
 
             # query index within that list
             try:
@@ -787,7 +787,7 @@ class GameCache(object):
             g.order[old], g.order[new] = g.order[new], g.order[old]
             g.timeid = now
 
-    def onActivateScene(self, player, data):
+    def on_activate_scene(self, player, data):
         """ GM: Activate a given scene. """
         if not player.is_gm:
             self.engine.logging.warning('Player tried to activate a scene but was not the GM by {0}'.format(player.ip))
@@ -812,9 +812,9 @@ class GameCache(object):
             g.active = scene_id
             self.parent.db.commit()
             # broadcast scene switch
-            self.broadcastSceneSwitch(g)
+            self.broadcast_scene_switch(g)
 
-    def onCloneScene(self, player, data):
+    def on_clone_scene(self, player, data):
         """ GM: Clone a given scene. """
         if not player.is_gm:
             self.engine.logging.warning('Player tried to clone a scene but was not the GM by {0}'.format(player.ip))
@@ -849,9 +849,9 @@ class GameCache(object):
             g.active = clone.id
             g.order.append(clone.id)
             # broadcast scene switch
-            self.broadcastSceneSwitch(g)
+            self.broadcast_scene_switch(g)
 
-    def onDeleteScene(self, player, data):
+    def on_delete_scene(self, player, data):
         """ GM: Delete a given scene. """
         if not player.is_gm:
             self.engine.logging.warning('Player tried to clone a scene but was not the GM by {0}'.format(player.ip))
@@ -872,7 +872,7 @@ class GameCache(object):
             if s is None:
                 self.engine.logging.warning('GM tried to delete a scene but scene not found {0}'.format(player.ip))
                 return
-            s.preDelete()
+            s.pre_delete()
             s.delete()
             self.parent.db.commit()
 
@@ -895,4 +895,4 @@ class GameCache(object):
                 g.active = remain.id
                 self.parent.db.commit()
                 # broadcast scene switch
-                self.broadcastSceneSwitch(g)
+                self.broadcast_scene_switch(g)

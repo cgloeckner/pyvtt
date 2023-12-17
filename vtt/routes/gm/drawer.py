@@ -16,11 +16,11 @@ def register(engine):
     @get('/')
     @view('gm')
     def get_game_list():
-        gm = engine.main_db.GM.loadFromSession(request)
+        gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             # remove cookie
             # FIXME: setting cookie is ignored on redirect
-            response.set_cookie('session', '', path='/', max_age=1, secure=engine.hasSsl())
+            response.set_cookie('session', '', path='/', max_age=1, secure=engine.has_ssl())
             redirect('/vtt/join')
 
         # load GM from cache
@@ -28,16 +28,16 @@ def register(engine):
         if gm_cache is None:
             # remove cookie
             engine.logging.warning \
-                ('GM name="{0}" url={1} tried to relogin by {2} but he was not in the cache'.format(gm.name, gm.url, engine.getClientIp
+                ('GM name="{0}" url={1} tried to relogin by {2} but he was not in the cache'.format(gm.name, gm.url, engine.get_client_ip
                                                                                                        (request)))
-            response.set_cookie('session', '', path='/', max_age=1, secure=engine.hasSsl())
+            response.set_cookie('session', '', path='/', max_age=1, secure=engine.has_ssl())
             abort(404)
 
         # refresh session
-        gm.refreshSession(response)
+        gm.refresh_session(response)
 
         engine.logging.access \
-            ('GM name="{0}" url={1} session refreshed by {2}'.format(gm.name, gm.url, engine.getClientIp(request)))
+            ('GM name="{0}" url={1} session refreshed by {2}'.format(gm.name, gm.url, engine.get_client_ip(request)))
 
         server = ''
 
@@ -53,7 +53,7 @@ def register(engine):
 
     @post('/vtt/clean-up/<url>')
     def clean_up(url):
-        gm = engine.main_db.GM.loadFromSession(request)
+        gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             abort(404)
 
@@ -62,14 +62,14 @@ def register(engine):
         if gm_cache is None:
             engine.logging.warning \
                 ('GM name="{0}" url="{1}" tried to kick all players at {2} by {3} but he was not inside the cache'.format
-                    (gm.name, gm.url, url, engine.getClientIp(request)))
+                    (gm.name, gm.url, url, engine.get_client_ip(request)))
             abort(404)
 
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == url).first()
         if game is None:
             engine.logging.warning \
-                ('GM name="{0}" url="{1}" tried to kick all players at {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.getClientIp
+                ('GM name="{0}" url="{1}" tried to kick all players at {2} by {3} but game was not found'.format(gm.name, gm.url, url, engine.get_client_ip
                                                                                                                     (request)))
             abort(404)
 
@@ -79,11 +79,11 @@ def register(engine):
         game.cleanup(now) # cleanup old images and tokens
         game_cache.cleanup() # remove all players
 
-        engine.logging.access('Players kicked from {0} by {1}'.format(game.getUrl(), engine.getClientIp(request)))
+        engine.logging.access('Players kicked from {0} by {1}'.format(game.get_url(), engine.get_client_ip(request)))
 
     @post('/vtt/kick-player/<url>/<uuid>')
     def kick_player(url, uuid):
-        gm = engine.main_db.GM.loadFromSession(request)
+        gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             abort(404)
 
@@ -92,7 +92,7 @@ def register(engine):
         if gm_cache is None:
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried to kick player #{4} at {2} by {3} but he was not inside the cache'.format(
-                    gm.name, gm.url, url, engine.getClientIp(request), uuid))
+                    gm.name, gm.url, url, engine.get_client_ip(request), uuid))
             abort(404)
 
         # load game from GM's database
@@ -102,7 +102,7 @@ def register(engine):
                 'GM name="{0}" url="{1}" tried to kick players #{4} {2} by {3} but game was not found'.format(gm.name,
                                                                                                               gm.url,
                                                                                                               url,
-                                                                                                              engine.getClientIp(
+                                                                                                              engine.get_client_ip(
                                                                                                                   request),
                                                                                                               uuid))
             abort(404)
@@ -112,18 +112,18 @@ def register(engine):
         if game_cache is None:
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried to kick player #{4} at {2} by {3} but the game was not inside the cache'.format(
-                    gm.name, gm.url, url, engine.getClientIp(request), uuid))
+                    gm.name, gm.url, url, engine.get_client_ip(request), uuid))
             abort(404)
 
         name = game_cache.disconnect(uuid)
 
         engine.logging.access(
-            'Player {0} ({1}) kicked from {2} by {3}'.format(name, uuid, game.getUrl(), engine.getClientIp(request)))
+            'Player {0} ({1}) kicked from {2} by {3}'.format(name, uuid, game.get_url(), engine.get_client_ip(request)))
 
     @post('/vtt/delete-game/<url>')
     @view('gms/games')
     def delete_game(url):
-        gm = engine.main_db.GM.loadFromSession(request)
+        gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             abort(404)
 
@@ -132,7 +132,7 @@ def register(engine):
         if gm_cache is None:
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried delete the game {2} by {3} but he was not inside the cache'.format(
-                    gm.name, gm.url, url, engine.getClientIp(request)))
+                    gm.name, gm.url, url, engine.get_client_ip(request)))
             abort(404)
 
         # load game from GM's database
@@ -141,15 +141,15 @@ def register(engine):
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried delete the game {2} by {3} but game was not found'.format(gm.name,
                                                                                                          gm.url, url,
-                                                                                                         engine.getClientIp(
+                                                                                                         engine.get_client_ip(
                                                                                                              request)))
             abort(404)
 
         # delete everything for that game
-        game.preDelete()
+        game.pre_delete()
         game.delete()
 
-        engine.logging.access('Game {0} deleted by {1}'.format(game.getUrl(), engine.getClientIp(request)))
+        engine.logging.access('Game {0} deleted by {1}'.format(game.get_url(), engine.get_client_ip(request)))
 
         # load game from GM's database
         all_games = gm_cache.db.Game.select()

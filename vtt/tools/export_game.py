@@ -25,12 +25,12 @@ if __name__ == '__main__':
     gm_url   = sys.argv[1]
     game_url = sys.argv[2]
 
-    gm_cache = e.cache.getFromUrl(gm_url)
+    gm_cache = e.cache.get_from_url(gm_url)
 
     with db_session:
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
 
-        zip_file, zip_path = game.toZip()
+        zip_file, zip_path = game.to_zip()
 
         print(gm_url, '/', game_url)
         print(zip_path / zip_file)

@@ -17,7 +17,7 @@ class TokenTest(unittest.TestCase):
     
     def setUp(self):
         # create temporary database
-        self.db = orm.createGmDatabase(engine=None, filename=':memory:')
+        self.db = orm.create_gm_database(engine=None, filename=':memory:')
         
     def tearDown(self):
         del self.db
@@ -125,7 +125,7 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.color, 'red')
         
         # cannot update locked token 
-        self.assertFalse(t.update(timeid=130, pos=(0, 0), size=10, zorder=3, rotate=22.5, flipx=True, label=('foobar', 'green')))
+        self.assertFalse(t.update(timeid=130, pos=(0, 0), size=10, zorder=3, rotate=22.5, flipx=True, text=('foobar', 'green')))
         self.assertEqual(t.timeid, 129)
         self.assertEqual(t.posx, 90)
         self.assertEqual(t.posy, 123)
@@ -151,7 +151,7 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.color, 'red')
 
         # can change label with color
-        self.assertTrue(t.update(timeid=132, label=('foobar', 'green')))
+        self.assertTrue(t.update(timeid=132, text=('foobar', 'green')))
         self.assertEqual(t.timeid, 132)
         self.assertEqual(t.posx, 90)
         self.assertEqual(t.posy, 123)
@@ -167,7 +167,7 @@ class TokenTest(unittest.TestCase):
         self.assertFalse(t.update(timeid=132))
 
         # very long token labels are cut to length
-        self.assertTrue(t.update(timeid=132, label=('X' * (orm.MAX_TOKEN_LABEL_SIZE + 1), 'white')))
+        self.assertTrue(t.update(timeid=132, text=('X' * (orm.MAX_TOKEN_LABEL_SIZE + 1), 'white')))
         self.assertEqual(len(t.text), orm.MAX_TOKEN_LABEL_SIZE)
         self.assertFalse(t.update(timeid=132))
         
@@ -175,9 +175,9 @@ class TokenTest(unittest.TestCase):
         # calc position of three tokens in "circle"
         p = list()
         origin = (100, 100)
-        p.append(self.db.Token.getPosByDegree(origin, 0, 3))
-        p.append(self.db.Token.getPosByDegree(origin, 1, 3))
-        p.append(self.db.Token.getPosByDegree(origin, 2, 3))
+        p.append(self.db.Token.get_pos_by_degree(origin, 0, 3))
+        p.append(self.db.Token.get_pos_by_degree(origin, 1, 3))
+        p.append(self.db.Token.get_pos_by_degree(origin, 2, 3))
         
         self.assertIn(( 51,  72), p) # top left
         self.assertIn((100, 155), p) # right
@@ -185,10 +185,10 @@ class TokenTest(unittest.TestCase):
         
         # calc position of four tokens in "circle"
         p = list()
-        p.append(self.db.Token.getPosByDegree(origin, 0, 4))
-        p.append(self.db.Token.getPosByDegree(origin, 1, 4))
-        p.append(self.db.Token.getPosByDegree(origin, 2, 4))
-        p.append(self.db.Token.getPosByDegree(origin, 3, 4))
+        p.append(self.db.Token.get_pos_by_degree(origin, 0, 4))
+        p.append(self.db.Token.get_pos_by_degree(origin, 1, 4))
+        p.append(self.db.Token.get_pos_by_degree(origin, 2, 4))
+        p.append(self.db.Token.get_pos_by_degree(origin, 3, 4))
         
         self.assertIn(( 99,  36), p) # top (99 ~ 100)
         self.assertIn((163,  99), p) # right
@@ -198,9 +198,9 @@ class TokenTest(unittest.TestCase):
         # calc position close to scene's topleft border 
         p = list()          
         origin = (0, 0)
-        p.append(self.db.Token.getPosByDegree(origin, 0, 3))
-        p.append(self.db.Token.getPosByDegree(origin, 1, 3))
-        p.append(self.db.Token.getPosByDegree(origin, 2, 3))
+        p.append(self.db.Token.get_pos_by_degree(origin, 0, 3))
+        p.append(self.db.Token.get_pos_by_degree(origin, 1, 3))
+        p.append(self.db.Token.get_pos_by_degree(origin, 2, 3))
         
         self.assertIn(( 0,  0), p) # top left (limited to scene)
         self.assertIn(( 0, 55), p) # right
@@ -209,9 +209,9 @@ class TokenTest(unittest.TestCase):
         # calc position close to scene's bottomright border 
         p = list()          
         origin = (orm.MAX_SCENE_WIDTH, orm.MAX_SCENE_HEIGHT)
-        p.append(self.db.Token.getPosByDegree(origin, 0, 3))
-        p.append(self.db.Token.getPosByDegree(origin, 1, 3))
-        p.append(self.db.Token.getPosByDegree(origin, 2, 3))
+        p.append(self.db.Token.get_pos_by_degree(origin, 0, 3))
+        p.append(self.db.Token.get_pos_by_degree(origin, 1, 3))
+        p.append(self.db.Token.get_pos_by_degree(origin, 2, 3))
         
         self.assertIn((959, 539), p) # top left
         self.assertIn((orm.MAX_SCENE_WIDTH, orm.MAX_SCENE_HEIGHT), p) # right (limited to scene)
@@ -219,6 +219,6 @@ class TokenTest(unittest.TestCase):
         
         # single token is placed at origin
         origin = (456, 123)
-        p = self.db.Token.getPosByDegree(origin, 0, 1)
+        p = self.db.Token.get_pos_by_degree(origin, 0, 1)
         self.assertEqual(p, origin)
 

@@ -42,7 +42,7 @@ class ErrorReporter:
                 stacktrace = self.get_stacktrace()
                 error_id = uuid.uuid1().hex
                 full_url = bottle.request.fullpath
-                client_ip = self.engine.getClientIp(bottle.request)
+                client_ip = self.engine.get_client_ip(bottle.request)
 
                 # dump cookies
                 cookies = ''

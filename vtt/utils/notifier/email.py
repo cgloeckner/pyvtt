@@ -63,7 +63,7 @@ class EmailApi(Notifier):
             self.smtp.sendmail(self.sender, self.sender, plain)
 
     def on_start(self):
-        msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.getDomain()} is now online!'
+        msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.get_domain()} is now online!'
         self.send('Server Online', msg)
 
     def on_cleanup(self, report):

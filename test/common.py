@@ -43,11 +43,11 @@ class EngineBaseTest(unittest.TestCase):
                 
     def monkeyPatch(self):
         # save methods for later
-        self.prev_getPublicIp = self.engine.getPublicIp
-        self.prev_getCountryFromIp = self.engine.getCountryFromIp
+        self.prev_getPublicIp = self.engine.get_public_ip
+        self.prev_getCountryFromIp = self.engine.get_country_from_ip
         # monkey-patch methods with stubs
-        self.engine.getPublicIp = lambda: '?.?.?.?'
-        self.engine.getCountryFromIp = lambda ip: 'unknown'
+        self.engine.get_public_ip = lambda: '?.?.?.?'
+        self.engine.get_country_from_ip = lambda ip: 'unknown'
         
     def tearDown(self):
         # unload engine
@@ -116,10 +116,10 @@ def setup_unittest_routes(engine):
     @bottle.view('unittest_game')
     def unittest_demo_game():
         gm = engine.main_db.GM.select(lambda gm: gm.url == 'arthur').first()
-        gm_cache = engine.cache.getFromUrl('arthur')
+        gm_cache = engine.cache.get_from_url('arthur')
         game = gm_cache.db.Game.select(lambda g: g.url == 'test-game-1').first()
             
-        websocket_url = engine.getWebsocketUrl()
+        websocket_url = engine.get_websocket_url()
             
         return dict(engine=engine, user_agent='UNITTEST', websocket_url=websocket_url, game=game, playername='arthur',playercolor='#FF0000', gm=gm, is_gm=True)
 
@@ -127,7 +127,7 @@ def setup_unittest_routes(engine):
     # @TODO register GM arthur
     # @TODO create game test-game-1 with background "/static/background.jpg"
     
-    server_uri = engine.getUrl()
+    server_uri = engine.get_url()
     print('=' * 80)
     print('URLs for Unittest scenarios:')
     for route in ['/vtt/unittest/game']:

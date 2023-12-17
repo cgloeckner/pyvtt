@@ -16,10 +16,10 @@ from vtt.orm.register import db_session
 from .gm import GmCache
 
 
-class EngineCache(object):
+class EngineCache:
     """ Thread-safe gms dict using gm-url as key. """
 
-    def __init__(self, engine):
+    def __init__(self, engine: any) -> None:
         self.engine = engine
         self.lock = lock.RLock()
         self.gms = dict()
@@ -50,9 +50,9 @@ class EngineCache(object):
 
     def get(self, gm):
         if gm:
-            return self.getFromUrl(gm.url)
+            return self.get_from_url(gm.url)
 
-    def getFromUrl(self, url):
+    def get_from_url(self, url):
         with self.lock:
             try:
                 return self.gms[url]
@@ -77,11 +77,11 @@ class EngineCache(object):
         game_url = data['game_url']
 
         # insert player
-        gm_cache = self.getFromUrl(gm_url)
+        gm_cache = self.get_from_url(gm_url)
         if gm_cache is None:
             self.engine.logging.warning('Cannot listen to websocket for GM {0}'.format(gm_url))
             return
-        game_cache = gm_cache.getFromUrl(game_url)
+        game_cache = gm_cache.get_from_url(game_url)
         if game_cache is None:
             self.engine.logging.warning('Cannot listen to websocket for game {0}'.format(game_url))
             return

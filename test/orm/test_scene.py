@@ -17,7 +17,7 @@ class SceneTest(unittest.TestCase):
     
     def setUp(self):
         # create temporary database
-        self.db = orm.createGmDatabase(engine=None, filename=':memory:')
+        self.db = orm.create_gm_database(engine=None, filename=':memory:')
         
     def tearDown(self):
         del self.db
@@ -38,7 +38,7 @@ class SceneTest(unittest.TestCase):
         self.assertEqual(t.back, demo_scene)
         
         # prepare scene deletion
-        demo_scene.preDelete()
+        demo_scene.pre_delete()
         tokens = self.db.Token.select(lambda t: t.scene == demo_scene)
         self.assertEqual(len(tokens), 0)
         self.assertEqual(demo_scene.backing, None)

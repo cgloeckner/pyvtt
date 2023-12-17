@@ -25,7 +25,7 @@ import bottle
 import vtt.utils as utils
 from buildnumber import BuildNumber
 from vtt.cache import EngineCache
-from vtt.orm.register import db_session, createMainDatabase
+from vtt.orm.register import db_session, create_main_database
 from vtt.server import VttServer
 
 
@@ -152,7 +152,7 @@ class Engine(object):
             self.logging.info('Settings loaded')
 
         # add this server to the shards list
-        self.shards.append(self.getUrl())
+        self.shards.append(self.get_url())
         
         # show argv help
         if '--help' in argv:
@@ -183,7 +183,7 @@ class Engine(object):
         else:
             if self.hosting['domain'] == '':
                 # run via public ip
-                ip = self.getPublicIp()
+                ip = self.get_public_ip()
                 self.hosting['domain'] = ip
                 self.logging.info(f'Using Public IP {ip} as Domain')
 
@@ -201,7 +201,7 @@ class Engine(object):
 
         self.logging.info('Loading main database...')
         # create main database
-        self.main_db = createMainDatabase(self)
+        self.main_db = create_main_database(self)
         
         # setup db_session to all routes
         self.app.install(db_session)
@@ -255,7 +255,7 @@ class Engine(object):
     def run(self):
         certfile = ''
         keyfile  = ''
-        if self.hasSsl():
+        if self.has_ssl():
             # enable SSL
             ssl_dir = self.paths.get_ssl_path()
             certfile = ssl_dir / 'cacert.pem'
@@ -263,7 +263,7 @@ class Engine(object):
             assert(os.path.exists(certfile))
             assert(os.path.exists(keyfile))
         
-        ssl_args = {'certfile': certfile, 'keyfile': keyfile} if self.hasSsl() else {}
+        ssl_args = {'certfile': certfile, 'keyfile': keyfile} if self.has_ssl() else {}
         
         if self.notify_api is not None:
             self.notify_api.on_start()
@@ -280,7 +280,7 @@ class Engine(object):
             **ssl_args
         )
         
-    def getDomain(self):
+    def get_domain(self):
         if self.localhost:
             # because of forced localhost mode
             return 'localhost'
@@ -288,25 +288,25 @@ class Engine(object):
             # use domain (might be replaced by public ip)
             return self.hosting['domain']
         
-    def getPort(self):
+    def get_port(self):
         return self.hosting['port']
    
-    def getUrl(self):
-        suffix = 's' if self.hasReverseProxy() or self.hasSsl() else ''
-        port   = '' if self.hasReverseProxy() else f':{self.getPort()}'
-        return f'http{suffix}://{self.getDomain()}{port}'
+    def get_url(self):
+        suffix = 's' if self.has_reverse_proxy() or self.has_ssl() else ''
+        port   = '' if self.has_reverse_proxy() else f':{self.get_port()}'
+        return f'http{suffix}://{self.get_domain()}{port}'
 
-    def getWebsocketUrl(self):
-        protocol = 'wss' if self.hasReverseProxy() or self.hasSsl() else 'ws'
-        port     = '' if self.hasReverseProxy() else f':{self.getPort()}'
-        return f'{protocol}://{self.getDomain()}{port}/vtt/websocket'
+    def get_websocket_url(self):
+        protocol = 'wss' if self.has_reverse_proxy() or self.has_ssl() else 'ws'
+        port     = '' if self.has_reverse_proxy() else f':{self.get_port()}'
+        return f'{protocol}://{self.get_domain()}{port}/vtt/websocket'
 
-    def getAuthCallbackUrl(self):
-        protocol = 'https' if self.hasReverseProxy() or self.hasSsl() else 'http'
-        port     = '' if self.hasReverseProxy() else f':{self.getPort()}'
-        return f'{protocol}://{self.getDomain()}{port}/vtt/callback'
+    def get_auth_callback_url(self):
+        protocol = 'https' if self.has_reverse_proxy() or self.has_ssl() else 'http'
+        port     = '' if self.has_reverse_proxy() else f':{self.get_port()}'
+        return f'{protocol}://{self.get_domain()}{port}/vtt/callback'
 
-    def getBuildSha(self):
+    def get_build_sha(self):
         if self.debug_hash is not None:
             return self.debug_hash
 
@@ -316,26 +316,26 @@ class Engine(object):
         
         return v
 
-    def hasReverseProxy(self):
+    def has_reverse_proxy(self):
         return self.hosting['reverse']
 
-    def hasSsl(self):
+    def has_ssl(self):
         return self.hosting['ssl']
 
-    def verifyUrlSection(self, s):
+    def verify_url_section(self, s):
         return bool(re.match(self.url_regex, s))
         
-    def getClientIp(self, request):
+    def get_client_ip(self, request):
         # use different header if through unix socket or reverse proxy
-        if self.hosting['socket'] != '' or self.hasReverseProxy():
+        if self.hosting['socket'] != '' or self.has_reverse_proxy():
             return request.environ.get('HTTP_X_FORWARDED_FOR')
         else:
             return request.environ.get('REMOTE_ADDR')
 
-    def getClientAgent(self, request):
+    def get_client_agent(self, request):
         return request.environ.get('HTTP_USER_AGENT')
         
-    def getCountryFromIp(self, ip, timeout=3):
+    def get_country_from_ip(self, ip, timeout=3):
         result = '?' # fallback case
         try:
             html = requests.get('http://ip-api.com/json/{0}'.format(ip), timeout=timeout)
@@ -346,14 +346,14 @@ class Engine(object):
             self.logging.warning('Cannot query location of IP {0}'.format(ip))
         return result
         
-    def getPublicIp(self):
+    def get_public_ip(self):
         try:
             return requests.get('https://api.ipify.org').text
         except requests.exceptions.ReadTimeout as e:
             self.logging.warning('Cannot query server\'s ip')
             return 'localhost'
 
-    def parseLoginLog(self):
+    def parse_login_log(self):
 
         class LoginRecord(object):
             def __init__(self, timeid, country, ip, agent):
@@ -374,7 +374,7 @@ class Engine(object):
 
     
     @staticmethod
-    def getMd5(handle):
+    def get_md5(handle):
         hash_md5 = hashlib.md5()
         offset = handle.tell()
         for chunk in iter(lambda: handle.read(4096), b""):
@@ -383,7 +383,7 @@ class Engine(object):
         handle.seek(offset)
         return hash_md5.hexdigest()
         
-    def getSize(self, file_upload):
+    def get_size(self, file_upload):
         """ Determine size of a file upload.
         """
         offset = file_upload.file.tell()
@@ -391,10 +391,10 @@ class Engine(object):
         file_upload.file.seek(offset)
         return size
         
-    def getSupportedDice(self):
+    def get_supported_dice(self):
         return [2, 4, 6, 8, 10, 12, 20, 100]
         
-    def cleanupAll(self):
+    def cleanup_all(self):
         """ Deletes all export games' zip files, unused images and
         outdated dice roll results from all games.
         Inactive games or even GMs are deleted
@@ -413,9 +413,9 @@ class Engine(object):
                 gm_cache = self.cache.get(gm)
 
                 # check if GM expired
-                if gm.hasExpired(now): 
+                if gm.has_expired(now):
                     # remove expired GM
-                    num_bytes += gm.preDelete()
+                    num_bytes += gm.pre_delete()
                     gms.append(gm.url)
                     gm.delete()
                     continue
@@ -438,7 +438,7 @@ class Engine(object):
 
         return gms, games, num_zips, num_bytes, num_rolls, num_tokens, num_md5s
 
-    def saveToDict(self):
+    def save_to_dict(self):
         """ Export all GMs and their games (including scenes and tokens)
         to a single dict. Images and music are NOT included.
         This method's purpose is to allow database schema migration:
@@ -453,16 +453,16 @@ class Engine(object):
         
         # dump each GM's games
         for gm in gms:         
-            gm_cache = self.cache.getFromUrl(gm['url'])
+            gm_cache = self.cache.get_from_url(gm['url'])
             gm['games'] = dict()
             with db_session:
                 for game in gm_cache.db.Game.select():
                     # fetch all(!) data
-                    gm['games'][game.url] = game.toDict()
+                    gm['games'][game.url] = game.to_dict()
 
         return gms
 
-    def loadFromDict(self, gms):
+    def load_from_dict(self, gms):
         """ Import all GMs and their games (including scenes and tokens)
         from a single dict. Images and music are NOT included.
         This method's purpose is to allow database schema migration.
@@ -474,18 +474,18 @@ class Engine(object):
                 gm = self.main_db.GM(name=gm_data['name'], url=gm_data['url'],
                                      identity=gm_data['identity'], sid=gm_data['sid'],
                                      metadata=gm_data['metadata'])
-                gm.postSetup() # NOTE: timeid is overwritten here
+                gm.post_setup() # NOTE: timeid is overwritten here
                 self.cache.insert(gm)
 
         # create Games
         for gm_data in gms:
-            gm_cache = self.cache.getFromUrl(gm_data['url'])
+            gm_cache = self.cache.get_from_url(gm_data['url'])
             gm_cache.connect_db()
             with db_session:
                 for url in gm_data['games']:
                     game = gm_cache.db.Game(url=url, gm_url=gm_data['url'])
-                    game.postSetup()
+                    game.post_setup()
                     gm_cache.db.commit()
-                    game.fromDict(gm_data['games'][url])
+                    game.from_dict(gm_data['games'][url])
                     gm_cache.db.commit()
                     

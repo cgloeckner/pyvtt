@@ -19,7 +19,7 @@ def register(engine):
     @get('/vtt/thumbnail/<gmurl>/<url>/<scene_id:int>')
     def get_scene_thumbnail(gmurl, url, scene_id):
         # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
+        gm_cache = engine.cache.get_from_url(gmurl)
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
@@ -41,7 +41,7 @@ def register(engine):
     @get('/vtt/thumbnail/<gmurl>/<url>')
     def get_game_thumbnail(gmurl, url):
         # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
+        gm_cache = engine.cache.get_from_url(gmurl)
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)

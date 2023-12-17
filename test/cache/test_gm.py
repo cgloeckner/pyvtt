@@ -20,19 +20,19 @@ class GmCacheTest(EngineBaseTest):
         
         with db_session:
             gm = self.engine.main_db.GM(name='user123', url='foo', identity='user123', sid='123456')
-            gm.postSetup()
+            gm.post_setup()
             self.cache = self.engine.cache.get(gm)
         
         # create GM database
-        self.db = orm.createGmDatabase(engine=self.engine, filename=':memory:')
+        self.db = orm.create_gm_database(engine=self.engine, filename=':memory:')
         
     def test_insert(self):
         # @NOTE: first insertion was trigged by postSetup()
         with db_session:
             game1 = self.db.Game(url='bar', gm_url='foo')
             game2 = self.db.Game(url='lol', gm_url='foo')
-            game1.postSetup()
-            game2.postSetup()
+            game1.post_setup()
+            game2.post_setup()
         
         # force 2nd insertion
         with self.assertRaises(KeyError) as e:
@@ -43,8 +43,8 @@ class GmCacheTest(EngineBaseTest):
         with db_session:
             game1 = self.db.Game(url='bar', gm_url='foo')
             game2 = self.db.Game(url='lol', gm_url='foo')
-            game1.postSetup()
-            game2.postSetup()
+            game1.post_setup()
+            game2.post_setup()
         
         # different games have different cache instances
         game1_cache = self.cache.get(game1)
@@ -55,24 +55,24 @@ class GmCacheTest(EngineBaseTest):
         with db_session:
             game1 = self.db.Game(url='bar', gm_url='foo')
             game2 = self.db.Game(url='lol', gm_url='foo')
-            game1.postSetup()
-            game2.postSetup()
+            game1.post_setup()
+            game2.post_setup()
         
         # different games have different cache instances
-        game1_cache = self.cache.getFromUrl(game1.url)
-        game2_cache = self.cache.getFromUrl(game2.url)
+        game1_cache = self.cache.get_from_url(game1.url)
+        game2_cache = self.cache.get_from_url(game2.url)
         self.assertNotEqual(game1_cache, game2_cache)
         
         # not failing but returns None for unknown game
-        unknown_cache = self.cache.getFromUrl('some-random-bullshit')
+        unknown_cache = self.cache.get_from_url('some-random-bullshit')
         self.assertIsNone(unknown_cache)
         
     def test_remove(self):
         with db_session:
             game1 = self.db.Game(url='bar', gm_url='foo')
             game2 = self.db.Game(url='lol', gm_url='foo')
-            game1.postSetup()
-            game2.postSetup()
+            game1.post_setup()
+            game2.post_setup()
         
         self.cache.remove(game1)
         

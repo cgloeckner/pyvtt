@@ -38,7 +38,7 @@ def register(engine):
 
         # query server location (if possible)
         ip = host.split('://')[1].split(':')[0]
-        country = engine.getCountryFromIp(ip)
+        country = engine.get_country_from_ip(ip)
         if country not in ['?', 'unknown']:
             data['flag'] = flag.flag(country)
 
@@ -57,5 +57,5 @@ def register(engine):
         if len(engine.shards) == 0:
             abort(404)
 
-        return dict(engine=engine, own=engine.getUrl())
+        return dict(engine=engine, own=engine.get_url())
 

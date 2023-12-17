@@ -19,7 +19,7 @@ class BaseLoginApi(abc.ABC):
     def __init__(self, api: str, engine: any, **data):
         self.api = api
         self.engine = engine
-        self.callback = f'{engine.getAuthCallbackUrl()}/{api}'  # https://example.com/my/callback/path/api_name
+        self.callback = f'{engine.get_auth_callback_url()}/{api}'  # https://example.com/my/callback/path/api_name
         self.client_id = data['client_id']  # ID of API key
         self.client_secret = data['client_secret']  # Secret of API key
         self.icon_url = data['icon']

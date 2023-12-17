@@ -25,7 +25,7 @@ class Auth0Api(BaseLoginApi):
         self.logout_endpoint = f'https://{data["domain"]}/v2/logout'
         self.token_endpoint  = f'https://{data["domain"]}/oauth/token'
 
-        self.logout_callback = engine.getUrl()
+        self.logout_callback = engine.get_url()
 
         # if engine.debug:
         #    # accept non-https for testing oauth (e.g. localhost)

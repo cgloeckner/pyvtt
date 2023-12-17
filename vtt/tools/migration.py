@@ -39,7 +39,7 @@ if __name__ == '__main__':
         print('{0} migration export started.'.format(engine.title))
 
         # export data to dict
-        data = engine.saveToDict()
+        data = engine.save_to_dict()
 
         # write data to json
         p = engine.paths.root / 'export.json'
@@ -67,7 +67,7 @@ if __name__ == '__main__':
             data = json.loads(h.read())
 
         # import data from dict
-        engine.loadFromDict(data)
+        engine.load_from_dict(data)
         
         print('Import finished.')
 

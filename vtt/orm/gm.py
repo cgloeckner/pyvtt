@@ -13,12 +13,33 @@ import os
 import shutil
 import time
 import uuid
+import typing
 
+import bottle
 from gevent import lock
 from pony.orm import *
 
 
-def register(engine, db):
+CleanupReport = tuple[list[str], int, int, int, int]
+
+
+class BaseGm(typing.Protocol):
+    def make_lock(self) -> None: ...
+    def post_setup(self) -> None: ...
+    def has_expired(self, now: int) -> bool: ...
+    @staticmethod
+    def cleanup(gm_db: Database, now: int) -> CleanupReport: ...
+    def pre_delete(self) -> int: ...
+    def refresh_session(self, response: bottle.Response) -> None: ...
+    @staticmethod
+    def load_from_session(request: bottle.Request) -> 'BaseGm': ...
+    @staticmethod
+    def generate_session() -> str: ...
+    @staticmethod
+    def generate_uuid() -> str: ...
+
+
+def register(engine: any, db: Database):
 
     class GM(db.Entity):
         id = PrimaryKey(int, auto=True)
@@ -29,13 +50,13 @@ def register(engine, db):
         metadata = Optional(str)
         timeid = Optional(float)  # used for cleanup
 
-        def makeLock(self):
+        def make_lock(self) -> None:
             engine.locks[self.url] = lock.RLock()
 
-        def postSetup(self):
+        def post_setup(self) -> None:
             self.timeid = int(time.time())
 
-            self.makeLock()
+            self.make_lock()
 
             root_path = engine.paths.get_gms_path(self.url)
 
@@ -46,11 +67,12 @@ def register(engine, db):
             # add to engine's GM cache
             engine.cache.insert(self)
 
-        def hasExpired(self, now):
+        def has_expired(self, now: int) -> bool:
             delta = now - self.timeid
             return self.timeid > 0 and delta > engine.cleanup['expire']
 
-        def cleanup(self, gm_db, now):
+        @staticmethod
+        def cleanup(gm_db: Database, now: int) -> CleanupReport:
             """ Cleanup GM's games' outdated rolls, unused images or
             event remove expired games (see engine.cleanup['expire']).
             """
@@ -61,9 +83,9 @@ def register(engine, db):
             num_md5s = 0
 
             for g in gm_db.Game.select():
-                if g.hasExpired(now):
+                if g.has_expired(now):
                     # remove this game
-                    num_bytes += g.preDelete()
+                    num_bytes += g.pre_delete()
                     games.append(f'{g.gm_url}/{g.url}')
                     g.delete()
                     continue
@@ -77,7 +99,7 @@ def register(engine, db):
 
             return games, num_bytes, num_rolls, num_tokens, num_md5s
 
-        def preDelete(self):
+        def pre_delete(self) -> int:
             """ Remove this GM from disk to allow removing him from
             the main database.
             """
@@ -95,24 +117,24 @@ def register(engine, db):
 
             return num_bytes
 
-        def refreshSession(self, response):
+        def refresh_session(self, response: bottle.Response) -> None:
             """ Refresh session id. """
             now = time.time()
             self.timeid = now
             response.set_cookie('session', self.sid, path='/', expires=now + engine.cleanup['expire'])
 
         @staticmethod
-        def loadFromSession(request):
+        def load_from_session(request: bottle.Request) -> 'GM':
             """ Fetch GM from session id and ip address. """
             sid = request.get_cookie('session')
-            return db.GM.select(lambda g: g.sid == sid).first()
+            return GM.select(lambda g: g.sid == sid).first()
 
         @staticmethod
-        def genSession():
+        def generate_session() -> str:
             return uuid.uuid4().hex
 
         @staticmethod
-        def genUUID():
+        def generate_uuid() -> str:
             u = uuid.uuid4()
             return base64.urlsafe_b64encode(u.bytes).decode("utf-8").strip('=')
 

@@ -16,12 +16,12 @@ def register(engine):
     @post('/vtt/hashtest/<gmurl>/<url>')
     def post_image_hashtest(gmurl, url):
         # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
+        gm_cache = engine.cache.get_from_url(gmurl)
         if gm_cache is None:
             abort(404)
 
         # loda game from cache
-        game_cache = gm_cache.getFromUrl(url)
+        game_cache = gm_cache.get_from_url(url)
         if game_cache is None:
             abort(404)
 
@@ -34,10 +34,10 @@ def register(engine):
         known_urls = list()
         for md5 in request.forms.getall('hashs[]'):
             if md5 is not None:
-                imgid = game.getIdByMd5(md5)
+                imgid = game.get_id_by_md5(md5)
 
                 if imgid is not None:
-                    url = game.getImageUrl(imgid)
+                    url = game.get_image_url(imgid)
                     known_urls.append(url)
 
         return {'urls': known_urls}
@@ -45,11 +45,11 @@ def register(engine):
 
     @post('/vtt/upload-background/<gmurl>/<url>')
     def post_set_background(gmurl, url):
-        gm = engine.main_db.GM.loadFromSession(request)
+        gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             engine.logging.warning(
                 'GM url="{0}" tried set the background at the game {1} by {2} but is not the GM'.format(gmurl, url,
-                                                                                                        engine.getClientIp(
+                                                                                                        engine.get_client_ip(
                                                                                                             request)))
             abort(404)
 
@@ -58,7 +58,7 @@ def register(engine):
         if gm_cache is None:
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but he was not inside the cache'.format(
-                    gm.name, gm.url, url, engine.getClientIp(request)))
+                    gm.name, gm.url, url, engine.get_client_ip(request)))
             abort(404)
 
         # load game from GM's database
@@ -66,7 +66,7 @@ def register(engine):
         if game is None:
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but game was not found'.format(
-                    gm.name, gm.url, url, engine.getClientIp(request)))
+                    gm.name, gm.url, url, engine.get_client_ip(request)))
             abort(404)
 
         # load scene
@@ -84,7 +84,7 @@ def register(engine):
         if len(files) != 1:
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but did not provide a single image'.format(
-                    gm.name, gm.url, url, engine.getClientIp(request)))
+                    gm.name, gm.url, url, engine.get_client_ip(request)))
             abort(403)  # Forbidden
 
         # check mime type
@@ -93,16 +93,16 @@ def register(engine):
         if content != 'image':
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but used an unsupported type'.format(
-                    gm.name, gm.url, url, engine.getClientIp(request)))
+                    gm.name, gm.url, url, engine.get_client_ip(request)))
             abort(403)  # Forbidden
 
         # check file size
         max_filesize = engine.file_limit['background']
-        size = engine.getSize(handle)
+        size = engine.get_size(handle)
         if size > max_filesize * 1024 * 1024:
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried set the background at the game {2} by {3} but file was too large'.format(
-                    gm.name, gm.url, url, engine.getClientIp(request)))
+                    gm.name, gm.url, url, engine.get_client_ip(request)))
             abort(403)  # Forbidden
 
         # upload image
@@ -113,7 +113,7 @@ def register(engine):
     @post('/vtt/query-scenes/<url>')
     @view('game/scenes')
     def post_create_scene(url):
-        gm = engine.main_db.GM.loadFromSession(request)
+        gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             abort(404)
 
@@ -122,7 +122,7 @@ def register(engine):
         if gm_cache is None:
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried create a scene at game {2} by {3} but he was not inside the cache'.format(
-                    gm.name, gm.url, url, engine.getClientIp(request)))
+                    gm.name, gm.url, url, engine.get_client_ip(request)))
             abort(404)
 
         # load game from GM's database
@@ -131,7 +131,7 @@ def register(engine):
             engine.logging.warning(
                 'GM name="{0}" url="{1}" tried create a scene at game {2} by {3} but game was not found'.format(gm.name,
                                                                                                                 gm.url, url,
-                                                                                                                engine.getClientIp(
+                                                                                                                engine.get_client_ip(
                                                                                                                     request)))
             abort(404)
 

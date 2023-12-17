@@ -26,7 +26,7 @@ class CleanupThread(object):
     def cleanup(self):
         # cleanup and measure time
         start = time.time()
-        gms, games, num_zips, num_bytes, num_rolls, num_tokens, num_md5s = self.engine.cleanupAll()
+        gms, games, num_zips, num_bytes, num_rolls, num_tokens, num_md5s = self.engine.cleanup_all()
         delta = time.time() - start
         
         results = {

@@ -30,10 +30,10 @@ class GameTest(EngineBaseTest):
         # finish GM data
         with db_session:
             gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm.postSetup()
+            gm.post_setup()
         
         # create GM database
-        self.db = orm.createGmDatabase(engine=self.engine, filename=':memory:')
+        self.db = orm.create_gm_database(engine=self.engine, filename=':memory:')
         
     def tearDown(self):
         del self.db
@@ -41,49 +41,49 @@ class GameTest(EngineBaseTest):
     @db_session
     def test_mayExpireSoon(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()  
+        game.post_setup()
         now = int(time.time())
 
         # will expire soon
         game.timeid = int(now - self.engine.cleanup['expire'] * 0.75)
-        self.assertTrue(game.mayExpireSoon(now))
+        self.assertTrue(game.may_expire_soon(now))
 
         # will not expire soon
         game.timeid = int(now - self.engine.cleanup['expire'] * 0.3)
-        self.assertFalse(game.mayExpireSoon(now))
+        self.assertFalse(game.may_expire_soon(now))
         
         # even HAS expired
         game.timeid = int(now - self.engine.cleanup['expire'] * 1.2)
-        self.assertTrue(game.mayExpireSoon(now))
+        self.assertTrue(game.may_expire_soon(now))
         
     @db_session
     def test_hasExpired(self):
         game = self.db.Game(url='foo', gm_url='url456') 
-        game.postSetup()   
+        game.post_setup()
         now = int(time.time())
 
         # has not expired yet
         game.timeid = int(now - self.engine.cleanup['expire'] * 0.75)
-        self.assertFalse(game.hasExpired(now))
+        self.assertFalse(game.has_expired(now))
 
         # has expired
         game.timeid = int(now - self.engine.cleanup['expire'] * 1.2)
-        self.assertTrue(game.hasExpired(now))
+        self.assertTrue(game.has_expired(now))
         
     @db_session
     def test_getUrl(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        url  = game.getUrl()
+        url  = game.get_url()
         self.assertEqual(url, 'url456/foo')
         
     @db_session
     def test_makeMd5s(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
 
         # create empty files (to mimic uploaded images)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
 
@@ -94,11 +94,11 @@ class GameTest(EngineBaseTest):
             self.assertEqual(len(data), 0)
         
         # assume empty cache
-        cache_instance = self.engine.checksums[game.getUrl()]
+        cache_instance = self.engine.checksums[game.get_url()]
         self.assertEqual(len(cache_instance), 0)
         
         # create md5s
-        game.makeMd5s()
+        game.make_md5s()
 
         # expect md5 file with single hash
         self.assertTrue(os.path.exists(md5_path))
@@ -107,21 +107,21 @@ class GameTest(EngineBaseTest):
             self.assertEqual(len(data), 1)
 
         # create more files
-        id2 = game.getNextId()
+        id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
         with open(p2, 'w') as h: # write different content because of hashing
             h.write('2')
-        id3 = game.getNextId()
+        id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
         with open(p3, 'w') as h: # write different content because of hashing
             h.write('3')
-        id4 = game.getNextId()
+        id4 = game.get_next_id()
         p4 = img_path / '{0}.png'.format(id4)
         with open(p4, 'w') as h: # write different content because of hashing
             h.write('4')
 
         # update md5s
-        game.makeMd5s()
+        game.make_md5s()
 
         # expect md5 file with multiple hashs
         self.assertTrue(os.path.exists(md5_path))
@@ -130,7 +130,7 @@ class GameTest(EngineBaseTest):
             self.assertEqual(len(data), 4)
         
         # test image IDs in cache
-        cache_instance = self.engine.checksums[game.getUrl()]
+        cache_instance = self.engine.checksums[game.get_url()]
         self.assertEqual(len(cache_instance), 4)
         ids = set()
         for md5 in cache_instance:
@@ -140,88 +140,88 @@ class GameTest(EngineBaseTest):
 
         # delete file
         os.remove(p3)
-        game.makeMd5s()        
-        cache_instance = self.engine.checksums[game.getUrl()]
+        game.make_md5s()
+        cache_instance = self.engine.checksums[game.get_url()]
         self.assertEqual(len(cache_instance), 3)
 
     @db_session
     def test_getIdByMd5(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create empty files (to mimic uploaded images)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         with open(p1, 'w') as h: # write different content because of hashing
             h.write('FOO')
-        id2 = game.getNextId()
+        id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
         with open(p2, 'w') as h: # write different content because of hashing
             h.write('A')
-        id3 = game.getNextId()
+        id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
         with open(p3, 'w') as h: # write different content because of hashing
             h.write('AAAA')
-        id4 = game.getNextId()
+        id4 = game.get_next_id()
         p4 = img_path / '{0}.png'.format(id4)
         with open(p4, 'w') as h: # write different content because of hashing
             h.write('ABAAB')
         
         # assume empty cache
-        cache_instance = self.engine.checksums[game.getUrl()]
+        cache_instance = self.engine.checksums[game.get_url()]
         self.assertEqual(len(cache_instance), 0)
         
-        game.makeMd5s()
+        game.make_md5s()
 
         # query 3rd image via checksum
         with open(p3, 'rb') as h:
-            md5 = self.engine.getMd5(h)
-        queried_id = game.getIdByMd5(md5)
+            md5 = self.engine.get_md5(h)
+        queried_id = game.get_id_by_md5(md5)
         self.assertEqual(queried_id, id3)
 
         # query non-existing image  
-        queried_id = game.getIdByMd5('foobar')
+        queried_id = game.get_id_by_md5('foobar')
         self.assertIsNone(queried_id)
 
     @db_session
     def test_removeMd5(self):  
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create empty files (to mimic uploaded images)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         with open(p1, 'w') as h: # write different content because of hashing
             h.write('FOO')
-        id2 = game.getNextId()
+        id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
         with open(p2, 'w') as h: # write different content because of hashing
             h.write('A')
-        id3 = game.getNextId()
+        id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
         with open(p3, 'w') as h: # write different content because of hashing
             h.write('AAAA')
-        id4 = game.getNextId()
+        id4 = game.get_next_id()
         p4 = img_path / '{0}.png'.format(id4)
         with open(p4, 'w') as h: # write different content because of hashing
             h.write('ABAAB')
         
         # assume empty cache
-        cache_instance = self.engine.checksums[game.getUrl()]
+        cache_instance = self.engine.checksums[game.get_url()]
         self.assertEqual(len(cache_instance), 0)
 
         # create checksums
-        game.makeMd5s()
+        game.make_md5s()
         with open(p3, "rb") as handle:
-            md5_3 = self.engine.getMd5(handle)
-        queried_id = game.getIdByMd5(md5_3)
+            md5_3 = self.engine.get_md5(handle)
+        queried_id = game.get_id_by_md5(md5_3)
         self.assertEqual(queried_id, id3)
 
         # remove md5
-        game.removeMd5(id3)
-        queried_id = game.getIdByMd5(md5_3)
+        game.remove_md5(id3)
+        queried_id = game.get_id_by_md5(md5_3)
         self.assertIsNone(queried_id)
     
     @db_session
@@ -236,7 +236,7 @@ class GameTest(EngineBaseTest):
         
         # test game setup
         self.assertFalse(os.path.isdir(game_path))
-        game.postSetup()
+        game.post_setup()
         self.assertTrue(os.path.isdir(game_path))
 
         # test scene ordering
@@ -255,7 +255,7 @@ class GameTest(EngineBaseTest):
         # expect no order list yet
         self.assertEqual(game.order, list())
 
-        game.reorderScenes()
+        game.reorder_scenes()
         
         # expect ordered by IDs
         last_id = last_scene.id
@@ -264,20 +264,20 @@ class GameTest(EngineBaseTest):
     @db_session
     def test_getAllImages(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create empty files (to mimic uploaded images)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
-        id2 = game.getNextId()
+        id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
         p2.touch()
-        id3 = game.getNextId()
+        id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
         p3.touch()
-        id4 = game.getNextId()
+        id4 = game.get_next_id()
         p4 = img_path / '{0}.png'.format(id4)
         p4.touch()
 
@@ -286,19 +286,19 @@ class GameTest(EngineBaseTest):
         p5.touch()
         
         # test files being detected
-        files = set(game.getAllImages())
+        files = set(game.get_all_images())
         self.assertEqual(files, {'0.png', '1.png', '2.png', '3.png'})
         
     @db_session
     def test_getNextId(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # starting id
-        i = game.getNextId()
+        i = game.get_next_id()
         self.assertEqual(i, 0)
         
-        i = game.getNextId()
+        i = game.get_next_id()
         self.assertEqual(i, 0)
         
         # gaps ignored for next_id
@@ -306,51 +306,51 @@ class GameTest(EngineBaseTest):
         for i in [0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 12]:
             p = img_path / '{0}.png'.format(i)
             p.touch()
-        i = game.getNextId()
+        i = game.get_next_id()
         self.assertEqual(i, 13)
         
         # first unused id
         p = img_path / '5.png'
         p.touch()     
-        i = game.getNextId()
+        i = game.get_next_id()
         self.assertEqual(i, 13)
     
     @db_session
     def test_getImageUrl(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
-        url = game.getImageUrl(17)
+        url = game.get_image_url(17)
         self.assertEqual(url, '/asset/url456/foo/17.png')
         
     @db_session
     def test_getFileSize(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create empty files (to mimic uploaded images)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
-        id2 = game.getNextId()
+        id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
         with open(p2, 'w') as h:
             h.write('test')
-        id3 = game.getNextId()
+        id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
         with open(p3, 'w') as h:
             h.write('xy')
-        id4 = game.getNextId()
+        id4 = game.get_next_id()
         p4 = img_path / '{0}.png'.format(id4)
         with open(p4, 'w') as h:
             h.write('abc')
         
         # test file sizes
-        size1 = game.getFileSize(str(p1))
-        size2 = game.getFileSize(str(p2))
-        size3 = game.getFileSize(str(p3)) 
-        size4 = game.getFileSize(str(p4))
+        size1 = game.get_file_size(str(p1))
+        size2 = game.get_file_size(str(p2))
+        size3 = game.get_file_size(str(p3))
+        size4 = game.get_file_size(str(p4))
         self.assertEqual(size1, 0)
         self.assertEqual(size2, 4)
         self.assertEqual(size3, 2)
@@ -359,7 +359,7 @@ class GameTest(EngineBaseTest):
     @db_session
     def test_upload(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         scene = self.db.Scene(game=game)
         
@@ -372,11 +372,11 @@ class GameTest(EngineBaseTest):
                 fupload = FileUpload(rh, 'test.png', 'test.png')
                 
                 # test upload result
-                old_id = game.getNextId()
+                old_id = game.get_next_id()
                 url = game.upload(fupload)
-                new_id = game.getNextId()
+                new_id = game.get_next_id()
                 self.assertEqual(old_id + 1, new_id)
-                self.assertEqual(url, game.getImageUrl(old_id))
+                self.assertEqual(url, game.get_image_url(old_id))
                 
                 # test file exists   
                 img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
@@ -384,14 +384,14 @@ class GameTest(EngineBaseTest):
                 self.assertTrue(os.path.exists(p))
                 
                 # check md5 being stored
-                md5 = self.engine.getMd5(fupload.file)
-                checksums = self.engine.checksums[game.getUrl()]
+                md5 = self.engine.get_md5(fupload.file)
+                checksums = self.engine.checksums[game.get_url()]
                 self.assertIn(md5, checksums)
                 
                 # try to reupload file: same file used
-                old_id = game.getNextId()
+                old_id = game.get_next_id()
                 new_url = game.upload(fupload)
-                new_id = game.getNextId()
+                new_id = game.get_next_id()
                 self.assertEqual(old_id, new_id)
                 self.assertEqual(url, new_url)
         
@@ -402,7 +402,7 @@ class GameTest(EngineBaseTest):
                     with open(wh.name, 'rb') as rh2:
                         # upload 2nd file
                         fupload2 = FileUpload(rh2, 'test.png', 'test.png') 
-                        new_id = game.getNextId()
+                        new_id = game.get_next_id()
                         url2 = game.upload(fupload2)
                         
                         # test 2nd file exists   
@@ -411,8 +411,8 @@ class GameTest(EngineBaseTest):
                         self.assertTrue(os.path.exists(p2))
                         
                         # check 2nd md5 being stored
-                        md5_2 = self.engine.getMd5(fupload2.file)
-                        checksums = self.engine.checksums[game.getUrl()]
+                        md5_2 = self.engine.get_md5(fupload2.file)
+                        checksums = self.engine.checksums[game.get_url()]
                         self.assertIn(md5_2, checksums) 
                         
                         # cleanup to delete 1st file
@@ -421,16 +421,16 @@ class GameTest(EngineBaseTest):
                         self.assertEqual(r, 0)
                         self.assertEqual(t, 0)
                         self.assertEqual(m, 1)
-                        checksums = self.engine.checksums[game.getUrl()]
+                        checksums = self.engine.checksums[game.get_url()]
                         self.assertNotIn(md5, checksums)
                         self.assertFalse(os.path.exists(p))
                         self.assertIn(md5_2, checksums)
                         self.assertTrue(os.path.exists(p2))
 
                         # reupload 1st file            
-                        p1_new = img_path2 / '{0}.png'.format(game.getNextId())
+                        p1_new = img_path2 / '{0}.png'.format(game.get_next_id())
                         url = game.upload(fupload)  
-                        checksums = self.engine.checksums[game.getUrl()]
+                        checksums = self.engine.checksums[game.get_url()]
                         self.assertIn(md5, checksums)
                         self.assertTrue(os.path.exists(p1_new))
                         self.assertIn(md5_2, checksums)
@@ -444,45 +444,45 @@ class GameTest(EngineBaseTest):
                 fupload = FileUpload(rh, 'test.png', 'test.png')
                 
                 # test upload result
-                old_id = game.getNextId()
+                old_id = game.get_next_id()
                 url = game.upload(fupload)
                 self.assertIsNone(url)
         
     def test_getIdFromUrl(self):
-        self.assertEqual(self.db.Game.getIdFromUrl('/foo/bar/3.17.png'), 3)
-        self.assertEqual(self.db.Game.getIdFromUrl('/0.'), 0)
+        self.assertEqual(self.db.Game.get_id_from_url('/foo/bar/3.17.png'), 3)
+        self.assertEqual(self.db.Game.get_id_from_url('/0.'), 0)
         with self.assertRaises(ValueError):
-            self.db.Game.getIdFromUrl('/a.')
+            self.db.Game.get_id_from_url('/a.')
         
     @db_session
     def test_getAbandonedImages(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create empty files (to mimic uploaded images)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
-        id2 = game.getNextId()
+        id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
         p2.touch()
-        id3 = game.getNextId()
+        id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
         p3.touch()
-        id4 = game.getNextId()
+        id4 = game.get_next_id()
         p4 = img_path / '{0}.png'.format(id4)
         p4.touch()
         
         # assign second file to token
         demo_scene = self.db.Scene(game=game)
-        url = game.getImageUrl(id2)
+        url = game.get_image_url(id2)
         self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
         self.db.commit()
         
         # expect 1st and 3rd file to be abandoned
         # @NOTE: 2nd is assigned, 4th is the last (keeps next id consistent)
-        abandoned = game.getAbandonedImages()
+        abandoned = game.get_abandoned_images()
         self.assertIn(str(p1), abandoned)
         self.assertNotIn(str(p2), abandoned)
         self.assertIn(str(p3), abandoned)
@@ -491,24 +491,24 @@ class GameTest(EngineBaseTest):
     @db_session
     def test_getBrokenTokens(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create empty file (to mimic uploaded image)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
         
         # create tokens with and without valid image
         demo_scene = self.db.Scene(game=game)
-        url = game.getImageUrl(id1)
+        url = game.get_image_url(id1)
         fine   = self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
         broken = self.db.Token(scene=demo_scene, url='bullshit.png', posx=200, posy=150, size=20)
         static = self.db.Token(scene=demo_scene, url='/static/paths/are/fine.png', posx=200, posy=150, size=20)
         self.db.commit()
         
         # expect broken token to be identified
-        all_broken = game.getBrokenTokens()
+        all_broken = game.get_broken_tokens()
         self.assertEqual(len(all_broken), 1)
         self.assertIn(broken, all_broken)
         self.assertNotIn(fine, all_broken)
@@ -517,38 +517,38 @@ class GameTest(EngineBaseTest):
     @db_session
     def test_removeMusic(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # expect music to be deleted on cleanup
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         p3 = img_path / '3.mp3'
         p3.touch()
-        game.removeMusic()
+        game.remove_music()
         self.assertFalse(os.path.exists(p3))
     
     @db_session
     def test_cleanup(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create three empty files (to mimic uploaded images)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         with open(p1, 'w') as h: # write different content because of hashing
             h.write('FOOBAR')
-        id2 = game.getNextId()
+        id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
         with open(p2, 'w') as h: # write different content because of hashing
             h.write('AAB')
         p2.touch()   
-        id3 = game.getNextId()
+        id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
         with open(p3, 'w') as h: # write different content because of hashing
             h.write('AB234')
         p3.touch()
         
-        game.makeMd5s() 
+        game.make_md5s()
 
         for i in range(120):
             self.db.Roll(game=game, name='foo', color='red', sides=4, result=3)
@@ -557,18 +557,18 @@ class GameTest(EngineBaseTest):
 
         # expect images to be hashed
         with open(p1, 'rb') as h:
-            md5_1 = self.engine.getMd5(h)
+            md5_1 = self.engine.get_md5(h)
         with open(p2, 'rb') as h:
-            md5_2 = self.engine.getMd5(h)
+            md5_2 = self.engine.get_md5(h)
         with open(p3, 'rb') as h:
-            md5_3 = self.engine.getMd5(h)
-        self.assertEqual(game.getIdByMd5(md5_1), id1)
-        self.assertEqual(game.getIdByMd5(md5_2), id2)
-        self.assertEqual(game.getIdByMd5(md5_3), id3)
+            md5_3 = self.engine.get_md5(h)
+        self.assertEqual(game.get_id_by_md5(md5_1), id1)
+        self.assertEqual(game.get_id_by_md5(md5_2), id2)
+        self.assertEqual(game.get_id_by_md5(md5_3), id3)
         
         # assign second file to token
         demo_scene = self.db.Scene(game=game)
-        url = game.getImageUrl(id2)
+        url = game.get_image_url(id2)
         self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
         self.db.commit()
         
@@ -584,8 +584,8 @@ class GameTest(EngineBaseTest):
         self.assertFalse(os.path.exists(p1))
         self.assertTrue(os.path.exists(p2))
 
-        self.assertEqual(game.getIdByMd5(md5_1), None)
-        self.assertEqual(game.getIdByMd5(md5_2), id2)
+        self.assertEqual(game.get_id_by_md5(md5_1), None)
+        self.assertEqual(game.get_id_by_md5(md5_2), id2)
 
         # expect music to still be present
         p3 = img_path / '4.mp3'    
@@ -596,14 +596,14 @@ class GameTest(EngineBaseTest):
     @db_session
     def test_preDelete(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create an empty file (to make sure it isn't blocking removing the directory)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
-        url = game.getImageUrl(id1)
+        url = game.get_image_url(id1)
         
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
@@ -615,9 +615,9 @@ class GameTest(EngineBaseTest):
         self.db.commit()
         
         # prepare game for deletion
-        game.preDelete()
+        game.pre_delete()
         self.assertFalse(os.path.exists(img_path))
-        gm_cache = self.engine.cache.getFromUrl('url456')
+        gm_cache = self.engine.cache.get_from_url('url456')
         game_cache = gm_cache.get(game)
         self.assertEqual(game_cache, None)
         
@@ -628,10 +628,10 @@ class GameTest(EngineBaseTest):
     @db_session
     def test_toDict(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create two demo scenes with tokens
-        url = game.getImageUrl('123')
+        url = game.get_image_url('123')
         scene1 = self.db.Scene(game=game)
         self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1) # background
         for i in range(7):
@@ -645,7 +645,7 @@ class GameTest(EngineBaseTest):
         self.db.Token(scene=scene1, url='/url456/foo/token_d20.png', posx=100, posy=5, size=40)
 
         # build dict from game, scenes and tokens
-        data = game.toDict()
+        data = game.to_dict()
 
         # check all token data in each scene
         for scene in data["scenes"]:
@@ -681,14 +681,14 @@ class GameTest(EngineBaseTest):
     @db_session
     def test_toZip(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create an empty file (to make sure it isn't blocking removing the directory)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
-        url = game.getImageUrl(id1)
+        url = game.get_image_url(id1)
 
         # create dummy music
         p2 = img_path / '0.mp3'    
@@ -708,7 +708,7 @@ class GameTest(EngineBaseTest):
         self.db.Token(scene=scene1, url='/url456/foo/token_d20.png', posx=100, posy=5, size=40)
         
         # create zip file
-        fname, path = game.toZip()
+        fname, path = game.to_zip()
         zip_path    = path / fname
         
         # expect music to still be present
@@ -776,7 +776,7 @@ class GameTest(EngineBaseTest):
                 # prepare fileupload
                 fupload = FileUpload(rh, 'test.png', 'test.png')
                 
-                game = self.db.Game.fromImage(
+                game = self.db.Game.from_image(
                     gm=self.engine.main_db.GM.select(lambda g: g.url == 'url456').first(),
                     url='bar',
                     handle=fupload
@@ -801,14 +801,14 @@ class GameTest(EngineBaseTest):
     @db_session
     def test_fromDict(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create an empty file (to make sure it isn't blocking removing the directory)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
-        url = game.getImageUrl(id1)
+        url = game.get_image_url(id1)
         
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
@@ -821,13 +821,13 @@ class GameTest(EngineBaseTest):
         self.db.commit()
         
         # create dict
-        data = game.toDict()
+        data = game.to_dict()
 
         # create copy of original game by loading dict
         game2 = self.db.Game(url='bar', gm_url='url456')
-        game2.postSetup()
+        game2.post_setup()
         self.db.commit()
-        game2.fromDict(data)
+        game2.from_dict(data)
         self.db.commit()
         
         # expect proper scenes' order
@@ -874,22 +874,22 @@ class GameTest(EngineBaseTest):
             del raw['color']
         # create another copy of that game
         game3 = self.db.Game(url='bar2', gm_url='url456')
-        game3.postSetup()
+        game3.post_setup()
         self.db.commit()
-        game3.fromDict(data)
+        game3.from_dict(data)
         self.db.commit() 
         
     @db_session
     def test_fromZip(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        game.postSetup()
+        game.post_setup()
         
         # create an empty file (to make sure it isn't blocking removing the directory)
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = game.getNextId()
+        id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
         p1.touch()
-        url = game.getImageUrl(id1)
+        url = game.get_image_url(id1)
         
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
@@ -902,14 +902,14 @@ class GameTest(EngineBaseTest):
         self.db.commit()
         
         # create zip file
-        fname, path = game.toZip()
+        fname, path = game.to_zip()
         zip_path    = path / fname
         
         # create copy of original game by importing zip
         with open(zip_path, 'rb') as fp:
             fupload = FileUpload(fp, 'demo.zip', 'demo.zip')
             
-            game2 = self.db.Game.fromZip(
+            game2 = self.db.Game.from_zip(
                 gm=self.engine.main_db.GM.select(lambda g: g.url == 'url456').first(),
                 url='bar',
                 handle=fupload
@@ -955,7 +955,7 @@ class GameTest(EngineBaseTest):
         with open(zip_path, 'rb') as fp:
             fupload = FileUpload(fp, 'demo.zip', 'demo.zip')
             
-            game3 = self.db.Game.fromZip(
+            game3 = self.db.Game.from_zip(
                 gm=self.engine.main_db.GM.select(lambda g: g.url == 'url456').first(),
                 url='bar',
                 handle=fupload

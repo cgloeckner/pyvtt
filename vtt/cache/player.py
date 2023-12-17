@@ -1,7 +1,7 @@
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2022 Christian Glöckner
+Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
@@ -18,12 +18,12 @@ from bottle import request
 from gevent import lock
 
 
-class PlayerCache(object):
+class PlayerCache:
     """Holds a single player.
     """
     instance_count = 0  # instance counter for server status
 
-    def __init__(self, engine, parent, name, color, is_gm):
+    def __init__(self, engine: any, parent: any, name: str, color: str, is_gm: bool) -> None:
         PlayerCache.instance_count += 1
 
         self.engine = engine
@@ -32,16 +32,16 @@ class PlayerCache(object):
         self.color = color
         self.uuid = uuid.uuid4().hex  # used for HTML DOM id
         self.selected = list()
-        self.index = parent.getNextId()  # used for ordering players in the UI
+        self.index = parent.get_next_id()  # used for ordering players in the UI
         self.is_gm = is_gm  # whether this player is the GM or not
         self.timeid = time.time()  # NOTE: currently not used but could be useful later
 
         self.greenlet = None
 
         # fetch country flag from ip
-        self.ip = self.engine.getClientIp(request)
-        self.country = self.engine.getCountryFromIp(self.ip)
-        self.agent = self.engine.getClientAgent(request)
+        self.ip = self.engine.get_client_ip(request)
+        self.country = self.engine.get_country_from_ip(self.ip)
+        self.agent = self.engine.get_client_agent(request)
         # ? = localhost, 'unknown' = unittest
         self.flag = flag.flag(self.country) if self.country not in ['?', 'unknown'] else ''
 
@@ -53,22 +53,22 @@ class PlayerCache(object):
         self.socket = None
 
         self.dispatch_map = {
-            'PING': self.parent.onPing,
-            'ROLL': self.parent.onRoll,
-            'SELECT': self.parent.onSelect,
-            'RANGE': self.parent.onRange,
-            'ORDER': self.parent.onOrder,
-            'UPDATE': self.parent.onUpdateToken,
-            'CREATE': self.parent.onCreateToken,
-            'CLONE': self.parent.onCloneToken,
-            'DELETE': self.parent.onDeleteToken,
-            'BEACON': self.parent.onBeacon,
-            'MUSIC': self.parent.onMusic,
-            'GM-CREATE': self.parent.onCreateScene,
-            'GM-MOVE': self.parent.onMoveScene,
-            'GM-ACTIVATE': self.parent.onActivateScene,
-            'GM-CLONE': self.parent.onCloneScene,
-            'GM-DELETE': self.parent.onDeleteScene
+            'PING': self.parent.on_ping,
+            'ROLL': self.parent.on_roll,
+            'SELECT': self.parent.on_select,
+            'RANGE': self.parent.on_range,
+            'ORDER': self.parent.on_order,
+            'UPDATE': self.parent.on_update_token,
+            'CREATE': self.parent.on_create_token,
+            'CLONE': self.parent.on_clone_token,
+            'DELETE': self.parent.on_delete_token,
+            'BEACON': self.parent.on_beacon,
+            'MUSIC': self.parent.on_music,
+            'GM-CREATE': self.parent.on_create_scene,
+            'GM-MOVE': self.parent.on_move_scene,
+            'GM-ACTIVATE': self.parent.on_activate_scene,
+            'GM-CLONE': self.parent.on_clone_scene,
+            'GM-DELETE': self.parent.on_delete_scene
         }
 
     def __del__(self):
@@ -76,7 +76,7 @@ class PlayerCache(object):
 
     # --- websocket implementation ------------------------------------
 
-    def getMetaData(self):
+    def get_meta_data(self) -> dict:
         return {
             'name': self.name,
             'is_gm': self.is_gm,
@@ -84,11 +84,11 @@ class PlayerCache(object):
             'gm': self.parent.parent.url
         }
 
-    def isOnline(self):
+    def is_online(self) -> bool:
         """ Returns if socket is ok. """
         return self.socket is not None and not self.socket.closed
 
-    def read(self):
+    def read(self) -> any:
         """ Return JSON object read from socket. """
         # fetch data
         # with self.lock:# note: atm deadlocking
@@ -97,7 +97,7 @@ class PlayerCache(object):
             # parse data
             return json.loads(raw)
 
-    def write(self, data):
+    def write(self, data: any):
         """ Write JSON object to socket. """
         # dump data
         raw = json.dumps(data)
@@ -106,7 +106,7 @@ class PlayerCache(object):
         if self.socket is not None:
             self.socket.send(raw)
 
-    def fetch(self, data, key):
+    def fetch(self, data: dict, key: any) -> any:
         """ Try to fetch key from data or raise ProtocolError. """
         try:
             return data[key]
@@ -115,15 +115,15 @@ class PlayerCache(object):
             # reraise since it's unexpected
             raise
 
-    def handle_async(self):
+    def handle_async(self) -> None:
         """ Runs a greenlet to handle asyncronously. """
         self.greenlet = gevent.Greenlet(run=self.handle)
         self.greenlet.start()
 
-    def handle(self):
+    def handle(self) -> None:
         """ Thread-handle for dispatching player actions. """
         try:
-            while self.isOnline():
+            while self.is_online():
                 # query data and operation id
                 data = self.read()
 
@@ -131,8 +131,8 @@ class PlayerCache(object):
                     break
 
                 # dispatch operation
-                opid = self.fetch(data, 'OPID')
-                func = self.dispatch_map[opid]
+                op_id = self.fetch(data, 'OPID')
+                func = self.dispatch_map[op_id]
                 func(self, data)
 
         except Exception as error:

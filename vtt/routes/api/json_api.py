@@ -54,13 +54,13 @@ def register(engine):
         start = time.time()
 
         # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
+        gm_cache = engine.cache.get_from_url(gmurl)
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
 
         # query whether user is the hosting GM
-        session_gm = engine.main_db.GM.loadFromSession(request)
+        session_gm = engine.main_db.GM.load_from_session(request)
         if session_gm is None or session_gm.url != gmurl:
             abort(404)
 
@@ -79,13 +79,13 @@ def register(engine):
         start = time.time()
 
         # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
+        gm_cache = engine.cache.get_from_url(gmurl)
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
 
         # query whether user is the hosting GM
-        session_gm = engine.main_db.GM.loadFromSession(request)
+        session_gm = engine.main_db.GM.load_from_session(request)
         if session_gm is None or session_gm.url != gmurl:
             abort(404)
 
@@ -138,7 +138,7 @@ def register(engine):
         """Count users locations based on IPs within past 30d."""
         start = time.time()
 
-        logins = engine.parseLoginLog()
+        logins = engine.parse_login_log()
         locations = dict()
         platforms = dict()
         browsers = dict()

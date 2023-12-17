@@ -470,8 +470,8 @@ class VttTest(EngineBaseTest):
         ret2, player2 = self.joinPlayer('arthur', 'test-game-1', 'bob', 'red')
         ret3, player3 = self.joinPlayer('arthur', 'test-game-1', 'carlos', 'blue')
 
-        gm_cache   = self.engine.cache.getFromUrl('arthur')
-        game_cache = gm_cache.getFromUrl('test-game-1')
+        gm_cache   = self.engine.cache.get_from_url('arthur')
+        game_cache = gm_cache.get_from_url('test-game-1')
         self.assertEqual(len(game_cache.players), 3)
 
         # non-GM cannot cleanup
@@ -513,8 +513,8 @@ class VttTest(EngineBaseTest):
         ret3, player3 = self.joinPlayer('arthur', 'test-game-1', 'carlos', 'blue')
         ret3, player4 = self.joinPlayer('arthur', 'test-game-1', 'blocker', 'green')
 
-        gm_cache   = self.engine.cache.getFromUrl('arthur')
-        game_cache = gm_cache.getFromUrl('test-game-1')
+        gm_cache   = self.engine.cache.get_from_url('arthur')
+        game_cache = gm_cache.get_from_url('test-game-1')
         self.assertEqual(len(game_cache.players), 4) 
         
         # non-GM cannot kick any player
@@ -575,23 +575,23 @@ class VttTest(EngineBaseTest):
         gm_sid = self.app.cookies['session']
         self.app.reset()
 
-        gm_cache = self.engine.cache.getFromUrl('arthur')
+        gm_cache = self.engine.cache.get_from_url('arthur')
         
         # non-GM cannot delete the game
         ret = self.app.post('/vtt/delete-game/test-game-1', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
-        self.assertIsNotNone(gm_cache.getFromUrl('test-game-1'))
+        self.assertIsNotNone(gm_cache.get_from_url('test-game-1'))
         
         # GM cannot delete an unknown game
         self.app.set_cookie('session', gm_sid)
         ret = self.app.post('/vtt/delete-game/test-weird-game', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
-        self.assertIsNotNone(gm_cache.getFromUrl('test-game-1'))
+        self.assertIsNotNone(gm_cache.get_from_url('test-game-1'))
         
         # GM can delete a game
         ret = self.app.post('/vtt/delete-game/test-game-1')
         self.assertEqual(ret.status_int, 200)
-        self.assertIsNone(gm_cache.getFromUrl('test-game-1'))
+        self.assertIsNone(gm_cache.get_from_url('test-game-1'))
         
         # GM cannot delete a game twice
         ret = self.app.post('/vtt/delete-game/test-game-1', expect_errors=True)
@@ -1015,23 +1015,23 @@ class VttTest(EngineBaseTest):
         
         # First, the handles are monkey patched to add to a list instead
         log = list()
-        gm_cache   = self.engine.cache.getFromUrl('arthur')
-        game_cache = gm_cache.getFromUrl('test-game-1')
-        game_cache.onPing   = lambda p, d: log.append(('onPing', p, d))
-        game_cache.onRoll   = lambda p, d: log.append(('onRoll', p, d))
-        game_cache.onSelect = lambda p, d: log.append(('onSelect', p, d))
-        game_cache.onRange  = lambda p, d: log.append(('onRange', p, d))
-        game_cache.onOrder  = lambda p, d: log.append(('onOrder', p, d))
-        game_cache.onUpdateToken   = lambda p, d: log.append(('onUpdateToken', p, d))
-        game_cache.onCreateToken   = lambda p, d: log.append(('onCreateToken', p, d))
-        game_cache.onCloneToken    = lambda p, d: log.append(('onCloneToken', p, d))
-        game_cache.onDeleteToken   = lambda p, d: log.append(('onDeleteToken', p, d))
-        game_cache.onBeacon        = lambda p, d: log.append(('onBeacon', p, d))
-        game_cache.onMusic         = lambda p, d: log.append(('onMusic', p, d))
-        game_cache.onCreateScene   = lambda p, d: log.append(('onCreateScene', p, d))
-        game_cache.onActivateScene = lambda p, d: log.append(('onActivateScene', p, d))
-        game_cache.onCloneScene    = lambda p, d: log.append(('onCloneScene', p, d))
-        game_cache.onDeleteScene   = lambda p, d: log.append(('onDeleteScene', p, d))
+        gm_cache   = self.engine.cache.get_from_url('arthur')
+        game_cache = gm_cache.get_from_url('test-game-1')
+        game_cache.on_ping   = lambda p, d: log.append(('onPing', p, d))
+        game_cache.on_roll   = lambda p, d: log.append(('onRoll', p, d))
+        game_cache.on_select = lambda p, d: log.append(('onSelect', p, d))
+        game_cache.on_range  = lambda p, d: log.append(('onRange', p, d))
+        game_cache.on_order  = lambda p, d: log.append(('onOrder', p, d))
+        game_cache.on_update_token   = lambda p, d: log.append(('onUpdateToken', p, d))
+        game_cache.on_create_token   = lambda p, d: log.append(('onCreateToken', p, d))
+        game_cache.on_clone_token    = lambda p, d: log.append(('onCloneToken', p, d))
+        game_cache.on_delete_token   = lambda p, d: log.append(('onDeleteToken', p, d))
+        game_cache.on_beacon        = lambda p, d: log.append(('onBeacon', p, d))
+        game_cache.on_music         = lambda p, d: log.append(('onMusic', p, d))
+        game_cache.on_create_scene   = lambda p, d: log.append(('onCreateScene', p, d))
+        game_cache.on_activate_scene = lambda p, d: log.append(('onActivateScene', p, d))
+        game_cache.on_clone_scene    = lambda p, d: log.append(('onCloneScene', p, d))
+        game_cache.on_delete_scene   = lambda p, d: log.append(('onDeleteScene', p, d))
 
         # let player trigger actions
         ret, player_cache = self.joinPlayer('arthur', 'test-game-1', 'merlin', '#FF00FF')
@@ -1074,7 +1074,7 @@ class VttTest(EngineBaseTest):
 
         # cannot trigger operation with too few arguments 
         log.clear()
-        game_cache.onRoll = lambda p, d: log.append(('onRoll', p, d['sides']))
+        game_cache.on_roll = lambda p, d: log.append(('onRoll', p, d['sides']))
         ret, player_cache = self.joinPlayer('arthur', 'test-game-1', 'merlin', '#FF00FF')
         s = player_cache.socket
         s.block = False
@@ -1166,10 +1166,10 @@ class VttTest(EngineBaseTest):
         self.assertNotIn('3.png', images)
 
         # can upload background and tokens in new scene
-        gm_cache   = self.engine.cache.getFromUrl('arthur')
-        game_cache = gm_cache.getFromUrl('test-game-1')
+        gm_cache   = self.engine.cache.get_from_url('arthur')
+        game_cache = gm_cache.get_from_url('test-game-1')
         gm_player  = game_cache.insert('GM Arthur', 'red', True)
-        game_cache.onCreateScene(gm_player, {})
+        game_cache.on_create_scene(gm_player, {})
         ret = self.app.post('/game/arthur/test-game-1/upload',
             upload_files=[
                 ('file[]', 'test.png', img_large),
@@ -1185,10 +1185,10 @@ class VttTest(EngineBaseTest):
         self.assertEqual(id_from_url(data['urls'][2]), 2)
         
         # cannot upload huge image as background
-        gm_cache   = self.engine.cache.getFromUrl('arthur')
-        game_cache = gm_cache.getFromUrl('test-game-1')
+        gm_cache   = self.engine.cache.get_from_url('arthur')
+        game_cache = gm_cache.get_from_url('test-game-1')
         gm_player  = game_cache.insert('GM Arthur', 'red', True)
-        game_cache.onCreateScene(gm_player, {})
+        game_cache.on_create_scene(gm_player, {})
         ret = self.app.post('/game/arthur/test-game-1/upload',
             upload_files=[
                 ('file[]', 'test.png', img_huge)

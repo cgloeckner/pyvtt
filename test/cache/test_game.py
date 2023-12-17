@@ -20,14 +20,14 @@ class GameCacheTest(EngineBaseTest):
         
         with db_session:
             gm = self.engine.main_db.GM(name='user123', url='foo', identity='user123', sid='123456')
-            gm.postSetup()
+            gm.post_setup()
         
         # create GM database
-        self.db = orm.createGmDatabase(engine=self.engine, filename=':memory:')
+        self.db = orm.create_gm_database(engine=self.engine, filename=':memory:')
         
         with db_session:
             game = self.db.Game(url='bar', gm_url='foo')
-            game.postSetup()
+            game.post_setup()
             self.cache = self.engine.cache.get(gm).get(game)
         
     def tearDown(self):
@@ -37,10 +37,10 @@ class GameCacheTest(EngineBaseTest):
         super().tearDown()
         
     def test_getNextId(self):
-        self.assertEqual(self.cache.getNextId(), 0)
-        self.assertEqual(self.cache.getNextId(), 1)
-        self.assertEqual(self.cache.getNextId(), 2)
-        self.assertEqual(self.cache.getNextId(), 3)
+        self.assertEqual(self.cache.get_next_id(), 0)
+        self.assertEqual(self.cache.get_next_id(), 1)
+        self.assertEqual(self.cache.get_next_id(), 2)
+        self.assertEqual(self.cache.get_next_id(), 3)
         
     def rebuildIndices(self):
         # @NOTE: this is called on insert and remove. hence it's tested
@@ -102,7 +102,7 @@ class GameCacheTest(EngineBaseTest):
         self.cache.insert('bob', 'blue', True)
         
         # query data (in index-order)
-        data = self.cache.getData()
+        data = self.cache.get_data()
         self.assertEqual(len(data), 4)
         self.assertEqual(data[0]['name'], 'arthur')
         self.assertEqual(data[1]['name'], 'gabriel')
@@ -112,7 +112,7 @@ class GameCacheTest(EngineBaseTest):
         # remove player
         self.cache.remove('carlos')
         # re- query data (in index-order)
-        data = self.cache.getData()
+        data = self.cache.get_data()
         self.assertEqual(len(data), 3)
         self.assertEqual(data[0]['name'], 'arthur')
         self.assertEqual(data[1]['name'], 'gabriel')
@@ -131,7 +131,7 @@ class GameCacheTest(EngineBaseTest):
         self.cache.get('bob').selected = [124, 236, 12]
         
         # expect selections per player name
-        selections = self.cache.getSelections()
+        selections = self.cache.get_selections()
         for name in selections:
             self.assertEqual(selections[name], self.cache.get(name).selected)
         

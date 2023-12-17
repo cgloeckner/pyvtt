@@ -103,117 +103,117 @@ class EngineTest(EngineBaseTest):
         settings['hosting']['domain'] = 'example.com'
         self.reloadEngine(settings=settings)
         
-        domain = self.engine.getDomain()
+        domain = self.engine.get_domain()
         self.assertEqual(domain, 'example.com')
         
         # reload with --localhost
         self.reloadEngine(argv=['--localhost'], settings=settings)
-        domain = self.engine.getDomain()
+        domain = self.engine.get_domain()
         self.assertEqual(domain, 'localhost')
         
     def test_getPort(self):
-        p = self.engine.getPort()
+        p = self.engine.get_port()
         self.assertEqual(p, 8080)
         
         # reload with custom port
         settings = EngineTest.defaultSettings()
         settings['hosting']['port'] = 80
         self.reloadEngine(settings=settings)
-        p = self.engine.getPort()
+        p = self.engine.get_port()
         self.assertEqual(p, 80)
         
     def test_hasSsl(self):
-        self.assertFalse(self.engine.hasSsl())
+        self.assertFalse(self.engine.has_ssl())
         
         # reload with ssl
         settings = EngineTest.defaultSettings()
         settings['hosting']['ssl'] = True 
         self.reloadEngine(settings=settings)   
-        self.assertTrue(self.engine.hasSsl())
+        self.assertTrue(self.engine.has_ssl())
 
     def test_getUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getUrl(), 'https://vtt.example.com')
+        self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
 
         # internal SSL does not effect it
         settings['hosting']['ssl'] = False
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getUrl(), 'https://vtt.example.com')
+        self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
 
         # internal port does not effect it
         settings['hosting']['port'] = 443
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getUrl(), 'https://vtt.example.com')
+        self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
         
         # reload without reverse proxy will take effect
         settings['hosting']['reverse'] = False 
         self.reloadEngine(settings=settings)       
-        self.assertEqual(self.engine.getUrl(), 'http://vtt.example.com:443')
+        self.assertEqual(self.engine.get_url(), 'http://vtt.example.com:443')
         
     def test_getWebsocketUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/vtt/websocket')
+        self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
 
         # internal SSL does not effect it
         settings['hosting']['ssl'] = False
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/vtt/websocket')
+        self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
 
         # internal port does not effect it
         settings['hosting']['port'] = 443
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getWebsocketUrl(), 'wss://vtt.example.com/vtt/websocket')
+        self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
         
         # reload without reverse proxy will take effect
         settings['hosting']['reverse'] = False 
         self.reloadEngine(settings=settings)      
-        self.assertEqual(self.engine.getWebsocketUrl(), 'ws://vtt.example.com:443/vtt/websocket')
+        self.assertEqual(self.engine.get_websocket_url(), 'ws://vtt.example.com:443/vtt/websocket')
 
     def test_getBuildSha(self):
         self.engine.git_hash = None
         self.engine.debug_hash = None
-        v = self.engine.getBuildSha()
+        v = self.engine.get_build_sha()
         self.assertEqual(v, self.engine.version)
 
         self.engine.git_hash = 'deadbeef'
-        v = self.engine.getBuildSha()
+        v = self.engine.get_build_sha()
         self.assertEqual(v, f'{self.engine.version}-{self.engine.git_hash}')
 
         self.engine.debug_hash = 'abcdefghijklmnop'
-        v = self.engine.getBuildSha()
+        v = self.engine.get_build_sha()
         self.assertEqual(v, self.engine.debug_hash)
         
         self.engine.git_hash = None
-        v = self.engine.getBuildSha()
+        v = self.engine.get_build_sha()
         self.assertEqual(v, self.engine.debug_hash)
 
     def test_getAuthCallbackUrl(self):
         settings = EngineTest.defaultSettings()
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com/vtt/callback')
+        self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
 
         # internal SSL does not effect it
         settings['hosting']['ssl'] = False
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com/vtt/callback')
+        self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
 
         # internal port does not effect it
         settings['hosting']['port'] = 443
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getAuthCallbackUrl(), 'https://vtt.example.com/vtt/callback')
+        self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
         
         # reload without reverse proxy will take effect
         settings['hosting']['reverse'] = False 
         self.reloadEngine(settings=settings)      
-        self.assertEqual(self.engine.getAuthCallbackUrl(), 'http://vtt.example.com:443/vtt/callback')
+        self.assertEqual(self.engine.get_auth_callback_url(), 'http://vtt.example.com:443/vtt/callback')
         
     def test_verifyUrlSection(self):
-        self.assertTrue(self.engine.verifyUrlSection('foo-bar.lol_test'))
-        self.assertFalse(self.engine.verifyUrlSection('url-with-speciöl-char'))
-        self.assertFalse(self.engine.verifyUrlSection('test-with-{braces'))
-        self.assertFalse(self.engine.verifyUrlSection('url with-space'))
+        self.assertTrue(self.engine.verify_url_section('foo-bar.lol_test'))
+        self.assertFalse(self.engine.verify_url_section('url-with-speciöl-char'))
+        self.assertFalse(self.engine.verify_url_section('test-with-{braces'))
+        self.assertFalse(self.engine.verify_url_section('url with-space'))
         # idk...
         
     def test_getClientIp(self):
@@ -228,13 +228,13 @@ class EngineTest(EngineBaseTest):
                 self.environ = FakeEnviron()
         
         dummy_request = FakeRequest()
-        self.assertEqual(self.engine.getClientIp(dummy_request), '1.2.3.4')
+        self.assertEqual(self.engine.get_client_ip(dummy_request), '1.2.3.4')
         
         # reload engine with unix socket  
         settings = EngineTest.defaultSettings()
         settings['hosting']['socket'] = '/path/to/socket' 
         self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.getClientIp(dummy_request), '5.6.7.8')
+        self.assertEqual(self.engine.get_client_ip(dummy_request), '5.6.7.8')
 
     def test_getClientAgent(self):
         class FakeRequest(object):
@@ -247,7 +247,7 @@ class EngineTest(EngineBaseTest):
                 self.environ = FakeEnviron()
         
         dummy_request = FakeRequest()
-        self.assertEqual(self.engine.getClientAgent(dummy_request), 'Fake Browser')
+        self.assertEqual(self.engine.get_client_agent(dummy_request), 'Fake Browser')
         
     def test_getCountryFromIp(self):
         # only test that the external API is working
@@ -264,7 +264,7 @@ class EngineTest(EngineBaseTest):
     def test_getMd5(self):
         # NOTE: THIS file here is hashed
         with open(__file__, 'rb') as h:
-            ret = self.engine.getMd5(h)
+            ret = self.engine.get_md5(h)
             self.assertIsInstance(ret, str)
         
     def test_getSize(self):
@@ -275,11 +275,11 @@ class EngineTest(EngineBaseTest):
             # rewind for reading
             h.seek(0)
             fupload = FileUpload(h, 'demo.dat', 'demo.dat')
-            size = self.engine.getSize(fupload)
+            size = self.engine.get_size(fupload)
             self.assertEqual(size, 4953)
         
     def test_getSupportedDice(self):
-        dice = self.engine.getSupportedDice()
+        dice = self.engine.get_supported_dice()
         self.assertEqual(dice, [2, 4, 6, 8, 10, 12, 20, 100])
         
     def test_cleanup(self):
@@ -288,9 +288,9 @@ class EngineTest(EngineBaseTest):
         with db_session:
             # create GMs
             gm1 = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm1.postSetup()
+            gm1.post_setup()
             gm2 = self.engine.main_db.GM(name='nobody', url='second', identity='nobody', sid='5673')
-            gm2.postSetup()
+            gm2.post_setup()
             gm2.timeid = now - self.engine.cleanup['expire'] - 10
         
         gm1_cache = self.engine.cache.get(gm1)
@@ -301,10 +301,10 @@ class EngineTest(EngineBaseTest):
         with db_session:
             # create some games
             g1 = gm1_cache.db.Game(url='foo', gm_url='url456')
-            g1.postSetup()
+            g1.post_setup()
             g2 = gm1_cache.db.Game(url='bar', gm_url='url456')
             g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
-            g2.postSetup()
+            g2.post_setup()
             
             # create some rolls
             old = now - self.engine.latest_rolls - 10
@@ -322,14 +322,14 @@ class EngineTest(EngineBaseTest):
             self.assertEqual(len(all_rolls), 120)
             
             # export both games
-            g1.toZip()
-            g2.toZip()
+            g1.to_zip()
+            g2.to_zip()
             export_path = self.engine.paths.get_export_path()
             num_files = len(os.listdir(export_path))
             self.assertEqual(num_files, 2)
             
             # cleanup!
-            gms, games, zips, b, r, t, m = self.engine.cleanupAll()
+            gms, games, zips, b, r, t, m = self.engine.cleanup_all()
             self.assertEqual(gms, ['second']) 
             self.assertEqual(games, ['url456/bar'])
             self.assertEqual(zips, 2)
@@ -366,9 +366,9 @@ class EngineTest(EngineBaseTest):
         with db_session:
             # create GMs
             gm1 = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm1.postSetup()
+            gm1.post_setup()
             gm2 = self.engine.main_db.GM(name='nobody', url='second', identity='nobody', sid='5673')
-            gm2.postSetup()
+            gm2.post_setup()
         
         gm1_cache = self.engine.cache.get(gm1)
         gm1_cache.connect_db()
@@ -378,15 +378,15 @@ class EngineTest(EngineBaseTest):
         with db_session:
             # create some games
             g1 = gm1_cache.db.Game(url='foo', gm_url='second')
-            g1.postSetup()
+            g1.post_setup()
             g2 = gm1_cache.db.Game(url='bar', gm_url='second')
             g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
-            g2.postSetup()
+            g2.post_setup()
             g3 = gm2_cache.db.Game(url='bar', gm_url='url456')
             g3.timeid = time.time() - self.engine.cleanup['expire'] - 10
-            g3.postSetup()
+            g3.post_setup()
 
-        export = self.engine.saveToDict()
+        export = self.engine.save_to_dict()
 
         # check GM data
         self.assertEqual(len(export), 2)
@@ -420,7 +420,7 @@ class EngineTest(EngineBaseTest):
             }
         }]
 
-        self.engine.loadFromDict(data)
+        self.engine.load_from_dict(data)
 
         # check GM data
         with db_session:
@@ -433,7 +433,7 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(all_gms[0].metadata, 'additional info')
 
         # check Games Data
-        gm_cache = self.engine.cache.getFromUrl('12345')
+        gm_cache = self.engine.cache.get_from_url('12345')
         with db_session:
             all_games = list(gm_cache.db.Game.select())
         self.assertEqual(len(all_games), 1)

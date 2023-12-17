@@ -21,8 +21,8 @@ class EngineCacheTest(EngineBaseTest):
         with db_session:
             gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
             gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
-            gm1.postSetup()
-            gm2.postSetup()
+            gm1.post_setup()
+            gm2.post_setup()
         
         # 2nd insertion is fine (GmCache is replaced)
         # @NOTE: the user may delete cookies and relogin
@@ -34,8 +34,8 @@ class EngineCacheTest(EngineBaseTest):
         with db_session:
             gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
             gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
-            gm1.postSetup()
-            gm2.postSetup()
+            gm1.post_setup()
+            gm2.post_setup()
         
         # different GMs have different cache instances
         gm1_cache = cache.get(gm1)
@@ -48,16 +48,16 @@ class EngineCacheTest(EngineBaseTest):
         with db_session:
             gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
             gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
-            gm1.postSetup()
-            gm2.postSetup()
+            gm1.post_setup()
+            gm2.post_setup()
         
         # different GMs have different cache instances
-        gm1_cache = cache.getFromUrl(gm1.url)
-        gm2_cache = cache.getFromUrl(gm2.url)
+        gm1_cache = cache.get_from_url(gm1.url)
+        gm2_cache = cache.get_from_url(gm2.url)
         self.assertNotEqual(gm1_cache, gm2_cache)
         
         # not failing but returns None for unknown GM
-        unknown_cache = cache.getFromUrl('some-random-bullshit')
+        unknown_cache = cache.get_from_url('some-random-bullshit')
         self.assertIsNone(unknown_cache)
         
     def test_remove(self):  
@@ -66,8 +66,8 @@ class EngineCacheTest(EngineBaseTest):
         with db_session:
             gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
             gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
-            gm1.postSetup()
-            gm2.postSetup()
+            gm1.post_setup()
+            gm2.post_setup()
         
         cache.remove(gm1)
         
@@ -97,14 +97,14 @@ class EngineCacheTest(EngineBaseTest):
         # create GM
         with db_session:
             gm = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
-            gm.postSetup()
+            gm.post_setup()
         gm_cache = cache.get(gm)
         gm_cache.connect_db()
 
         # create Game
         with db_session:
             game = gm_cache.db.Game(url='bar', gm_url='foo')
-            game.postSetup()
+            game.post_setup()
         game_cache = gm_cache.get(game)
         self.assertEqual(len(game_cache.players), 0)
 

@@ -21,7 +21,7 @@ class GmTest(EngineBaseTest):
     def test_postSetup(self):
         # create demo GM
         gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-        gm.postSetup()
+        gm.post_setup()
         
         # test call of makeLock()
         self.assertIn(gm.url, self.engine.locks)
@@ -37,22 +37,22 @@ class GmTest(EngineBaseTest):
     @db_session
     def test_hasExpired(self):
         gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-        gm.postSetup()    
+        gm.post_setup()
         now = int(time.time())
 
         # has not expired yet
         gm.timeid = int(now - self.engine.cleanup['expire'] * 0.75)
-        self.assertFalse(gm.hasExpired(now))
+        self.assertFalse(gm.has_expired(now))
 
         # has expired
         gm.timeid = int(now - self.engine.cleanup['expire'] * 1.2)
-        self.assertTrue(gm.hasExpired(now))
+        self.assertTrue(gm.has_expired(now))
     
     def test_cleanup(self):
         with db_session:
             # create demo GM
             gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm.postSetup()
+            gm.post_setup()
         
         gm_cache = self.engine.cache.get(gm)
         gm_cache.connect_db()
@@ -60,10 +60,10 @@ class GmTest(EngineBaseTest):
         with db_session:
             # create some games
             g1 = gm_cache.db.Game(url='foo', gm_url='url456')
-            g1.postSetup()
+            g1.post_setup()
             g2 = gm_cache.db.Game(url='bar', gm_url='url456')
             g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
-            g2.postSetup()
+            g2.post_setup()
             
             # create some rolls
             now = time.time()
@@ -109,7 +109,7 @@ class GmTest(EngineBaseTest):
         with db_session:
             # create demo GM
             gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm.postSetup()
+            gm.post_setup()
         
         gm_cache = self.engine.cache.get(gm)
         gm_cache.connect_db()
@@ -117,9 +117,9 @@ class GmTest(EngineBaseTest):
         with db_session:
             # create some games
             g1 = gm_cache.db.Game(url='foo', gm_url='url456')
-            g1.postSetup()
+            g1.post_setup()
             g2 = gm_cache.db.Game(url='bar', gm_url='url456')
-            g2.postSetup()
+            g2.post_setup()
             
             # create some rolls
             now = time.time()
@@ -133,7 +133,7 @@ class GmTest(EngineBaseTest):
             self.assertEqual(len(all_rolls), 30)
         
         # prepare pre-deletion
-        gm.preDelete()
+        gm.pre_delete()
         
         # expect directory and cache instance being removed  
         p = self.engine.paths.get_gms_path(gm.url)
@@ -150,15 +150,15 @@ class GmTest(EngineBaseTest):
     def test_refreshSession(self):
         # create demo GM
         gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-        gm.postSetup()
+        gm.post_setup()
         
         # setup session
         day_ago   = time.time() - 3600 * 24
-        gm.sid    = self.engine.main_db.GM.genSession()
+        gm.sid    = self.engine.main_db.GM.generate_session()
         gm.timeid = day_ago
         
         # refresh session
-        gm.refreshSession(response)
+        gm.refresh_session(response)
         self.assertGreater(gm.timeid, day_ago)
         
         # check cookie being set
@@ -174,8 +174,8 @@ class GmTest(EngineBaseTest):
         with db_session:
             # create demo GM
             gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm.postSetup()
-            gm.sid = self.engine.main_db.GM.genSession()
+            gm.post_setup()
+            gm.sid = self.engine.main_db.GM.generate_session()
         
         # create fake-request
         class FakeRequest(object):
@@ -188,6 +188,6 @@ class GmTest(EngineBaseTest):
         
         # load GM from session
         with db_session:
-            loaded = self.engine.main_db.GM.loadFromSession(request)
+            loaded = self.engine.main_db.GM.load_from_session(request)
             self.assertEqual(loaded.id, gm.id)
         

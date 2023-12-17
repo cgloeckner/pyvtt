@@ -21,7 +21,7 @@ class PlayerCacheTest(EngineBaseTest):
         
         with db_session:
             gm = self.engine.main_db.GM(name='user123', url='foo', identity='user123', sid='123456')
-            gm.postSetup()
+            gm.post_setup()
         
         # create GM database
         gm_cache = self.engine.cache.get(gm)
@@ -29,7 +29,7 @@ class PlayerCacheTest(EngineBaseTest):
         
         with db_session:
             game = gm_cache.db.Game(url='bar', gm_url='foo')
-            game.postSetup()
+            game.post_setup()
             
             # create pretty old rolls
             kwargs = {
@@ -82,12 +82,12 @@ class PlayerCacheTest(EngineBaseTest):
 
     def get_game(self, gm='foo', game='bar'):
         """ Helper to query a game. """
-        gm_cache = self.engine.cache.getFromUrl(gm)
+        gm_cache = self.engine.cache.get_from_url(gm)
         return gm_cache.db.Game.select(lambda g: g.url == game).first()
 
     def active_scene(self, gm='foo', game='bar'):
         """ Helper to query active scene of a game. """
-        gm_cache = self.engine.cache.getFromUrl(gm) 
+        gm_cache = self.engine.cache.get_from_url(gm)
         game = self.get_game(gm, game)
         return gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
         
@@ -98,30 +98,30 @@ class PlayerCacheTest(EngineBaseTest):
     
     def purge_game(self, gm='foo', game='bar'):
         """ Helper to purge a game from all scenes. """
-        gm_cache = self.engine.cache.getFromUrl(gm)
+        gm_cache = self.engine.cache.get_from_url(gm)
         game = gm_cache.db.Game.select(lambda g: g.url == game).first()
         for s in game.scenes:
-            s.preDelete()
+            s.pre_delete()
             s.delete()
         game.order = list()
     
     def get_token(self, tid, gm='foo'):
         """ Helper to query a token from a game by its id. """  
-        gm_cache = self.engine.cache.getFromUrl(gm)
+        gm_cache = self.engine.cache.get_from_url(gm)
         return gm_cache.db.Token.select(lambda t: t.id == tid).first()
         
     def test_getMetaData(self):  
-        game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
+        game_cache = self.engine.cache.get_from_url('foo').get_from_url('bar')
         player_cache   = game_cache.insert('arthur', 'red', False)
         gmplayer_cache = game_cache.insert('bob', 'blue', True)
         
-        meta1 = player_cache.getMetaData()
+        meta1 = player_cache.get_meta_data()
         self.assertEqual(meta1['name'], 'arthur')
         self.assertFalse(meta1['is_gm'])
         self.assertEqual(meta1['game'], 'bar')
         self.assertEqual(meta1['gm'], 'foo')
         
-        meta2 = gmplayer_cache.getMetaData()
+        meta2 = gmplayer_cache.get_meta_data()
         self.assertEqual(meta2['name'], 'bob')
         self.assertTrue(meta2['is_gm'])
         self.assertEqual(meta2['game'], 'bar')
@@ -132,7 +132,7 @@ class PlayerCacheTest(EngineBaseTest):
         new_socket = SocketDummy()
         
         # insert players
-        game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
+        game_cache = self.engine.cache.get_from_url('foo').get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = old_socket
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -187,7 +187,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket2 = SocketDummy()
         
         # insert players
-        game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
+        game_cache = self.engine.cache.get_from_url('foo').get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -208,7 +208,7 @@ class PlayerCacheTest(EngineBaseTest):
         
     def test_disconnect(self):
         # insert player
-        game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
+        game_cache = self.engine.cache.get_from_url('foo').get_from_url('bar')
         player_cache = game_cache.insert('arthur', 'red', False)
         player_cache.socket = SocketDummy()
         
@@ -224,7 +224,7 @@ class PlayerCacheTest(EngineBaseTest):
         
     def test_cleanup(self):
         # insert players
-        game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
+        game_cache = self.engine.cache.get_from_url('foo').get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = SocketDummy()
         player_cache2 = game_cache.insert('gabriel', 'blue', False)
@@ -237,7 +237,7 @@ class PlayerCacheTest(EngineBaseTest):
         game_cache.cleanup()
         
         # expect every player to be disconnected
-        data = game_cache.getData()
+        data = game_cache.get_data()
         self.assertEqual(len(data), 0)
         
         # ... and can re-login
@@ -248,7 +248,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket2 = SocketDummy()
         
         # insert players
-        game_cache = self.engine.cache.getFromUrl('foo').getFromUrl('bar')
+        game_cache = self.engine.cache.get_from_url('foo').get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -269,8 +269,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -285,7 +285,7 @@ class PlayerCacheTest(EngineBaseTest):
             for t in gm_cache.db.Token.select(lambda t: t.scene.id == active and t.posx >= 22):
                 t.timeid = since
         # trigger token update after player1 changed something
-        game_cache.broadcastTokenUpdate(player_cache1, since)
+        game_cache.broadcast_token_update(player_cache1, since)
         
         # expect broadcast to all sockets
         data1 = socket1.pop_send()
@@ -311,8 +311,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -323,7 +323,7 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
             # broadcast about active scene
-            game_cache.broadcastSceneSwitch(game)
+            game_cache.broadcast_scene_switch(game)
         
         # expect broadcast to all sockets
         data1 = socket1.pop_send()
@@ -342,8 +342,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -354,7 +354,7 @@ class PlayerCacheTest(EngineBaseTest):
         # fetch refresh data
         with db_session:
             game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
-            data = game_cache.fetchRefresh(game.active)
+            data = game_cache.fetch_refresh(game.active)
             
             scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
             
@@ -379,7 +379,7 @@ class PlayerCacheTest(EngineBaseTest):
             other_scene = list(game.scenes)[0]
             if other_scene == scene:
                 other_scene = list(game.scenes)[1]
-            data = game_cache.fetchRefresh(other_scene.id)
+            data = game_cache.fetch_refresh(other_scene.id)
              
             # expect complete REFRESH update
             self.assertEqual(data['OPID'], 'REFRESH')
@@ -389,13 +389,13 @@ class PlayerCacheTest(EngineBaseTest):
         socket = SocketDummy()
         
         # insert player
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache = game_cache.insert('arthur', 'red', False)
         player_cache.socket = socket
         
         # trigger ping and expect answer
-        game_cache.onPing(player_cache, {})
+        game_cache.on_ping(player_cache, {})
         answer = socket.pop_send()
         self.assertEqual(answer['OPID'], 'PING')
         
@@ -405,8 +405,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -415,9 +415,9 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache3.socket = socket3
         
         # trigger roll different dice and expect ROLLs
-        sides = self.engine.getSupportedDice()
+        sides = self.engine.get_supported_dice()
         for s in sides:
-            game_cache.onRoll(player_cache1, {'sides': s})
+            game_cache.on_roll(player_cache1, {'sides': s})
             answer1 = socket1.pop_send()
             answer2 = socket2.pop_send()
             answer3 = socket3.pop_send()
@@ -432,7 +432,7 @@ class PlayerCacheTest(EngineBaseTest):
         
         # cannot roll unsupported dice
         self.assertNotIn(7, sides)
-        game_cache.onRoll(player_cache1, {'sides': 7})
+        game_cache.on_roll(player_cache1, {'sides': 7})
         answer = socket1.pop_send()
         self.assertIsNone(answer)
         
@@ -442,8 +442,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -453,7 +453,7 @@ class PlayerCacheTest(EngineBaseTest):
         
         # trigger selection and expect SELECT broadcast
         selected = [37, 134, 623]
-        game_cache.onSelect(player_cache1, {'selected': selected})
+        game_cache.on_select(player_cache1, {'selected': selected})
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -473,7 +473,7 @@ class PlayerCacheTest(EngineBaseTest):
         
         # trigger selection reste and expect SELECT broadcast  
         selected = list()
-        game_cache.onSelect(player_cache1, {'selected': selected})
+        game_cache.on_select(player_cache1, {'selected': selected})
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -493,8 +493,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -531,7 +531,7 @@ class PlayerCacheTest(EngineBaseTest):
             'width'  : 40,
             'height' : 30
         }
-        game_cache.onRange(player_cache1, query)
+        game_cache.on_range(player_cache1, query)
          
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -562,7 +562,7 @@ class PlayerCacheTest(EngineBaseTest):
             'width'  : 3,
             'height' : 4
         }
-        game_cache.onRange(player_cache1, query) 
+        game_cache.on_range(player_cache1, query)
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -586,7 +586,7 @@ class PlayerCacheTest(EngineBaseTest):
             'width'  : 3,
             'height' : 4
         }
-        game_cache.onRange(player_cache1, query) 
+        game_cache.on_range(player_cache1, query)
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -610,7 +610,7 @@ class PlayerCacheTest(EngineBaseTest):
             'width'  : 40,
             'height' : 30
         }
-        game_cache.onRange(player_cache1, query) 
+        game_cache.on_range(player_cache1, query)
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -633,7 +633,7 @@ class PlayerCacheTest(EngineBaseTest):
                 'height' : 30
             }
             query[missing] = None
-            game_cache.onRange(player_cache1, query)
+            game_cache.on_range(player_cache1, query)
              
             answer1 = socket1.pop_send()
             answer2 = socket2.pop_send()
@@ -648,8 +648,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -658,7 +658,7 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache3.socket = socket3
         
         # moving player left triggers ORDER broadcast
-        game_cache.onOrder(player_cache2, {'name': 'bob', 'direction': -1})
+        game_cache.on_order(player_cache2, {'name': 'bob', 'direction': -1})
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -679,7 +679,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3.clearAll()
         
         # moving player right triggers ORDER broadcast
-        game_cache.onOrder(player_cache2, {'name': 'bob', 'direction': 1})
+        game_cache.on_order(player_cache2, {'name': 'bob', 'direction': 1})
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -700,7 +700,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3.clearAll()
         
         # cannot move more then one spot 
-        game_cache.onOrder(player_cache2, {'name': 'bob', 'direction': 2})
+        game_cache.on_order(player_cache2, {'name': 'bob', 'direction': 2})
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -714,7 +714,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3.clearAll()
         
         # cannot move without direction
-        game_cache.onOrder(player_cache2, {'name': 'bob', 'direction': 0})
+        game_cache.on_order(player_cache2, {'name': 'bob', 'direction': 0})
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -728,7 +728,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3.clearAll()
         
         # cannot move unknown player
-        game_cache.onOrder(player_cache2, {'name': 'roger', 'direction': 0})
+        game_cache.on_order(player_cache2, {'name': 'roger', 'direction': 0})
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -742,7 +742,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3.clearAll()
         
         # moving first player left triggers ORDER with unchanged data
-        game_cache.onOrder(player_cache2, {'name': 'arthur', 'direction': -1})  
+        game_cache.on_order(player_cache2, {'name': 'arthur', 'direction': -1})
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -758,7 +758,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3.clearAll()
         
         # moving last player right triggers ORDER with unchanged data
-        game_cache.onOrder(player_cache2, {'name': 'carlos', 'direction': 1})  
+        game_cache.on_order(player_cache2, {'name': 'carlos', 'direction': 1})
         
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -775,8 +775,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -802,7 +802,7 @@ class PlayerCacheTest(EngineBaseTest):
         
         # token can be updated without actual data causing empty 'UPDATE' broadcast
         update_data = copy.deepcopy(default_update)
-        game_cache.onUpdateToken(player_cache1, update_data)
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -820,7 +820,7 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger update for invalid token expecting empty 'UPDATE' broadcast
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['id'] = 5467357467 
-        game_cache.onUpdateToken(player_cache1, update_data) 
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -837,7 +837,7 @@ class PlayerCacheTest(EngineBaseTest):
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['posx'] = 38
         update_data['changes'][0]['posy'] = 43
-        game_cache.onUpdateToken(player_cache1, update_data)
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -856,7 +856,7 @@ class PlayerCacheTest(EngineBaseTest):
         # cannot modify token's posx only
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['posx'] = 100
-        game_cache.onUpdateToken(player_cache1, update_data)
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -875,7 +875,7 @@ class PlayerCacheTest(EngineBaseTest):
         # cannot modify token's posy only
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['posy'] = 100
-        game_cache.onUpdateToken(player_cache1, update_data)
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -894,7 +894,7 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger token's size update
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['size'] = 50
-        game_cache.onUpdateToken(player_cache1, update_data) 
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -912,7 +912,7 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger token's zorder-layering update
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['zorder'] = 13
-        game_cache.onUpdateToken(player_cache1, update_data) 
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -930,7 +930,7 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger token's rotate update
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['rotate'] = 22.25
-        game_cache.onUpdateToken(player_cache1, update_data) 
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -948,7 +948,7 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger token's flip-x update
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['flipx'] = True
-        game_cache.onUpdateToken(player_cache1, update_data) 
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -966,7 +966,7 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger token's flip-x redo update
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['flipx'] = False
-        game_cache.onUpdateToken(player_cache1, update_data) 
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -984,7 +984,7 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger token's locking update
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['locked'] = True
-        game_cache.onUpdateToken(player_cache1, update_data) 
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1002,7 +1002,7 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger token's unlocking update
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['locked'] = False
-        game_cache.onUpdateToken(player_cache1, update_data) 
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1016,7 +1016,7 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger token's label set, but color is set automatically
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['text'] = 'foobar'
-        game_cache.onUpdateToken(player_cache1, update_data) 
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1035,7 +1035,7 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger token's label reset
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0]['text'] = ''
-        game_cache.onUpdateToken(player_cache1, update_data) 
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1054,7 +1054,7 @@ class PlayerCacheTest(EngineBaseTest):
         update_data = copy.deepcopy(default_update)
         update_data['changes'][0] = {'id': 2, 'posx': 2, 'posy': 3}
         update_data['changes'].append({'id': 1, 'posx': 10, 'posy': 9})
-        game_cache.onUpdateToken(player_cache1, update_data)
+        game_cache.on_update_token(player_cache1, update_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1079,8 +1079,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -1104,7 +1104,7 @@ class PlayerCacheTest(EngineBaseTest):
             self.purge_scene(self.active_scene())
         create_data = copy.deepcopy(default_data) 
         create_data['urls'] = ['/foo/bar.png', '/some/test.png', '/unit/test.png']
-        game_cache.onCreateToken(player_cache1, create_data)
+        game_cache.on_create_token(player_cache1, create_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1153,7 +1153,7 @@ class PlayerCacheTest(EngineBaseTest):
         create_data = copy.deepcopy(default_data)
         create_data['urls'] = ['/static/token_d4.png']
         create_data['labels'] = ['#3']
-        game_cache.onCreateToken(player_cache1, create_data)
+        game_cache.on_create_token(player_cache1, create_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1168,7 +1168,7 @@ class PlayerCacheTest(EngineBaseTest):
         create_data = copy.deepcopy(default_data)
         create_data['size'] = '-1' 
         create_data['urls'] = ['/foo/bar.png']
-        game_cache.onCreateToken(player_cache1, create_data)
+        game_cache.on_create_token(player_cache1, create_data)
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1191,8 +1191,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -1209,7 +1209,7 @@ class PlayerCacheTest(EngineBaseTest):
             t3 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
             t4 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
         ids = [t1.id, t3.id]
-        game_cache.onDeleteToken(player_cache1, {'tokens': ids})
+        game_cache.on_delete_token(player_cache1, {'tokens': ids})
         # expect DELETE broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1229,7 +1229,7 @@ class PlayerCacheTest(EngineBaseTest):
             self.assertIn(t4.id, remain)
 
         # cannot delete already deleted token 
-        game_cache.onDeleteToken(player_cache1, {'tokens': [t3.id]}) 
+        game_cache.on_delete_token(player_cache1, {'tokens': [t3.id]})
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1238,7 +1238,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertIsNone(answer1)
         
         # cannot delete unknown token
-        game_cache.onDeleteToken(player_cache1, {'tokens': [67546345]}) 
+        game_cache.on_delete_token(player_cache1, {'tokens': [67546345]})
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()
@@ -1256,7 +1256,7 @@ class PlayerCacheTest(EngineBaseTest):
             t3.locked = True
             t4 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
         ids = [t1.id, t3.id, t4.id]
-        game_cache.onDeleteToken(player_cache1, {'tokens': ids})
+        game_cache.on_delete_token(player_cache1, {'tokens': ids})
         # expect DELETE broadcast for 2 of 3 tokens
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1279,8 +1279,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -1289,7 +1289,7 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache3.socket = socket3
 
         beacon_data = {'OPID': 'BEACON', 'x': 5, 'y': 10}
-        game_cache.onBeacon(player_cache1, beacon_data)
+        game_cache.on_beacon(player_cache1, beacon_data)
         # expect BEACON broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1304,7 +1304,7 @@ class PlayerCacheTest(EngineBaseTest):
 
         # check that specific player's color and uuid are used
         beacon_data = {'OPID': 'BEACON', 'x': 5, 'y': 10}
-        game_cache.onBeacon(player_cache3, beacon_data)
+        game_cache.on_beacon(player_cache3, beacon_data)
         # expect BEACON broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1323,8 +1323,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -1335,7 +1335,7 @@ class PlayerCacheTest(EngineBaseTest):
         beacon_data = {'OPID': 'MUSIC', 'action': 'add', 'slot_id': [0, 2, 3, 4]}          
         expected = [None] * self.engine.file_limit['num_music']
         self.assertEqual(game_cache.playback, expected)
-        game_cache.onMusic(player_cache3, beacon_data)
+        game_cache.on_music(player_cache3, beacon_data)
         # expect MUSIC add-slots broadcast              
         for i in beacon_data['slot_id']:
             expected[i] = False
@@ -1350,7 +1350,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['slot_id'], [0, 2, 3, 4])
         
         beacon_data = {'OPID': 'MUSIC', 'action': 'remove', 'slot_id': 3}
-        game_cache.onMusic(player_cache3, beacon_data)
+        game_cache.on_music(player_cache3, beacon_data)
         # expect MUSIC remove-slots broadcast
         expected[3] = None
         self.assertEqual(game_cache.playback, expected)
@@ -1364,7 +1364,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['slot_id'], 3)
         
         beacon_data = {'OPID': 'MUSIC', 'action': 'play', 'slot_id': 2}
-        game_cache.onMusic(player_cache3, beacon_data)
+        game_cache.on_music(player_cache3, beacon_data)
         # expect MUSIC play broadcast
         expected[2] = True
         self.assertEqual(game_cache.playback, expected)
@@ -1378,7 +1378,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['slot_id'], 2)
         
         beacon_data = {'OPID': 'MUSIC', 'action': 'play', 'slot_id': 4}
-        game_cache.onMusic(player_cache3, beacon_data)
+        game_cache.on_music(player_cache3, beacon_data)
         # expect MUSIC play broadcast
         expected[4] = True
         self.assertEqual(game_cache.playback, expected)
@@ -1392,7 +1392,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['slot_id'], 4)
         
         beacon_data = {'OPID': 'MUSIC', 'action': 'pause', 'slot_id': 2}
-        game_cache.onMusic(player_cache3, beacon_data)
+        game_cache.on_music(player_cache3, beacon_data)
         # expect MUSIC pause broadcast
         expected[2] = False
         self.assertEqual(game_cache.playback, expected)
@@ -1410,8 +1410,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', False)
@@ -1432,7 +1432,7 @@ class PlayerCacheTest(EngineBaseTest):
             'posx': 100,
             'posy': 80
         }
-        game_cache.onCloneToken(player_cache1, data)
+        game_cache.on_clone_token(player_cache1, data)
         # expect CREATE broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1467,7 +1467,7 @@ class PlayerCacheTest(EngineBaseTest):
             'posx': 100,
             'posy': 80
         }
-        game_cache.onCloneToken(player_cache1, data) 
+        game_cache.on_clone_token(player_cache1, data)
         # expect CREATE broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1501,7 +1501,7 @@ class PlayerCacheTest(EngineBaseTest):
             'posx': 100,
             'posy': 80
         }
-        game_cache.onCloneToken(player_cache1, data) 
+        game_cache.on_clone_token(player_cache1, data)
         # expect CREATE broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1524,7 +1524,7 @@ class PlayerCacheTest(EngineBaseTest):
                 'posx': pos[0],
                 'posy': pos[1]
             }
-            game_cache.onCloneToken(player_cache1, data)           
+            game_cache.on_clone_token(player_cache1, data)
             # expect CREATE broadcast
             answer1 = socket1.pop_send()
             answer2 = socket2.pop_send()
@@ -1548,8 +1548,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', True)
@@ -1560,7 +1560,7 @@ class PlayerCacheTest(EngineBaseTest):
         # GM can create a scene
         with db_session:
             last_scene = self.active_scene()
-        game_cache.onCreateScene(player_cache2, {})
+        game_cache.on_create_scene(player_cache2, {})
         # expect REFRESH broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1580,7 +1580,7 @@ class PlayerCacheTest(EngineBaseTest):
             self.assertEqual(game.order, expect)
         
         # GM can create another scene at the end
-        game_cache.onCreateScene(player_cache2, {}) 
+        game_cache.on_create_scene(player_cache2, {})
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()               
@@ -1593,7 +1593,7 @@ class PlayerCacheTest(EngineBaseTest):
             self.assertEqual(game.order, expect)
 
         # GM can create yet another scene at the end
-        game_cache.onCreateScene(player_cache2, {})
+        game_cache.on_create_scene(player_cache2, {})
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
         answer3 = socket3.pop_send()                
@@ -1607,7 +1607,7 @@ class PlayerCacheTest(EngineBaseTest):
 
         # non-GM cannot create a scene
         last_scene = new_scene    
-        game_cache.onCreateScene(player_cache1, {})
+        game_cache.on_create_scene(player_cache1, {})
         # expect no broadcast   
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1626,8 +1626,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', True)
@@ -1637,10 +1637,10 @@ class PlayerCacheTest(EngineBaseTest):
 
         with db_session:
             self.purge_game()
-        game_cache.onCreateScene(player_cache2, {})
-        game_cache.onCreateScene(player_cache2, {})
-        game_cache.onCreateScene(player_cache2, {})
-        game_cache.onCreateScene(player_cache2, {})
+        game_cache.on_create_scene(player_cache2, {})
+        game_cache.on_create_scene(player_cache2, {})
+        game_cache.on_create_scene(player_cache2, {})
+        game_cache.on_create_scene(player_cache2, {})
         socket1.clearAll()
         socket2.clearAll()
         socket3.clearAll()
@@ -1658,51 +1658,51 @@ class PlayerCacheTest(EngineBaseTest):
 
         with db_session:
             game = self.get_game()
-            game.reorderScenes()
+            game.reorder_scenes()
         self.assertEqual(game.order, [s1, s2, s3, s4]) # explicit order
         
         # GM can move a scene left
-        game_cache.onMoveScene(player_cache2, {'scene': s3, 'step': -1})
+        game_cache.on_move_scene(player_cache2, {'scene': s3, 'step': -1})
         with db_session:
             game = self.get_game()
         self.assertEqual(game.order, [s1, s3, s2, s4])
 
         # GM can move last scene left
-        game_cache.onMoveScene(player_cache2, {'scene': s4, 'step': -1})  
+        game_cache.on_move_scene(player_cache2, {'scene': s4, 'step': -1})
         with db_session:
             game = self.get_game()
         self.assertEqual(game.order, [s1, s3, s4, s2])
 
         # GM can move a scene right
-        game_cache.onMoveScene(player_cache2, {'scene': s3, 'step': 1})  
+        game_cache.on_move_scene(player_cache2, {'scene': s3, 'step': 1})
         with db_session:
             game = self.get_game()
         self.assertEqual(game.order, [s1, s4, s3, s2])
         
         # GM can move first scene right
-        game_cache.onMoveScene(player_cache2, {'scene': s1, 'step': 1})  
+        game_cache.on_move_scene(player_cache2, {'scene': s1, 'step': 1})
         with db_session:
             game = self.get_game()
         self.assertEqual(game.order, [s4, s1, s3, s2])
         
         # GM cannot move first scene too far left
-        game_cache.onMoveScene(player_cache2, {'scene': s4, 'step': -1}) 
+        game_cache.on_move_scene(player_cache2, {'scene': s4, 'step': -1})
         with db_session:
             game = self.get_game()
         self.assertEqual(game.order, [s4, s1, s3, s2])
         
         # GM cannot move last scene too far right
-        game_cache.onMoveScene(player_cache2, {'scene': s2, 'step': 1})  
+        game_cache.on_move_scene(player_cache2, {'scene': s2, 'step': 1})
         with db_session:
             game = self.get_game()
         self.assertEqual(game.order, [s4, s1, s3, s2])
 
         # a non-GM cannot move any scene
-        game_cache.onMoveScene(player_cache3, {'scene': s3, 'step': -1}) 
+        game_cache.on_move_scene(player_cache3, {'scene': s3, 'step': -1})
         with db_session:
             game = self.get_game()
         self.assertEqual(game.order, [s4, s1, s3, s2])
-        game_cache.onMoveScene(player_cache3, {'scene': s3, 'step': 1})  
+        game_cache.on_move_scene(player_cache3, {'scene': s3, 'step': 1})
         with db_session:
             game = self.get_game()
         self.assertEqual(game.order, [s4, s1, s3, s2])
@@ -1713,8 +1713,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', True)
@@ -1724,8 +1724,8 @@ class PlayerCacheTest(EngineBaseTest):
 
         with db_session:
             self.purge_game()
-        game_cache.onCreateScene(player_cache2, {})
-        game_cache.onCreateScene(player_cache2, {})
+        game_cache.on_create_scene(player_cache2, {})
+        game_cache.on_create_scene(player_cache2, {})
         socket1.clearAll()
         socket2.clearAll()
         socket3.clearAll()
@@ -1738,7 +1738,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(all_scene_ids[1], active.id)
         
         # GM can activate a scene
-        game_cache.onActivateScene(player_cache2, {'scene': all_scene_ids[0]})
+        game_cache.on_activate_scene(player_cache2, {'scene': all_scene_ids[0]})
         # expect REFRESH broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1753,7 +1753,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(all_scene_ids[0], active.id)
 
         # non-GM cannot switch scene   
-        game_cache.onActivateScene(player_cache1, {'scene': all_scene_ids[1]}) 
+        game_cache.on_activate_scene(player_cache1, {'scene': all_scene_ids[1]})
         # expect no broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1767,7 +1767,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(all_scene_ids[0], active.id)
 
         # cannot switch to unknown scene   
-        game_cache.onActivateScene(player_cache2, {'scene': 57375367}) 
+        game_cache.on_activate_scene(player_cache2, {'scene': 57375367})
         # expect no broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1786,8 +1786,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', True)
@@ -1798,8 +1798,8 @@ class PlayerCacheTest(EngineBaseTest):
         def reset():
             with db_session:
                 self.purge_game()
-            game_cache.onCreateScene(player_cache2, {})
-            game_cache.onCreateScene(player_cache2, {})
+            game_cache.on_create_scene(player_cache2, {})
+            game_cache.on_create_scene(player_cache2, {})
             socket1.clearAll()
             socket2.clearAll()
             socket3.clearAll()
@@ -1821,7 +1821,7 @@ class PlayerCacheTest(EngineBaseTest):
         all_scene_ids, active = reset()
             
         # GM can clone a scene
-        game_cache.onCloneScene(player_cache2, {'scene': all_scene_ids[1]}) 
+        game_cache.on_clone_scene(player_cache2, {'scene': all_scene_ids[1]})
         # expect REFRESH broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1857,7 +1857,7 @@ class PlayerCacheTest(EngineBaseTest):
         
         # non-GM cannot clone a scene
         last_active = active
-        game_cache.onCloneScene(player_cache1, {'scene': all_scene_ids[1]}) 
+        game_cache.on_clone_scene(player_cache1, {'scene': all_scene_ids[1]})
         # expect no broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1874,7 +1874,7 @@ class PlayerCacheTest(EngineBaseTest):
         all_scene_ids, last_active = reset()
         
         # clone an unknown scene scene
-        game_cache.onCloneScene(player_cache1, {'scene': 234656456}) 
+        game_cache.on_clone_scene(player_cache1, {'scene': 234656456})
         # expect no broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1893,8 +1893,8 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.getFromUrl('foo')
-        game_cache = gm_cache.getFromUrl('bar')
+        gm_cache   = self.engine.cache.get_from_url('foo')
+        game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
         player_cache2 = game_cache.insert('bob', 'yellow', True)
@@ -1905,10 +1905,10 @@ class PlayerCacheTest(EngineBaseTest):
         def reset():
             with db_session:
                 self.purge_game()
-            game_cache.onCreateScene(player_cache2, {})
-            game_cache.onCreateScene(player_cache2, {})
-            game_cache.onCreateScene(player_cache2, {})
-            game_cache.onCreateScene(player_cache2, {})
+            game_cache.on_create_scene(player_cache2, {})
+            game_cache.on_create_scene(player_cache2, {})
+            game_cache.on_create_scene(player_cache2, {})
+            game_cache.on_create_scene(player_cache2, {})
             socket1.clearAll()
             socket2.clearAll()
             socket3.clearAll()
@@ -1931,7 +1931,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(game.order, [3, 4, 5, 6])
         
         # GM can delete an inactive scene
-        game_cache.onDeleteScene(player_cache2, {'scene': all_scene_ids[1]}) 
+        game_cache.on_delete_scene(player_cache2, {'scene': all_scene_ids[1]})
         # expect no broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1961,7 +1961,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(game.order, [7, 8, 9, 10])
 
         # GM can delete an active scene
-        game_cache.onDeleteScene(player_cache2, {'scene': active.id})
+        game_cache.on_delete_scene(player_cache2, {'scene': active.id})
         # expect REFRESH broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -1984,7 +1984,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertNotEqual(active.id, now_active.id)
             
         # non-GM cannot delete a scene  
-        game_cache.onDeleteScene(player_cache1, {'scene': all_scene_ids[0]}) 
+        game_cache.on_delete_scene(player_cache1, {'scene': all_scene_ids[0]})
         # expect no broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()
@@ -2002,7 +2002,7 @@ class PlayerCacheTest(EngineBaseTest):
         # reset to only one scene
         with db_session:
             self.purge_game()
-        game_cache.onCreateScene(player_cache2, {})
+        game_cache.on_create_scene(player_cache2, {})
         socket1.clearAll()
         socket2.clearAll()
         socket3.clearAll()
@@ -2013,7 +2013,7 @@ class PlayerCacheTest(EngineBaseTest):
             self.assertEqual(game.order, [active.id])
         
         # GM can delete the last remaining scene
-        game_cache.onDeleteScene(player_cache2, {'scene': active.id})
+        game_cache.on_delete_scene(player_cache2, {'scene': active.id})
         last_active = active.id
         # refetch game
         with db_session:

@@ -44,7 +44,7 @@ def register(engine):
     @get('/asset/<gmurl>/<url>/<fname>')
     def game_asset(gmurl, url, fname):
         # load GM from cache
-        gm_cache = engine.cache.getFromUrl(gmurl)
+        gm_cache = engine.cache.get_from_url(gmurl)
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)

@@ -14,9 +14,17 @@ import shutil
 import tempfile
 import time
 import zipfile
+import pathlib
+import typing
 
+import bottle
 from PIL import Image, UnidentifiedImageError
 from pony.orm import *
+
+from .gm import BaseGm
+
+
+CleanupReport = tuple[int, int, int, int]
 
 
 def register(engine, db):
@@ -31,20 +39,20 @@ def register(engine, db):
         gm_url = Required(str)  # used for internal things
         order = Optional(IntArray)  # scene ordering by their ids
 
-        def hasExpired(self, now, scale=1.0):
+        def has_expired(self, now: int, scale: float = 1.0) -> bool:
             delta = now - self.timeid
             return self.timeid > 0 and delta > engine.cleanup['expire'] * scale
 
-        def mayExpireSoon(self, now):
-            return self.hasExpired(now, scale=0.5)
+        def may_expire_soon(self, now: int) -> bool:
+            return self.has_expired(now, scale=0.5)
 
-        def getUrl(self):
-            return '{0}/{1}'.format(self.gm_url, self.url)
+        def get_url(self) -> str:
+            return f'{self.gm_url}/{self.url}'
 
-        def makeMd5s(self):
+        def make_md5s(self) -> int:
             md5_path = engine.paths.get_md5_path(self.gm_url, self.url)
             root = engine.paths.get_game_path(self.gm_url, self.url)
-            all_images = self.getAllImages()
+            all_images = self.get_all_images()
 
             # load md5 hashes from json-file
             data = dict()
@@ -52,26 +60,26 @@ def register(engine, db):
                 with open(md5_path, 'r') as handle:
                     data = json.load(handle)
 
-            # check if image exists for all md5s
+            # check if image exists for all md5 hashes
             for md5 in data.copy():
-                fname = '{0}.png'.format(data[md5])
-                if not os.path.exists(root / fname):
+                filename = '{0}.png'.format(data[md5])
+                if not os.path.exists(root / filename):
                     del data[md5]
 
             # check for images without md5
             missing = list()
-            for fname in all_images:
-                fname_id = int(fname.split('.')[0])
-                if fname_id not in data.values():
-                    missing.append(fname)
+            for filename in all_images:
+                filename_id = int(filename.split('.')[0])
+                if filename_id not in data.values():
+                    missing.append(filename)
 
-            # create missing md5s
-            for fname in missing:
+            # create missing md5 hashes
+            for filename in missing:
                 # create md5 of file (assumed to be images)
-                with open(root / fname, "rb") as handle:
-                    md5 = engine.getMd5(handle)
-                    data[md5] = int(fname.split('.')[0])
-            engine.checksums[self.getUrl()] = data
+                with open(root / filename, "rb") as handle:
+                    md5 = engine.get_md5(handle)
+                    data[md5] = int(filename.split('.')[0])
+            engine.checksums[self.get_url()] = data
 
             # save md5 hashes to json-file
             with open(md5_path, 'w') as handle:
@@ -79,20 +87,19 @@ def register(engine, db):
 
             return len(missing)
 
-        def getIdByMd5(self, md5):
-            return engine.checksums[self.getUrl()].get(md5, None)
+        def get_id_by_md5(self, md5: str) -> int | None:
+            return engine.checksums[self.get_url()].get(md5, None)
 
-        def removeMd5(self, img_id):
-            cache = engine.checksums[self.getUrl()]
+        def remove_md5(self, img_id: int):
+            cache = engine.checksums[self.get_url()]
             # linear search for image hash
             for k, v in cache.items():
                 if v == img_id:
                     del cache[k]
                     return
 
-        def postSetup(self):
-            """ Adds the game's directory and prepare the md5 cache.
-            """
+        def post_setup(self):
+            """ Adds the game's directory and prepare the md5 cache."""
             img_path = engine.paths.get_game_path(self.gm_url, self.url)
 
             with engine.locks[self.gm_url]:  # make IO access safe
@@ -100,104 +107,105 @@ def register(engine, db):
                     os.mkdir(img_path)
 
             # add to the engine's cache
-            gm_cache = engine.cache.getFromUrl(self.gm_url)
+            gm_cache = engine.cache.get_from_url(self.gm_url)
             gm_cache.insert(self)
 
             # NOTE that order == None if database was freshly migrated
             # since order is optional, but should be provided
             self.order = list()
 
-            self.makeMd5s()
+            self.make_md5s()
 
-        def reorderScenes(self):
+        def reorder_scenes(self):
             """ Reorder scenes based on their IDs. """
             self.order = [s.id for s in self.scenes]
             self.order.sort()
 
-        def getAllImages(self):
+        def get_all_images(self) -> list[str]:
             """Note: needs to be called from a threadsafe context."""
             root = engine.paths.get_game_path(self.gm_url, self.url)
             return [f for f in os.listdir(root) if f.endswith('.png')]
 
-        def getNextId(self):
+        def get_next_id(self) -> int:
             """Note: needs to be called from a threadsafe context."""
             max_id = 0
-            fnames = self.getAllImages()
-            split = lambda s: int(s.split('.png')[0])
-            if len(fnames) > 0:
-                last_png = max(fnames, key=split)
+            filenames = self.get_all_images()
+
+            def split(s: str) -> int:
+                return int(s.split('.png')[0])
+
+            if len(filenames) > 0:
+                last_png = max(filenames, key=split)
                 max_id = split(last_png) + 1
             return max_id
 
-        def getImageUrl(self, image_id):
-            return '/asset/{0}/{1}/{2}.png'.format(self.gm_url, self.url, image_id)
+        def get_image_url(self, image_id: int) -> str:
+            return f'/asset/{self.gm_url}/{self.url}/{image_id}.png'
 
-        def getFileSize(self, url):
+        def get_file_size(self, url: str) -> int:
             game_root = engine.paths.get_game_path(self.gm_url, self.url)
-            img_fname = url.split('/')[-1]
-            local_path = os.path.join(game_root, img_fname)
+            img_filename = url.split('/')[-1]
+            local_path = os.path.join(game_root, img_filename)
             return os.path.getsize(local_path)
 
-        def upload(self, handle):
-            """Save the given image via file handle and return the url to the image.
-            """
+        def upload(self, handle: bottle.FileUpload) -> str | None:
+            """Save the given image via file handle and return the url to the image."""
             suffix = '.{0}'.format(handle.filename.split(".")[-1])
-            with tempfile.NamedTemporaryFile(suffix=suffix) as tmpfile:
-                # save image to tempfile
-                handle.save(tmpfile.name, overwrite=True)
+            with tempfile.NamedTemporaryFile(suffix=suffix) as tmp_file:
+                # save image to temporary file
+                handle.save(tmp_file.name, overwrite=True)
 
                 # check file format
                 try:
-                    Image.open(tmpfile.name)
+                    Image.open(tmp_file.name)
                 except UnidentifiedImageError:
                     # unsupported file format
                     return None
 
                 # create md5 checksum for duplication test
-                new_md5 = engine.getMd5(tmpfile.file)
+                new_md5 = engine.get_md5(tmp_file.file)
 
                 game_root = engine.paths.get_game_path(self.gm_url, self.url)
-                image_id = self.getNextId()
-                local_path = game_root / '{0}.png'.format(image_id)
+                image_id = self.get_next_id()
+                local_path = game_root / f'{image_id}.png'
                 with engine.locks[self.gm_url]:  # make IO access safe
-                    if new_md5 not in engine.checksums[self.getUrl()]:
+                    if new_md5 not in engine.checksums[self.get_url()]:
                         # copy image to target
-                        shutil.copyfile(tmpfile.name, local_path)
+                        shutil.copyfile(tmp_file.name, local_path)
 
                         # store pair: checksum => image_id
-                        engine.checksums[self.getUrl()][new_md5] = image_id
+                        engine.checksums[self.get_url()][new_md5] = image_id
 
                 # fetch remote path (query image_id via by checksum)
-                remote_path = self.getImageUrl(engine.checksums[self.getUrl()][new_md5])
+                remote_path = self.get_image_url(engine.checksums[self.get_url()][new_md5])
 
                 # assure image file exists
                 img_id = int(remote_path.split('/')[-1].split('.png')[0])
-                local_path = game_root / '{0}.png'.format(img_id)
+                local_path = game_root / f'{img_id}.png'
                 with engine.locks[self.gm_url]:  # make IO access safe
                     if not os.path.exists(local_path):
                         # copy image to target
-                        shutil.copyfile(tmpfile.name, local_path)
+                        shutil.copyfile(tmp_file.name, local_path)
 
                         engine.logging.warning('Image got re-uploaded to fix a cache error')
                         if engine.notify_api is not None:
                             engine.notify_api(remote_path,
-                                              'Image got re-uploaded to fix a cache error:\n {0}'.format(remote_path))
+                                              f'Image got re-uploaded to fix a cache error:\n {remote_path}')
 
                 return remote_path
 
         @staticmethod
-        def getIdFromUrl(url):
+        def get_id_from_url(url: str) -> id:
             return int(url.split('/')[-1].split('.')[0])
 
-        def getAbandonedImages(self):
+        def get_abandoned_images(self) -> list[str]:
             # check all existing images
             game_root = engine.paths.get_game_path(self.gm_url, self.url)
-            all_images = list()
             with engine.locks[self.gm_url]:  # make IO access safe
-                all_images = self.getAllImages()
+                all_images = self.get_all_images()
 
             abandoned = list()
-            last_id = self.getNextId() - 1
+            last_id = self.get_next_id() - 1
             for image_id in all_images:
                 this_id = int(image_id.split('.')[0])
                 if this_id == last_id:
@@ -205,20 +213,19 @@ def register(engine, db):
                     # unexpected browser cache behavior
                     continue
                 # create url (ignore png-extension due to os.listdir)
-                url = self.getImageUrl(this_id)
+                url = self.get_image_url(this_id)
                 # check for any tokens
-                t = db.Token.select(lambda t: t.url == url).first()
-                if t is None:
+                token = db.Token.select(lambda t: t.url == url).first()
+                if token is None:
                     # found abandoned image
                     abandoned.append(os.path.join(game_root, image_id))
 
             return abandoned
 
-        def getBrokenTokens(self):
+        def get_broken_tokens(self) -> list[db.Entity]:
             # query all images
-            all_images = list()
             with engine.locks[self.gm_url]:  # make IO access safe
-                all_images = self.getAllImages()
+                all_images = self.get_all_images()
 
             # query all tokens without valid image
             broken = list()
@@ -230,7 +237,7 @@ def register(engine, db):
                         broken.append(t)
             return broken
 
-        def removeMusic(self):
+        def remove_music(self):
             """ Remove music. """
             root = engine.paths.get_game_path(self.gm_url, self.url)
             with engine.locks[self.gm_url]:  # make IO access safe
@@ -239,20 +246,18 @@ def register(engine, db):
                     if os.path.exists(fname):
                         os.remove(fname)
 
-        def cleanup(self, now):
+        def cleanup(self, now) -> CleanupReport:
             """ Cleanup game's unused image and token data. """
             num_bytes = 0
-            num_rolls = 0
-            num_tokens = 0
 
             # query and remove all images that are not used as tokens
-            relevant = self.getAbandonedImages()
+            relevant = self.get_abandoned_images()
             with engine.locks[self.gm_url]:  # make IO access safe
-                for fname in relevant:
-                    num_bytes += os.path.getsize(fname)
-                    os.remove(fname)
+                for filename in relevant:
+                    num_bytes += os.path.getsize(filename)
+                    os.remove(filename)
                     # remove image's md5 hash from cache
-                    self.removeMd5(self.getIdFromUrl(fname))
+                    self.remove_md5(self.get_id_from_url(filename))
 
             # delete all outdated rolls
             rolls = db.Roll.select(lambda r: r.game == self and r.timeid < now - engine.latest_rolls)
@@ -260,16 +265,16 @@ def register(engine, db):
             rolls.delete()
 
             # query and remove all tokens that have no image
-            relevant = self.getBrokenTokens()
+            relevant = self.get_broken_tokens()
             num_tokens = len(relevant)
             for t in relevant:
                 t.delete()
 
-            num_md5s = self.makeMd5s()
+            num_md5s = self.make_md5s()
 
             return num_bytes, num_rolls, num_tokens, num_md5s
 
-        def preDelete(self):
+        def pre_delete(self) -> int:
             """ Remove this game from disk before removing it from
             the GM's database. """
             engine.logging.info('|--x Removing {0}'.format(self.url))
@@ -282,72 +287,67 @@ def register(engine, db):
                 shutil.rmtree(game_path)
 
             # remove game from GM's cache
-            gm_cache = engine.cache.getFromUrl(self.gm_url)
+            gm_cache = engine.cache.get_from_url(self.gm_url)
             gm_cache.remove(self)
 
             # remove all scenes
             for s in self.scenes:
-                s.preDelete()
+                s.pre_delete()
                 s.delete()
 
             return num_bytes
 
-        def toDict(self):
+        def to_dict(self) -> dict[str, list[db.Entity]]:
             # collect all tokens in this game
             tokens = list()
             id_translation = dict()  # required because the current token ids will not persist
             game_tokens = db.Token.select(
-                lambda t: t.scene is not None
-                          and t.scene.game is not None
-                          and t.scene.game == self
+                lambda t: t.scene is not None and t.scene.game is not None and t.scene.game == self
             )
-            for t in game_tokens:
-                url = t.url.split('/')[-1].split('.png')[0]
+            for token in game_tokens:
+                url = token.url.split('/')[-1].split('.png')[0]
                 if url.isdigit():
                     url = int(url)
 
                 tokens.append({
                     "url": url,
-                    "posx": t.posx,
-                    "posy": t.posy,
-                    "zorder": t.zorder,
-                    "size": t.size,
-                    "rotate": t.rotate,
-                    "flipx": t.flipx,
-                    "locked": t.locked,
-                    "text": t.text,
-                    "color": t.color
+                    "posx": token.posx,
+                    "posy": token.posy,
+                    "zorder": token.zorder,
+                    "size": token.size,
+                    "rotate": token.rotate,
+                    "flipx": token.flipx,
+                    "locked": token.locked,
+                    "text": token.text,
+                    "color": token.color
                 })
-                id_translation[t.id] = len(tokens) - 1
+                id_translation[token.id] = len(tokens) - 1
 
             # collect all scenes in this game
             scenes = list()
-            active = 0
-            for s in self.scenes.order_by(lambda s: s.id):
+            for scene in self.scenes.order_by(lambda s: s.id):
                 tkns = list()
-                for t in s.tokens:
+                for token in scene.tokens:
                     # query new id from translation dict
-                    tkns.append(id_translation[t.id])
+                    tkns.append(id_translation[token.id])
                 backing_file = None
-                if s.backing is not None:
-                    backing_file = id_translation[s.backing.id]
+                if scene.backing is not None:
+                    backing_file = id_translation[scene.backing.id]
                 scenes.append({
                     "tokens": tkns,
                     "backing": backing_file
                 })
-                if self.active == s.id:
-                    active = len(scenes) - 1
 
             return {
                 "tokens": tokens,
                 "scenes": scenes
             }
 
-        def toZip(self):
+        def to_zip(self) -> tuple[str, pathlib.Path]:
             # remove abandoned images
             self.cleanup(time.time())
 
-            data = self.toDict()
+            data = self.to_dict()
 
             # build zip file
             zip_path = engine.paths.get_export_path()
@@ -363,17 +363,17 @@ def register(engine, db):
 
                 # add images to the zip, too
                 p = engine.paths.get_game_path(self.gm_url, self.url)
-                for img in self.getAllImages():
+                for img in self.get_all_images():
                     h.write(p / img, img)
 
             return zip_file, zip_path
 
-        @staticmethod
-        def fromImage(gm, url, handle):
+        @classmethod
+        def from_image(cls, gm: BaseGm, url: str, handle: bottle.FileUpload) -> typing.Self | None:
             # create game with that image as background
             game = db.Game(url=url, gm_url=gm.url)
             try:
-                game.postSetup()
+                game.post_setup()
             except KeyError:
                 # url already in use
                 return None
@@ -397,11 +397,11 @@ def register(engine, db):
             db.commit()
 
             # setup scenes' order (for initial scene)
-            game.reorderScenes()
+            game.reorder_scenes()
 
             return game
 
-        def fromDict(self, data):
+        def from_dict(self, data: dict[str, db.Entity]) -> None:
             # create scenes
             for sid, s in enumerate(data["scenes"]):
                 scene = db.Scene(game=self)
@@ -412,14 +412,14 @@ def register(engine, db):
                     url = token_data['url']
                     if isinstance(url, int):
                         # regular token
-                        newurl = self.getImageUrl(url)
+                        new_url = self.get_image_url(url)
                     else:
                         # timer token
-                        newurl = '/static/assets/{0}.png'.format(url)
+                        new_url = '/static/assets/{0}.png'.format(url)
                     # create token
                     t = db.Token(
                         scene=scene,
-                        url=newurl,
+                        url=new_url,
                         posx=token_data['posx'],
                         posy=token_data['posy'],
                         zorder=token_data.get('zorder', 0),
@@ -440,10 +440,10 @@ def register(engine, db):
 
             db.commit()
             # setup scenes' order (for initial scene)
-            self.reorderScenes()
+            self.reorder_scenes()
 
-        @staticmethod
-        def fromZip(gm, url, handle):
+        @classmethod
+        def from_zip(cls, gm: BaseGm, url: str, handle: bottle.FileUpload) -> typing.Self | None:
             # unzip uploaded file to temp dir
             with tempfile.TemporaryDirectory() as tmp_dir:
                 zip_path = os.path.join(tmp_dir, handle.filename)
@@ -456,7 +456,6 @@ def register(engine, db):
                     return None
 
                 # create all game data
-                data = dict()
                 json_path = os.path.join(tmp_dir, 'game.json')
                 if not os.path.exists(json_path):
                     return None
@@ -470,7 +469,7 @@ def register(engine, db):
                 # create game
                 game = db.Game(url=url, gm_url=gm.url)
                 try:
-                    game.postSetup()
+                    game.post_setup()
                 except KeyError:
                     # url already in use
                     return None
@@ -478,16 +477,16 @@ def register(engine, db):
 
                 # copy images to game directory
                 img_path = engine.paths.get_game_path(gm.url, url)
-                for fname in os.listdir(tmp_dir):
-                    if fname.endswith('.png'):
-                        src_path = os.path.join(tmp_dir, fname)
-                        dst_path = img_path / fname
+                for filename in os.listdir(tmp_dir):
+                    if filename.endswith('.png'):
+                        src_path = os.path.join(tmp_dir, filename)
+                        dst_path = img_path / filename
                         shutil.copyfile(src_path, dst_path)
 
                 # create scenes
                 try:
-                    game.fromDict(data)
-                except KeyError as e:
+                    game.from_dict(data)
+                except KeyError as _:
                     # delete game
                     game.delete()
                     return None

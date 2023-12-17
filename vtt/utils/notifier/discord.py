@@ -34,7 +34,7 @@ class DiscordWebhookNotifier:
         httpx.post(self.url, json={'username': self.alias, 'content': content})
 
     def on_start(self) -> None:
-        msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.getDomain()} is now online!'
+        msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.get_domain()} is now online!'
         self.send(msg)
 
     def on_cleanup(self, report: any) -> None:

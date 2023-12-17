@@ -13,7 +13,7 @@ from pony.orm import *
 from . import token, scene, roll, game, gm
 
 
-def createGmDatabase(engine, filename):
+def create_gm_database(engine: any, filename: str) -> Database:
     """ Creates a new database for with GM entities such as Tokens, Scenes etc."""
     db = Database()
 
@@ -27,12 +27,13 @@ def createGmDatabase(engine, filename):
     return db
 
 
-def createMainDatabase(engine):
+def create_main_database(engine: any) -> Database:
     """ Creates main database for GM data."""
     db = Database()
 
     gm.register(engine, db)
 
-    db.bind('sqlite', str(engine.paths.get_main_database_path()), create_db=True)
+    main_db_path = engine.paths.get_main_database_path()
+    db.bind('sqlite', str(main_db_path), create_db=True)
     db.generate_mapping(create_tables=True)
     return db

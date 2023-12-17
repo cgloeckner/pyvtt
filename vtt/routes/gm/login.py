@@ -31,10 +31,10 @@ def _login_callback(engine, provider):
                 name=session['name'],
                 identity=session['identity'],
                 metadata=session['metadata'],
-                url=engine.main_db.GM.genUUID(),
-                sid=engine.main_db.GM.genSession(),
+                url=engine.main_db.GM.generate_uuid(),
+                sid=engine.main_db.GM.generate_session(),
             )
-            gm.postSetup()
+            gm.post_setup()
             engine.main_db.commit()
 
             # add to cache and initialize database
@@ -55,20 +55,20 @@ def _login_callback(engine, provider):
 
             engine.logging.access(
                 'GM created using external auth with name="{0}" url={1} by {2}.'.format(gm.name, gm.url,
-                                                                                        engine.getClientIp(
+                                                                                        engine.get_client_ip(
                                                                                             request)))
 
         else:
             # create new session for already existing GM
-            gm.sid = engine.main_db.GM.genSession()
+            gm.sid = engine.main_db.GM.generate_session()
             gm.name = session['name']
             gm.metadata = session['metadata']
 
-        gm.refreshSession(response)
+        gm.refresh_session(response)
 
         engine.logging.access(
             'GM name="{0}" url={1} session refreshed using external auth by {2}'.format(gm.name, gm.url,
-                                                                                        engine.getClientIp(
+                                                                                        engine.get_client_ip(
                                                                                             request)))
 
         engine.main_db.commit()
@@ -99,29 +99,29 @@ def register(engine):
 
             # test gm name (also as url)
             gmname = request.forms.gmname
-            if not engine.verifyUrlSection(gmname):
+            if not engine.verify_url_section(gmname):
                 # contains invalid characters
                 status['error'] = 'NO SPECIAL CHARS OR SPACES'
-                engine.logging.warning('Failed GM login by {0}: invalid name "{1}".'.format(engine.getClientIp(request), gmname))
+                engine.logging.warning('Failed GM login by {0}: invalid name "{1}".'.format(engine.get_client_ip(request), gmname))
                 return status
 
             name = gmname[:20].lower().strip()
             if name in engine.gm_blacklist:
                 # blacklisted name
                 status['error'] = 'RESERVED NAME'
-                engine.logging.warning('Failed GM login by {0}: reserved name "{1}".'.format(engine.getClientIp(request), gmname))
+                engine.logging.warning('Failed GM login by {0}: reserved name "{1}".'.format(engine.get_client_ip(request), gmname))
                 return status
 
             if len(engine.main_db.GM.select(lambda g: g.name == name or g.url == name)) > 0:
                 # collision
                 status['error'] = 'ALREADY IN USE'
-                engine.logging.warning('Failed GM login by {0}: name collision "{1}".'.format(engine.getClientIp(request), gmname))
+                engine.logging.warning('Failed GM login by {0}: name collision "{1}".'.format(engine.get_client_ip(request), gmname))
                 return status
 
             # create new GM (use GM name as display name and URL)
-            sid = engine.main_db.GM.genSession()
+            sid = engine.main_db.GM.generate_session()
             gm = engine.main_db.GM(name=name, identity=name, url=name, sid=sid)
-            gm.postSetup()
+            gm.post_setup()
             engine.main_db.commit()
 
             # add to cache and initialize database
@@ -141,9 +141,9 @@ def register(engine):
                 raise
 
             expires = time.time() + engine.cleanup['expire']
-            response.set_cookie('session', sid, path='/', expires=expires, secure=engine.hasSsl())
+            response.set_cookie('session', sid, path='/', expires=expires, secure=engine.has_ssl())
 
-            engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.getClientIp(request)))
+            engine.logging.access('GM created with name="{0}" url={1} by {2}.'.format(gm.name, gm.url, engine.get_client_ip(request)))
 
             engine.main_db.commit()
             status['url'] = gm.url
@@ -152,6 +152,6 @@ def register(engine):
     @get('/vtt/logout')
     def vtt_logout():
         # remove cookie
-        response.set_cookie('session', '', path='/', max_age=1, secure=engine.hasSsl())
+        response.set_cookie('session', '', path='/', max_age=1, secure=engine.has_ssl())
         # redirect default index
         redirect('/')
