@@ -151,7 +151,7 @@ class EngineCacheTest(EngineBaseTest):
         
         # @NOTE: The async handle() will terminate, because the dummy
         # socket yields None and hence mimics socket to be closed by
-        # the client .. wait for it!  
+        # the client ... wait for it!
         player_cache.greenlet.join()
         
         # expect player to be disconnected

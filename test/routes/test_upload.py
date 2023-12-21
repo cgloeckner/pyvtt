@@ -17,7 +17,7 @@ def id_from_url(s: str) -> int:
     return int(s.split('/')[-1].split('.png')[0])
 
 
-def count_mp3s(root: pathlib.Path):
+def count_mp3s(root: pathlib.Path) -> int:
     return len([f for f in os.listdir(root) if f.endswith('.mp3')])
 
 
@@ -136,7 +136,6 @@ class UploadRoutesTest(EngineBaseTest):
         self.assertEqual(id_from_url(data['urls'][2]), 3)
 
     def test_cannot_upload_backgrounds_that_are_too_large(self):
-        # cannot upload huge image as background
         gm_cache = self.engine.cache.get_from_url('arthur')
         game_cache = gm_cache.get_from_url('test-game-1')
         gm_player = game_cache.insert('GM Arthur', 'red', True)

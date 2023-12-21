@@ -37,7 +37,7 @@ class SceneTest(unittest.TestCase):
         
         # prepare scene deletion
         demo_scene.pre_delete()
-        tokens = self.db.Token.select(lambda t: t.scene == demo_scene)
+        tokens = self.db.Token.select(lambda _t: _t.scene == demo_scene)
         self.assertEqual(len(tokens), 0)
         self.assertEqual(demo_scene.backing, None)
         

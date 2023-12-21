@@ -71,7 +71,7 @@ class GameTest(EngineBaseTest):
     @db_session
     def test_getUrl(self):
         game = self.db.Game(url='foo', gm_url='url456')
-        url  = game.get_url()
+        url = game.get_url()
         self.assertEqual(url, 'url456/foo')
         
     @db_session
@@ -107,15 +107,15 @@ class GameTest(EngineBaseTest):
         # create more files
         id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
-        with open(p2, 'w') as h: # write different content because of hashing
+        with open(p2, 'w') as h:  # write different content because of hashing
             h.write('2')
         id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
-        with open(p3, 'w') as h: # write different content because of hashing
+        with open(p3, 'w') as h:  # write different content because of hashing
             h.write('3')
         id4 = game.get_next_id()
         p4 = img_path / '{0}.png'.format(id4)
-        with open(p4, 'w') as h: # write different content because of hashing
+        with open(p4, 'w') as h:  # write different content because of hashing
             h.write('4')
 
         # update md5s
@@ -134,7 +134,7 @@ class GameTest(EngineBaseTest):
         for md5 in cache_instance:
             img_id = cache_instance[md5]
             ids.add(img_id)
-        self.assertEqual(ids, {0, 1, 2, 3}) # compare sets
+        self.assertEqual(ids, {0, 1, 2, 3})  # compare sets
 
         # delete file
         os.remove(p3)
@@ -151,19 +151,19 @@ class GameTest(EngineBaseTest):
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
-        with open(p1, 'w') as h: # write different content because of hashing
+        with open(p1, 'w') as h:  # write different content because of hashing
             h.write('FOO')
         id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
-        with open(p2, 'w') as h: # write different content because of hashing
+        with open(p2, 'w') as h:  # write different content because of hashing
             h.write('A')
         id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
-        with open(p3, 'w') as h: # write different content because of hashing
+        with open(p3, 'w') as h:  # write different content because of hashing
             h.write('AAAA')
         id4 = game.get_next_id()
         p4 = img_path / '{0}.png'.format(id4)
-        with open(p4, 'w') as h: # write different content because of hashing
+        with open(p4, 'w') as h:  # write different content because of hashing
             h.write('ABAAB')
         
         # assume empty cache
@@ -191,19 +191,19 @@ class GameTest(EngineBaseTest):
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
-        with open(p1, 'w') as h: # write different content because of hashing
+        with open(p1, 'w') as h:  # write different content because of hashing
             h.write('FOO')
         id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
-        with open(p2, 'w') as h: # write different content because of hashing
+        with open(p2, 'w') as h:  # write different content because of hashing
             h.write('A')
         id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
-        with open(p3, 'w') as h: # write different content because of hashing
+        with open(p3, 'w') as h:  # write different content because of hashing
             h.write('AAAA')
         id4 = game.get_next_id()
         p4 = img_path / '{0}.png'.format(id4)
-        with open(p4, 'w') as h: # write different content because of hashing
+        with open(p4, 'w') as h:  # write different content because of hashing
             h.write('ABAAB')
         
         # assume empty cache
@@ -359,7 +359,7 @@ class GameTest(EngineBaseTest):
         game = self.db.Game(url='foo', gm_url='url456')
         game.post_setup()
         
-        scene = self.db.Scene(game=game)
+        self.db.Scene(game=game)
         
         # can upload image file
         pil_img = Image.new(mode='RGB', size=(32, 32))
@@ -395,13 +395,13 @@ class GameTest(EngineBaseTest):
         
                 # can upload another image file (different to 1st one)
                 pil_img2 = Image.new(mode='RGB', size=(48, 48))
-                with tempfile.NamedTemporaryFile('wb') as wh:
-                    pil_img2.save(wh.name, 'PNG')
-                    with open(wh.name, 'rb') as rh2:
+                with tempfile.NamedTemporaryFile('wb') as wh2:
+                    pil_img2.save(wh2.name, 'PNG')
+                    with open(wh2.name, 'rb') as rh2:
                         # upload 2nd file
                         fupload2 = FileUpload(rh2, 'test.png', 'test.png') 
                         new_id = game.get_next_id()
-                        url2 = game.upload(fupload2)
+                        game.upload(fupload2)
                         
                         # test 2nd file exists   
                         img_path2 = self.engine.paths.get_game_path(game.gm_url, game.url)
@@ -427,7 +427,7 @@ class GameTest(EngineBaseTest):
 
                         # reupload 1st file            
                         p1_new = img_path2 / '{0}.png'.format(game.get_next_id())
-                        url = game.upload(fupload)  
+                        game.upload(fupload)
                         checksums = self.engine.checksums[game.get_url()]
                         self.assertIn(md5, checksums)
                         self.assertTrue(os.path.exists(p1_new))
@@ -442,7 +442,7 @@ class GameTest(EngineBaseTest):
                 fupload = FileUpload(rh, 'test.png', 'test.png')
                 
                 # test upload result
-                old_id = game.get_next_id()
+                game.get_next_id()
                 url = game.upload(fupload)
                 self.assertIsNone(url)
         
@@ -500,7 +500,7 @@ class GameTest(EngineBaseTest):
         # create tokens with and without valid image
         demo_scene = self.db.Scene(game=game)
         url = game.get_image_url(id1)
-        fine   = self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
+        fine = self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
         broken = self.db.Token(scene=demo_scene, url='bullshit.png', posx=200, posy=150, size=20)
         static = self.db.Token(scene=demo_scene, url='/static/paths/are/fine.png', posx=200, posy=150, size=20)
         self.db.commit()
@@ -533,16 +533,16 @@ class GameTest(EngineBaseTest):
         img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
         id1 = game.get_next_id()
         p1 = img_path / '{0}.png'.format(id1)
-        with open(p1, 'w') as h: # write different content because of hashing
+        with open(p1, 'w') as h:  # write different content because of hashing
             h.write('FOOBAR')
         id2 = game.get_next_id()
         p2 = img_path / '{0}.png'.format(id2)
-        with open(p2, 'w') as h: # write different content because of hashing
+        with open(p2, 'w') as h:  # write different content because of hashing
             h.write('AAB')
         p2.touch()   
         id3 = game.get_next_id()
         p3 = img_path / '{0}.png'.format(id3)
-        with open(p3, 'w') as h: # write different content because of hashing
+        with open(p3, 'w') as h:  # write different content because of hashing
             h.write('AB234')
         p3.touch()
         
@@ -588,7 +588,7 @@ class GameTest(EngineBaseTest):
         # expect music to still be present
         p3 = img_path / '4.mp3'    
         p3.touch()
-        b, r, t, m = game.cleanup(now)
+        game.cleanup(now)
         self.assertTrue(os.path.exists(p3))
         
     @db_session
@@ -631,7 +631,7 @@ class GameTest(EngineBaseTest):
         # create two demo scenes with tokens
         url = game.get_image_url('123')
         scene1 = self.db.Scene(game=game)
-        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1) # background
+        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1)  # background
         for i in range(7):
             self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
         scene2 = self.db.Scene(game=game)
@@ -694,7 +694,7 @@ class GameTest(EngineBaseTest):
 
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
-        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1) # background
+        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1)  # background
         for i in range(7):
             self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
         scene2 = self.db.Scene(game=game)
@@ -707,7 +707,7 @@ class GameTest(EngineBaseTest):
         
         # create zip file
         fname, path = game.to_zip()
-        zip_path    = path / fname
+        zip_path = path / fname
         
         # expect music to still be present
         self.assertTrue(os.path.exists(p2))
@@ -810,7 +810,7 @@ class GameTest(EngineBaseTest):
         
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
-        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1) # background
+        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1)  # background
         for i in range(7):
             self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
         scene2 = self.db.Scene(game=game)
@@ -835,8 +835,8 @@ class GameTest(EngineBaseTest):
         self.assertEqual(len(game2.scenes), len(game.scenes))
         game2_scene1 = list(game2.scenes)[0]
         game2_scene2 = list(game2.scenes)[1]
-        query1 = self.db.Token.select(lambda t: t.scene == game2_scene1)
-        query2 = self.db.Token.select(lambda t: t.scene == game2_scene2)
+        query1 = self.db.Token.select(lambda _t: _t.scene == game2_scene1)
+        query2 = self.db.Token.select(lambda _t: _t.scene == game2_scene2)
         # order isn't important here
         if len(query1) == 4:
             query1, query2 = query2, query1
@@ -891,7 +891,7 @@ class GameTest(EngineBaseTest):
         
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
-        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1) # background
+        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1)  # background
         for i in range(7):
             self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
         scene2 = self.db.Scene(game=game)
@@ -901,7 +901,7 @@ class GameTest(EngineBaseTest):
         
         # create zip file
         fname, path = game.to_zip()
-        zip_path    = path / fname
+        zip_path = path / fname
         
         # create copy of original game by importing zip
         with open(zip_path, 'rb') as fp:
@@ -920,10 +920,10 @@ class GameTest(EngineBaseTest):
             self.assertEqual(len(game2.scenes), len(game.scenes))
             game2_scene1 = list(game2.scenes)[0]
             game2_scene2 = list(game2.scenes)[1]
-            query1 = self.db.Token.select(lambda t: t.scene == game2_scene1)
-            query2 = self.db.Token.select(lambda t: t.scene == game2_scene2)
+            query1 = self.db.Token.select(lambda _t: _t.scene == game2_scene1)
+            query2 = self.db.Token.select(lambda _t: _t.scene == game2_scene2)
             # order isn't important here
-            self.assertEqual(set([4, 8]), set([len(query1), len(query2)]))
+            self.assertEqual({4, 8}, {len(query1), len(query2)})
             
             # assert all images being there
             new_img_path = self.engine.paths.get_game_path(game2.gm_url, game2.url)
@@ -942,7 +942,7 @@ class GameTest(EngineBaseTest):
         with tempfile.TemporaryDirectory() as tmp_dir:
             # manipulate json
             json_path = os.path.join(tmp_dir, 'game.json')
-            with open(json_path , 'w') as h:
+            with open(json_path, 'w') as h:
                 h.write('{some[brokenstuff": "(}]')
             
             # pack zip (without any images)
@@ -959,4 +959,3 @@ class GameTest(EngineBaseTest):
                 handle=fupload
             )
             self.assertIsNone(game3) 
-

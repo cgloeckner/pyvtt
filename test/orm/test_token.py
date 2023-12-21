@@ -22,9 +22,10 @@ class TokenTest(unittest.TestCase):
         
     @db_session
     def test_update(self):
-        demo_game  = self.db.Game(url='test', gm_url='foo')
+        demo_game = self.db.Game(url='test', gm_url='foo')
         demo_scene = self.db.Scene(game=demo_game)
-        t = self.db.Token(scene=demo_scene, url='dummy', posx=200, posy=150, size=20, zorder=5, rotate=33.4, flipx=True, text='test', color='red')
+        t = self.db.Token(scene=demo_scene, url='dummy', posx=200, posy=150, size=20, zorder=5, rotate=33.4,
+                          flipx=True, text='test', color='red')
         
         # moving token
         self.assertTrue(t.update(timeid=100, pos=(90, 123)))
@@ -123,7 +124,8 @@ class TokenTest(unittest.TestCase):
         self.assertEqual(t.color, 'red')
         
         # cannot update locked token 
-        self.assertFalse(t.update(timeid=130, pos=(0, 0), size=10, zorder=3, rotate=22.5, flipx=True, text=('foobar', 'green')))
+        self.assertFalse(t.update(timeid=130, pos=(0, 0), size=10, zorder=3, rotate=22.5, flipx=True,
+                                  text=('foobar', 'green')))
         self.assertEqual(t.timeid, 129)
         self.assertEqual(t.posx, 90)
         self.assertEqual(t.posy, 123)
@@ -177,9 +179,9 @@ class TokenTest(unittest.TestCase):
         p.append(self.db.Token.get_pos_by_degree(origin, 1, 3))
         p.append(self.db.Token.get_pos_by_degree(origin, 2, 3))
         
-        self.assertIn(( 51,  72), p) # top left
-        self.assertIn((100, 155), p) # right
-        self.assertIn((147,  72), p) # bottom left
+        self.assertIn((51,  72), p)  # top left
+        self.assertIn((100, 155), p)  # right
+        self.assertIn((147,  72), p)  # bottom left
         
         # calc position of four tokens in "circle"
         p = list()
@@ -188,10 +190,10 @@ class TokenTest(unittest.TestCase):
         p.append(self.db.Token.get_pos_by_degree(origin, 2, 4))
         p.append(self.db.Token.get_pos_by_degree(origin, 3, 4))
         
-        self.assertIn(( 99,  36), p) # top (99 ~ 100)
-        self.assertIn((163,  99), p) # right
-        self.assertIn((100, 164), p) # bottom
-        self.assertIn(( 36, 100), p) # left
+        self.assertIn((99,  36), p)  # top (99 ~ 100)
+        self.assertIn((163,  99), p)  # right
+        self.assertIn((100, 164), p)  # bottom
+        self.assertIn((36, 100), p)  # left
         
         # calc position close to scene's topleft border 
         p = list()          
@@ -200,23 +202,22 @@ class TokenTest(unittest.TestCase):
         p.append(self.db.Token.get_pos_by_degree(origin, 1, 3))
         p.append(self.db.Token.get_pos_by_degree(origin, 2, 3))
         
-        self.assertIn(( 0,  0), p) # top left (limited to scene)
-        self.assertIn(( 0, 55), p) # right
-        self.assertIn((47,  0), p) # bottom left (limited to scene)
+        self.assertIn((0,  0), p)  # top left (limited to scene)
+        self.assertIn((0, 55), p)  # right
+        self.assertIn((47,  0), p)  # bottom left (limited to scene)
         
-        # calc position close to scene's bottomright border 
+        # calc position close to scene's bottom right border
         p = list()          
         origin = (orm.MAX_SCENE_WIDTH, orm.MAX_SCENE_HEIGHT)
         p.append(self.db.Token.get_pos_by_degree(origin, 0, 3))
         p.append(self.db.Token.get_pos_by_degree(origin, 1, 3))
         p.append(self.db.Token.get_pos_by_degree(origin, 2, 3))
         
-        self.assertIn((959, 539), p) # top left
-        self.assertIn((orm.MAX_SCENE_WIDTH, orm.MAX_SCENE_HEIGHT), p) # right (limited to scene)
-        self.assertIn((orm.MAX_SCENE_WIDTH, 539), p) # bottom left (limited to scene)
+        self.assertIn((959, 539), p)  # top left
+        self.assertIn((orm.MAX_SCENE_WIDTH, orm.MAX_SCENE_HEIGHT), p)  # right (limited to scene)
+        self.assertIn((orm.MAX_SCENE_WIDTH, 539), p)  # bottom left (limited to scene)
         
         # single token is placed at origin
         origin = (456, 123)
         p = self.db.Token.get_pos_by_degree(origin, 0, 1)
         self.assertEqual(p, origin)
-

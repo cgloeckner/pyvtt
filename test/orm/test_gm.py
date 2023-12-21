@@ -5,7 +5,10 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import os, time, random, datetime
+import datetime
+import os
+import random
+import time
 
 from bottle import response
 from pony.orm import db_session
@@ -67,15 +70,15 @@ class GmTest(EngineBaseTest):
             now = time.time()
             old = now - self.engine.latest_rolls - 10
             for i in range(15):
-                gm_cache.db.Roll(game=g1, name='test', color='red',
-                    sides=20, result=random.randrange(1, 20), timeid=now)
-                gm_cache.db.Roll(game=g2, name='test', color='red',
-                    sides=20, result=random.randrange(1, 20), timeid=now)
+                gm_cache.db.Roll(game=g1, name='test', color='red', sides=20, result=random.randrange(1, 20),
+                                 timeid=now)
+                gm_cache.db.Roll(game=g2, name='test', color='red', sides=20, result=random.randrange(1, 20),
+                                 timeid=now)
             for i in range(45):
-                gm_cache.db.Roll(game=g1, name='test', color='red',
-                    sides=12, result=random.randrange(1, 12), timeid=old)
-                gm_cache.db.Roll(game=g2, name='test', color='red',
-                    sides=12, result=random.randrange(1, 12), timeid=old)
+                gm_cache.db.Roll(game=g1, name='test', color='red', sides=12, result=random.randrange(1, 12),
+                                 timeid=old)
+                gm_cache.db.Roll(game=g2, name='test', color='red', sides=12, result=random.randrange(1, 12),
+                                 timeid=old)
             all_rolls = gm_cache.db.Roll.select()
             self.assertEqual(len(all_rolls), 120)
             
@@ -88,16 +91,16 @@ class GmTest(EngineBaseTest):
             self.assertEqual(m, 0)
             
             # expect first game to still exist
-            q1 = gm_cache.db.Game.select(lambda g: g.url == 'foo').first()
+            q1 = gm_cache.db.Game.select(lambda _g: _g.url == 'foo').first()
             self.assertEqual(g1, q1)
             # with only 15 rolls left
-            g1_rolls = gm_cache.db.Roll.select(lambda r: r.game == q1)
+            g1_rolls = gm_cache.db.Roll.select(lambda _r: _r.game == q1)
             self.assertEqual(len(g1_rolls), 15)
-            for r in g1_rolls: # expect no d12 rolls (they were deleted)
+            for r in g1_rolls:  # expect no d12 rolls (they were deleted)
                 self.assertEqual(r.sides, 20)
             
             # expect second game to be deleted
-            q2 = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
+            q2 = gm_cache.db.Game.select(lambda _g: _g.url == 'bar').first()
             self.assertIsNone(q2)
             # so only 15 rolls remain in total 
             all_rolls = gm_cache.db.Roll.select()
@@ -121,12 +124,11 @@ class GmTest(EngineBaseTest):
             
             # create some rolls
             now = time.time()
-            old = now - self.engine.latest_rolls - 10
             for i in range(15):
-                gm_cache.db.Roll(game=g1, name='test', color='red',
-                    sides=20, result=random.randrange(1, 20), timeid=now)
-                gm_cache.db.Roll(game=g2, name='test', color='red',
-                    sides=20, result=random.randrange(1, 20), timeid=now)
+                gm_cache.db.Roll(game=g1, name='test', color='red', sides=20,
+                                 result=random.randrange(1, 20), timeid=now)
+                gm_cache.db.Roll(game=g2, name='test', color='red', sides=20,
+                                 result=random.randrange(1, 20), timeid=now)
             all_rolls = gm_cache.db.Roll.select()
             self.assertEqual(len(all_rolls), 30)
         
@@ -151,8 +153,8 @@ class GmTest(EngineBaseTest):
         gm.post_setup()
         
         # setup session
-        day_ago   = time.time() - 3600 * 24
-        gm.sid    = self.engine.main_db.GM.generate_session()
+        day_ago = time.time() - 3600 * 24
+        gm.sid = self.engine.main_db.GM.generate_session()
         gm.timeid = day_ago
         
         # refresh session
@@ -160,11 +162,11 @@ class GmTest(EngineBaseTest):
         self.assertGreater(gm.timeid, day_ago)
         
         # check cookie being set
-        cookies = [value for name, value in response.headerlist
-            if name.title() == 'Set-Cookie']
+        cookies = [value for name, value in response.headerlist if name.title() == 'Set-Cookie']
         cookies.sort()
         expire_date = gm.timeid + self.engine.cleanup['expire']
-        time_str = datetime.datetime.fromtimestamp(expire_date).astimezone(datetime.timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT')
+        time_str = (datetime.datetime.fromtimestamp(expire_date).astimezone(datetime.timezone.utc).
+                    strftime('%a, %d %b %Y %H:%M:%S GMT'))
         self.assertIn('session={0}'.format(gm.sid), cookies[0])
         self.assertIn('expires={0}'.format(time_str), cookies[0])
         
@@ -179,7 +181,8 @@ class GmTest(EngineBaseTest):
         class FakeRequest(object):
             def __init__(self, session):
                 self.session = session
-            def get_cookie(self, key):
+
+            def get_cookie(self, _):
                 return self.session
         
         request = FakeRequest(gm.sid)

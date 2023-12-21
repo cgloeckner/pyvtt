@@ -94,7 +94,7 @@ class EngineCache:
         player_cache.socket = socket
         game_cache.login(player_cache)
 
-        # handle incomming data
+        # handle incoming data
         # NOTE: needs to be done async, else db_session will block,
         # because the route, which calls this listen() has its own
         # db_session due to the bottle configuration

@@ -9,8 +9,6 @@ from test.common import EngineBaseTest, make_image
 from vtt import routes
 
 
-# ---------------------------------------------------------------------
-
 class WebsocketRoutesTest(EngineBaseTest):
 
     def setUp(self):

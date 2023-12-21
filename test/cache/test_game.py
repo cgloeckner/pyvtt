@@ -49,7 +49,7 @@ class GameCacheTest(EngineBaseTest):
         # create some players
         p = self.cache.insert('arthur', 'red', False)
         self.assertIsNotNone(p)
-        self.cache.insert('bob', 'blue', True) # GM
+        self.cache.insert('bob', 'blue', True)  # GM
         self.cache.insert('carlos', 'yellow', False)
         
         # test indices being rebuilt
@@ -72,7 +72,7 @@ class GameCacheTest(EngineBaseTest):
     def test_get(self): 
         # create some players
         self.cache.insert('arthur', 'red', False)
-        self.cache.insert('bob', 'blue', True) # GM
+        self.cache.insert('bob', 'blue', True)  # GM
         self.cache.insert('carlos', 'yellow', False)
         
         # query players

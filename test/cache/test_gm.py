@@ -25,7 +25,7 @@ class GmCacheTest(EngineBaseTest):
         self.db = orm.create_gm_database(engine=self.engine, filename=':memory:')
         
     def test_insert(self):
-        # @NOTE: first insertion was trigged by postSetup()
+        # @NOTE: first insertion was triggered by postSetup()
         with db_session:
             game1 = self.db.Game(url='bar', gm_url='foo')
             game2 = self.db.Game(url='lol', gm_url='foo')

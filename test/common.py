@@ -20,11 +20,12 @@ from PIL import Image
 from geventwebsocket.exceptions import WebSocketError
 
 from vtt.engine import Engine
+from vtt.cache import PlayerCache
 from vtt.utils import PathApi
 
 
 @functools.cache
-def make_image(w, h):
+def make_image(w: int, h: int) -> bytes:
     pil_img = Image.new(mode='RGB', size=(w, h))
     with tempfile.NamedTemporaryFile('wb') as wh:
         pil_img.save(wh.name, 'BMP')
@@ -33,7 +34,7 @@ def make_image(w, h):
 
 
 @functools.cache
-def make_zip(filename, data, n):
+def make_zip(filename: str, data: str, n: int) -> bytes:
     with tempfile.TemporaryDirectory() as tmp_dir:
         # create json
         json_path = os.path.join(tmp_dir, 'game.json')
@@ -58,7 +59,7 @@ def make_zip(filename, data, n):
 
 class EngineBaseTest(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         # create temporary directory
         self.tmpdir = tempfile.TemporaryDirectory()
         self.root = pathlib.Path(self.tmpdir.name)
@@ -76,7 +77,7 @@ class EngineBaseTest(unittest.TestCase):
         
         self.monkeyPatch()
                 
-    def monkeyPatch(self):
+    def monkeyPatch(self) -> None:
         # save methods for later
         self.prev_getPublicIp = self.engine.get_public_ip
         self.prev_getCountryFromIp = self.engine.get_country_from_ip
@@ -84,13 +85,13 @@ class EngineBaseTest(unittest.TestCase):
         self.engine.get_public_ip = lambda: '?.?.?.?'
         self.engine.get_country_from_ip = lambda ip: 'unknown'
         
-    def tearDown(self):
+    def tearDown(self) -> None:
         # unload engine
         del self.app
         del self.engine
         del self.tmpdir
 
-    def join_player(self, gm_url, game_url, player_name, player_color):
+    def join_player(self, gm_url: str, game_url: str, player_name: str, player_color: str) -> tuple[any, PlayerCache]:
         # post login
         ret = self.app.post('/game/{0}/{1}/login'.format(gm_url, game_url),
                             {'playername': player_name, 'playercolor': player_color})
@@ -105,26 +106,25 @@ class EngineBaseTest(unittest.TestCase):
 
 # ---------------------------------------------------------------------
 
-class SocketDummy(object):
-    """ Dummy class for working with a socket.
-    """
+class SocketDummy:
+    """Dummy class for working with a socket."""
 
-    read_buffer: list
-    write_buffer: list
+    read_buffer: list[str]
+    write_buffer: list[str]
     closed: False
     block: False
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.clear_all()
         
-    def clear_all(self):
+    def clear_all(self) -> None:
         self.read_buffer = list()
         self.write_buffer = list()
         
         self.closed = False
         self.block = True
         
-    def receive(self):
+    def receive(self) -> str | None:
         if self.closed:
             raise WebSocketError('SocketDummy is closed')
         # block if buffer empty
@@ -135,20 +135,20 @@ class SocketDummy(object):
             return self.read_buffer.pop(0)
         return None
         
-    def push_receive(self, data):
+    def push_receive(self, data: dict) -> None:
         self.read_buffer.append(json.dumps(data))
         
-    def send(self, s):
+    def send(self, s: str) -> None:
         if self.closed:
             raise WebSocketError('SocketDummy is closed')
         self.write_buffer.append(s)
         
-    def pop_send(self):
+    def pop_send(self) -> dict | None:
         if len(self.write_buffer) > 0:
             return json.loads(self.write_buffer.pop(0))
         return None
         
-    def close(self):
+    def close(self) -> None:
         if self.closed:
             raise WebSocketError('SocketDummy is closed')
         self.closed = True
@@ -156,7 +156,7 @@ class SocketDummy(object):
 
 # ---------------------------------------------------------------------
 
-def presetup_unittest(argv):
+def pre_setup_unittest(argv: list[str]) -> list[str]:
     argv.append('--quiet')
     argv.append('--debug')
     argv.append('--localhost')

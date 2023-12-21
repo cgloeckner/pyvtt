@@ -33,37 +33,37 @@ class LoggingApiTest(unittest.TestCase):
         del self.logging
         del self.tmpdir
         
-    def assertLastLine(self, log_name: str, line):
+    def assert_last_line(self, log_name: str, line: str) -> None:
         with open(self.root / f'{log_name}.log', 'r') as h:
             content = h.read()
         last_line = content.split('\n')[-2]  # note: last line is empty
         self.assertTrue(last_line.endswith(line))  # ignore line's beginning (time etc.)
 
-    def assertFileNotFound(self, log_name: str):
+    def assert_file_not_found(self, log_name: str) -> None:
         with self.assertRaises(FileNotFoundError):
             with open(self.root / f'{log_name}.log', 'r') as _:
                 pass
         
     def test_info(self):
         self.logging.info('hello info world')
-        self.assertLastLine('info', 'hello info world')
+        self.assert_last_line('info', 'hello info world')
         
     def test_error(self):
         self.logging.error('hello error world')
-        self.assertLastLine('error', 'hello error world')
+        self.assert_last_line('error', 'hello error world')
         
     def test_access(self):
         self.logging.access('hello access world')
-        self.assertLastLine('access', 'hello access world')
+        self.assert_last_line('access', 'hello access world')
         
     def test_warning(self):
         self.logging.warning('hello warning world')
-        self.assertLastLine('warning', 'hello warning world')
+        self.assert_last_line('warning', 'hello warning world')
         
     def test_logins(self):           
         data = {'id': '123', 'username': 'foobar'}
         self.logging.logins(data)
-        self.assertLastLine('logins', str(data))
+        self.assert_last_line('logins', str(data))
     
     def test_auth(self):              
         self.logging.auth('hello stats world')
@@ -88,21 +88,21 @@ class LoggingApiTest(unittest.TestCase):
 
         # regular logs are empty
         self.logging.info('hello info world')
-        self.assertFileNotFound('info')
+        self.assert_file_not_found('info')
          
         self.logging.error('hello error world')
-        self.assertFileNotFound('error')
+        self.assert_file_not_found('error')
         
         self.logging.access('hello access world')
-        self.assertFileNotFound('access')
+        self.assert_file_not_found('access')
         
         self.logging.warning('hello warning world')
-        self.assertFileNotFound('warning')
+        self.assert_file_not_found('warning')
 
         self.logging.auth('hello stats world')
-        self.assertFileNotFound('auth')
+        self.assert_file_not_found('auth')
         
         # stats log is not empty due to analysis stuff
         data = {'id': '123', 'username': 'foobar'}
         self.logging.logins(data)
-        self.assertLastLine('logins', str(data))
+        self.assert_last_line('logins', str(data))

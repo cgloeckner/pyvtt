@@ -5,12 +5,14 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import time, copy
+import copy
+import time
 
 from pony.orm import db_session
 
-from vtt import orm
 from test.common import EngineBaseTest, SocketDummy
+from vtt import orm
+
 
 class PlayerCacheTest(EngineBaseTest):
     
@@ -31,24 +33,24 @@ class PlayerCacheTest(EngineBaseTest):
             
             # create pretty old rolls
             kwargs = {
-                'game'   : game,
-                'name'   : 'nobody',
-                'color'  : '#DEAD00',
-                'sides'  : 4,
-                'result' : 3,
-                'timeid' : time.time() - self.engine.latest_rolls - 10
+                'game': game,
+                'name': 'nobody',
+                'color': '#DEAD00',
+                'sides': 4,
+                'result': 3,
+                'timeid': time.time() - self.engine.latest_rolls - 10
             }
             gm_cache.db.Roll(**kwargs)
             
             # create some old rolls 
-            kwargs['sides']  = 12 
+            kwargs['sides'] = 12
             kwargs['timeid'] = time.time() - self.engine.recent_rolls - 10
             for i in range(1, 13):
                 kwargs['result'] = i
                 gm_cache.db.Roll(**kwargs)
             
             # create some recent rolls
-            kwargs['sides']  = 20
+            kwargs['sides'] = 20
             kwargs['timeid'] = time.time()
             for i in range(1, 21):
                 kwargs['result'] = i
@@ -63,20 +65,16 @@ class PlayerCacheTest(EngineBaseTest):
             game.active = scene1.id
             
             # create backgrounds
-            b1 = gm_cache.db.Token(scene=scene1, url='/foo', posx=20,
-                posy=30, size=-1)
-            b2 = gm_cache.db.Token(scene=scene2, url='/foo', posx=20,
-                posy=30, size=-1)
+            b1 = gm_cache.db.Token(scene=scene1, url='/foo', posx=20, posy=30, size=-1)
+            gm_cache.db.Token(scene=scene2, url='/foo', posx=20, posy=30, size=-1)
             
             gm_cache.db.commit()
             scene1.backing = b1
             
             # create some tokens
             for i in range(5):
-                gm_cache.db.Token(scene=scene1, url='/foo', posx=20+i,
-                    posy=30, size=40)
-                gm_cache.db.Token(scene=scene2, url='/foo', posx=20+i ,
-                    posy=30, size=40)
+                gm_cache.db.Token(scene=scene1, url='/foo', posx=20+i, posy=30, size=40)
+                gm_cache.db.Token(scene=scene2, url='/foo', posx=20+i, posy=30, size=40)
 
     def get_game(self, gm='foo', game='bar'):
         """ Helper to query a game. """
@@ -88,8 +86,9 @@ class PlayerCacheTest(EngineBaseTest):
         gm_cache = self.engine.cache.get_from_url(gm)
         game = self.get_game(gm, game)
         return gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
-        
-    def purge_scene(self, scene):
+
+    @staticmethod
+    def purge_scene(scene):
         """ Helper to purge a scene from all tokens. """
         for t in scene.tokens:
             t.delete()
@@ -110,8 +109,8 @@ class PlayerCacheTest(EngineBaseTest):
         
     def test_getMetaData(self):  
         game_cache = self.engine.cache.get_from_url('foo').get_from_url('bar')
-        player_cache   = game_cache.insert('arthur', 'red', False)
-        gmplayer_cache = game_cache.insert('bob', 'blue', True)
+        player_cache = game_cache.insert('arthur', 'red', False)
+        gm_player_cache = game_cache.insert('bob', 'blue', True)
         
         meta1 = player_cache.get_meta_data()
         self.assertEqual(meta1['name'], 'arthur')
@@ -119,7 +118,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(meta1['game'], 'bar')
         self.assertEqual(meta1['gm'], 'foo')
         
-        meta2 = gmplayer_cache.get_meta_data()
+        meta2 = gm_player_cache.get_meta_data()
         self.assertEqual(meta2['name'], 'bob')
         self.assertTrue(meta2['is_gm'])
         self.assertEqual(meta2['game'], 'bar')
@@ -162,7 +161,7 @@ class PlayerCacheTest(EngineBaseTest):
         # expect scene data to joined player
         refresh = new_socket.pop_send()
         self.assertEqual(refresh['OPID'], 'REFRESH')
-        # @NOTE: refresh data is tested seperately in-depth
+        # @NOTE: refresh data is tested separately in-depth
         
         # expect JOIN being broadcast
         join_broadcast = old_socket.pop_send()
@@ -177,7 +176,7 @@ class PlayerCacheTest(EngineBaseTest):
         order_broadcast = old_socket.pop_send()
         self.assertEqual(order_broadcast['OPID'], 'ORDER')
         self.assertEqual(order_broadcast['indices'], {
-            player_cache1.uuid : 0, player_cache2.uuid : 1
+            player_cache1.uuid: 0, player_cache2.uuid: 1
         })
         
     def test_logout(self):
@@ -267,7 +266,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -277,10 +276,10 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache3.socket = socket3
         
         # update some tokens in active scene
-        since = time.time() - 30 # for last 30 seconds
+        since = time.time() - 30  # for last 30 seconds
         with db_session:
             active = gm_cache.db.Game.select(lambda g: g.url == 'bar').first().active
-            for t in gm_cache.db.Token.select(lambda t: t.scene.id == active and t.posx >= 22):
+            for t in gm_cache.db.Token.select(lambda _t: _t.scene.id == active and _t.posx >= 22):
                 t.timeid = since
         # trigger token update after player1 changed something
         game_cache.broadcast_token_update(player_cache1, since)
@@ -309,7 +308,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -332,7 +331,7 @@ class PlayerCacheTest(EngineBaseTest):
         
         # check data for tokens
         self.assertEqual(data1['OPID'], 'REFRESH')
-        # @NOTE: refresh data is tested seperately in-depth
+        # @NOTE: refresh data is tested separately in-depth
         
     def test_fetchRefresh(self):
         socket1 = SocketDummy()
@@ -340,7 +339,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -387,7 +386,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket = SocketDummy()
         
         # insert player
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache = game_cache.insert('arthur', 'red', False)
         player_cache.socket = socket
@@ -403,7 +402,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -440,7 +439,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -485,13 +484,16 @@ class PlayerCacheTest(EngineBaseTest):
         # expect player's selection being updated
         self.assertEqual(player_cache1.selected, selected)
         
-    def test_onRange(self): 
+    def test_onRange(self):
+        def add_token(x, y):
+            return gm_cache.db.Token(scene=scene, url='/test', posx=x, posy=y, size=20)
+
         socket1 = SocketDummy()
         socket2 = SocketDummy()
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -505,29 +507,25 @@ class PlayerCacheTest(EngineBaseTest):
             game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
             scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
             
-            add_token = lambda x, y: gm_cache.db.Token(
-                scene=scene, url='/test', posx=x, posy=y, size=20
-            )
-            
             # @NOTE: will query for (100, 130) with 40x30
-            inside     = add_token(x=120, y=145)
-            at_left    = add_token(x= 90, y=145) # x within half size
-            at_right   = add_token(x=150, y=145) # x within half size
-            at_top     = add_token(x=120, y=120) # y within half size
-            at_bottom  = add_token(x=120, y=170) # y within half size
-            off_left   = add_token(x= 89, y=145)
-            off_right  = add_token(x=151, y=145)
-            off_top    = add_token(x=120, y=119)
-            off_bottom = add_token(x=120, y=171)
-            outside    = add_token(x=300, y=250)
-        
+            inside = add_token(x=120, y=145)
+            add_token(x=90, y=145)  # x within half size -- at_left
+            add_token(x=150, y=145)  # x within half size -- at_right
+            add_token(x=120, y=120)  # y within half size -- at_top
+            add_token(x=120, y=170)  # y within half size -- at_bottom
+            add_token(x=89, y=145)  # off_left
+            add_token(x=151, y=145)  # off_right
+            add_token(x=120, y=119)  # off_top
+            add_token(x=120, y=171)  # off_bottom
+            add_token(x=300, y=250)  # outside
+
         # trigger range selection and expect SELECT broadcast
         query = {
-            'adding' : False,
-            'left'   : 100,
-            'top'    : 130,
-            'width'  : 40,
-            'height' : 30
+            'adding': False,
+            'left': 100,
+            'top': 130,
+            'width': 40,
+            'height': 30
         }
         game_cache.on_range(player_cache1, query)
          
@@ -541,12 +539,8 @@ class PlayerCacheTest(EngineBaseTest):
         # @NOTE: SELECT is tested more in-depth on its own
         
         # @TODO: fix that bug
-        self.assertEqual(len(player_cache1.selected), 1)#5)
+        self.assertEqual(len(player_cache1.selected), 1)
         self.assertIn(inside.id,    player_cache1.selected)
-        #self.assertIn(at_left.id,   player_cache1.selected)
-        #self.assertIn(at_right.id,  player_cache1.selected)
-        #self.assertIn(at_top.id,    player_cache1.selected)
-        #self.assertIn(at_bottom.id, player_cache1.selected)
         
         socket1.clear_all()
         socket2.clear_all()
@@ -554,11 +548,11 @@ class PlayerCacheTest(EngineBaseTest):
         
         # trigger range query on empty space
         query = {
-            'adding' : False,
-            'left'   : 0,
-            'top'    : 2,
-            'width'  : 3,
-            'height' : 4
+            'adding': False,
+            'left': 0,
+            'top': 2,
+            'width': 3,
+            'height': 4
         }
         game_cache.on_range(player_cache1, query)
         
@@ -578,11 +572,11 @@ class PlayerCacheTest(EngineBaseTest):
         # trigger adding range query on empty space
         player_cache1.selected = [145634]  
         query = {
-            'adding' : True,
-            'left'   : 0,
-            'top'    : 2,
-            'width'  : 3,
-            'height' : 4
+            'adding': True,
+            'left': 0,
+            'top': 2,
+            'width': 3,
+            'height': 4
         }
         game_cache.on_range(player_cache1, query)
         
@@ -602,11 +596,11 @@ class PlayerCacheTest(EngineBaseTest):
         
         # trigger adding range query on regular space
         query = {
-            'adding' : True,
-            'left'   : 100,
-            'top'    : 130,
-            'width'  : 40,
-            'height' : 30
+            'adding': True,
+            'left': 100,
+            'top': 130,
+            'width': 40,
+            'height': 30
         }
         game_cache.on_range(player_cache1, query)
         
@@ -624,15 +618,16 @@ class PlayerCacheTest(EngineBaseTest):
         # incomplete queries are ignored
         for missing in ['left', 'top', 'width', 'height']:
             query = {
-                'adding' : False,
-                'left'   : 100,
-                'top'    : 130,
-                'width'  : 40,
-                'height' : 30
+                'adding': False,
+                'left': 100,
+                'top': 130,
+                'width': 40,
+                'height': 30,
+                'missing': None
             }
-            query[missing] = None
+            query.pop(missing)
             game_cache.on_range(player_cache1, query)
-             
+
             answer1 = socket1.pop_send()
             answer2 = socket2.pop_send()
             answer3 = socket3.pop_send()
@@ -646,7 +641,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -697,7 +692,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket2.clear_all()
         socket3.clear_all()
         
-        # cannot move more then one spot 
+        # cannot move more than one spot
         game_cache.on_order(player_cache2, {'name': 'bob', 'direction': 2})
         
         answer1 = socket1.pop_send()
@@ -773,7 +768,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -781,22 +776,21 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache2.socket = socket2
         player_cache3 = game_cache.insert('carlos', 'green', False)
         player_cache3.socket = socket3
-        
+
         # create demo token
         with db_session:
             game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
             last_update = game.timeid
             scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
             token = gm_cache.db.Token(scene=scene, url='/test', posx=30, posy=15, size=20)
-        
+
         def query_token(tid=token.id):
             with db_session:
-                game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
-                last_update = game.timeid
-                scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
+                _game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
+                gm_cache.db.Scene.select(lambda s: s.id == _game.active).first()
                 return gm_cache.db.Token.select(lambda t: t.id == tid).first()
-        
-        default_update = { 'changes': [ {'id': token.id} ] }
+
+        default_update = {'changes': [{'id': token.id}]}
         
         # token can be updated without actual data causing empty 'UPDATE' broadcast
         update_data = copy.deepcopy(default_update)
@@ -1077,7 +1071,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -1087,15 +1081,15 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache3.socket = socket3
         
         default_data = {
-            'posx' : 50,
-            'posy' : 67,
-            'size' : 23,
-            'urls' : list()
+            'posx': 50,
+            'posy': 67,
+            'size': 23,
+            'urls': list()
         }
         
         with db_session:
             scene = self.active_scene()
-            old_timeid = max(list(scene.tokens), key=lambda t: t.timeid).timeid
+            old_timeid = max(list(scene.tokens), key=lambda _t: _t.timeid).timeid
         
         # trigger token creation and expect CREATE broadcast
         with db_session:
@@ -1164,7 +1158,7 @@ class PlayerCacheTest(EngineBaseTest):
 
         # can change background
         create_data = copy.deepcopy(default_data)
-        create_data['size'] = '-1' 
+        create_data['size'] = -1
         create_data['urls'] = ['/foo/bar.png']
         game_cache.on_create_token(player_cache1, create_data)
         answer1 = socket1.pop_send()
@@ -1176,7 +1170,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(len(answer1['tokens']), 1)
         with db_session:
             scene = self.active_scene()
-            tokens = gm_cache.db.Token.select(lambda t: t.scene == scene)
+            tokens = gm_cache.db.Token.select(lambda _t: _t.scene == scene)
             # expect only one background token
             self.assertIsNotNone(scene.backing)
             for t in tokens:
@@ -1189,7 +1183,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -1277,7 +1271,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -1321,7 +1315,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -1331,10 +1325,10 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache3.socket = socket3
 
         beacon_data = {'OPID': 'MUSIC', 'action': 'add', 'slot_id': [0, 2, 3, 4]}          
-        expected = [None] * self.engine.file_limit['num_music']
+        expected: list[bool | None] = [None] * self.engine.file_limit['num_music']
         self.assertEqual(game_cache.playback, expected)
         game_cache.on_music(player_cache3, beacon_data)
-        # expect MUSIC add-slots broadcast              
+        # expect MUSIC add-slots broadcast
         for i in beacon_data['slot_id']:
             expected[i] = False
         self.assertEqual(game_cache.playback, expected)
@@ -1408,7 +1402,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -1421,10 +1415,10 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             scene = self.active_scene()
             self.purge_scene(scene)
-            t1 = gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
-            t2 = gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
+            gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
+            gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
             t3 = gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
-            t4 = gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
+            gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
         data = {
             'ids': [t3.id],
             'posx': 100,
@@ -1448,7 +1442,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(clone.size, t3.size)
         self.assertEqual(clone.rotate, t3.rotate)
         self.assertEqual(clone.flipx, t3.flipx)
-        self.assertFalse(clone.locked) # cloned tokens are not locked by default
+        self.assertFalse(clone.locked)  # cloned tokens are not locked by default
         self.assertEqual(clone.text, t3.text)
         self.assertEqual(clone.color, t3.color)
 
@@ -1457,7 +1451,7 @@ class PlayerCacheTest(EngineBaseTest):
             scene = self.active_scene()
             self.purge_scene(scene)
             t1 = gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
-            t2 = gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
+            gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
             t3 = gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
             t4 = gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
         data = {
@@ -1491,8 +1485,8 @@ class PlayerCacheTest(EngineBaseTest):
             scene = self.active_scene()
             self.purge_scene(scene)
             t1 = gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
-            t2 = gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
-            t3 = gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
+            gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
+            gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
             t4 = gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
         data = {
             'ids': [t1.id, 4563574575678, t4.id],
@@ -1516,7 +1510,7 @@ class PlayerCacheTest(EngineBaseTest):
                 t1 = gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
                 t2 = gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
                 t3 = gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
-                t4 = gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
+                gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
             data = {
                 'ids': [t1.id, t2.id, t3.id],
                 'posx': pos[0],
@@ -1546,7 +1540,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -1579,9 +1573,9 @@ class PlayerCacheTest(EngineBaseTest):
         
         # GM can create another scene at the end
         game_cache.on_create_scene(player_cache2, {})
-        answer1 = socket1.pop_send()
-        answer2 = socket2.pop_send()
-        answer3 = socket3.pop_send()               
+        socket1.pop_send()
+        socket2.pop_send()
+        socket3.pop_send()
         with db_session:
             new_scene = self.active_scene()
         # expect scene at end of the order list
@@ -1592,9 +1586,9 @@ class PlayerCacheTest(EngineBaseTest):
 
         # GM can create yet another scene at the end
         game_cache.on_create_scene(player_cache2, {})
-        answer1 = socket1.pop_send()
-        answer2 = socket2.pop_send()
-        answer3 = socket3.pop_send()                
+        socket1.pop_send()
+        socket2.pop_send()
+        socket3.pop_send()
         with db_session:
             new_scene = self.active_scene()
         # expect scene at end of the order list
@@ -1624,7 +1618,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -1646,7 +1640,7 @@ class PlayerCacheTest(EngineBaseTest):
         # query all scenes in that game
         with db_session:
             all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
-            game = self.get_game()
+            self.get_game()
         self.assertEqual(len(all_scene_ids), 4)
         all_scene_ids.sort()
         s1 = all_scene_ids[0]
@@ -1657,7 +1651,7 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             game = self.get_game()
             game.reorder_scenes()
-        self.assertEqual(game.order, [s1, s2, s3, s4]) # explicit order
+        self.assertEqual(game.order, [s1, s2, s3, s4])  # explicit order
         
         # GM can move a scene left
         game_cache.on_move_scene(player_cache2, {'scene': s3, 'step': -1})
@@ -1711,7 +1705,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -1784,7 +1778,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -1804,16 +1798,16 @@ class PlayerCacheTest(EngineBaseTest):
             
             # query all scenes in that game
             with db_session:
-                all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
-                active = self.active_scene()
-                self.assertEqual(len(all_scene_ids), 2)
-                self.assertEqual(all_scene_ids[1], active.id)
+                _all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
+                _active = self.active_scene()
+                self.assertEqual(len(_all_scene_ids), 2)
+                self.assertEqual(_all_scene_ids[1], _active.id)
                 # create some tokens and background
-                gm_cache.db.Token(scene=active, url='wallpaper', posx=1, posy=2, size=-1)
-                for t in range(3):
-                    gm_cache.db.Token(scene=active, url='test', posx=20, posy=21, size=3,
-                        rotate=22.5, flipx=True, locked=True, text='foo', color='#FF0000')
-                return all_scene_ids, active
+                gm_cache.db.Token(scene=_active, url='wallpaper', posx=1, posy=2, size=-1)
+                for _ in range(3):
+                    gm_cache.db.Token(scene=_active, url='test', posx=20, posy=21, size=3, rotate=22.5, flipx=True,
+                                      locked=True, text='foo', color='#FF0000')
+                return _all_scene_ids, _active
         
         # clear game
         all_scene_ids, active = reset()
@@ -1871,7 +1865,7 @@ class PlayerCacheTest(EngineBaseTest):
         # clear game       
         all_scene_ids, last_active = reset()
         
-        # clone an unknown scene scene
+        # clone an unknown scene
         game_cache.on_clone_scene(player_cache1, {'scene': 234656456})
         # expect no broadcast
         answer1 = socket1.pop_send()
@@ -1891,7 +1885,7 @@ class PlayerCacheTest(EngineBaseTest):
         socket3 = SocketDummy()
         
         # insert players
-        gm_cache   = self.engine.cache.get_from_url('foo')
+        gm_cache = self.engine.cache.get_from_url('foo')
         game_cache = gm_cache.get_from_url('bar')
         player_cache1 = game_cache.insert('arthur', 'red', False)
         player_cache1.socket = socket1
@@ -1913,12 +1907,12 @@ class PlayerCacheTest(EngineBaseTest):
             
             # query all scenes in that game
             with db_session:
-                all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
-                active = self.active_scene()
-                self.assertEqual(len(all_scene_ids), 4)
-                self.assertEqual(all_scene_ids[3], active.id)
+                _all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
+                _active = self.active_scene()
+                self.assertEqual(len(_all_scene_ids), 4)
+                self.assertEqual(_all_scene_ids[3], active.id)
 
-            return all_scene_ids, active
+            return _all_scene_ids, _active
         
         # clear game
         all_scene_ids, active = reset()
@@ -2017,7 +2011,6 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             game = self.get_game()  
             active = self.active_scene()
-        print(game.order)
         # expect REFRESH broadcast
         answer1 = socket1.pop_send()
         answer2 = socket2.pop_send()

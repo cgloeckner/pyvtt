@@ -26,20 +26,20 @@ class PathApiTest(unittest.TestCase):
         del self.paths
         del self.tmpdir
         
-    def assertDirectory(self, p):
-        self.assertTrue(os.path.exists(p))
+    def assert_directory(self, p: pathlib.Path) -> None:
+        self.assertTrue(p.exists())
         
     def test_ensure(self):
         # @NOTE: ensure() is called by the constructor
         
         # test required paths
-        self.assertDirectory(self.paths.pref_root)
-        self.assertDirectory(self.paths.get_export_path())
-        self.assertDirectory(self.paths.get_gms_path())
-        self.assertDirectory(self.paths.get_fancy_url_path())
-        self.assertDirectory(self.paths.get_static_path())
-        self.assertDirectory(self.paths.get_assets_path())
-        self.assertDirectory(self.paths.get_client_code_path())
+        self.assert_directory(self.paths.pref_root)
+        self.assert_directory(self.paths.get_export_path())
+        self.assert_directory(self.paths.get_gms_path())
+        self.assert_directory(self.paths.get_fancy_url_path())
+        self.assert_directory(self.paths.get_static_path())
+        self.assert_directory(self.paths.get_assets_path())
+        self.assert_directory(self.paths.get_client_code_path())
         
     def test_simple_path_getter(self):
         # @NOTE: actual value isn't tested but that they are not throwing
