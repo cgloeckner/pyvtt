@@ -1,5 +1,3 @@
-#!/usr/bin/python3 
-# -*- coding: utf-8 -*- 
 """
 https://github.com/cgloeckner/pyvtt/
 

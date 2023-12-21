@@ -114,7 +114,7 @@ def register(engine: any):
         if is_zip:
             engine.logging.access(f'Game {game_url} imported from "{filename}" by {client_ip}')
         else:
-            engine.logging.access('Game {game_url} created from "{filename}" by {client_ip}')
+            engine.logging.access(f'Game {game_url} created from "{filename}" by {client_ip}')
 
         status['url'] = f'game/{game.get_url()}'
 

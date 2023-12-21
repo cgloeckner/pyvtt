@@ -1,5 +1,3 @@
-#!/usr/bin/python3 
-# -*- coding: utf-8 -*- 
 """
 https://github.com/cgloeckner/pyvtt/
 
@@ -13,11 +11,11 @@ from test.common import EngineBaseTest, SocketDummy
 
 
 class EngineCacheTest(EngineBaseTest):
-        
-    def test_insert(self):     
+
+    def test_insert(self):
         cache = self.engine.cache
         
-        # @NOTE: first insertion is trigged by postSetup()
+        # @NOTE: first insertion is triggered by postSetup()
         with db_session:
             gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
             gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')

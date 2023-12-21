@@ -176,22 +176,21 @@ def register(engine: any):
             'query_time': done - start
         }
 
-    if engine.login['type'] == 'google':
-        @get('/vtt/api/google')
-        def api_query_google():
-            # query gms and how many accounts do idle
-            now = time.time()
-            provider = {}
-            for gm in engine.main_db.GM.select():
-                # fetch provider
-                p = '-'.join(gm.metadata.split('|')[:-1])
-                for k in ['-oauth2', 'oauth2-']:
-                    p = p.replace(k, '')
-                if p not in provider:
-                    provider[p] = 1
-                else:
-                    provider[p] += 1
-            done = time.time()
+    @get('/vtt/api/auth')
+    def api_query_auth():
+        # query gms and how many accounts do idle
+        now = time.time()
+        provider = {}
+        for gm in engine.main_db.GM.select():
+            # fetch provider
+            p = '-'.join(gm.metadata.split('|')[:-1])
+            for k in ['-oauth2', 'oauth2-']:
+                p = p.replace(k, '')
+            if p not in provider:
+                provider[p] = 1
+            else:
+                provider[p] += 1
+        done = time.time()
 
-            provider['query_time'] = done - now
-            return provider
+        provider['query_time'] = done - now
+        return provider

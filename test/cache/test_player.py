@@ -1,5 +1,3 @@
-#!/usr/bin/python3 
-# -*- coding: utf-8 -*- 
 """
 https://github.com/cgloeckner/pyvtt/
 
@@ -467,9 +465,9 @@ class PlayerCacheTest(EngineBaseTest):
         # expect player's selection being updated
         self.assertEqual(player_cache1.selected, selected)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger selection reste and expect SELECT broadcast  
         selected = list()
@@ -550,9 +548,9 @@ class PlayerCacheTest(EngineBaseTest):
         #self.assertIn(at_top.id,    player_cache1.selected)
         #self.assertIn(at_bottom.id, player_cache1.selected)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger range query on empty space
         query = {
@@ -573,9 +571,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['OPID'], 'SELECT')
         self.assertEqual(len(player_cache1.selected), 0)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
 
         # trigger adding range query on empty space
         player_cache1.selected = [145634]  
@@ -598,9 +596,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(len(player_cache1.selected), 1)
         self.assertIn(145634, player_cache1.selected)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger adding range query on regular space
         query = {
@@ -674,9 +672,9 @@ class PlayerCacheTest(EngineBaseTest):
         }
         self.assertEqual(answer1['indices'], expected)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # moving player right triggers ORDER broadcast
         game_cache.on_order(player_cache2, {'name': 'bob', 'direction': 1})
@@ -695,9 +693,9 @@ class PlayerCacheTest(EngineBaseTest):
         }
         self.assertEqual(answer1['indices'], expected)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # cannot move more then one spot 
         game_cache.on_order(player_cache2, {'name': 'bob', 'direction': 2})
@@ -709,9 +707,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertIsNone(answer2)
         self.assertIsNone(answer3)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # cannot move without direction
         game_cache.on_order(player_cache2, {'name': 'bob', 'direction': 0})
@@ -723,9 +721,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertIsNone(answer2)
         self.assertIsNone(answer3)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # cannot move unknown player
         game_cache.on_order(player_cache2, {'name': 'roger', 'direction': 0})
@@ -737,9 +735,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertIsNone(answer2)
         self.assertIsNone(answer3)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # moving first player left triggers ORDER with unchanged data
         game_cache.on_order(player_cache2, {'name': 'arthur', 'direction': -1})
@@ -753,9 +751,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['OPID'], 'ORDER')
         self.assertEqual(answer1['indices'], expected)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # moving last player right triggers ORDER with unchanged data
         game_cache.on_order(player_cache2, {'name': 'carlos', 'direction': 1})
@@ -813,9 +811,9 @@ class PlayerCacheTest(EngineBaseTest):
         # expect game expiring timer being updated
         self.assertGreater(game.id, last_update)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger update for invalid token expecting empty 'UPDATE' broadcast
         update_data = copy.deepcopy(default_update)
@@ -829,9 +827,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['OPID'], 'UPDATE')
         self.assertEqual(len(answer1['tokens']), 0)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger token's position update
         update_data = copy.deepcopy(default_update)
@@ -849,9 +847,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(token.posx, 38)
         self.assertEqual(token.posy, 43)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # cannot modify token's posx only
         update_data = copy.deepcopy(default_update)
@@ -868,9 +866,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(token.posx, 38)
         self.assertEqual(token.posy, 43)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # cannot modify token's posy only
         update_data = copy.deepcopy(default_update)
@@ -887,9 +885,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(token.posx, 38)
         self.assertEqual(token.posy, 43)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger token's size update
         update_data = copy.deepcopy(default_update)
@@ -905,9 +903,9 @@ class PlayerCacheTest(EngineBaseTest):
         token = query_token()
         self.assertEqual(token.size, 50)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger token's zorder-layering update
         update_data = copy.deepcopy(default_update)
@@ -923,9 +921,9 @@ class PlayerCacheTest(EngineBaseTest):
         token = query_token()
         self.assertEqual(token.zorder, 13)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger token's rotate update
         update_data = copy.deepcopy(default_update)
@@ -941,9 +939,9 @@ class PlayerCacheTest(EngineBaseTest):
         token = query_token()
         self.assertAlmostEqual(token.rotate, 22.25)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger token's flip-x update
         update_data = copy.deepcopy(default_update)
@@ -959,9 +957,9 @@ class PlayerCacheTest(EngineBaseTest):
         token = query_token()
         self.assertTrue(token.flipx)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger token's flip-x redo update
         update_data = copy.deepcopy(default_update)
@@ -977,9 +975,9 @@ class PlayerCacheTest(EngineBaseTest):
         token = query_token()
         self.assertFalse(token.flipx)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger token's locking update
         update_data = copy.deepcopy(default_update)
@@ -995,9 +993,9 @@ class PlayerCacheTest(EngineBaseTest):
         token = query_token()
         self.assertTrue(token.locked)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger token's unlocking update
         update_data = copy.deepcopy(default_update)
@@ -1028,9 +1026,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(token.text, 'foobar')
         self.assertEqual(token.color, 'red')
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # trigger token's label reset
         update_data = copy.deepcopy(default_update)
@@ -1046,9 +1044,9 @@ class PlayerCacheTest(EngineBaseTest):
         token = query_token()
         self.assertEqual(token.text, '')
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
         # tokens do not have to be sorted by IDs
         update_data = copy.deepcopy(default_update)
@@ -1069,9 +1067,9 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(token1.posx, 10)
         self.assertEqual(token1.posy, 9)
         
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         
     def test_onCreateToken(self):
         socket1 = SocketDummy()
@@ -1641,9 +1639,9 @@ class PlayerCacheTest(EngineBaseTest):
         game_cache.on_create_scene(player_cache2, {})
         game_cache.on_create_scene(player_cache2, {})
         game_cache.on_create_scene(player_cache2, {})
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
 
         # query all scenes in that game
         with db_session:
@@ -1726,9 +1724,9 @@ class PlayerCacheTest(EngineBaseTest):
             self.purge_game()
         game_cache.on_create_scene(player_cache2, {})
         game_cache.on_create_scene(player_cache2, {})
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
 
         # query all scenes in that game
         with db_session:
@@ -1800,9 +1798,9 @@ class PlayerCacheTest(EngineBaseTest):
                 self.purge_game()
             game_cache.on_create_scene(player_cache2, {})
             game_cache.on_create_scene(player_cache2, {})
-            socket1.clearAll()
-            socket2.clearAll()
-            socket3.clearAll()
+            socket1.clear_all()
+            socket2.clear_all()
+            socket3.clear_all()
             
             # query all scenes in that game
             with db_session:
@@ -1909,9 +1907,9 @@ class PlayerCacheTest(EngineBaseTest):
             game_cache.on_create_scene(player_cache2, {})
             game_cache.on_create_scene(player_cache2, {})
             game_cache.on_create_scene(player_cache2, {})
-            socket1.clearAll()
-            socket2.clearAll()
-            socket3.clearAll()
+            socket1.clear_all()
+            socket2.clear_all()
+            socket3.clear_all()
             
             # query all scenes in that game
             with db_session:
@@ -2003,9 +2001,9 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             self.purge_game()
         game_cache.on_create_scene(player_cache2, {})
-        socket1.clearAll()
-        socket2.clearAll()
-        socket3.clearAll()
+        socket1.clear_all()
+        socket2.clear_all()
+        socket3.clear_all()
         # expect scene order with remaining scene
         with db_session:
             game = self.get_game()

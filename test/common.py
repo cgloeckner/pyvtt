@@ -1,5 +1,3 @@
-#!/usr/bin/python3 
-# -*- coding: utf-8 -*- 
 """
 https://github.com/cgloeckner/pyvtt/
 
@@ -12,23 +10,60 @@ import pathlib
 import tempfile
 import time
 import unittest
-import webtest
+import zipfile
+import os
+import functools
 
 import bottle
+import webtest
+from PIL import Image
 from geventwebsocket.exceptions import WebSocketError
 
 from vtt.engine import Engine
 from vtt.utils import PathApi
 
 
+@functools.cache
+def make_image(w, h):
+    pil_img = Image.new(mode='RGB', size=(w, h))
+    with tempfile.NamedTemporaryFile('wb') as wh:
+        pil_img.save(wh.name, 'BMP')
+        with open(wh.name, 'rb') as rh:
+            return rh.read()
+
+
+@functools.cache
+def make_zip(filename, data, n):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # create json
+        json_path = os.path.join(tmp_dir, 'game.json')
+        with open(json_path, 'w') as jh:
+            jh.write(data)
+        # create image
+        for i in range(n):
+            img_path = os.path.join(tmp_dir, '{0}.bmp'.format(i))
+            img_file = Image.new(mode='RGB', size=(1024, 1024))
+            img_file.save(img_path)
+        # pack zip
+        zip_path = os.path.join(tmp_dir, '{0}.zip'.format(filename))
+        with zipfile.ZipFile(zip_path, "w") as zh:
+            zh.write(json_path, 'game.json')
+            for i in range(n):
+                zh.write(img_path, '{0}.bmp'.format(i))
+        with open(zip_path, 'rb') as rh:
+            return rh.read()
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 class EngineBaseTest(unittest.TestCase):
-        
+
     def setUp(self):
         # create temporary directory
         self.tmpdir = tempfile.TemporaryDirectory()
-        self.root   = pathlib.Path(self.tmpdir.name)
+        self.root = pathlib.Path(self.tmpdir.name)
         
-        # pregenerate paths api for dummyfiles            
+        # pre-generate paths api for dummy files
         paths = PathApi(appname='unittest', pref_root=self.root)
         for w in ['verbs', 'adjectives', 'nouns']:
             with open(paths.get_fancy_url_path() / '{0}.txt'.format(w), 'w') as h:
@@ -55,22 +90,39 @@ class EngineBaseTest(unittest.TestCase):
         del self.engine
         del self.tmpdir
 
+    def join_player(self, gm_url, game_url, player_name, player_color):
+        # post login
+        ret = self.app.post('/game/{0}/{1}/login'.format(gm_url, game_url),
+                            {'playername': player_name, 'playercolor': player_color})
+        self.assertEqual(ret.status_int, 200)
+        # open fake socket
+        s = SocketDummy()
+        s.block = True
+        s.push_receive({'name': player_name, 'gm_url': gm_url, 'game_url': game_url})
+        # listen to the faked websocket
+        return ret, self.engine.cache.listen(s)
+
 
 # ---------------------------------------------------------------------
 
 class SocketDummy(object):
     """ Dummy class for working with a socket.
     """
+
+    read_buffer: list
+    write_buffer: list
+    closed: False
+    block: False
     
     def __init__(self):
-        self.clearAll()
+        self.clear_all()
         
-    def clearAll(self):
-        self.read_buffer  = list()
+    def clear_all(self):
+        self.read_buffer = list()
         self.write_buffer = list()
         
         self.closed = False
-        self.block  = True
+        self.block = True
         
     def receive(self):
         if self.closed:
@@ -115,13 +167,14 @@ def setup_unittest_routes(engine):
     @bottle.get('/vtt/unittest/game')
     @bottle.view('unittest_game')
     def unittest_demo_game():
-        gm = engine.main_db.GM.select(lambda gm: gm.url == 'arthur').first()
+        gm = engine.main_db.GM.select(lambda _gm: _gm.url == 'arthur').first()
         gm_cache = engine.cache.get_from_url('arthur')
         game = gm_cache.db.Game.select(lambda g: g.url == 'test-game-1').first()
             
         websocket_url = engine.get_websocket_url()
             
-        return dict(engine=engine, user_agent='UNITTEST', websocket_url=websocket_url, game=game, playername='arthur',playercolor='#FF0000', gm=gm, is_gm=True)
+        return dict(engine=engine, user_agent='UNITTEST', websocket_url=websocket_url, game=game, playername='arthur',
+                    playercolor='#FF0000', gm=gm, is_gm=True)
 
     # setup demo game
     # @TODO register GM arthur
@@ -133,4 +186,3 @@ def setup_unittest_routes(engine):
     for route in ['/vtt/unittest/game']:
         print('\t{0}{1}'.format(server_uri, route))
     print('=' * 80)
-

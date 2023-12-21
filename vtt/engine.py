@@ -188,15 +188,16 @@ class Engine(object):
                 self.logging.info(f'Using Public IP {ip} as Domain')
 
             # FIXME: use factory pattern
-            if self.notify['type'] == 'webhook' and not self.debug:
-                if self.notify['provider'] == 'discord':
-                    self.notify_api = utils.DiscordWebhookNotifier(self, appname=appname, **self.notify)
+            if self.notify is not None and not self.debug:
+                if self.notify['type'] == 'webhook':
+                    if self.notify['provider'] == 'discord':
+                        self.notify_api = utils.DiscordWebhookNotifier(self, appname=appname, **self.notify)
 
-            if self.notify['type'] == 'email' and not self.debug:
-                # create email notify API
-                self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
+                if self.notify['type'] == 'email':
+                    # create email notify API
+                    self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
 
-            if self.login['type'] == 'oauth':
+            if self.login is not None and self.login['type'] == 'oauth':
                 self.login_api = utils.OAuthLogin(engine=self, **self.login)
 
         self.logging.info('Loading main database...')
