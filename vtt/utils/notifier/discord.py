@@ -29,8 +29,7 @@ class DiscordWebhookNotifier:
         users = [f'<@{user}>' for user in self.users]
         return f' '.join(roles + users)
 
-    def send(self, message: str) -> None:
-        content = f'{self.get_mentions()}: {message}'
+    def send(self, content: str) -> None:
         httpx.post(self.url, json={'username': self.alias, 'content': content})
 
     def on_start(self) -> None:
@@ -44,5 +43,6 @@ class DiscordWebhookNotifier:
         self.send(msg)
 
     def on_error(self, error_id: str, message: str):
-        self.send(f'Exception Traceback #{error_id}\n'
-                  f'{message}')
+        self.send(f'{self.get_mentions()}:\n'
+                  f'Exception Traceback `#{error_id}`\n'
+                  f'```{message}```')
