@@ -1910,7 +1910,7 @@ class PlayerCacheTest(EngineBaseTest):
                 _all_scene_ids = [s.id for s in gm_cache.db.Scene.select(lambda s: s.game.url == 'bar')]
                 _active = self.active_scene()
                 self.assertEqual(len(_all_scene_ids), 4)
-                self.assertEqual(_all_scene_ids[3], active.id)
+                self.assertEqual(_all_scene_ids[3], _active.id)
 
             return _all_scene_ids, _active
         

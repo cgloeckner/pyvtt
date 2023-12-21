@@ -406,11 +406,11 @@ class GameCache:
     def on_range(self, player, data):
         """ Handle player selecting multiple tokens. """
         # fetch rectangle data
-        adding = data['adding']
-        left = data['left']
-        top = data['top']
-        width = data['width']
-        height = data['height']
+        adding = data.get('adding')
+        left = data.get('left')
+        top = data.get('top')
+        width = data.get('width')
+        height = data.get('height')
 
         if left is None or top is None or width is None or height is None:
             # ignore incomplete range query
