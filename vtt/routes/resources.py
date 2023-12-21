@@ -17,7 +17,7 @@ def register(engine: any):
     def static_files(filename: str):
         root = engine.paths.get_static_path()
         if not os.path.isdir(root) or not os.path.exists(root / filename):
-            root = './static'
+            root = engine.paths.get_static_path(default=True)
 
         # @NOTE: no need to check file extension, this directory is
         # meant to be accessible as a whole
