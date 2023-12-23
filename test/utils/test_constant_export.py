@@ -9,7 +9,7 @@ import tempfile
 import unittest
 import pathlib
 
-from vtt import utils
+from vtt import utils, orm
 
 
 class ConstantExportTest(unittest.TestCase):
@@ -21,21 +21,36 @@ class ConstantExportTest(unittest.TestCase):
     def tearDown(self):
         del self.tmp_file
 
-    def test_setitem(self):
-        e = utils.ConstantExport()
-        self.assertEqual(len(e.data), 0)
+    def test_load_from_engine(self):
+        class MockEngine:
+            file_limit: dict[str, int] = {
+                'token': 5,
+                'background': 25,
+                'game': 40,
+                'music': 6,
+                'num_music': 7
+            }
+            playercolors: list[str] = ['#ff0000', '#00ff00', '#0000ff']
 
-        e['test'] = 'foo'
-        e['bar'] = 42
-        e['number'] = 3.14     
-        e['thing'] = True
-        e['other'] = False
-        self.assertEqual(e.data['test'], 'foo')
-        self.assertEqual(e.data['bar'], 42)
-        self.assertEqual(e.data['number'], 3.14)
-        self.assertTrue(e.data['thing'])
-        self.assertFalse(e.data['other'])
-        
+        mock_engine = MockEngine()
+
+        e = utils.ConstantExport()
+        e.load_from_engine(mock_engine)
+
+        self.assertEqual(e['MAX_SCENE_WIDTH'], orm.MAX_SCENE_WIDTH)
+        self.assertEqual(e['MAX_SCENE_HEIGHT'], orm.MAX_SCENE_HEIGHT)
+        self.assertEqual(e['MIN_TOKEN_SIZE'], orm.MIN_TOKEN_SIZE)
+        self.assertEqual(e['MAX_TOKEN_SIZE'], orm.MAX_TOKEN_SIZE)
+        self.assertEqual(e['MAX_TOKEN_LABEL_SIZE'], orm.MAX_TOKEN_LABEL_SIZE)
+
+        self.assertEqual(e['MAX_TOKEN_FILESIZE'], 5)
+        self.assertEqual(e['MAX_BACKGROUND_FILESIZE'], 25)
+        self.assertEqual(e['MAX_GAME_FILESIZE'], 40)
+        self.assertEqual(e['MAX_MUSIC_FILESIZE'], 6)
+        self.assertEqual(e['MAX_MUSIC_SLOTS'], 7)
+
+        self.assertEqual(e['SUGGESTED_PLAYER_COLORS'], mock_engine.playercolors)
+
     def test_saveToMemory(self):
         e = utils.ConstantExport()
         e['test'] = 'foo'

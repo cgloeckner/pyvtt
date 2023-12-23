@@ -5,10 +5,11 @@ Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import os
 import pathlib
+import sys
 import tempfile
 import unittest
+import pytest
 
 from vtt import utils
 
@@ -28,7 +29,22 @@ class PathApiTest(unittest.TestCase):
         
     def assert_directory(self, p: pathlib.Path) -> None:
         self.assertTrue(p.exists())
-        
+
+    def test_path_api_default(self):
+        fake_path = pathlib.Path(self.tmpdir.name) / 'fake_home'
+        patch = pytest.MonkeyPatch()
+        patch.setattr(pathlib.Path, 'home', lambda: fake_path)
+
+        root = utils.PathApi(appname='unittest')
+        self.assertEqual(root.pref_root, fake_path / '.local' / 'share' / 'unittest')
+
+    def test_path_api_non_linux(self):
+        patch = pytest.MonkeyPatch()
+        patch.setattr(sys, 'platform', 'test-system')
+
+        with self.assertRaises(NotImplementedError):
+            root = utils.PathApi(appname='unittest')
+
     def test_ensure(self):
         # @NOTE: ensure() is called by the constructor
         
@@ -50,6 +66,7 @@ class PathApiTest(unittest.TestCase):
         self.paths.get_client_code_path()
         self.paths.get_settings_path()
         self.paths.get_main_database_path()
+        self.paths.get_constants_path()
         self.paths.get_ssl_path()
         self.paths.get_log_path('foo')
         

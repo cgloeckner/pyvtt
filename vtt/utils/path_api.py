@@ -40,8 +40,8 @@ class PathApi:
 
     @staticmethod
     def ensure(path: pathlib.Path) -> None:
-        if not os.path.isdir(path):
-            os.mkdir(path)
+        if not path.is_dir():
+            path.mkdir(parents=True)
 
     # Engine paths
 

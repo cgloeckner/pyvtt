@@ -1,7 +1,9 @@
+sha.txt
+htmlcov/
+
 # PyCharm
 .idea
 
-sha.txt
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

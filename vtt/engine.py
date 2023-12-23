@@ -248,7 +248,8 @@ class Engine(object):
 
         # export server constants to javascript-file
         self.constants = utils.ConstantExport()
-        self.constants(self)
+        self.constants.load_from_engine(self)
+        self.constants.save_to_file(self.paths.get_constants_path())
 
         # game cache
         self.cache = EngineCache(self)
@@ -373,7 +374,11 @@ class Engine(object):
                 records.append(LoginRecord(*args))
         return records
 
-    
+    def on_error(self, error_id: str, message: str) -> None:
+        self.logging.error(message)
+        if self.notify_api is not None:
+            self.notify_api.on_error(error_id, message)
+
     @staticmethod
     def get_md5(handle):
         hash_md5 = hashlib.md5()

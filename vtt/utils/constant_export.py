@@ -13,35 +13,9 @@ import typing
 
 
 # Exports Constants to a JavaScript-File to allow their use client-side, too
-class ConstantExport:
+class ConstantExport(dict):
 
-    def __init__(self) -> None:
-        self.data = dict()
-
-    def __setitem__(self, key: str, value: any) -> None:
-        """ @NOTE: key will be the javascript-identifier. But there
-        is no syntax test here, this is up to the caller.
-        """
-        self.data[key] = value
-
-    def save_to_memory(self) -> str:
-        out = ''
-        for key in self.data:
-            raw = self.data[key]
-            if isinstance(raw, str):
-                raw = '"{0}"'.format(raw)
-            elif isinstance(raw, bool):
-                raw = 'true' if raw else 'false'
-            out += f'var {key} = {raw};\n'
-        return out
-
-    def save_to_file(self, path: pathlib.Path) -> None:
-        content = '/** DO NOT MODIFY THIS FILE. IT WAS CREATED AUTOMATICALLY. */\n'
-        content += self.save_to_memory()
-        with open(path, 'w') as h:
-            h.write(content)
-
-    def __call__(self, engine: typing.Any) -> None:
+    def load_from_engine(self, engine: typing.Any) -> None:
         import vtt.orm as orm
         self['MAX_SCENE_WIDTH'] = orm.MAX_SCENE_WIDTH
         self['MAX_SCENE_HEIGHT'] = orm.MAX_SCENE_HEIGHT
@@ -57,4 +31,19 @@ class ConstantExport:
 
         self['SUGGESTED_PLAYER_COLORS'] = engine.playercolors
 
-        self.save_to_file(engine.paths.get_constants_path())
+    def save_to_memory(self) -> str:
+        out = ''
+        for key in self:
+            raw = self[key]
+            if isinstance(raw, str):
+                raw = '"{0}"'.format(raw)
+            elif isinstance(raw, bool):
+                raw = 'true' if raw else 'false'
+            out += f'var {key} = {raw};\n'
+        return out
+
+    def save_to_file(self, path: pathlib.Path) -> None:
+        content = '/** DO NOT MODIFY THIS FILE. IT WAS CREATED AUTOMATICALLY. */\n'
+        content += self.save_to_memory()
+        with open(path, 'w') as h:
+            h.write(content)

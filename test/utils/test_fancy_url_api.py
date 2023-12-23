@@ -17,8 +17,14 @@ class FancyUrlApiTest(unittest.TestCase):
     def setUp(self):            
         # create temporary directory
         self.tmpdir = tempfile.TemporaryDirectory()
-        self.paths = utils.PathApi(appname='unittest', app_root=pathlib.Path('..'),
-                                   pref_root=pathlib.Path(self.tmpdir.name))
+        pref_root = pathlib.Path(self.tmpdir.name)
+
+        self.paths = utils.PathApi(appname='unittest', app_root=pathlib.Path('..'), pref_root=pref_root)
+        verbs_file = self.paths.get_fancy_url_path('verbs')
+
+        with open(verbs_file, 'w') as h:
+            h.write('\n'.join(['push', 'pull', 'move', '']))
+
         self.urls = utils.FancyUrlApi(self.paths)
 
     def tearDown(self):

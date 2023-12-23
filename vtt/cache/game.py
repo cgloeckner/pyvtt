@@ -60,7 +60,7 @@ class GameCache:
             # sort players by old indices
             tmp = dict(sorted(self.players.items(), key=lambda i: i[1].index))
 
-            # generate new_indicex
+            # generate new_index
             for new_index, n in enumerate(tmp):
                 self.players[n].index = new_index
 
