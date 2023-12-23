@@ -1,2 +1,2 @@
-from .discord import DiscordWebhookNotifier
+from .discord import DiscordWebhook
 from .email import EmailApi

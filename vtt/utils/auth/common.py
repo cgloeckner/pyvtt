@@ -6,28 +6,27 @@ License: MIT (see LICENSE for details)
 """
 
 import abc
+import typing
 
-import bottle
 
-
-Session = dict[str, str]
+AuthSession = dict[str, str]
+AuthHandle = typing.Callable[[AuthSession], None]
 
 
 # @NOTE: this class is not covered in the unit tests because it depends too much on external resources
 class BaseLoginApi(abc.ABC):
 
-    def __init__(self, api: str, engine: any, **data):
-        self.api = api
-        self.engine = engine
-        self.callback = f'{engine.get_auth_callback_url()}/{api}'  # https://example.com/my/callback/path/api_name
-        self.client_id = data['client_id']  # ID of API key
-        self.client_secret = data['client_secret']  # Secret of API key
-        self.icon_url = data['icon']
+    def __init__(self, api_name: str, callback_url: str, client_id: str, client_secret: str, icon_url: str):
+        self.api_name = api_name
+        self.callback = f'{callback_url}/{api_name}'  # https://example.com/my/callback/path/api_name
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.icon_url = icon_url
 
-        self.login_caption = f'Login with {api}'
+        self.login_caption = f'Login with {api_name}'
 
     def get_auth_url(self) -> str: ...
-    def get_session(self, request: bottle.Request) -> Session: ...
+    def get_session(self, request_url: str) -> AuthSession: ...
 
 
 class LoginClient(abc.ABC):

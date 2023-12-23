@@ -12,16 +12,16 @@ import json
 import httpx
 
 
-class DiscordWebhookNotifier:
+class DiscordWebhook:
     """Send notifications to a discord webhook"""
 
-    def __init__(self, engine: any, **data):
-        self.engine = engine
-        self.appname = data['appname']
-        self.alias = data['alias']
-        self.url = data['url']
-        self.roles = data['roles']
-        self.users = data['users']
+    def __init__(self, app_title: str, alias: str, url: str, roles: list[str], users: list[str]):
+        self.app_title = app_title
+
+        self.alias = alias
+        self.url = url
+        self.roles = roles
+        self.users = users
 
     def get_mentions(self) -> str:
         """Get mentioning string for relevant roles and users."""
@@ -33,10 +33,10 @@ class DiscordWebhookNotifier:
         httpx.post(self.url, json={'username': self.alias, 'content': content})
 
     def on_start(self) -> None:
-        msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.get_domain()} is now online!'
+        msg = f'The VTT Server {self.app_title} is now online!'
         self.send(msg)
 
-    def on_cleanup(self, report: any) -> None:
+    def on_cleanup(self, report: dict) -> None:
         report = json.dumps(report, indent=4)
         msg = (f'The VTT Server finished cleanup.\n'
                f'```{report}```')

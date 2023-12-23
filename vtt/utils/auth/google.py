@@ -4,54 +4,50 @@ https://github.com/cgloeckner/pyvtt/
 Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
-import os
-import typing
 
 import bottle
 import google.auth.transport.requests
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-from .common import BaseLoginApi, LoginClient, Session
+from .common import BaseLoginApi, LoginClient, AuthSession, AuthHandle
 
 
 class GoogleLogin(BaseLoginApi):
 
-    def __init__(self, engine: typing.Any, client: LoginClient, **data):
-        super().__init__('google', engine, **data)
+    def __init__(self, client: LoginClient, on_auth: AuthHandle, callback_url: str, client_id: str, client_secret: str,
+                 icon_url: str):
+        super().__init__('google', callback_url, client_id, client_secret, icon_url)
         self.client = client
+        self.on_auth = on_auth
 
-        if engine.debug:
-            # accept non-https for testing oauth (e.g. localhost)
-            os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
-    def get_auth_url(self) -> str:
-        """ Generate google-URL to access in order to fetch data. """
-        # create auth flow session
-        f = InstalledAppFlow.from_client_config(
-            client_config={
-                'web': {
+        self.client_config = {
+            'web': {
                     'client_id': self.client_id,
                     'client_secret': self.client_secret,
                     'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
                     'token_uri': 'https://oauth2.googleapis.com/token'
                 }
-            },
-            scopes=[
-                'https://www.googleapis.com/auth/userinfo.email',
-                'https://www.googleapis.com/auth/userinfo.profile',
-                'openid'
-            ],
-            redirect_uri=self.callback)
+        }
+
+        self.scopes = [f'https://www.googleapis.com/auth/{scope}' for scope in ['userinfo.email', 'userinfo.profile']]
+        self.scopes.append('openid')
+
+    def get_auth_url(self) -> str:
+        """ Generate google-URL to access in order to fetch data. """
+        # create auth flow session
+        f = InstalledAppFlow.from_client_config(client_config=self.client_config, scopes=self.scopes,
+                                                redirect_uri=self.callback)
 
         auth_url, state = f.authorization_url()
         self.client.save_session(state, f)
 
         return auth_url
 
-    def get_session(self, request: bottle.Request) -> Session:
+    # FIXME: not tested yet, because it would requires mocking the google oauth api
+    def get_session(self, request_url) -> AuthSession:
         """ Query google to return required user data and infos."""
-        state = request.url.split('state=')[1].split('&')[0]
+        state = request_url.split('state=')[1].split('&')[0]
 
         # fetch token
         f = self.client.load_session(state)
@@ -71,6 +67,6 @@ class GoogleLogin(BaseLoginApi):
             'metadata': f'google-oauth2|{id_info.get("sub")}'
         }
 
-        self.engine.logging.auth(result)
+        self.on_auth(result)
 
         return result

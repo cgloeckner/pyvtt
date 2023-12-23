@@ -21,7 +21,7 @@ def _login_callback(engine: any, provider: str):
         client_ip = engine.get_client_ip(request)
 
         # query session from login auth
-        session = engine.login_api.providers[provider].get_session(request)
+        session = engine.login_api.providers[provider].get_session(request.url)
         if 'identity' not in session:
             redirect('/vtt/join')
 
@@ -81,7 +81,7 @@ def register(engine: any):
         return dict(engine=engine)
 
     if engine.login_api is not None:
-        for provider in engine.login_api.providers:
+        for provider in engine.login_api.apis:
             _login_callback(engine, provider)
 
     else:

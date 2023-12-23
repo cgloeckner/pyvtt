@@ -7,16 +7,16 @@ License: MIT (see LICENSE for details)
 
 import requests
 
-import bottle
-
-from .common import BaseLoginApi, LoginClient, Session
+from .common import BaseLoginApi, LoginClient, AuthSession, AuthHandle
 
 
 class DiscordLogin(BaseLoginApi):
 
-    def __init__(self, engine: any, client: LoginClient, **data):
-        super().__init__('discord', engine, **data)
+    def __init__(self, client: LoginClient, on_auth: AuthHandle, callback_url: str, client_id: str, client_secret: str,
+                 icon_url: str):
+        super().__init__('discord', callback_url, client_id, client_secret, icon_url)
         self.client = client
+        self.on_auth = on_auth
         self.scopes = '+'.join(['identify', 'email'])
 
     def get_auth_url(self) -> str:
@@ -26,8 +26,9 @@ class DiscordLogin(BaseLoginApi):
                 f'scope={self.scopes}&'
                 f'response_type=code')
 
-    def get_session(self, request: bottle.Request) -> Session:
-        code = request.url.split('code=')[1].split('&')[0]
+    # FIXME: not tested yet, because it would requires mocking the discord oauth api
+    def get_session(self, request_url: str) -> AuthSession:
+        code = request_url.split('code=')[1].split('&')[0]
 
         # query access token
         data = {
@@ -54,6 +55,6 @@ class DiscordLogin(BaseLoginApi):
             'metadata': f'discord-oauth2|{user_data["email"]}'
         }
 
-        self.engine.logging.auth(result)
+        self.on_auth(result)
 
         return result

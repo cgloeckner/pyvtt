@@ -88,6 +88,7 @@ class Engine(object):
         }
         self.login          = dict() # login settings
         self.login['type']  = ''
+        self.login['providers']: dict[str, str] = {}
         self.login_api      = None   # login api instance
         self.notify         = dict() # crash notify settings
         self.notify['type'] = ''
@@ -191,14 +192,16 @@ class Engine(object):
             if self.notify is not None and not self.debug:
                 if self.notify['type'] == 'webhook':
                     if self.notify['provider'] == 'discord':
-                        self.notify_api = utils.DiscordWebhookNotifier(self, appname=appname, **self.notify)
+                        app_title = f'{self.title} on {self.get_domain()}'
+                        self.notify_api = utils.DiscordWebhook(app_title=app_title, **self.notify)
 
                 if self.notify['type'] == 'email':
                     # create email notify API
                     self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
 
             if self.login is not None and self.login['type'] == 'oauth':
-                self.login_api = utils.OAuthLogin(engine=self, **self.login)
+                self.login_api = utils.OAuthClient(on_auth=self.logging.auth, callback_url=self.get_auth_callback_url(),
+                                                   providers=self.login['providers'])
 
         self.logging.info('Loading main database...')
         # create main database
@@ -214,7 +217,7 @@ class Engine(object):
         
         else:
             # use custom middleware
-            self.error_reporter = utils.ErrorReporter(self)
+            self.error_reporter = utils.ErrorDispatcher(self.get_client_ip, self.logging.error)
             self.app.install(self.error_reporter.plugin)
         
         # dice roll specific timers

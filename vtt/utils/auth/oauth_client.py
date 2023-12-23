@@ -7,22 +7,18 @@ License: MIT (see LICENSE for details)
 
 from gevent import lock
 
-from .common import LoginClient
-from .discord import DiscordLogin
-from .google import GoogleLogin
+from .factory import create_login_api
+from .common import LoginClient, AuthHandle
 
 
-class OAuthLogin(LoginClient):
-    def __init__(self, engine: any, **kwargs):
-        self.engine = engine
+ProviderData = dict[str, dict[str, str]]  # keys api_name to dict of settings
 
-        # register all oauth providers
-        self.providers = {}
-        for provider in kwargs['providers']:
-            if provider == 'google':
-                self.providers['google'] = GoogleLogin(engine, self, **kwargs['providers'][provider])
-            if provider == 'discord':
-                self.providers['discord'] = DiscordLogin(engine, self, **kwargs['providers'][provider])
+
+class OAuthClient(LoginClient):
+    def __init__(self, on_auth: AuthHandle, callback_url: str, providers: ProviderData):
+        # register all provided login APIs
+        self.apis = {api_name: create_login_api(self, on_auth, api_name, callback_url, providers[api_name])
+                     for api_name in providers}
 
         # thread-safe structure to hold login sessions
         self.sessions: dict[str, any] = {}
@@ -47,5 +43,5 @@ class OAuthLogin(LoginClient):
 
         return provider.lower()
 
-    def get_icon_url(self, key: str) -> str:
-        return self.providers[key].icon_url
+    def get_icon_url(self, api_name: str) -> str:
+        return self.apis[api_name].icon_url

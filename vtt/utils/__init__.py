@@ -6,4 +6,4 @@ from .fancy_url import *
 from .logging_api import *
 from .path_api import *
 from .notifier import *
-from .oauth import *
+from .auth import *
