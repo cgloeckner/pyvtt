@@ -35,20 +35,53 @@ class GmTest(EngineBaseTest):
         gm_cache = self.engine.cache.get(gm)
         self.assertIsNotNone(gm_cache)
 
-    @db_session
     def test_hasExpired(self):
-        gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-        gm.post_setup()
+        with db_session:
+            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
+            gm.post_setup()
+            now = int(time.time())
+
+        gm_cache = self.engine.cache.insert(gm)
+        gm_cache.connect_db()
+
+        with db_session:
+            gm = self.engine.main_db.GM.select(url=gm.url).first()
+
+            # has not expired yet
+            gm.timeid = int(now - self.engine.cleanup['expire'] * 0.75)
+            self.assertFalse(gm.has_expired(now, gm_cache.db))
+
+            # has expired
+            gm.timeid = int(now - self.engine.cleanup['expire'] * 1.2)
+            self.assertTrue(gm.has_expired(now, gm_cache.db))
+
+    def test_gm_is_not_expired_if_has_recent_games(self) -> None:
         now = int(time.time())
 
-        # has not expired yet
-        gm.timeid = int(now - self.engine.cleanup['expire'] * 0.75)
-        self.assertFalse(gm.has_expired(now))
+        with db_session:
+            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
+            gm.post_setup()
 
-        # has expired
-        gm.timeid = int(now - self.engine.cleanup['expire'] * 1.2)
-        self.assertTrue(gm.has_expired(now))
-    
+        gm_cache = self.engine.cache.insert(gm)
+        gm_cache.connect_db()
+
+        with db_session:
+            gm = self.engine.main_db.GM.select(url=gm.url).first()
+            gm.timeid = 1
+            self.assertTrue(gm.has_expired(now, gm_cache.db))
+
+        with db_session:
+            game = gm_cache.db.Game(url='test-game', gm_url=gm.url)
+            game.post_setup()
+
+            game.timeid = 1
+            self.assertTrue(game.has_expired(now, 1.0))
+            self.assertTrue(gm.has_expired(now, gm_cache.db))
+
+            game.timeid = now
+            self.assertFalse(game.has_expired(now, 1.0))
+            self.assertFalse(gm.has_expired(now, gm_cache.db))
+
     def test_cleanup(self):
         with db_session:
             # create demo GM

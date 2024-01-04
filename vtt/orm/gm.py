@@ -67,9 +67,18 @@ def register(engine: any, db: Database):
             # add to engine's GM cache
             engine.cache.insert(self)
 
-        def has_expired(self, now: int) -> bool:
+        def has_expired(self, now: int, gm_db: Database) -> bool:
             delta = now - self.timeid
-            return self.timeid > 0 and delta > engine.cleanup['expire']
+            if self.timeid == 0 or delta <= engine.cleanup['expire']:
+                return False
+
+            # check whether all games have expired too
+            for game in gm_db.Game.select(gm_url=self.url):
+                if not game.has_expired(now, 1.0):
+                    # at least this game did not expire yet
+                    return False
+
+            return True
 
         @staticmethod
         def cleanup(gm_db: Database, now: int) -> CleanupReport:
