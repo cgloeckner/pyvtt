@@ -193,7 +193,9 @@ class Engine(object):
                 if self.notify['type'] == 'webhook':
                     if self.notify['provider'] == 'discord':
                         app_title = f'{self.title} on {self.get_domain()}'
-                        self.notify_api = utils.DiscordWebhook(app_title=app_title, **self.notify)
+                        self.notify_api = utils.DiscordWebhook(app_title=app_title, alias=self.notify['alias'],
+                                                               url=self.notify['url'], roles=self.notify['roles'],
+                                                               users=self.notify['users'])
 
                 if self.notify['type'] == 'email':
                     # create email notify API
@@ -422,7 +424,7 @@ class Engine(object):
                 gm_cache = self.cache.get(gm)
 
                 # check if GM expired
-                if gm.has_expired(now):
+                if gm.has_expired(now, gm_cache.db):
                     # remove expired GM
                     num_bytes += gm.pre_delete()
                     gms.append(gm.url)
