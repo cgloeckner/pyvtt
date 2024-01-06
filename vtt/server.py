@@ -17,35 +17,29 @@ from gevent import socket
 from geventwebsocket.handler import WebSocketHandler
 
 
+def get_unix_socket_listener(filename) -> socket.socket:
+    if os.path.exists(filename):
+        os.remove(filename)
+    listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    listener.bind(filename)
+    listener.listen(1)
+    return listener
+
+
 # Server adapter providing support for WebSockets and UnixSocket
 class VttServer(bottle.ServerAdapter):
     
     def __init__(self, host, port, **options):
-        # handle given unixsocket
-        self.unixsocket = ''
-        if 'unixsocket' in options:
-            self.unixsocket = options['unixsocket']
-            del options['unixsocket']
-        
+        self.listener = (host, port)
+
+        unixsocket = options.pop('unixsocket', '')
+        if unixsocket != '':
+            self.listener = get_unix_socket_listener(unixsocket)
+            print('Listening on unixsocket: {0}'.format(unixsocket))
+
         # create ServerAdapter
         super().__init__(host, port, **options)
     
     def run(self, handler):
-        if self.unixsocket != '':
-            # create listener for unix socket
-            if os.path.exists(self.unixsocket):
-                os.remove(self.unixsocket)
-            self.listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.listener.bind(self.unixsocket)
-            self.listener.listen(1)   
-            print('Listening on unixsocket: {0}'.format(self.unixsocket))
-            
-            # run server using unix socket
-            server = WSGIServer(self.listener, handler, handler_class=WebSocketHandler, **self.options)
-            
-        else:
-            # start server using a regular host-port-configuration
-            server = WSGIServer((self.host, self.port), handler, handler_class=WebSocketHandler, **self.options)
-        
-        # run server
+        server = WSGIServer(self.listener, handler, handler_class=WebSocketHandler, **self.options)
         server.serve_forever()
