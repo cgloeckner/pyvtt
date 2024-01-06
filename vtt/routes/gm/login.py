@@ -21,7 +21,7 @@ def _login_callback(engine: any, provider: str):
         client_ip = engine.get_client_ip(request)
 
         # query session from login auth
-        session = engine.login_api.providers[provider].get_session(request.url)
+        session = engine.login_api.apis[provider].get_session(request.url)
         if 'identity' not in session:
             redirect('/vtt/join')
 
