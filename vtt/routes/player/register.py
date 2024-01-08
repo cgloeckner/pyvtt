@@ -8,7 +8,8 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
-from . import login, thumbnail, play
+from . import login, play
+from ..gm import thumbnail
 
 
 def register(engine: any):
