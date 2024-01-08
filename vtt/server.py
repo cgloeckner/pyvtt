@@ -8,7 +8,7 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
-import os
+import pathlib
 
 import bottle
 
@@ -17,11 +17,12 @@ from gevent import socket
 from geventwebsocket.handler import WebSocketHandler
 
 
-def get_unix_socket_listener(filename) -> socket.socket:
-    if os.path.exists(filename):
-        os.remove(filename)
+def get_unix_socket_listener(socket_path: pathlib.Path) -> socket.socket:
+    if socket_path.exists():
+        socket_path.unlink()
+
     listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    listener.bind(filename)
+    listener.bind(str(socket_path))
     listener.listen(1)
     return listener
 
@@ -34,8 +35,9 @@ class VttServer(bottle.ServerAdapter):
 
         unixsocket = options.pop('unixsocket', '')
         if unixsocket != '':
-            self.listener = get_unix_socket_listener(unixsocket)
-            print('Listening on unixsocket: {0}'.format(unixsocket))
+            socket_path = pathlib.Path(unixsocket)
+            self.listener = get_unix_socket_listener(socket_path)
+            print('Listening on unixsocket: {0}'.format(socket_path))
 
         # create ServerAdapter
         super().__init__(host, port, **options)
