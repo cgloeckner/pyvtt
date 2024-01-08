@@ -16,44 +16,45 @@ from bottle import *
 def _login_callback(engine: any, provider: str):
     """Registers a callback url for oauth-login with the given provider."""
 
+    def register_new_gm_account(session: any) -> 'GM':
+        # create GM (username as display name, user-id as url)
+        gm = engine.main_db.GM(
+            name=session['name'],
+            identity=session['identity'],
+            metadata=session['metadata'],
+            url=engine.main_db.GM.generate_uuid(),
+            sid=engine.main_db.GM.generate_session(),
+        )
+        gm.post_setup()
+        engine.main_db.commit()
+
+        # add to cache and initialize database
+        engine.cache.insert(gm)
+        gm_cache = engine.cache.get(gm)
+
+        # @NOTE: database creation NEEDS to be run from another
+        # thread, because every bottle route has a db_session
+        # active, but creating a database from within a db_session
+        # isn't possible
+        tmp = gevent.Greenlet(run=gm_cache.connect_db)
+        tmp.start()
+        try:
+            tmp.get()
+        except gevent.Timeout:
+            # reraise greenlet Timeout exception to trigger proper error reporting
+            raise
+
+        return gm
+
     @get(f'/vtt/callback/{provider}')
     def gm_login_callback():
         client_ip = engine.get_client_ip(request)
 
         # query session from login auth
         session = engine.login_api.apis[provider].get_session(request.url)
-        if 'identity' not in session:
-            redirect('/vtt/join')
-
-        # test whether GM is already there
         gm = engine.main_db.GM.select(lambda g: g.identity == session['identity']).first()
         if gm is None:
-            # create GM (username as display name, user-id as url)
-            gm = engine.main_db.GM(
-                name=session['name'],
-                identity=session['identity'],
-                metadata=session['metadata'],
-                url=engine.main_db.GM.generate_uuid(),
-                sid=engine.main_db.GM.generate_session(),
-            )
-            gm.post_setup()
-            engine.main_db.commit()
-
-            # add to cache and initialize database
-            engine.cache.insert(gm)
-            gm_cache = engine.cache.get(gm)
-
-            # @NOTE: database creation NEEDS to be run from another
-            # thread, because every bottle route has an db_session
-            # active, but creating a database from within a db_session
-            # isn't possible
-            tmp = gevent.Greenlet(run=gm_cache.connect_db)
-            tmp.start()
-            try:
-                tmp.get()
-            except gevent.Timeout:
-                # reraise greenlet Timeout exception to trigger proper error reporting
-                raise
+            gm = register_new_gm_account(session)
 
             engine.logging.access(f'GM created using external auth with name="{gm.name}" url={gm.url} by {client_ip}.')
 

@@ -60,13 +60,7 @@ def register(engine: any):
         status['url_ok'] = True
 
         # upload file
-        files = []
-        try:
-            files = request.files.getall('file')
-        except OSError:
-            # cannot read uploaded files
-            abort(404)
-
+        files = files = request.files.getall('file')
         if len(files) != 1:
             engine.logging.warning(f'GM name="{gm.name}" url={gm.url} tried to import game by {client_ip} '
                                    f'but uploaded {len(files)} files')

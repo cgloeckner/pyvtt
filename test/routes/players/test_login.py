@@ -1,7 +1,7 @@
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2023 Christian Glöckner
+Copyright (c) 2020-2024 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
@@ -9,7 +9,7 @@ from test.common import EngineBaseTest, make_image
 from vtt import routes
 
 
-class LoginRoutesTest(EngineBaseTest):
+class PlayerLoginRoutesTest(EngineBaseTest):
 
     def setUp(self):
         super().setUp()
@@ -30,27 +30,6 @@ class LoginRoutesTest(EngineBaseTest):
         self.assertEqual(ret.status_int, 200)
         self.sid = self.app.cookies['session']
         self.app.reset()
-
-    def test_root_redirects_to_login(self):
-        ret = self.app.get('/')
-        self.assertEqual(ret.status_int, 302)
-        self.assertEqual(ret.location, 'http://localhost:80/vtt/join')
-        ret = ret.follow()
-        self.assertEqual(ret.status_int, 200)
-
-    def test_expect_games_menu_if_logged_in(self):
-        ret = self.app.post('/vtt/join', {'gmname': 'bob'}, xhr=True)
-        self.assertEqual(ret.status_int, 200)
-        self.assertIn('session', self.app.cookies)
-        ret = self.app.get('/')
-        self.assertEqual(ret.status_int, 200)
-
-    def test_expect_redirect_if_session_is_invalid(self):
-        self.app.set_cookie('session', 'randomstuffthatisnotasessionid')
-        ret = self.app.get('/')
-        self.assertEqual(ret.status_int, 302)
-        # FIXME: setting cookie is ignored on redirect
-        # self.assertEqual(self.app.cookies['session'], '""')
 
     def test_can_access_login_screen_for_existing_game(self):
         ret = self.app.get('/game/arthur/test-game-1')

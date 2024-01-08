@@ -72,13 +72,7 @@ def register(engine: any):
             abort(404)
 
         # expect single background to be uploaded
-        files = []
-        try:
-            files = request.files.getall('file[]')
-        except OSError:
-            # cannot read uploaded files
-            abort(404)
-
+        files = request.files.getall('file[]')
         if len(files) != 1:
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried set the background at the game '
                                    f'{game_url} by {client_ip} but did not provide a single image')

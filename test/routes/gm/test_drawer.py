@@ -10,7 +10,7 @@ import json
 import gevent
 
 from test.common import EngineBaseTest, make_image
-from vtt import routes
+from vtt import routes, orm
 
 
 class GmGamesRoutesTest(EngineBaseTest):
@@ -78,6 +78,20 @@ class GmGamesRoutesTest(EngineBaseTest):
         ret = self.app.post('/vtt/clean-up/test-weird', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
+    def test_cannot_cleanup_as_unknown_gm(self):
+        self.app.set_cookie('session', self.sid)
+
+        self.join_player('arthur', 'test-game-1', 'arthur', 'gold')
+        self.join_player('arthur', 'test-game-1', 'bob', 'red')
+        self.join_player('arthur', 'test-game-1', 'carlos', 'blue')
+
+        with orm.db_session:
+            gm = self.engine.main_db.GM.select(lambda g: g.url == 'arthur').first()
+            self.engine.cache.remove(gm)
+
+        ret = self.app.post('/vtt/clean-up/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
     def test_GM_can_cleanup_his_game(self):
         self.join_player('arthur', 'test-game-1', 'arthur', 'gold')
         self.join_player('arthur', 'test-game-1', 'bob', 'red')
@@ -124,6 +138,37 @@ class GmGamesRoutesTest(EngineBaseTest):
             ret = self.app.post('/vtt/kick-player/test-weird-1/{0}'.format(p.uuid), expect_errors=True)
             self.assertEqual(ret.status_int, 404)
             self.assertEqual(len(game_cache.players), 4)
+
+    def test_cannot_kick_as_unknown_gm(self):
+        self.join_player('arthur', 'test-game-1', 'arthur', 'gold')
+        ret2, player2 = self.join_player('arthur', 'test-game-1', 'bob', 'red')
+        self.join_player('arthur', 'test-game-1', 'carlos', 'blue')
+        self.join_player('arthur', 'test-game-1', 'blocker', 'green')
+
+        with orm.db_session:
+            gm = self.engine.main_db.GM.select(lambda g: g.url == 'arthur').first()
+            self.engine.cache.remove(gm)
+
+        # GM can kick a single player from his game
+        self.app.set_cookie('session', self.sid)
+        ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player2.uuid), expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+    def test_cannot_kick_from_unknown_game(self):
+        self.join_player('arthur', 'test-game-1', 'arthur', 'gold')
+        ret2, player2 = self.join_player('arthur', 'test-game-1', 'bob', 'red')
+        self.join_player('arthur', 'test-game-1', 'carlos', 'blue')
+        self.join_player('arthur', 'test-game-1', 'blocker', 'green')
+
+        with orm.db_session:
+            gm_cache = self.engine.cache.get_from_url('arthur')
+            game = gm_cache.db.Game.select(lambda g: g.url == 'test-game-1').first()
+            gm_cache.remove(game)
+
+        # GM can kick a single player from his game
+        self.app.set_cookie('session', self.sid)
+        ret = self.app.post('/vtt/kick-player/test-game-1/{0}'.format(player2.uuid), expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
 
     def test_GM_can_kick_players(self):
         self.join_player('arthur', 'test-game-1', 'arthur', 'gold')
@@ -239,8 +284,17 @@ class GmGamesRoutesTest(EngineBaseTest):
 
     def test_GM_cannot_delete_a_game_twice(self):
         self.app.set_cookie('session', self.sid)
-        ret = self.app.post('/vtt/delete-game/test-game-1', expect_errors=True)
+        ret = self.app.post('/vtt/delete-game/test-game-1')
         self.assertEqual(ret.status_int, 200)
+        ret = self.app.post('/vtt/delete-game/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+    def test_cannot_delete_game_for_unknown_gm(self):
+        with orm.db_session:
+            gm = self.engine.main_db.GM.select(lambda g: g.url == 'arthur').first()
+            self.engine.cache.remove(gm)
+
+        self.app.set_cookie('session', self.sid)
         ret = self.app.post('/vtt/delete-game/test-game-1', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
@@ -270,6 +324,15 @@ class GmGamesRoutesTest(EngineBaseTest):
         ret = self.app.post('/vtt/query-scenes/test-game-1')
         self.assertEqual(ret.status_int, 200)
 
+    def test_cannot_query_scenes_for_unknown_gm(self):
+        with orm.db_session:
+            gm = self.engine.main_db.GM.select(lambda g: g.url == 'arthur').first()
+            self.engine.cache.remove(gm)
+
+        self.app.set_cookie('session', self.sid)
+        ret = self.app.post('/vtt/query-scenes/test-game-1', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
     def test_hashes_for_existing_assets(self):
         gm_ret, gm_player = self.join_player('arthur', 'test-game-1', 'arthur', 'gold')
         for i in range(3):
@@ -282,6 +345,22 @@ class GmGamesRoutesTest(EngineBaseTest):
             "urls": ["/asset/arthur/test-game-1/0.png"]
         }
         self.assertEqual(ret.body, json.dumps(expect).encode('utf-8'))
+
+    def test_cannot_hashtest_for_unknown_gm(self):
+        ret = self.app.post('/vtt/hashtest/bob/test-game-1', {'hashs[]': []}, xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+    def test_cannot_hashtest_for_unknown_game(self):
+        ret = self.app.post('/vtt/hashtest/arthur/test-game-2', {'hashs[]': []}, xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+    def test_cannot_hashtest_for_deleted_game(self):
+        gm_cache = self.engine.cache.get_from_url('arthur')
+        with orm.db_session:
+            gm_cache.db.Game.select(lambda g: g.url == 'test-game-1').first().delete()
+
+        ret = self.app.post('/vtt/hashtest/arthur/test-game-1', {'hashs[]': []}, xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
 
     def test_hashes_for_missing_assets(self):
         gm_ret, gm_player = self.join_player('arthur', 'test-game-1', 'arthur', 'gold')

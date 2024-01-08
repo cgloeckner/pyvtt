@@ -1,7 +1,7 @@
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2023 Christian Glöckner
+Copyright (c) 2020-2024 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
@@ -10,7 +10,7 @@ import os
 import pathlib
 
 from test.common import EngineBaseTest, make_image
-from vtt import routes
+from vtt import routes, orm
 
 
 def id_from_url(s: str) -> int:
@@ -242,6 +242,42 @@ class UploadRoutesTest(EngineBaseTest):
                             upload_files=[('file[]', 'back.png', self.img_large)], xhr=True)
         self.assertEqual(ret.status_int, 200)
         self.assertEqual(id_from_url(str(ret.body)), 1)
+
+    def test_cannot_upload_background_as_unknown_gm(self):
+        self.app.set_cookie('session', self.sid)
+        with orm.db_session:
+            gm = self.engine.main_db.GM.select(lambda g: g.url == 'arthur').first()
+            self.engine.cache.remove(gm)
+
+        ret = self.app.post('/vtt/upload-background/arthur/test-game-1',
+                            upload_files=[('file[]', 'back.png', self.img_large)], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+    def test_cannot_upload_background_for_unknown_game(self):
+        self.app.set_cookie('session', self.sid)
+
+        ret = self.app.post('/vtt/upload-background/arthur/test-game-2',
+                            upload_files=[('file[]', 'back.png', self.img_large)], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+    def test_cannot_upload_background_if_no_scene_exists(self):
+        self.app.set_cookie('session', self.sid)
+        with orm.db_session:
+            gm_cache = self.engine.cache.get_from_url('arthur')
+            game = gm_cache.db.Game.select(lambda g: g.url == 'test-game-1').first()
+            for scene in game.scenes:
+                scene.delete()
+
+        ret = self.app.post('/vtt/upload-background/arthur/test-game-1',
+                            upload_files=[('file[]', 'back.png', self.img_large)], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+    def test_cannot_upload_unsupported_mime_type_as_background(self):
+        self.app.set_cookie('session', self.sid)
+
+        ret = self.app.post('/vtt/upload-background/arthur/test-game-1',
+                            upload_files=[('file[]', 'back.js', b'function foo() {}')], xhr=True, expect_errors=True)
+        self.assertEqual(ret.status_int, 403)
 
     def test_GM_cannot_upload_multiple_backgrounds(self):
         self.app.set_cookie('session', self.sid)

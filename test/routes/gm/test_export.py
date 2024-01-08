@@ -1,12 +1,12 @@
 """
 https://github.com/cgloeckner/pyvtt/
 
-Copyright (c) 2020-2023 Christian Glöckner
+Copyright (c) 2020-2024 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
 from test.common import EngineBaseTest, make_image
-from vtt import routes
+from vtt import routes, orm
 
 
 class GmExportRoutesTest(EngineBaseTest):
@@ -77,4 +77,14 @@ class GmExportRoutesTest(EngineBaseTest):
 
     def test_cannot_export_non_existing_game(self):
         ret = self.app.get('/vtt/export-game/test-anything-else', expect_errors=True)
+        self.assertEqual(ret.status_int, 404)
+
+    def test_cannot_export_a_deleted_gms_game(self):
+        self.app.set_cookie('session', self.sid)
+
+        with orm.db_session:
+            gm = self.engine.main_db.GM.select(lambda g: g.url == 'arthur').first()
+            self.engine.cache.remove(gm)
+
+        ret = self.app.get('/vtt/export-game/test-exportgame-1', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
