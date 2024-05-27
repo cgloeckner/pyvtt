@@ -2017,9 +2017,9 @@ function onResetPlayers(event) {
         var target = $('#players');
         var pos = [
             parseInt(window.innerWidth * 0.5),
-            parseInt(window.innerHeight - 1.5 * target.height() + 25)
+            parseInt(window.innerHeight - 0.5 * target.height() - 20)
         ];
-        
+
         // apply position
         movePlayersTo(pos);
         localStorage.removeItem('players');
