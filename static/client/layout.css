@@ -861,22 +861,16 @@ div.rollbox > span > span.maxani {
 
 /* --- Players list ------------------------------------------------- */
 
-div#players {  
-    position: absolute; 
+div#players {
+    position: absolute;
     left: 50%;
     bottom: 0px;
-    
     height: 56px;
-    transform: translate(-50%, 0%);
-     
     display: block;
-    
-    white-space: nowrap;
 }
 
-div#players > span.player {    
+div#players > span.player {
     display: inline-block;
-    height: 20px;
     padding: 10px;
     margin: 7px;
     font-size: larger;
@@ -885,7 +879,6 @@ div#players > span.player {
     text-align: center;
     color: black;
     min-width: 80px;
-
     cursor: grab;
 }
 

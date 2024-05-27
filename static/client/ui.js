@@ -2154,9 +2154,10 @@ function moveDiceTo(data, sides) {
 }
 
 function movePlayersTo(pos) {
-    var target = $('#players'); 
-    target.css('left', pos[0]);
-    target.css('top',  pos[1]);
+    var target = $('#players');
+    target.css('left', pos[0] - target.width()  / 2);
+    target.css('top',  pos[1] - target.height() / 2);
+    target.css('max-width', pos[0] * 2)
 }
 
 function moveMusicTo(pos) {
@@ -2237,14 +2238,24 @@ function onDragDice(event) {
 function onDragPlayers(event) {
     var p = pickScreenPos(event);
     var target = $('#players');
-    
-    // limit position to the screen
     var w = target.width();
     var h = target.height();
-    var x = parseInt(Math.max(w / 2, Math.min(window.innerWidth - w/2, p[0])));
-    var y = parseInt(Math.max(0,     Math.min(window.innerHeight - 1.5 * h + 25,  p[1])));
+    var player_w = target.children().first().width();
+
+    // Prevent dragging player list so far into the lower-right corner that
+    // the first player is unclickable (behind the auth info), and the rest of
+    // the players are off the screen.
+    if (p[0] >= (window.innerWidth - player_w)) {
+        pad = h
+    } else {
+        pad = 0
+    }
+
+    // limit position of the first player in the list to the screen
+    var x = parseInt(Math.max(0,     Math.min(window.innerWidth  - player_w / 2, p[0])));
+    var y = parseInt(Math.max(h / 2, Math.min(window.innerHeight - h / 2 - pad,  p[1])));
     var pos = [x, y];
-    
+
     movePlayersTo(pos);
     savePlayersPos(pos);
 }
