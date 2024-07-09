@@ -2240,20 +2240,16 @@ function onDragPlayers(event) {
     var target = $('#players');
     var w = target.width();
     var h = target.height();
-    var player_w = target.children().first().width();
 
-    // Prevent dragging player list so far into the lower-right corner that
-    // the first player is unclickable (behind the auth info), and the rest of
-    // the players are off the screen.
-    if (p[0] >= (window.innerWidth - player_w)) {
-        pad = h
-    } else {
-        pad = 0
-    }
+    // Gets the maximum width of any player box, including the margin.
+    // The '- 3' allows dragging the players slightly closer to the edge of
+    // the screen, which allows the player box width to continue collapsing
+    // after a multi-word player name is word wrapped.
+    var max_p_w = Math.max([target.children()].map(i => i.outerWidth(true))) - 3;
 
-    // limit position of the first player in the list to the screen
-    var x = parseInt(Math.max(0,     Math.min(window.innerWidth  - player_w / 2, p[0])));
-    var y = parseInt(Math.max(h / 2, Math.min(window.innerHeight - h / 2 - pad,  p[1])));
+    // limit position of list to be on the screen
+    var x = parseInt(Math.max(max_p_w / 2, Math.min(window.innerWidth  - max_p_w / 2, p[0])));
+    var y = parseInt(Math.max(      h / 2, Math.min(window.innerHeight -       h / 2, p[1])));
     var pos = [x, y];
 
     movePlayersTo(pos);

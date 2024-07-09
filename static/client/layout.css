@@ -863,10 +863,8 @@ div.rollbox > span > span.maxani {
 
 div#players {
     position: absolute;
-    left: 50%;
-    bottom: 0px;
     height: 56px;
-    display: block;
+    display: table;
 }
 
 div#players > span.player {
