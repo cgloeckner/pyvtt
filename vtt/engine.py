@@ -87,9 +87,6 @@ class Engine(object):
                 "label" : "HOME",
                 "url"   : "/"
             }, {
-                "label" : "STATUS",
-                "url"   : "/vtt/shard"
-            }, {
                 "label" : "ROADMAP",
                 "url"   : "/static/roadmap.html"
             }, {
@@ -107,6 +104,16 @@ class Engine(object):
                     'url': value
                 })
         
+        num_shards = int(os.getenv('VTT_SHARDS_NUM', 0))
+        self.shards = [os.getenv(f'VTT_SHARDS_{n}') for n in range(num_shards)]
+        print('SHARDS', self.shards)
+        if len(self.shards) > 0:
+
+            self.links.append({
+                "label" : "STATUS",
+                "url"   : "/vtt/shard"
+            })
+
         self.cleanup = {
             'expire':  int(os.getenv('VTT_CLEANUP_EXPIRE', 2592000)),
             'daytime': os.getenv('VTT_CLEANUP_TIME', '03:00')
