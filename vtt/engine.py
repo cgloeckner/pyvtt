@@ -57,10 +57,10 @@ class Engine(object):
         self.listen = '0.0.0.0'
         self.hosting = {
             "domain"  : os.getenv('VTT_DOMAIN', 'localhost'),
-            "port"    : os.getenv('VTT_PORT', 8080),
+            "port"    : int(os.getenv('VTT_PORT', 8080)),
             "socket"  : os.getenv('VTT_SOCKET', ""),
-            "ssl"     : os.getenv('VTT_SSL', False),
-            "reverse" : os.getenv('VTT_REVERSE_PROXY', False)
+            "ssl"     : bool(os.getenv('VTT_SSL', False)),
+            "reverse" : bool(os.getenv('VTT_REVERSE_PROXY', False))
         }
         self.shards = list()
         
@@ -72,39 +72,58 @@ class Engine(object):
         
         # maximum file sizes for uploads (in MB)
         self.file_limit = {
-            "token"      : os.getenv('VTT_LIMIT_TOKEN', 2),
-            "background" : os.gentenv('VTT_LIMIT_BG', 10),
-            "game"       : os.getenv('VTT_LIMIT_GAME', 20),
-            "music"      : os.getenv('VTT_LIMIT_MUSIC', 10)
-            "num_music"  : 5
+            "token"      : int(os.getenv('VTT_LIMIT_TOKEN', 2)),
+            "background" : int(os.getenv('VTT_LIMIT_BG', 10)),
+            "game"       : int(os.getenv('VTT_LIMIT_GAME', 20)),
+            "music"      : int(os.getenv('VTT_LIMIT_MUSIC', 10)),
+            "num_music"  : int(os.getenv('VTT_NUM_NUSIC', 5))
         }
         self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', "#C52828", "#13AA4F", "#ECBC15", "#7F99C7", "#9251B7", "#797A90", "#80533F", "#21A0B7"]
         
         self.title          = os.getenv('VTT_TITLE', appname)
         self.links          = list()
         self.cleanup = {
-            'expire':  os.getenv('VTT_CLEANUP_EXPIRE', 2592000),
+            'expire':  int(os.getenv('VTT_CLEANUP_EXPIRE', 2592000)),
             'daytime': os.getenv('VTT_CLEANUP_TIME', '03:00')
         }
+
+        self.login_api = None   # login api instance
+        """
+        # FIXME: deprecated
         self.login          = dict() # login settings
         self.login['type']  = os.getenv('VTT_LOGIN_TYPE', '')
         self.login['providers']: dict[str, str] = {}
-        self.login_api      = None   # login api instance
+
+        if self.login['type'] == 'auth0':
+            self.login['domain'] = os.environ['VTT_AUTH0_DOMAIN']
+            self.login['client_id'] = os.environ['VTT_AUTH0_ID']
+            self.login['client_secret'] = os.environ['VTT_AUTH0_SECRET']
+            self.login['icons'] = {
+                "google": "https://www.google.com/favicon.ico",
+                "discord": "https://assets-global.website-files.com/6257adef93867e50d84d30e2/6266bc493fb42d4e27bb8393_847541504914fd33810e70a0ea73177e.ico",
+                "patreon": "https://c5.patreon.com/external/favicon/favicon.ico",
+                "auth0": "https://cdn.auth0.com/website/new-homepage/dark-favicon.png"
+            }
+        """
+
         self.notify         = dict() # crash notify settings
         self.notify['type'] = os.getenv('VTT_NOTIFY_TYPE', '')
         self.notify_api     = None   # notify api instance
+        """
+        # FIXME: deprecated
         # email notification configuration
-        self.notify['host']     = os.gentenv('VTT_NOTIFY_HOST'),
-        self.notify['port']     = os.gentenv('VTT_NOTIFY_PORT'),
+        self.notify['host']     = os.getenv('VTT_NOTIFY_HOST'),
+        self.notify['port']     = int(os.getenv('VTT_NOTIFY_PORT')),
         self.notify['sender']   = os.getenv('VTT_NOTIFY_SENDER'),
         self.notify['user']     = os.getenv('VTT_NOTIFY_USER'),
         self.notify['password'] = os.getenv('VTT_NOTIFY_PASS'),
+        """
         # Discord webhook notification configuration
         self.notify['provider'] = os.getenv('VTT_NOTIFY_PROVIDER'),
         self.notify['alias']    = os.getenv('VTT_NOTIFY_ALIAS'),
         self.notify['url']      = os.getenv('VTT_NOTIFY_URL'),
-        self.notify['roles']    = os.getenv('VTT_NOTIFY_ROLES'),
-        self.notify['users']    = os.getenv('VTT_NOTIFY_USERS')
+        self.notify['roles']    = os.getenv('VTT_NOTIFY_ROLES', []),
+        self.notify['users']    = [os.getenv('VTT_NOTIFY_USERS')]
         
         self.cache         = None   # later engine cache
 
@@ -130,22 +149,6 @@ class Engine(object):
         
         # load fancy url generator api ... lol
         self.url_generator = utils.FancyUrlApi(self.paths)
-
-        # handle settings
-        settings = {
-            'login'        : {
-               "type"          : "auth0",
-               "domain"        : os.getenv('VTT_AUTH0_DOMAIN', "YOUR_APP.us.auth0.com"),
-               "client_id"     : os.getenv('VTT_AUTH0_ID', "YOUR_APP_ID"),
-               "client_secret" : os.getenv('VTT_AUTH0_SECRET', "YOUR_APP_SECRET"),
-               "icons": {
-                  "google": "https://www.google.com/favicon.ico",
-                  "discord": "https://assets-global.website-files.com/6257adef93867e50d84d30e2/6266bc493fb42d4e27bb8393_847541504914fd33810e70a0ea73177e.ico",
-                  "patreon": "https://c5.patreon.com/external/favicon/favicon.ico",
-                  "auth0": "https://cdn.auth0.com/website/new-homepage/dark-favicon.png"
-               }
-            },
-        }
 
         # show argv help
         if '--help' in argv:
@@ -193,9 +196,18 @@ class Engine(object):
                     # create email notify API
                     self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
 
-            if self.login is not None and self.login['type'] == 'oauth':
+            # collect provider data from environ vars
+            providers = {}
+            for api_name in utils.auth.SUPPORTED_LOGIN_APIS:
+                data = utils.parse_provider_data(api_name, os.environ)
+                if data is not None:
+                    providers[api_name] = data
+            
+            self.logging.info(f'Found oauth setup for: {[api_name for api_name in providers]}')
+            
+            if len(providers) > 1:
                 self.login_api = utils.OAuthClient(on_auth=self.logging.auth, callback_url=self.get_auth_callback_url(),
-                                                   providers=self.login['providers'])
+                                                   providers=providers)
 
         self.logging.info('Loading main database...')
         # create main database
