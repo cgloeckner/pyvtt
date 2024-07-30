@@ -56,11 +56,11 @@ class Engine(object):
         # webserver stuff
         self.listen = '0.0.0.0'
         self.hosting = {
-            'domain'  : 'localhost',
-            'port'    : 8080,
-            'socket'  : '',
-            'ssl'     : False,
-            'reverse' : False
+            "domain"  : os.getenv('VTT_DOMAIN', 'localhost'),
+            "port"    : os.getenv('VTT_PORT', 8080),
+            "socket"  : os.getenv('VTT_SOCKET', ""),
+            "ssl"     : os.getenv('VTT_SSL', False),
+            "reverse" : os.getenv('VTT_REVERSE_PROXY', False)
         }
         self.shards = list()
         
@@ -72,27 +72,39 @@ class Engine(object):
         
         # maximum file sizes for uploads (in MB)
         self.file_limit = {
-            "token"      : 2,
-            "background" : 10,
-            "game"       : 30,
-            "music"      : 10,
+            "token"      : os.getenv('VTT_LIMIT_TOKEN', 2),
+            "background" : os.gentenv('VTT_LIMIT_BG', 10),
+            "game"       : os.getenv('VTT_LIMIT_GAME', 20),
+            "music"      : os.getenv('VTT_LIMIT_MUSIC', 10)
             "num_music"  : 5
         }
-        self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF']
+        self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', "#C52828", "#13AA4F", "#ECBC15", "#7F99C7", "#9251B7", "#797A90", "#80533F", "#21A0B7"]
         
-        self.title          = appname
+        self.title          = os.getenv('VTT_TITLE', appname)
         self.links          = list()
         self.cleanup = {
-            'expire': 3600 * 24 * 30, # default: 30d
-            'daytime': '03:00'
+            'expire':  os.getenv('VTT_CLEANUP_EXPIRE', 2592000),
+            'daytime': os.getenv('VTT_CLEANUP_TIME', '03:00')
         }
         self.login          = dict() # login settings
-        self.login['type']  = ''
+        self.login['type']  = os.getenv('VTT_LOGIN_TYPE', '')
         self.login['providers']: dict[str, str] = {}
         self.login_api      = None   # login api instance
         self.notify         = dict() # crash notify settings
-        self.notify['type'] = ''
+        self.notify['type'] = os.getenv('VTT_NOTIFY_TYPE', '')
         self.notify_api     = None   # notify api instance
+        # email notification configuration
+        self.notify['host']     = os.gentenv('VTT_NOTIFY_HOST'),
+        self.notify['port']     = os.gentenv('VTT_NOTIFY_PORT'),
+        self.notify['sender']   = os.getenv('VTT_NOTIFY_SENDER'),
+        self.notify['user']     = os.getenv('VTT_NOTIFY_USER'),
+        self.notify['password'] = os.getenv('VTT_NOTIFY_PASS'),
+        # Discord webhook notification configuration
+        self.notify['provider'] = os.getenv('VTT_NOTIFY_PROVIDER'),
+        self.notify['alias']    = os.getenv('VTT_NOTIFY_ALIAS'),
+        self.notify['url']      = os.getenv('VTT_NOTIFY_URL'),
+        self.notify['roles']    = os.getenv('VTT_NOTIFY_ROLES'),
+        self.notify['users']    = os.getenv('VTT_NOTIFY_USERS')
         
         self.cache         = None   # later engine cache
 
@@ -120,41 +132,21 @@ class Engine(object):
         self.url_generator = utils.FancyUrlApi(self.paths)
 
         # handle settings
-        settings_path = self.paths.get_settings_path()
-        if not os.path.exists(settings_path):
-            # create default settings
-            settings = {
-                'title'        : self.title,
-                'cleanup'      : self.cleanup,
-                'links'        : self.links,
-                'file_limit'   : self.file_limit,
-                'playercolors' : self.playercolors,
-                'shards'       : self.shards,
-                'hosting'      : self.hosting,
-                'login'        : self.login,
-                'notify'       : self.notify
-            }
-            with open(settings_path, 'w') as h:
-                json.dump(settings, h, indent=4)
-                self.logging.info('Created default settings file')
-        else:
-            # load settings
-            with open(settings_path, 'r') as h:
-                settings = json.load(h)
-                self.title        = settings['title']
-                self.cleanup      = settings['cleanup']
-                self.links        = settings['links']
-                self.file_limit   = settings['file_limit']
-                self.playercolors = settings['playercolors']
-                self.shards       = settings['shards']
-                self.hosting      = settings['hosting']
-                self.login        = settings['login']
-                self.notify       = settings['notify']
-            self.logging.info('Settings loaded')
+        settings = {
+            'login'        : {
+               "type"          : "auth0",
+               "domain"        : os.getenv('VTT_AUTH0_DOMAIN', "YOUR_APP.us.auth0.com"),
+               "client_id"     : os.getenv('VTT_AUTH0_ID', "YOUR_APP_ID"),
+               "client_secret" : os.getenv('VTT_AUTH0_SECRET', "YOUR_APP_SECRET"),
+               "icons": {
+                  "google": "https://www.google.com/favicon.ico",
+                  "discord": "https://assets-global.website-files.com/6257adef93867e50d84d30e2/6266bc493fb42d4e27bb8393_847541504914fd33810e70a0ea73177e.ico",
+                  "patreon": "https://c5.patreon.com/external/favicon/favicon.ico",
+                  "auth0": "https://cdn.auth0.com/website/new-homepage/dark-favicon.png"
+               }
+            },
+        }
 
-        # add this server to the shards list
-        self.shards.append(self.get_url())
-        
         # show argv help
         if '--help' in argv:
             print('Commandline options:')

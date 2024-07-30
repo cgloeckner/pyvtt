@@ -58,9 +58,6 @@ class PathApi:
     def get_log_path(self, filename: str) -> pathlib.Path:
         return self.pref_root / '{0}.log'.format(filename)
 
-    def get_settings_path(self) -> pathlib.Path:
-        return self.pref_root / 'settings.json'
-
     def get_main_database_path(self) -> pathlib.Path:
         return self.pref_root / 'main.db'
 
