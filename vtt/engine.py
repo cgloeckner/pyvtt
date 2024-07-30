@@ -106,7 +106,6 @@ class Engine(object):
         
         num_shards = int(os.getenv('VTT_SHARDS_NUM', 0))
         self.shards = [os.getenv(f'VTT_SHARDS_{n}') for n in range(num_shards)]
-        print('SHARDS', self.shards)
         if len(self.shards) > 0:
 
             self.links.append({
@@ -120,50 +119,6 @@ class Engine(object):
         }
 
         self.login_api = None   # login api instance
-        """
-        # FIXME: deprecated
-        self.login          = dict() # login settings
-        self.login['type']  = os.getenv('VTT_LOGIN_TYPE', '')
-        self.login['providers']: dict[str, str] = {}
-
-        if self.login['type'] == 'auth0':
-            self.login['domain'] = os.environ['VTT_AUTH0_DOMAIN']
-            self.login['client_id'] = os.environ['VTT_AUTH0_ID']
-            self.login['client_secret'] = os.environ['VTT_AUTH0_SECRET']
-            self.login['icons'] = {
-                "google": "https://www.google.com/favicon.ico",
-                "discord": "https://assets-global.website-files.com/6257adef93867e50d84d30e2/6266bc493fb42d4e27bb8393_847541504914fd33810e70a0ea73177e.ico",
-                "patreon": "https://c5.patreon.com/external/favicon/favicon.ico",
-                "auth0": "https://cdn.auth0.com/website/new-homepage/dark-favicon.png"
-            }
-        """
-
-        """
-        # FIXME: deprecated
-        self.notify         = dict() # crash notify settings
-        self.notify['type'] = os.getenv('VTT_NOTIFY_TYPE', '')
-        self.notify_api     = None   # notify api instance
-        """
-        """
-        # FIXME: deprecated
-        # email notification configuration
-        self.notify['host']     = os.getenv('VTT_NOTIFY_HOST'),
-        self.notify['port']     = int(os.getenv('VTT_NOTIFY_PORT')),
-        self.notify['sender']   = os.getenv('VTT_NOTIFY_SENDER'),
-        self.notify['user']     = os.getenv('VTT_NOTIFY_USER'),
-        self.notify['password'] = os.getenv('VTT_NOTIFY_PASS'),
-        """
-
-        """
-        # FIXME: deprecated
-        # Discord webhook notification configuration
-        self.notify['provider'] = os.getenv('VTT_NOTIFY_PROVIDER'),
-        self.notify['alias']    = os.getenv('VTT_NOTIFY_ALIAS'),
-        self.notify['url']      = os.getenv('VTT_NOTIFY_URL'),
-        self.notify['roles']    = os.getenv('VTT_NOTIFY_ROLES', []),
-        self.notify['users']    = [os.getenv('VTT_NOTIFY_USERS')]
-        """
-        
         self.cache = None   # later engine cache
 
         # handle commandline arguments
@@ -206,7 +161,6 @@ class Engine(object):
             print('    --loglevel=<level>')
             print('                 Use <level> as logging level')
             print('')
-            print('See {0} for custom settings.'.format(settings_path))
             sys.exit(0)
 
         if self.localhost:
@@ -222,39 +176,8 @@ class Engine(object):
                 self.hosting['domain'] = ip
                 self.logging.info(f'Using Public IP {ip} as Domain')
 
-            webhooks = {}
-            for api_name in utils.notifier.SUPPORTED_APIS:
-                data = utils.parse_webhook_data(api_name, os.environ)
-                if data is not None:
-                    webhooks[api_name] = data
-
-            self.logging.info(f'Found webhook setup for: {[api_name for api_name in webhooks]}')
-            
-            if len(webhooks) >= 1:
-                # FIXME: using the next best webhook API does not allow multiple webhooks
-                app_title = f'{self.title} on {self.get_domain()}'
-                first_hook = webhooks[list(webhooks.keys())[0]]
-                self.notify_api = utils.DiscordWebhook(app_title=app_title, alias=app_title, url=first_hook['url'], roles=[], users=first_hook['users'])
-
-            """
-            # FIXME: deprecated
-                if self.notify['type'] == 'email':
-                    # create email notify API
-                    self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
-            """
-                    
-            # collect provider data from environ vars
-            providers = {}
-            for api_name in utils.auth.SUPPORTED_LOGIN_APIS:
-                data = utils.parse_provider_data(api_name, os.environ)
-                if data is not None:
-                    providers[api_name] = data
-            
-            self.logging.info(f'Found oauth setup for: {[api_name for api_name in providers]}')
-            
-            if len(providers) >= 1:
-                self.login_api = utils.OAuthClient(on_auth=self.logging.auth, callback_url=self.get_auth_callback_url(),
-                                                   providers=providers)
+            self.init_webhooks()
+            self.init_oauth()
 
         self.logging.info('Loading main database...')
         # create main database
@@ -277,13 +200,54 @@ class Engine(object):
         self.recent_rolls = 30 # rolls within past 30s are recent
         self.latest_rolls = 60 * 10 # rolls within the past 10min are up-to-date
 
+        self.git_hash = None
+        self.debug_hash = None
+        self.load_version_number()
+
+        # export server constants to javascript-file
+        self.constants = utils.ConstantExport()
+        self.constants.load_from_engine(self)
+        self.constants.save_to_file(self.paths.get_constants_path())
+
+        # game cache
+        self.cache = EngineCache(self)
+
+    def init_webhooks(self) -> None:
+        webhooks = {}
+        for api_name in utils.notifier.SUPPORTED_APIS:
+            data = utils.parse_webhook_data(api_name, os.environ)
+            if data is not None:
+                webhooks[api_name] = data
+
+        self.logging.info(f'Found webhook setup for: {[api_name for api_name in webhooks]}')
+        
+        if len(webhooks) >= 1:
+            # FIXME: using the next best webhook API does not allow multiple webhooks
+            app_title = f'{self.title} on {self.get_domain()}'
+            first_hook = webhooks[list(webhooks.keys())[0]]
+            self.notify_api = utils.DiscordWebhook(app_title=app_title, alias=app_title, url=first_hook['url'], roles=[], users=first_hook['users'])
+
+    def init_oauth(self) -> None:
+        # collect provider data from environ vars
+        providers = {}
+        for api_name in utils.auth.SUPPORTED_LOGIN_APIS:
+            data = utils.parse_provider_data(api_name, os.environ)
+            if data is not None:
+                providers[api_name] = data
+        
+        self.logging.info(f'Found oauth setup for: {[api_name for api_name in providers]}')
+        
+        if len(providers) >= 1:
+            self.login_api = utils.OAuthClient(on_auth=self.logging.auth, callback_url=self.get_auth_callback_url(),
+                                                providers=providers)
+
+    def load_version_number(self) -> None:
         # load version number
         bn = BuildNumber()
         bn.load_from_file(self.paths.get_static_path(default=True) / 'client' / 'version.js')
         self.version = str(bn)
         
         # query latest git hash
-        self.git_hash = None
         try:
             with open('sha.txt') as h:
                 self.git_hash = h.read().split('\n')[0]
@@ -298,17 +262,8 @@ class Engine(object):
                 self.git_hash = p.stdout.decode('utf-8').split('\n')[0]
 
         # generate debug hash
-        self.debug_hash = None
         if self.debug:
             self.debug_hash = uuid.uuid4().hex
-
-        # export server constants to javascript-file
-        self.constants = utils.ConstantExport()
-        self.constants.load_from_engine(self)
-        self.constants.save_to_file(self.paths.get_constants_path())
-
-        # game cache
-        self.cache = EngineCache(self)
 
     def run(self):
         certfile = ''
