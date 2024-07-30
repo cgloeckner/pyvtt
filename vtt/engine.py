@@ -138,9 +138,12 @@ class Engine(object):
             }
         """
 
+        """
+        # FIXME: deprecated
         self.notify         = dict() # crash notify settings
         self.notify['type'] = os.getenv('VTT_NOTIFY_TYPE', '')
         self.notify_api     = None   # notify api instance
+        """
         """
         # FIXME: deprecated
         # email notification configuration
@@ -150,14 +153,18 @@ class Engine(object):
         self.notify['user']     = os.getenv('VTT_NOTIFY_USER'),
         self.notify['password'] = os.getenv('VTT_NOTIFY_PASS'),
         """
+
+        """
+        # FIXME: deprecated
         # Discord webhook notification configuration
         self.notify['provider'] = os.getenv('VTT_NOTIFY_PROVIDER'),
         self.notify['alias']    = os.getenv('VTT_NOTIFY_ALIAS'),
         self.notify['url']      = os.getenv('VTT_NOTIFY_URL'),
         self.notify['roles']    = os.getenv('VTT_NOTIFY_ROLES', []),
         self.notify['users']    = [os.getenv('VTT_NOTIFY_USERS')]
+        """
         
-        self.cache         = None   # later engine cache
+        self.cache = None   # later engine cache
 
         # handle commandline arguments
         self.localhost = '--localhost' in argv
@@ -215,19 +222,27 @@ class Engine(object):
                 self.hosting['domain'] = ip
                 self.logging.info(f'Using Public IP {ip} as Domain')
 
-            # FIXME: use factory pattern
-            if self.notify is not None and not self.debug:
-                if self.notify['type'] == 'webhook':
-                    if self.notify['provider'] == 'discord':
-                        app_title = f'{self.title} on {self.get_domain()}'
-                        self.notify_api = utils.DiscordWebhook(app_title=app_title, alias=self.notify['alias'],
-                                                               url=self.notify['url'], roles=self.notify['roles'],
-                                                               users=self.notify['users'])
+            webhooks = {}
+            for api_name in utils.notifier.SUPPORTED_APIS:
+                data = utils.parse_webhook_data(api_name, os.environ)
+                if data is not None:
+                    webhooks[api_name] = data
 
+            self.logging.info(f'Found webhook setup for: {[api_name for api_name in webhooks]}')
+            
+            if len(webhooks) >= 1:
+                # FIXME: using the next best webhook API does not allow multiple webhooks
+                app_title = f'{self.title} on {self.get_domain()}'
+                first_hook = webhooks[list(webhooks.keys())[0]]
+                self.notify_api = utils.DiscordWebhook(app_title=app_title, alias=app_title, url=first_hook['url'], roles=[], users=first_hook['users'])
+
+            """
+            # FIXME: deprecated
                 if self.notify['type'] == 'email':
                     # create email notify API
                     self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
-
+            """
+                    
             # collect provider data from environ vars
             providers = {}
             for api_name in utils.auth.SUPPORTED_LOGIN_APIS:
