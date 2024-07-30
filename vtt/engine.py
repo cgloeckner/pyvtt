@@ -205,7 +205,7 @@ class Engine(object):
             
             self.logging.info(f'Found oauth setup for: {[api_name for api_name in providers]}')
             
-            if len(providers) > 1:
+            if len(providers) >= 1:
                 self.login_api = utils.OAuthClient(on_auth=self.logging.auth, callback_url=self.get_auth_callback_url(),
                                                    providers=providers)
 
