@@ -80,8 +80,33 @@ class Engine(object):
         }
         self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', "#C52828", "#13AA4F", "#ECBC15", "#7F99C7", "#9251B7", "#797A90", "#80533F", "#21A0B7"]
         
-        self.title          = os.getenv('VTT_TITLE', appname)
-        self.links          = list()
+        self.title = os.getenv('VTT_TITLE', appname)
+
+        self.links = [
+            {
+                "label" : "HOME",
+                "url"   : "/"
+            }, {
+                "label" : "STATUS",
+                "url"   : "/vtt/shard"
+            }, {
+                "label" : "ROADMAP",
+                "url"   : "/static/roadmap.html"
+            }, {
+                "label" : "TERMS",
+                "url"   : "/static/terms.html"
+            }
+        ]
+
+        for category in ['discord', 'faq']:
+            key = f'VTT_LINKS_{category.upper()}'
+            value = os.getenv(key)
+            if value is not None:
+                self.links.append({
+                    'label': category.upper(),
+                    'url': value
+                })
+        
         self.cleanup = {
             'expire':  int(os.getenv('VTT_CLEANUP_EXPIRE', 2592000)),
             'daytime': os.getenv('VTT_CLEANUP_TIME', '03:00')
