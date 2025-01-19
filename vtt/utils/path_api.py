@@ -20,12 +20,11 @@ class PathApi:
         """ Uses given root or pick standard preference directory. """
         self.app_root = app_root
         if pref_root is None:
-            # get preference dir
-            pref_root = pathlib.Path.home()
-            if sys.platform.startswith('linux'):
-                pref_root = pref_root / ".local" / "share"
-            else:
-                raise NotImplementedError('only linux supported yet')
+            # use current working directory
+            pref_root = pathlib.Path.cwd()
+        else:
+          # we need to convert the string path value to a pathlib object
+          pref_root = pathlib.Path(pref_root)
 
         self.pref_root = pref_root / appname
 

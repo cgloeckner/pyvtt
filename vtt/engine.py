@@ -32,8 +32,9 @@ from vtt.server import VttServer
 class Engine(object):
 
     def __init__(self, app_root=pathlib.Path('.'), argv=list(), pref_dir=None):
-        appname = 'pyvtt'
-        self.log_level = 'INFO'
+        appname = os.getenv('VTT_APPNAME', 'pyvtt')
+        pref_dir = os.getenv('VTT_PREFDIR', None)
+        self.log_level = os.getenv('VTT_LOG_LEVEL', 'INFO')
         for arg in argv:
             if arg.startswith('--appname='):
                 appname = arg.split('--appname=')[1]
@@ -118,6 +119,7 @@ class Engine(object):
             'daytime': os.getenv('VTT_CLEANUP_TIME', '03:00')
         }
 
+        self.notify_api = None # notify api instance
         self.login_api = None   # login api instance
         self.cache = None   # later engine cache
 
