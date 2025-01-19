@@ -23,54 +23,24 @@ from vtt import engine
 class EngineTest(EngineBaseTest):
         
     def tearDown(self):
-        fname = self.engine.paths.get_settings_path()
-        if os.path.exists(fname):
-            os.remove(fname)
-        
         super().tearDown()
         
     @staticmethod
-    def defaultSettings():
-        return {
-            'title'      : 'unittest',
-            'links'      : [
-                { 'label': 'FAQ',   'url': '/static/faq.html' },
-                { 'label': 'LOGIN', 'url': '/vtt/join' }
-            ],
-            'file_limit' : {
-                'token'      : 2,
-                'background' : 10,
-                'game'       : 15,
-                'music'      : 10,
-                'num_music'  : 5
-            },
-            'playercolors' : ['#FF0000', '#00FF00'],
-            'shards'  : list(),
-            'cleanup': {
-                'expire'  : 3600,
-                'daytime' : '03:00'
-            },
-            'hosting' : {
-                'domain'  : 'vtt.example.com',
-                'port'    : 80,
-                'ssl'     : False,
-                'reverse' : True
-            },
-            'login'    : {
-                'type' : None
-            },
-            'notify'   : {
-                'type' : None
-            }
-        }
+    def defaultEnviron():
+        os.environ['VTT_TITLE'] = 'unittest'
+        os.environ['VTT_LIMIT_TOKEN'] =' 2'
+        os.environ['VTT_LIMIT_BG'] = '10'
+        os.environ['VTT_LIMIT_GAME'] = '5'
+        os.environ['VTT_LIMIT_MUSIC'] = '10'
+        os.environ['VTT_NUM_MUSIC'] = '5'
+        os.environ['VTT_CLEANUP_EXPIRE'] = '3600'
+        os.environ['VTT_CLEANUP_TIME'] = '03:00'
+        os.environ['VTT_DOMAIN'] = 'vtt.example.com'
+        os.environ['VTT_PORT'] = '8080'
+        os.environ['VTT_SSL'] = 'False'
+        os.environ['VTT_REVERSE_PROXY'] = 'True' 
 
-    def reloadEngine(self, argv=list(), settings=None):
-        if settings is not None:
-            # change settings
-            fname = self.engine.paths.get_settings_path()
-            with open(fname, 'w') as h:
-                json.dump(settings, h)
-
+    def reloadEngine(self, argv=list()):
         # reload engine (without cleanup thread)
         argv.append('--quiet')
         self.engine = engine.Engine(argv=argv, pref_dir=self.root)
@@ -97,76 +67,77 @@ class EngineTest(EngineBaseTest):
             requests.get('http://localhost:8080')
         
     def test_getDomain(self):
-        settings = EngineTest.defaultSettings()
-        settings['hosting']['domain'] = 'example.com'
-        self.reloadEngine(settings=settings)
+        EngineTest.defaultEnviron()
+        os.environ['VTT_DOMAIN'] = 'example.com'
+        self.reloadEngine()
         
         domain = self.engine.get_domain()
         self.assertEqual(domain, 'example.com')
         
         # reload with --localhost
-        self.reloadEngine(argv=['--localhost'], settings=settings)
+        self.reloadEngine(argv=['--localhost'])
         domain = self.engine.get_domain()
         self.assertEqual(domain, 'localhost')
         
     def test_getPort(self):
+        EngineTest.defaultEnviron()
         p = self.engine.get_port()
         self.assertEqual(p, 8080)
         
         # reload with custom port
-        settings = EngineTest.defaultSettings()
-        settings['hosting']['port'] = 80
-        self.reloadEngine(settings=settings)
+        os.environ['VTT_PORT'] = '80'
+        self.reloadEngine()
         p = self.engine.get_port()
         self.assertEqual(p, 80)
         
     def test_hasSsl(self):
+        EngineTest.defaultEnviron()
         self.assertFalse(self.engine.has_ssl())
         
         # reload with ssl
-        settings = EngineTest.defaultSettings()
-        settings['hosting']['ssl'] = True 
-        self.reloadEngine(settings=settings)   
+        os.environ['VTT_SSL'] = 'True'
+        self.reloadEngine()   
         self.assertTrue(self.engine.has_ssl())
 
     def test_getUrl(self):
-        settings = EngineTest.defaultSettings()
-        self.reloadEngine(settings=settings)
+        EngineTest.defaultEnviron()
+        self.reloadEngine()
         self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
 
         # internal SSL does not effect it
-        settings['hosting']['ssl'] = False
-        self.reloadEngine(settings=settings)
+        os.environ['VTT_SSL'] = 'False'
+        self.reloadEngine()
         self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
 
         # internal port does not effect it
-        settings['hosting']['port'] = 443
-        self.reloadEngine(settings=settings)
+        os.environ['VTT_PORT'] = '443'
+        self.reloadEngine()
         self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
         
         # reload without reverse proxy will take effect
-        settings['hosting']['reverse'] = False 
-        self.reloadEngine(settings=settings)       
+        os.environ['VTT_REVERSE_PROXY'] = 'False' 
+        self.reloadEngine()       
         self.assertEqual(self.engine.get_url(), 'http://vtt.example.com:443')
         
     def test_getWebsocketUrl(self):
-        settings = EngineTest.defaultSettings()
-        self.reloadEngine(settings=settings)
+        EngineTest.defaultEnviron()
+        self.reloadEngine()
         self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
 
         # internal SSL does not effect it
-        settings['hosting']['ssl'] = False
-        self.reloadEngine(settings=settings)
+        os.environ['VTT_SSL'] = 'False'
+        self.reloadEngine()
         self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
 
         # internal port does not effect it
-        settings['hosting']['port'] = 443
-        self.reloadEngine(settings=settings)
+        os.environ['VTT_PORT'] = '443'
+        self.reloadEngine()
         self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
         
         # reload without reverse proxy will take effect
-        settings['hosting']['reverse'] = False 
-        self.reloadEngine(settings=settings)      
+        os.environ['VTT_REVERSE_PROXY'] = 'False' 
+        os.environ['VTT_PORT'] = '443'
+        self.reloadEngine()
         self.assertEqual(self.engine.get_websocket_url(), 'ws://vtt.example.com:443/vtt/websocket')
 
     def test_getBuildSha(self):
@@ -188,23 +159,23 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(v, self.engine.debug_hash)
 
     def test_getAuthCallbackUrl(self):
-        settings = EngineTest.defaultSettings()
-        self.reloadEngine(settings=settings)
+        EngineTest.defaultEnviron()
+        self.reloadEngine()
         self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
 
         # internal SSL does not effect it
-        settings['hosting']['ssl'] = False
-        self.reloadEngine(settings=settings)
+        os.environ['VTT_SSL'] = 'False'
+        self.reloadEngine()
         self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
 
         # internal port does not effect it
-        settings['hosting']['port'] = 443
-        self.reloadEngine(settings=settings)
+        os.environ['VTT_PORT'] = '443'
+        self.reloadEngine()
         self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
         
         # reload without reverse proxy will take effect
-        settings['hosting']['reverse'] = False 
-        self.reloadEngine(settings=settings)      
+        os.environ['VTT_REVERSE_PROXY'] = 'False' 
+        self.reloadEngine()      
         self.assertEqual(self.engine.get_auth_callback_url(), 'http://vtt.example.com:443/vtt/callback')
         
     def test_verifyUrlSection(self):
