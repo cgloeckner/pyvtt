@@ -14,7 +14,6 @@ if __name__ == '__main__':
         engine = Engine(argv=argv)
         routes.register_gm(engine)
         routes.register_player(engine)
-        routes.register_api(engine)
         routes.register_resources(engine)
         routes.register_error(engine)
 
