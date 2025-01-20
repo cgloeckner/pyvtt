@@ -94,7 +94,7 @@ class EngineTest(EngineBaseTest):
     def test_hasSsl(self):
         EngineTest.defaultEnviron()
         self.reloadEngine()
-        self.assertFalse(self.engine.has_ssl()
+        self.assertFalse(self.engine.has_ssl())
         
         # reload with ssl
         os.environ['VTT_SSL'] = 'True'
