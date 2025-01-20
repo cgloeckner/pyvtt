@@ -22,6 +22,7 @@ class PathApi:
         if pref_root is None:
             # use current working directory
             pref_root = pathlib.Path.cwd()
+            pref_root = pref_root / 'data'
         else:
           # we need to convert the string path value to a pathlib object
           pref_root = pathlib.Path(pref_root)
