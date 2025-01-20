@@ -65,7 +65,7 @@ class Engine(object):
         
         # blacklist for GM names and game URLs
         self.gm_blacklist = ['', 'static', 'asset', 'vtt', 'game']
-        self.url_regex    = '^[A-Za-z0-9_\-.]+$'
+        self.url_regex    = r'^[A-Za-z0-9_\-.]+$'
         
         # maximum file sizes for uploads (in MB)
         self.file_limit = {

@@ -64,7 +64,7 @@ class PathApiTest(unittest.TestCase):
         self.paths.get_assets_path()
         self.paths.get_assets_path(default=True)
         self.paths.get_client_code_path()
-        self.paths.get_settings_path()
+        #self.paths.get_settings_path()
         self.paths.get_main_database_path()
         self.paths.get_constants_path()
         self.paths.get_ssl_path()

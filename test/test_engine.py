@@ -388,5 +388,3 @@ class EngineTest(EngineBaseTest):
             all_games = list(gm_cache.db.Game.select())
         self.assertEqual(len(all_games), 1)
 
-
-
