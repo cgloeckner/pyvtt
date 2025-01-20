@@ -333,10 +333,8 @@ class Engine(object):
         return bool(re.match(self.url_regex, s))
         
     def get_client_ip(self, request):
-        if request.environ.get('HTTP_X_FORWARDED_FOR'):
-            return request.environ.get('HTTP_X_FORWARDED_FOR')
-        else:
-            return request.environ.get('REMOTE_ADDR')
+        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR') or request.environ.get('REMOTE_ADDR')
+        return client_ip
 
     def get_client_agent(self, request):
         return request.environ.get('HTTP_USER_AGENT')
