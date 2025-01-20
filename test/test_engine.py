@@ -37,8 +37,8 @@ class EngineTest(EngineBaseTest):
         os.environ['VTT_CLEANUP_TIME'] = '03:00'
         os.environ['VTT_DOMAIN'] = 'vtt.example.com'
         os.environ['VTT_PORT'] = '8080'
-        os.environ['VTT_SSL'] = '' 
-        os.environ['VTT_REVERSE_PROXY'] = '' 
+        os.environ.pop('VTT_SSL', None)
+        os.environ.pop('VTT_REVERSE_PROXY', None)
 
     def reloadEngine(self, argv=list()):
         # reload engine (without cleanup thread)
@@ -93,7 +93,8 @@ class EngineTest(EngineBaseTest):
         
     def test_hasSsl(self):
         EngineTest.defaultEnviron()
-        self.assertFalse(self.engine.has_ssl())
+        self.reloadEngine()
+        self.assertFalse(self.engine.has_ssl()
         
         # reload with ssl
         os.environ['VTT_SSL'] = 'True'
@@ -103,44 +104,34 @@ class EngineTest(EngineBaseTest):
     def test_getUrl(self):
         EngineTest.defaultEnviron()
         self.reloadEngine()
-        self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
+        self.assertEqual(self.engine.get_url(), 'http://vtt.example.com:8080')
 
         # internal SSL does not effect it
-        os.environ['VTT_SSL'] = ''
+        os.environ['VTT_SSL'] = 'True'
         self.reloadEngine()
-        self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
+        self.assertEqual(self.engine.get_url(), 'https://vtt.example.com:8080')
 
         # internal port does not effect it
         os.environ['VTT_PORT'] = '443'
         self.reloadEngine()
         self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
-        
-        # reload without reverse proxy will take effect
-        os.environ['VTT_REVERSE_PROXY'] = 'False' 
-        self.reloadEngine()       
-        self.assertEqual(self.engine.get_url(), 'http://vtt.example.com:443')
         
     def test_getWebsocketUrl(self):
         EngineTest.defaultEnviron()
         self.reloadEngine()
-        self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
+        self.assertEqual(self.engine.get_websocket_url(), 'ws://vtt.example.com:8080/vtt/websocket')
 
         # internal SSL does not effect it
-        os.environ['VTT_SSL'] = ''
+        os.environ['VTT_SSL'] = 'True'
         self.reloadEngine()
-        self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
+        self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com:8080/vtt/websocket')
 
         # internal port does not effect it
+        os.environ['VTT_SSL'] = 'True'
         os.environ['VTT_PORT'] = '443'
         self.reloadEngine()
         self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
         
-        # reload without reverse proxy will take effect
-        os.environ['VTT_REVERSE_PROXY'] = 'False' 
-        os.environ['VTT_PORT'] = '443'
-        self.reloadEngine()
-        self.assertEqual(self.engine.get_websocket_url(), 'ws://vtt.example.com:443/vtt/websocket')
-
     def test_getBuildSha(self):
         self.engine.git_hash = None
         self.engine.debug_hash = None
@@ -162,22 +153,17 @@ class EngineTest(EngineBaseTest):
     def test_getAuthCallbackUrl(self):
         EngineTest.defaultEnviron()
         self.reloadEngine()
-        self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
+        self.assertEqual(self.engine.get_auth_callback_url(), 'http://vtt.example.com:8080/vtt/callback')
 
         # internal SSL does not effect it
-        os.environ['VTT_SSL'] = ''
+        os.environ['VTT_SSL'] = 'True'
         self.reloadEngine()
-        self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
+        self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com:8080/vtt/callback')
 
         # internal port does not effect it
         os.environ['VTT_PORT'] = '443'
         self.reloadEngine()
         self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
-        
-        # reload without reverse proxy will take effect
-        os.environ['VTT_REVERSE_PROXY'] = '' 
-        self.reloadEngine()      
-        self.assertEqual(self.engine.get_auth_callback_url(), 'http://vtt.example.com:443/vtt/callback')
         
     def test_verifyUrlSection(self):
         self.assertTrue(self.engine.verify_url_section('foo-bar.lol_test'))
@@ -200,13 +186,6 @@ class EngineTest(EngineBaseTest):
         dummy_request = FakeRequest()
         self.assertEqual(self.engine.get_client_ip(dummy_request), '1.2.3.4')
         
-        # 2025-01-20 - test disabled, is unix socket worth keeping?
-        ## reload engine with unix socket  
-        #EngineTest.defaultEnviron()
-        #settings['hosting']['socket'] = '/path/to/socket' 
-        #self.reloadEngine(settings=settings)
-        #self.assertEqual(self.engine.get_client_ip(dummy_request), '5.6.7.8')
-
     def test_getClientAgent(self):
         class FakeRequest(object):
             def __init__(self):

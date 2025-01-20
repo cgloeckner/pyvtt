@@ -59,9 +59,7 @@ class Engine(object):
         self.hosting = {
             "domain"  : os.getenv('VTT_DOMAIN', 'localhost'),
             "port"    : int(os.getenv('VTT_PORT', 8080)),
-            "socket"  : os.getenv('VTT_SOCKET', ""),
-            "ssl"     : bool(os.getenv('VTT_SSL', "")),
-            "reverse" : bool(os.getenv('VTT_REVERSE_PROXY', ""))
+            "ssl"     : bool(os.getenv('VTT_SSL', False))
         }
         self.shards = list()
         self.main_db = None
@@ -267,18 +265,6 @@ class Engine(object):
             self.debug_hash = uuid.uuid4().hex
 
     def run(self):
-        certfile = ''
-        keyfile  = ''
-        if self.has_ssl():
-            # enable SSL
-            ssl_dir = self.paths.get_ssl_path()
-            certfile = ssl_dir / 'cacert.pem'
-            keyfile  = ssl_dir / 'privkey.pem'
-            assert(os.path.exists(certfile))
-            assert(os.path.exists(keyfile))
-        
-        ssl_args = {'certfile': certfile, 'keyfile': keyfile} if self.has_ssl() else {}
-        
         if self.notify_api is not None:
             self.notify_api.on_start()
 
@@ -288,10 +274,6 @@ class Engine(object):
             debug      = self.debug,
             quiet      = self.quiet,
             server     = VttServer,
-            # VttServer-specific
-            unixsocket = self.hosting['socket'],
-            # SSL-specific
-            **ssl_args
         )
         
     def get_domain(self):
@@ -306,18 +288,39 @@ class Engine(object):
         return self.hosting['port']
    
     def get_url(self):
-        suffix = 's' if self.has_reverse_proxy() or self.has_ssl() else ''
-        port   = '' if self.has_reverse_proxy() else f':{self.get_port()}'
+        port   = ''
+        suffix = ''
+        if self.has_ssl():
+          suffix = 's'
+          if self.get_port() != 443:
+            port   = f':{self.get_port()}'
+        else:
+          if self.get_port != 80:
+            port   = f':{self.get_port()}'
         return f'http{suffix}://{self.get_domain()}{port}'
 
     def get_websocket_url(self):
-        protocol = 'wss' if self.has_reverse_proxy() or self.has_ssl() else 'ws'
-        port     = '' if self.has_reverse_proxy() else f':{self.get_port()}'
+        port = ''
+        protocol = 'ws'
+        if self.has_ssl():
+            protocol = 'wss'
+            if self.get_port() != 443:
+                port  = f':{self.get_port()}'
+        else:
+            if self.get_port() != 80:
+                port  = f':{self.get_port()}'
         return f'{protocol}://{self.get_domain()}{port}/vtt/websocket'
 
     def get_auth_callback_url(self):
-        protocol = 'https' if self.has_reverse_proxy() or self.has_ssl() else 'http'
-        port     = '' if self.has_reverse_proxy() else f':{self.get_port()}'
+        port = ''
+        protocol = 'http'
+        if self.has_ssl():
+            protocol = 'https'
+            if self.get_port() != 443:
+                port = f':{self.get_port()}'
+        else:
+            if self.get_port() != 80:
+                port = f':{self.get_port()}'
         return f'{protocol}://{self.get_domain()}{port}/vtt/callback'
 
     def get_build_sha(self):
@@ -340,8 +343,7 @@ class Engine(object):
         return bool(re.match(self.url_regex, s))
         
     def get_client_ip(self, request):
-        # use different header if through unix socket or reverse proxy
-        if self.hosting['socket'] != '' or self.has_reverse_proxy():
+        if request.environ.get('HTTP_X_FORWARDED_FOR'):
             return request.environ.get('HTTP_X_FORWARDED_FOR')
         else:
             return request.environ.get('REMOTE_ADDR')
