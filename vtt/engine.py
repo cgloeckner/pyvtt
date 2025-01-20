@@ -61,7 +61,6 @@ class Engine(object):
             "port"    : int(os.getenv('VTT_PORT', 8080)),
             "ssl"     : bool(os.getenv('VTT_SSL', False))
         }
-        self.shards = list()
         self.main_db = None
         
         # blacklist for GM names and game URLs
@@ -102,15 +101,6 @@ class Engine(object):
                     'url': value
                 })
         
-        num_shards = int(os.getenv('VTT_SHARDS_NUM', 0))
-        self.shards = [os.getenv(f'VTT_SHARDS_{n}') for n in range(num_shards)]
-        if len(self.shards) > 0:
-
-            self.links.append({
-                "label" : "STATUS",
-                "url"   : "/vtt/shard"
-            })
-
         self.cleanup = {
             'expire':  int(os.getenv('VTT_CLEANUP_EXPIRE', 2592000)),
             'daytime': os.getenv('VTT_CLEANUP_TIME', '03:00')
