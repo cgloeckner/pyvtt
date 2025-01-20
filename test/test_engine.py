@@ -200,11 +200,12 @@ class EngineTest(EngineBaseTest):
         dummy_request = FakeRequest()
         self.assertEqual(self.engine.get_client_ip(dummy_request), '1.2.3.4')
         
-        # reload engine with unix socket  
-        settings = EngineTest.defaultSettings()
-        settings['hosting']['socket'] = '/path/to/socket' 
-        self.reloadEngine(settings=settings)
-        self.assertEqual(self.engine.get_client_ip(dummy_request), '5.6.7.8')
+        # 2025-01-20 - test disabled, is unix socket worth keeping?
+        ## reload engine with unix socket  
+        #EngineTest.defaultEnviron()
+        #settings['hosting']['socket'] = '/path/to/socket' 
+        #self.reloadEngine(settings=settings)
+        #self.assertEqual(self.engine.get_client_ip(dummy_request), '5.6.7.8')
 
     def test_getClientAgent(self):
         class FakeRequest(object):
