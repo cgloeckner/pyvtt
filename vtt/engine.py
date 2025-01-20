@@ -60,11 +60,10 @@ class Engine(object):
             "domain"  : os.getenv('VTT_DOMAIN', 'localhost'),
             "port"    : int(os.getenv('VTT_PORT', 8080)),
             "socket"  : os.getenv('VTT_SOCKET', ""),
-            "ssl"     : bool(os.getenv('VTT_SSL', False)),
-            "reverse" : bool(os.getenv('VTT_REVERSE_PROXY', False))
+            "ssl"     : bool(os.getenv('VTT_SSL', "")),
+            "reverse" : bool(os.getenv('VTT_REVERSE_PROXY', ""))
         }
         self.shards = list()
-        
         self.main_db = None
         
         # blacklist for GM names and game URLs

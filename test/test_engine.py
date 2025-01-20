@@ -37,8 +37,8 @@ class EngineTest(EngineBaseTest):
         os.environ['VTT_CLEANUP_TIME'] = '03:00'
         os.environ['VTT_DOMAIN'] = 'vtt.example.com'
         os.environ['VTT_PORT'] = '8080'
-        os.environ['VTT_SSL'] = 'False'
-        os.environ['VTT_REVERSE_PROXY'] = 'True' 
+        os.environ['VTT_SSL'] = '' 
+        os.environ['VTT_REVERSE_PROXY'] = '' 
 
     def reloadEngine(self, argv=list()):
         # reload engine (without cleanup thread)
@@ -49,6 +49,7 @@ class EngineTest(EngineBaseTest):
 
     def test_run_engine_with_custom_prefdir(self):
         engine.Engine(argv=['--prefdir=/tmp'])
+        
 
     def test_run(self): 
         # confirm server is offline
@@ -105,7 +106,7 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
 
         # internal SSL does not effect it
-        os.environ['VTT_SSL'] = 'False'
+        os.environ['VTT_SSL'] = ''
         self.reloadEngine()
         self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
 
@@ -125,7 +126,7 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
 
         # internal SSL does not effect it
-        os.environ['VTT_SSL'] = 'False'
+        os.environ['VTT_SSL'] = ''
         self.reloadEngine()
         self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
 
@@ -164,7 +165,7 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
 
         # internal SSL does not effect it
-        os.environ['VTT_SSL'] = 'False'
+        os.environ['VTT_SSL'] = ''
         self.reloadEngine()
         self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
 
@@ -174,7 +175,7 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
         
         # reload without reverse proxy will take effect
-        os.environ['VTT_REVERSE_PROXY'] = 'False' 
+        os.environ['VTT_REVERSE_PROXY'] = '' 
         self.reloadEngine()      
         self.assertEqual(self.engine.get_auth_callback_url(), 'http://vtt.example.com:443/vtt/callback')
         
