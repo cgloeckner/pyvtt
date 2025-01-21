@@ -24,21 +24,6 @@ class EngineTest(EngineBaseTest):
         
     def tearDown(self):
         super().tearDown()
-        
-    @staticmethod
-    def defaultEnviron():
-        os.environ['VTT_TITLE'] = 'unittest'
-        os.environ['VTT_LIMIT_TOKEN'] =' 2'
-        os.environ['VTT_LIMIT_BG'] = '10'
-        os.environ['VTT_LIMIT_GAME'] = '5'
-        os.environ['VTT_LIMIT_MUSIC'] = '10'
-        os.environ['VTT_NUM_MUSIC'] = '5'
-        os.environ['VTT_CLEANUP_EXPIRE'] = '3600'
-        os.environ['VTT_CLEANUP_TIME'] = '03:00'
-        os.environ['VTT_DOMAIN'] = 'vtt.example.com'
-        os.environ['VTT_PORT'] = '8080'
-        os.environ.pop('VTT_SSL', None)
-        os.environ.pop('VTT_REVERSE_PROXY', None)
 
     def reloadEngine(self, argv=list()):
         # reload engine (without cleanup thread)
@@ -68,7 +53,6 @@ class EngineTest(EngineBaseTest):
             requests.get('http://localhost:8080')
         
     def test_getDomain(self):
-        EngineTest.defaultEnviron()
         os.environ['VTT_DOMAIN'] = 'example.com'
         self.reloadEngine()
         
@@ -81,7 +65,6 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(domain, 'localhost')
         
     def test_getPort(self):
-        EngineTest.defaultEnviron()
         p = self.engine.get_port()
         self.assertEqual(p, 8080)
         
@@ -92,7 +75,6 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(p, 80)
         
     def test_hasSsl(self):
-        EngineTest.defaultEnviron()
         self.reloadEngine()
         self.assertFalse(self.engine.has_ssl())
         
@@ -102,7 +84,6 @@ class EngineTest(EngineBaseTest):
         self.assertTrue(self.engine.has_ssl())
 
     def test_getUrl(self):
-        EngineTest.defaultEnviron()
         self.reloadEngine()
         self.assertEqual(self.engine.get_url(), 'http://vtt.example.com:8080')
 
@@ -117,7 +98,6 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
         
     def test_getWebsocketUrl(self):
-        EngineTest.defaultEnviron()
         self.reloadEngine()
         self.assertEqual(self.engine.get_websocket_url(), 'ws://vtt.example.com:8080/vtt/websocket')
 
@@ -151,7 +131,6 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(v, self.engine.debug_hash)
 
     def test_getAuthCallbackUrl(self):
-        EngineTest.defaultEnviron()
         self.reloadEngine()
         self.assertEqual(self.engine.get_auth_callback_url(), 'http://vtt.example.com:8080/vtt/callback')
 

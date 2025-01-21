@@ -19,6 +19,7 @@ class ApiRoutesTest(EngineBaseTest):
         routes.register_gm(self.engine)
         routes.register_player(self.engine)
         routes.register_resources(self.engine)
+        routes.register_api(self.engine)
         # @NOTE: custom error pages are not routed here
 
     def test_api_get_queries(self):
