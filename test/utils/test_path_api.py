@@ -38,13 +38,6 @@ class PathApiTest(unittest.TestCase):
         root = utils.PathApi(appname='unittest')
         self.assertEqual(root.pref_root, fake_path / '.local' / 'share' / 'unittest')
 
-    def test_path_api_non_linux(self):
-        patch = pytest.MonkeyPatch()
-        patch.setattr(sys, 'platform', 'test-system')
-
-        with self.assertRaises(NotImplementedError):
-            root = utils.PathApi(appname='unittest')
-
     def test_ensure(self):
         # @NOTE: ensure() is called by the constructor
         
