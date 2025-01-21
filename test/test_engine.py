@@ -174,22 +174,21 @@ class EngineTest(EngineBaseTest):
         
     def test_getClientIp(self):
         class FakeRequest(object):
-            def __init__(self, proxy = False):
+            def __init__(self):
                 class FakeEnviron(object):
-                    def __init__(self, proxy = False):
-                        self.proxy = proxy
                     def get(self, s):
-                        if not self.proxy and s == 'REMOTE_ADDR':
+                        if s == 'REMOTE_ADDR':
                             return '1.2.3.4'
-                        if not self.proxy and s == 'HTTP_X_FORWARDED_FOR':
-                            return None
                         else:
                             return '5.6.7.8'
-                self.environ = FakeEnviron(proxy)
+                self.environ = FakeEnviron()
         
+        # test no reverse proxy
         dummy_request = FakeRequest()
         self.assertEqual(self.engine.get_client_ip(dummy_request), '1.2.3.4')
-        dummy_request = FakeRequest(True)
+        # test reverse proxy
+        os.environ['VTT_REVERSE_PROXY'] = 'True'
+        self.reloadEngine()
         self.assertEqual(self.engine.get_client_ip(dummy_request), '5.6.7.8')
         
     def test_getClientAgent(self):

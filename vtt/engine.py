@@ -59,7 +59,8 @@ class Engine(object):
         self.hosting = {
             "domain"  : os.getenv('VTT_DOMAIN', 'localhost'),
             "port"    : int(os.getenv('VTT_PORT', 8080)),
-            "ssl"     : bool(os.getenv('VTT_SSL', False))
+            "ssl"     : bool(os.getenv('VTT_SSL', False)),
+            "reverse" : bool(os.getenv('VTT_REVERSE_PROXY'))
         }
         self.main_db = None
         
@@ -333,8 +334,10 @@ class Engine(object):
         return bool(re.match(self.url_regex, s))
         
     def get_client_ip(self, request):
-        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR') or request.environ.get('REMOTE_ADDR')
-        return client_ip
+        if self.has_reverse_proxy():
+            return request.environ.get('HTTP_X_FORWARDED_FOR')
+        else:
+            return request.environ.get('REMOTE_ADDR')
 
     def get_client_agent(self, request):
         return request.environ.get('HTTP_USER_AGENT')
