@@ -86,12 +86,12 @@ class EngineBaseTest(unittest.TestCase):
                 h.write('demo')
         
         # load engine app into webtest
+        EngineBaseTest.defaultEnviron()
         self.engine = Engine(argv=['--quiet', '--localhost'], pref_dir=self.root)
         self.engine.app.catchall = False
         self.app = webtest.TestApp(self.engine.app)
         
         self.monkeyPatch()
-        EngineBaseTest.defaultEnviron()
                 
     def monkeyPatch(self) -> None:
         # save methods for later
