@@ -19,12 +19,12 @@ class PathApi:
     def __init__(self, appname: str, pref_root: pathlib.Path | None = None, app_root=pathlib.Path('..')) -> None:
         """ Uses given root or pick standard preference directory. """
         self.app_root = app_root
-        self.pref_root = pref_root
         if pref_root is None:
             # use current working directory instead
-            self.pref_root = pathlib.Path.cwd() / 'data'
+            pref_root = pathlib.Path.cwd()
         
-        self.pref_root /= appname
+        # note: `pref_root` may be passed in as `str`
+        self.pref_root = pathlib.Path(pref_root) / 'data' / appname
 
         # make sure paths exists
         self.ensure(self.pref_root)
