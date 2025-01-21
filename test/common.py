@@ -64,7 +64,7 @@ class EngineBaseTest(unittest.TestCase):
         os.environ['VTT_TITLE'] = 'unittest'
         os.environ['VTT_LIMIT_TOKEN'] =' 2'
         os.environ['VTT_LIMIT_BG'] = '10'
-        os.environ['VTT_LIMIT_GAME'] = '5'
+        os.environ['VTT_LIMIT_GAME'] = '20'
         os.environ['VTT_LIMIT_MUSIC'] = '10'
         os.environ['VTT_NUM_MUSIC'] = '5'
         os.environ['VTT_CLEANUP_EXPIRE'] = '3600'
