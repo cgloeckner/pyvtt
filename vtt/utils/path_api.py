@@ -20,14 +20,11 @@ class PathApi:
         """ Uses given root or pick standard preference directory. """
         self.app_root = app_root
         if pref_root is None:
-            # get preference dir
-            pref_root = pathlib.Path.home()
-            if sys.platform.startswith('linux'):
-                pref_root = pref_root / ".local" / "share"
-            else:
-                raise NotImplementedError('only linux supported yet')
-
-        self.pref_root = pref_root / appname
+            # use current working directory instead
+            pref_root = pathlib.Path.cwd()
+        
+        # note: `pref_root` may be passed in as `str`
+        self.pref_root = pathlib.Path(pref_root) / 'data' / appname
 
         # make sure paths exists
         self.ensure(self.pref_root)
@@ -57,9 +54,6 @@ class PathApi:
 
     def get_log_path(self, filename: str) -> pathlib.Path:
         return self.pref_root / '{0}.log'.format(filename)
-
-    def get_settings_path(self) -> pathlib.Path:
-        return self.pref_root / 'settings.json'
 
     def get_main_database_path(self) -> pathlib.Path:
         return self.pref_root / 'main.db'

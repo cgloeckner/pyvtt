@@ -59,6 +59,21 @@ def make_zip(filename: str, data: str, n: int) -> bytes:
 
 class EngineBaseTest(unittest.TestCase):
 
+    @staticmethod
+    def defaultEnviron():
+        os.environ['VTT_TITLE'] = 'unittest'
+        os.environ['VTT_LIMIT_TOKEN'] =' 2'
+        os.environ['VTT_LIMIT_BG'] = '10'
+        os.environ['VTT_LIMIT_GAME'] = '20'
+        os.environ['VTT_LIMIT_MUSIC'] = '10'
+        os.environ['VTT_NUM_MUSIC'] = '5'
+        os.environ['VTT_CLEANUP_EXPIRE'] = '3600'
+        os.environ['VTT_CLEANUP_TIME'] = '03:00'
+        os.environ['VTT_DOMAIN'] = 'vtt.example.com'
+        os.environ['VTT_PORT'] = '8080'
+        os.environ.pop('VTT_SSL', None)
+        os.environ.pop('VTT_REVERSE_PROXY', None)
+
     def setUp(self) -> None:
         # create temporary directory
         self.tmpdir = tempfile.TemporaryDirectory()
@@ -71,6 +86,7 @@ class EngineBaseTest(unittest.TestCase):
                 h.write('demo')
         
         # load engine app into webtest
+        EngineBaseTest.defaultEnviron()
         self.engine = Engine(argv=['--quiet', '--localhost'], pref_dir=self.root)
         self.engine.app.catchall = False
         self.app = webtest.TestApp(self.engine.app)

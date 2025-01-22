@@ -32,8 +32,9 @@ from vtt.server import VttServer
 class Engine(object):
 
     def __init__(self, app_root=pathlib.Path('.'), argv=list(), pref_dir=None):
-        appname = 'pyvtt'
-        self.log_level = 'INFO'
+        appname = os.getenv('VTT_APPNAME', 'pyvtt')
+        pref_dir = os.getenv('VTT_PREFDIR', pref_dir)
+        self.log_level = os.getenv('VTT_LOG_LEVEL', 'INFO')
         for arg in argv:
             if arg.startswith('--appname='):
                 appname = arg.split('--appname=')[1]
@@ -56,45 +57,59 @@ class Engine(object):
         # webserver stuff
         self.listen = '0.0.0.0'
         self.hosting = {
-            'domain'  : 'localhost',
-            'port'    : 8080,
-            'socket'  : '',
-            'ssl'     : False,
-            'reverse' : False
+            "domain"  : os.getenv('VTT_DOMAIN', 'localhost'),
+            "port"    : int(os.getenv('VTT_PORT', 8080)),
+            "ssl"     : bool(os.getenv('VTT_SSL', False)),
+            "reverse" : bool(os.getenv('VTT_REVERSE_PROXY', False))
         }
-        self.shards = list()
-        
         self.main_db = None
         
         # blacklist for GM names and game URLs
         self.gm_blacklist = ['', 'static', 'asset', 'vtt', 'game']
-        self.url_regex    = '^[A-Za-z0-9_\-.]+$'
+        self.url_regex    = r'^[A-Za-z0-9_\-.]+$'
         
         # maximum file sizes for uploads (in MB)
         self.file_limit = {
-            "token"      : 2,
-            "background" : 10,
-            "game"       : 30,
-            "music"      : 10,
-            "num_music"  : 5
+            "token"      : int(os.getenv('VTT_LIMIT_TOKEN', 2)),
+            "background" : int(os.getenv('VTT_LIMIT_BG', 10)),
+            "game"       : int(os.getenv('VTT_LIMIT_GAME', 20)),
+            "music"      : int(os.getenv('VTT_LIMIT_MUSIC', 10)),
+            "num_music"  : int(os.getenv('VTT_NUM_NUSIC', 5))
         }
-        self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF']
+        self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', "#C52828", "#13AA4F", "#ECBC15", "#7F99C7", "#9251B7", "#797A90", "#80533F", "#21A0B7"]
         
-        self.title          = appname
-        self.links          = list()
+        self.title = os.getenv('VTT_TITLE', appname)
+
+        self.links = [
+            {
+                "label" : "HOME",
+                "url"   : "/"
+            }, {
+                "label" : "ROADMAP",
+                "url"   : "/static/roadmap.html"
+            }, {
+                "label" : "TERMS",
+                "url"   : "/static/terms.html"
+            }
+        ]
+
+        for category in ['discord', 'faq']:
+            key = f'VTT_LINKS_{category.upper()}'
+            value = os.getenv(key)
+            if value is not None:
+                self.links.append({
+                    'label': category.upper(),
+                    'url': value
+                })
+        
         self.cleanup = {
-            'expire': 3600 * 24 * 30, # default: 30d
-            'daytime': '03:00'
+            'expire':  int(os.getenv('VTT_CLEANUP_EXPIRE', 2592000)),
+            'daytime': os.getenv('VTT_CLEANUP_TIME', '03:00')
         }
-        self.login          = dict() # login settings
-        self.login['type']  = ''
-        self.login['providers']: dict[str, str] = {}
-        self.login_api      = None   # login api instance
-        self.notify         = dict() # crash notify settings
-        self.notify['type'] = ''
-        self.notify_api     = None   # notify api instance
-        
-        self.cache         = None   # later engine cache
+
+        self.notify_api = None # notify api instance
+        self.login_api = None   # login api instance
+        self.cache = None   # later engine cache
 
         # handle commandline arguments
         self.localhost = '--localhost' in argv
@@ -119,42 +134,6 @@ class Engine(object):
         # load fancy url generator api ... lol
         self.url_generator = utils.FancyUrlApi(self.paths)
 
-        # handle settings
-        settings_path = self.paths.get_settings_path()
-        if not os.path.exists(settings_path):
-            # create default settings
-            settings = {
-                'title'        : self.title,
-                'cleanup'      : self.cleanup,
-                'links'        : self.links,
-                'file_limit'   : self.file_limit,
-                'playercolors' : self.playercolors,
-                'shards'       : self.shards,
-                'hosting'      : self.hosting,
-                'login'        : self.login,
-                'notify'       : self.notify
-            }
-            with open(settings_path, 'w') as h:
-                json.dump(settings, h, indent=4)
-                self.logging.info('Created default settings file')
-        else:
-            # load settings
-            with open(settings_path, 'r') as h:
-                settings = json.load(h)
-                self.title        = settings['title']
-                self.cleanup      = settings['cleanup']
-                self.links        = settings['links']
-                self.file_limit   = settings['file_limit']
-                self.playercolors = settings['playercolors']
-                self.shards       = settings['shards']
-                self.hosting      = settings['hosting']
-                self.login        = settings['login']
-                self.notify       = settings['notify']
-            self.logging.info('Settings loaded')
-
-        # add this server to the shards list
-        self.shards.append(self.get_url())
-        
         # show argv help
         if '--help' in argv:
             print('Commandline options:')
@@ -172,7 +151,6 @@ class Engine(object):
             print('    --loglevel=<level>')
             print('                 Use <level> as logging level')
             print('')
-            print('See {0} for custom settings.'.format(settings_path))
             sys.exit(0)
 
         if self.localhost:
@@ -188,22 +166,8 @@ class Engine(object):
                 self.hosting['domain'] = ip
                 self.logging.info(f'Using Public IP {ip} as Domain')
 
-            # FIXME: use factory pattern
-            if self.notify is not None and not self.debug:
-                if self.notify['type'] == 'webhook':
-                    if self.notify['provider'] == 'discord':
-                        app_title = f'{self.title} on {self.get_domain()}'
-                        self.notify_api = utils.DiscordWebhook(app_title=app_title, alias=self.notify['alias'],
-                                                               url=self.notify['url'], roles=self.notify['roles'],
-                                                               users=self.notify['users'])
-
-                if self.notify['type'] == 'email':
-                    # create email notify API
-                    self.notify_api = utils.EmailApi(self, appname=appname, **self.notify)
-
-            if self.login is not None and self.login['type'] == 'oauth':
-                self.login_api = utils.OAuthClient(on_auth=self.logging.auth, callback_url=self.get_auth_callback_url(),
-                                                   providers=self.login['providers'])
+            self.init_webhooks()
+            self.init_oauth()
 
         self.logging.info('Loading main database...')
         # create main database
@@ -226,13 +190,54 @@ class Engine(object):
         self.recent_rolls = 30 # rolls within past 30s are recent
         self.latest_rolls = 60 * 10 # rolls within the past 10min are up-to-date
 
+        self.git_hash = None
+        self.debug_hash = None
+        self.load_version_number()
+
+        # export server constants to javascript-file
+        self.constants = utils.ConstantExport()
+        self.constants.load_from_engine(self)
+        self.constants.save_to_file(self.paths.get_constants_path())
+
+        # game cache
+        self.cache = EngineCache(self)
+
+    def init_webhooks(self) -> None:
+        webhooks = {}
+        for api_name in utils.notifier.SUPPORTED_APIS:
+            data = utils.parse_webhook_data(api_name, os.environ)
+            if data is not None:
+                webhooks[api_name] = data
+
+        self.logging.info(f'Found webhook setup for: {[api_name for api_name in webhooks]}')
+        
+        if len(webhooks) >= 1:
+            # FIXME: using the next best webhook API does not allow multiple webhooks
+            app_title = f'{self.title} on {self.get_domain()}'
+            first_hook = webhooks[list(webhooks.keys())[0]]
+            self.notify_api = utils.DiscordWebhook(app_title=app_title, alias=app_title, url=first_hook['url'], roles=[], users=first_hook['users'])
+
+    def init_oauth(self) -> None:
+        # collect provider data from environ vars
+        providers = {}
+        for api_name in utils.auth.SUPPORTED_LOGIN_APIS:
+            data = utils.parse_provider_data(api_name, os.environ)
+            if data is not None:
+                providers[api_name] = data
+        
+        self.logging.info(f'Found oauth setup for: {[api_name for api_name in providers]}')
+        
+        if len(providers) >= 1:
+            self.login_api = utils.OAuthClient(on_auth=self.logging.auth, callback_url=self.get_auth_callback_url(),
+                                                providers=providers)
+
+    def load_version_number(self) -> None:
         # load version number
         bn = BuildNumber()
         bn.load_from_file(self.paths.get_static_path(default=True) / 'client' / 'version.js')
         self.version = str(bn)
         
         # query latest git hash
-        self.git_hash = None
         try:
             with open('sha.txt') as h:
                 self.git_hash = h.read().split('\n')[0]
@@ -247,31 +252,10 @@ class Engine(object):
                 self.git_hash = p.stdout.decode('utf-8').split('\n')[0]
 
         # generate debug hash
-        self.debug_hash = None
         if self.debug:
             self.debug_hash = uuid.uuid4().hex
 
-        # export server constants to javascript-file
-        self.constants = utils.ConstantExport()
-        self.constants.load_from_engine(self)
-        self.constants.save_to_file(self.paths.get_constants_path())
-
-        # game cache
-        self.cache = EngineCache(self)
-
     def run(self):
-        certfile = ''
-        keyfile  = ''
-        if self.has_ssl():
-            # enable SSL
-            ssl_dir = self.paths.get_ssl_path()
-            certfile = ssl_dir / 'cacert.pem'
-            keyfile  = ssl_dir / 'privkey.pem'
-            assert(os.path.exists(certfile))
-            assert(os.path.exists(keyfile))
-        
-        ssl_args = {'certfile': certfile, 'keyfile': keyfile} if self.has_ssl() else {}
-        
         if self.notify_api is not None:
             self.notify_api.on_start()
 
@@ -281,10 +265,6 @@ class Engine(object):
             debug      = self.debug,
             quiet      = self.quiet,
             server     = VttServer,
-            # VttServer-specific
-            unixsocket = self.hosting['socket'],
-            # SSL-specific
-            **ssl_args
         )
         
     def get_domain(self):
@@ -299,18 +279,39 @@ class Engine(object):
         return self.hosting['port']
    
     def get_url(self):
-        suffix = 's' if self.has_reverse_proxy() or self.has_ssl() else ''
-        port   = '' if self.has_reverse_proxy() else f':{self.get_port()}'
+        port   = ''
+        suffix = ''
+        if self.has_ssl():
+          suffix = 's'
+          if self.get_port() != 443:
+            port   = f':{self.get_port()}'
+        else:
+          if self.get_port != 80:
+            port   = f':{self.get_port()}'
         return f'http{suffix}://{self.get_domain()}{port}'
 
     def get_websocket_url(self):
-        protocol = 'wss' if self.has_reverse_proxy() or self.has_ssl() else 'ws'
-        port     = '' if self.has_reverse_proxy() else f':{self.get_port()}'
+        port = ''
+        protocol = 'ws'
+        if self.has_ssl():
+            protocol = 'wss'
+            if self.get_port() != 443:
+                port  = f':{self.get_port()}'
+        else:
+            if self.get_port() != 80:
+                port  = f':{self.get_port()}'
         return f'{protocol}://{self.get_domain()}{port}/vtt/websocket'
 
     def get_auth_callback_url(self):
-        protocol = 'https' if self.has_reverse_proxy() or self.has_ssl() else 'http'
-        port     = '' if self.has_reverse_proxy() else f':{self.get_port()}'
+        port = ''
+        protocol = 'http'
+        if self.has_ssl():
+            protocol = 'https'
+            if self.get_port() != 443:
+                port = f':{self.get_port()}'
+        else:
+            if self.get_port() != 80:
+                port = f':{self.get_port()}'
         return f'{protocol}://{self.get_domain()}{port}/vtt/callback'
 
     def get_build_sha(self):
@@ -333,8 +334,7 @@ class Engine(object):
         return bool(re.match(self.url_regex, s))
         
     def get_client_ip(self, request):
-        # use different header if through unix socket or reverse proxy
-        if self.hosting['socket'] != '' or self.has_reverse_proxy():
+        if self.has_reverse_proxy():
             return request.environ.get('HTTP_X_FORWARDED_FOR')
         else:
             return request.environ.get('REMOTE_ADDR')

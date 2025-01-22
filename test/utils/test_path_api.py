@@ -30,20 +30,15 @@ class PathApiTest(unittest.TestCase):
     def assert_directory(self, p: pathlib.Path) -> None:
         self.assertTrue(p.exists())
 
-    def test_path_api_default(self):
-        fake_path = pathlib.Path(self.tmpdir.name) / 'fake_home'
-        patch = pytest.MonkeyPatch()
-        patch.setattr(pathlib.Path, 'home', lambda: fake_path)
-
-        root = utils.PathApi(appname='unittest')
-        self.assertEqual(root.pref_root, fake_path / '.local' / 'share' / 'unittest')
-
-    def test_path_api_non_linux(self):
-        patch = pytest.MonkeyPatch()
-        patch.setattr(sys, 'platform', 'test-system')
-
-        with self.assertRaises(NotImplementedError):
-            root = utils.PathApi(appname='unittest')
+    def test_path_api_with_given_prefroot(self):
+        # as setUp
+        expected = pathlib.Path(self.tmpdir.name) / 'data' / 'unittest'
+        self.assertEqual(self.paths.pref_root, expected)
+        
+    def test_path_api_without_specific_prefroot(self):
+        paths = utils.PathApi(appname='unittest')
+        expected = pathlib.Path.cwd() / 'data' / 'unittest'
+        self.assertEqual(paths.pref_root, expected)
 
     def test_ensure(self):
         # @NOTE: ensure() is called by the constructor
@@ -64,7 +59,7 @@ class PathApiTest(unittest.TestCase):
         self.paths.get_assets_path()
         self.paths.get_assets_path(default=True)
         self.paths.get_client_code_path()
-        self.paths.get_settings_path()
+        #self.paths.get_settings_path()
         self.paths.get_main_database_path()
         self.paths.get_constants_path()
         self.paths.get_ssl_path()

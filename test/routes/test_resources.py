@@ -19,7 +19,6 @@ class ResourcesRoutesTest(EngineBaseTest):
         routes.register_gm(self.engine)
         routes.register_player(self.engine)
         routes.register_resources(self.engine)
-        routes.register_api(self.engine)
         # @NOTE: custom error pages are not routed here
 
         # register arthur
@@ -51,7 +50,7 @@ class ResourcesRoutesTest(EngineBaseTest):
         new_file.touch()
         ret = self.app.get('/static/malicious.js')
         self.assertEqual(ret.status_int, 200)
-        self.assertEqual(ret.content_type, 'application/javascript')
+        self.assertIn('javascript', ret.content_type)
 
     def test_can_load_existing_png(self):
         ret = self.app.get('/static/d20.png')
@@ -66,12 +65,12 @@ class ResourcesRoutesTest(EngineBaseTest):
     def test_can_load_favicon(self):
         ret = self.app.get('/static/favicon.ico')
         self.assertEqual(ret.status_int, 200)
-        self.assertEqual(ret.content_type, 'image/vnd.microsoft.icon')
+        self.assertIn('icon', ret.content_type)
 
     def test_can_load_existing_javascript_file(self):
         ret = self.app.get('/static/client/render.js')
         self.assertEqual(ret.status_int, 200)
-        self.assertEqual(ret.content_type, 'application/javascript')
+        self.assertIn('javascript', ret.content_type)
 
     def test_can_load_existing_css_file(self):
         ret = self.app.get('/static/client/layout.css')

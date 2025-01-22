@@ -1,8 +1,14 @@
+pyvtt
 sha.txt
 htmlcov/
+run.sh
+
+# VSCode
+pyvtt.code-workspace
 
 # PyCharm
 .idea
+.code-workspace
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
