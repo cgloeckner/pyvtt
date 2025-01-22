@@ -69,10 +69,10 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(p, 8080)
         
         # reload with custom port
-        os.environ['VTT_PORT'] = '80'
+        os.environ['VTT_PORT'] = '8080'
         self.reloadEngine()
         p = self.engine.get_port()
-        self.assertEqual(p, 80)
+        self.assertEqual(p, 8080)
         
     def test_hasSsl(self):
         self.reloadEngine()

@@ -60,7 +60,7 @@ class Engine(object):
             "domain"  : os.getenv('VTT_DOMAIN', 'localhost'),
             "port"    : int(os.getenv('VTT_PORT', 8080)),
             "ssl"     : bool(os.getenv('VTT_SSL', False)),
-            "reverse" : bool(os.getenv('VTT_REVERSE_PROXY'))
+            "reverse" : bool(os.getenv('VTT_REVERSE_PROXY', False))
         }
         self.main_db = None
         
