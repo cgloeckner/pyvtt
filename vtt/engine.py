@@ -85,15 +85,12 @@ class Engine(object):
                 "label" : "HOME",
                 "url"   : "/"
             }, {
-                "label" : "ROADMAP",
-                "url"   : "/static/roadmap.html"
-            }, {
                 "label" : "TERMS",
-                "url"   : "/static/terms.html"
+                "url"   : "https://github.com/cgloeckner/pyvtt/blob/master/TERMS.md"
             }
         ]
 
-        for category in ['discord', 'faq']:
+        for category in ['discord', 'github']:
             key = f'VTT_LINKS_{category.upper()}'
             value = os.getenv(key)
             if value is not None:
