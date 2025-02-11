@@ -20,7 +20,7 @@ This application includes a simple Dockerfile to build a runnable container.
 
 Kane Driscol
 - Lead Artist (see commit details)
-- Community Manager for ICVTT over on the [Runehammer Forums](https://forums.runehammer.online/) and [ICRPG Discord Community](https://discord.gg/H76tfBZZEX)
+- Community Manager for ICVTT over on the [ICRPG Discord Community](https://discord.gg/H76tfBZZEX)
 
 Coyote
 - Majority of default assets
