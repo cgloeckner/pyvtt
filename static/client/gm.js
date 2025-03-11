@@ -84,7 +84,12 @@ function updateCountdown() {
     let d = getSchedulerDate()
     url += d.getTime().toString(16)
 
-    $('#schedule_url')[0].innerHTML = `<a href="${server}${url}" target="_blank">${server}${url}</a>`
+    let anchor = document.createElement('a');
+    anchor.href = `${server}${url}`;
+    anchor.target = "_blank";
+    anchor.textContent = `${server}${url}`;
+    $('#schedule_url')[0].innerHTML = '';
+    $('#schedule_url')[0].appendChild(anchor);
     // note: escape some chars
     $('#discord_prompt')[0].innerHTML = getDiscordPrompt(d).replace(/<|>/g, e => e === '<' ? '&lt;' : '&gt;')
 }
