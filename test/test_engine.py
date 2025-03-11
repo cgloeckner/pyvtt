@@ -134,13 +134,8 @@ class EngineTest(EngineBaseTest):
         self.reloadEngine()
         self.assertEqual(self.engine.get_auth_callback_url(), 'http://vtt.example.com:8080/vtt/callback')
 
-        # internal SSL does not effect it
+        # internal SSL causes port to be ignored, because things will be https' default 443 anyways
         os.environ['VTT_SSL'] = 'True'
-        self.reloadEngine()
-        self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com:8080/vtt/callback')
-
-        # internal port does not effect it
-        os.environ['VTT_PORT'] = '443'
         self.reloadEngine()
         self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
         
