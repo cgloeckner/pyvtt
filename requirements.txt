@@ -2,7 +2,7 @@ Authlib==1.1.0
 beautifulsoup4==4.11.1
 bottle==0.12.23
 cachetools==5.2.0
-certifi==2023.7.22
+certifi==2024.7.4
 cffi==1.15.1
 charset-normalizer==2.1.1
 cryptography
