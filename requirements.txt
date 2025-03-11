@@ -29,7 +29,7 @@ rsa==4.9
 six==1.16.0
 soupsieve==2.3.2.post1
 uritemplate==4.1.1
-urllib3==1.26.18
+urllib3==1.26.19
 zope.event==4.5.0
 zope.interface==5.5.2
 httpx~=0.25.2
