@@ -77,8 +77,8 @@ def register(engine: any):
 
         # save playername in client cookie
         expire = int(time.time() + engine.cleanup['expire'])
-        response.set_cookie('playername', player_name, path=game.get_url(), expires=expire, secure=engine.uses_https())
-        response.set_cookie('playercolor', player_color, path=game.get_url(), expires=expire, secure=engine.uses_https())
+        response.set_cookie('playername', player_name, path=game.get_url(), expires=expire, secure=engine.has_ssl())
+        response.set_cookie('playercolor', player_color, path=game.get_url(), expires=expire, secure=engine.has_ssl())
 
         engine.logging.access(f'Player logged in to {game_url} by {client_ip}.')
 

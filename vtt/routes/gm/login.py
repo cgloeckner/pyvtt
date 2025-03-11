@@ -140,7 +140,7 @@ def register(engine: any):
                 raise
 
             expires = time.time() + engine.cleanup['expire']
-            response.set_cookie('session', sid, path='/', expires=expires, secure=engine.uses_https())
+            response.set_cookie('session', sid, path='/', expires=expires, secure=engine.has_ssl())
 
             engine.logging.access(f'GM created with name="{gm.name}" url={gm.url} by {client_ip}.')
 
@@ -151,6 +151,6 @@ def register(engine: any):
     @get('/vtt/logout')
     def vtt_logout():
         # remove cookie
-        response.set_cookie('session', '', path='/', max_age=1, secure=engine.uses_https())
+        response.set_cookie('session', '', path='/', max_age=1, secure=engine.has_ssl())
         # redirect default index
         redirect('/')
