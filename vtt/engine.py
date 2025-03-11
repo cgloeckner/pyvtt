@@ -280,8 +280,6 @@ class Engine(object):
         suffix = ''
         if self.has_ssl():
           suffix = 's'
-          if self.get_port() != 443:
-            port   = f':{self.get_port()}'
         else:
           if self.get_port != 80:
             port   = f':{self.get_port()}'
@@ -292,8 +290,6 @@ class Engine(object):
         protocol = 'ws'
         if self.has_ssl():
             protocol = 'wss'
-            if self.get_port() != 443:
-                port  = f':{self.get_port()}'
         else:
             if self.get_port() != 80:
                 port  = f':{self.get_port()}'

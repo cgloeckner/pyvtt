@@ -87,28 +87,18 @@ class EngineTest(EngineBaseTest):
         self.reloadEngine()
         self.assertEqual(self.engine.get_url(), 'http://vtt.example.com:8080')
 
-        # internal SSL does not effect it
+        # enabling SSL causes the port to be ignored (assued HTTPS' default 443 from outside)
         os.environ['VTT_SSL'] = 'True'
         self.reloadEngine()
-        self.assertEqual(self.engine.get_url(), 'https://vtt.example.com:8080')
-
-        # internal port does not effect it
-        os.environ['VTT_PORT'] = '443'
-        self.reloadEngine()
         self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
+
         
     def test_getWebsocketUrl(self):
         self.reloadEngine()
         self.assertEqual(self.engine.get_websocket_url(), 'ws://vtt.example.com:8080/vtt/websocket')
 
-        # internal SSL does not effect it
+        # enabling SSL causes the port to be ignored (assued HTTPS' default 443 from outside)
         os.environ['VTT_SSL'] = 'True'
-        self.reloadEngine()
-        self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com:8080/vtt/websocket')
-
-        # internal port does not effect it
-        os.environ['VTT_SSL'] = 'True'
-        os.environ['VTT_PORT'] = '443'
         self.reloadEngine()
         self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
         

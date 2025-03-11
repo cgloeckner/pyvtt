@@ -22,7 +22,7 @@ def register(engine: any):
         if gm is None:
             # remove cookie
             # FIXME: setting cookie is ignored on redirect
-            response.set_cookie('session', '', path='/', max_age=1, secure=engine.has_ssl())
+            response.set_cookie('session', '', path='/', max_age=1, secure=engine.uses_https())
             redirect('/vtt/join')
 
         # load GM from cache
@@ -31,7 +31,7 @@ def register(engine: any):
             # remove cookie
             engine.logging.warning(f'GM name="{gm.name}" url={gm.url} tried to re-login by {client_ip} '
                                    f'but he was not in the cache')
-            response.set_cookie('session', '', path='/', max_age=1, secure=engine.has_ssl())
+            response.set_cookie('session', '', path='/', max_age=1, secure=engine.uses_https())
             abort(404)
 
         # refresh session
