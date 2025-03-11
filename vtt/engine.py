@@ -304,8 +304,6 @@ class Engine(object):
         protocol = 'http'
         if self.has_ssl():
             protocol = 'https'
-            if self.get_port() != 443:
-                port = f':{self.get_port()}'
         else:
             if self.get_port() != 80:
                 port = f':{self.get_port()}'
