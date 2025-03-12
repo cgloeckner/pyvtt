@@ -11,6 +11,7 @@ import random
 import requests
 import tempfile
 import time
+import bottle
 
 import gevent
 from bottle import FileUpload
@@ -91,7 +92,6 @@ class EngineTest(EngineBaseTest):
         os.environ['VTT_SSL'] = 'True'
         self.reloadEngine()
         self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
-
         
     def test_getWebsocketUrl(self):
         self.reloadEngine()
@@ -185,7 +185,15 @@ class EngineTest(EngineBaseTest):
         with open(__file__, 'rb') as h:
             ret = self.engine.get_md5(h)
             self.assertIsInstance(ret, str)
-        
+    
+    def test_getMd5_works_with_bottle_fileupload(self):
+        # NOTE: using THIS file as example
+        with open(__file__, 'rb') as h:
+            fupload = bottle.FileUpload(fileobj=h, name='foo', filename='test_engine.py')
+            file_hash = self.engine.get_md5(h)
+            obj_hash = self.engine.get_md5(fupload.file)
+            self.assertEqual(file_hash, obj_hash)
+
     def test_getSize(self):
         # create dummy file
         with tempfile.TemporaryFile() as h:
