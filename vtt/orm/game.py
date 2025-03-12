@@ -150,49 +150,32 @@ def register(engine: any, db: Database):
 
         def upload(self, handle: bottle.FileUpload) -> str | None:
             """Save the given image via file handle and return the url to the image."""
-            suffix = '.{0}'.format(handle.filename.split(".")[-1])
-            with tempfile.NamedTemporaryFile(suffix=suffix) as tmp_file:
-                # save image to temporary file
-                handle.save(tmp_file.name, overwrite=True)
+            # check file format
+            try:
+                Image.open(handle.file)
+            except UnidentifiedImageError:
+                # unsupported file format
+                return None
 
-                # check file format
-                try:
-                    Image.open(tmp_file.name)
-                except UnidentifiedImageError:
-                    # unsupported file format
-                    return None
+            # figure out where to save it
+            game_root = engine.paths.get_game_path(self.gm_url, self.url)
+            image_id = self.get_next_id()
+            local_path = game_root / f'{image_id}.png'
 
-                # create md5 checksum for duplication test
-                new_md5 = engine.get_md5(tmp_file.file)
+            # make sure image is on disk
+            new_md5 = engine.get_md5(handle.file)
+            
+            with engine.locks[self.gm_url]:  # make IO access safe
+                chcksm = engine.checksums[self.get_url()]
+                found_id = chcksm.get(new_md5)
+                if found_id is None or not os.path.exists(game_root / f'{found_id}.png'):
+                    # save to disk (cache miss or caching error)
+                    handle.save(str(local_path))
+                    chcksm[new_md5] = image_id
+                    found_id = image_id
 
-                game_root = engine.paths.get_game_path(self.gm_url, self.url)
-                image_id = self.get_next_id()
-                local_path = game_root / f'{image_id}.png'
-                with engine.locks[self.gm_url]:  # make IO access safe
-                    if new_md5 not in engine.checksums[self.get_url()]:
-                        # copy image to target
-                        shutil.copyfile(tmp_file.name, local_path)
-
-                        # store pair: checksum => image_id
-                        engine.checksums[self.get_url()][new_md5] = image_id
-
-                # fetch remote path (query image_id via by checksum)
-                remote_path = self.get_image_url(engine.checksums[self.get_url()][new_md5])
-
-                # assure image file exists
-                img_id = int(remote_path.split('/')[-1].split('.png')[0])
-                local_path = game_root / f'{img_id}.png'
-                with engine.locks[self.gm_url]:  # make IO access safe
-                    if not os.path.exists(local_path):
-                        # copy image to target
-                        shutil.copyfile(tmp_file.name, local_path)
-
-                        engine.logging.warning('Image got re-uploaded to fix a cache error')
-                        if engine.notify_api is not None:
-                            engine.notify_api(remote_path,
-                                              f'Image got re-uploaded to fix a cache error:\n {remote_path}')
-
-                return remote_path
+            # fetch remote path
+            return self.get_image_url(found_id)
 
         @staticmethod
         def get_id_from_url(url: str) -> id:

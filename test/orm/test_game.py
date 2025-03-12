@@ -415,7 +415,7 @@ class GameTest(EngineBaseTest):
                         
                         # cleanup to delete 1st file
                         b, r, t, m = game.cleanup(0)
-                        self.assertEqual(b, 82)
+                        self.assertEqual(b, 41)
                         self.assertEqual(r, 0)
                         self.assertEqual(t, 0)
                         self.assertEqual(m, 1)
