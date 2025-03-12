@@ -156,6 +156,7 @@ def register(engine: any, db: Database):
             except UnidentifiedImageError:
                 # unsupported file format
                 return None
+            handle.file.seek(0)
 
             # figure out where to save it
             game_root = engine.paths.get_game_path(self.gm_url, self.url)
