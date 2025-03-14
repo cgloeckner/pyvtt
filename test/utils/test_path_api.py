@@ -32,12 +32,12 @@ class PathApiTest(unittest.TestCase):
 
     def test_path_api_with_given_prefroot(self):
         # as setUp
-        expected = pathlib.Path(self.tmpdir.name) / 'unittest'
+        expected = pathlib.Path(self.tmpdir.name)
         self.assertEqual(self.paths.pref_root, expected)
         
     def test_path_api_without_specific_prefroot(self):
         paths = utils.PathApi(appname='unittest')
-        expected = pathlib.Path.cwd() / 'data' / 'unittest'
+        expected = pathlib.Path.cwd() / 'data'
         self.assertEqual(paths.pref_root, expected)
 
     def test_ensure(self):

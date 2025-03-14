@@ -24,7 +24,7 @@ class PathApi:
             pref_root = pathlib.Path.cwd() / 'data' 
         
         # note: `pref_root` may be passed in as `str`
-        self.pref_root = pathlib.Path(pref_root) / appname
+        self.pref_root = pathlib.Path(pref_root)
 
         # make sure paths exists
         self.ensure(self.pref_root)
