@@ -71,3 +71,8 @@ class ApiRoutesTest(EngineBaseTest):
         ret = self.app.get('/vtt/api/assets-list/arthur/test-game-1', expect_errors=True)
         self.assertEqual(ret.status_int, 200)
 
+    def test_can_post_maintenance_timestamp(self) -> None:
+        ret = self.app.post('/vtt/api/maintenance/1234')
+        self.assertEqual(ret.status_int, 200)
+
+        self.assertEqual(self.engine.maintenance.load(), 1234)

@@ -194,3 +194,7 @@ def register(engine: any):
 
         provider['query_time'] = done - now
         return provider
+
+    @post('/vtt/api/maintenance/<timestamp>')
+    def set_maintenance(timestamp):
+        engine.maintenance.store(int(timestamp))

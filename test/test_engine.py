@@ -357,3 +357,5 @@ class EngineTest(EngineBaseTest):
             all_games = list(gm_cache.db.Game.select())
         self.assertEqual(len(all_games), 1)
 
+    def test_atomic_maintenance_timestamp(self) -> None:
+        self.assertEqual(self.engine.maintenance.load(), 0)

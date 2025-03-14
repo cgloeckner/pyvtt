@@ -1,4 +1,6 @@
-%import requests, json
+%import requests
+%import json
+%import time
 %import bottle
 
 %try:
@@ -20,6 +22,12 @@
 </span>
 
 <span class="links">
+
+%maintenance = engine.maintenance.load()
+%if maintenance > time.time():
+    %include("maintenance", timestamp=maintenance)
+%end
+
 %if gm is not None:
     <a href="/vtt/logout" draggable="false">LOGOUT</a>
 %end

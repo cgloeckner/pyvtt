@@ -21,6 +21,7 @@ import time
 import uuid
 
 import bottle
+import atomicx
 
 import vtt.utils as utils
 from buildnumber import BuildNumber
@@ -63,6 +64,7 @@ class Engine(object):
             "reverse" : bool(os.getenv('VTT_REVERSE_PROXY', False))
         }
         self.main_db = None
+        self.maintenance = atomicx.AtomicInt()
         
         # blacklist for GM names and game URLs
         self.gm_blacklist = ['', 'static', 'asset', 'vtt', 'game']
