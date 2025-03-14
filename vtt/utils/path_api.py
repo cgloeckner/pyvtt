@@ -21,10 +21,10 @@ class PathApi:
         self.app_root = app_root
         if pref_root is None:
             # use current working directory instead
-            pref_root = pathlib.Path.cwd()
+            pref_root = pathlib.Path.cwd() / 'data' 
         
         # note: `pref_root` may be passed in as `str`
-        self.pref_root = pathlib.Path(pref_root) / 'data' / appname
+        self.pref_root = pathlib.Path(pref_root) / appname
 
         # make sure paths exists
         self.ensure(self.pref_root)
