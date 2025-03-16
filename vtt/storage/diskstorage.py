@@ -127,23 +127,31 @@ class DiskStorage:
         """Returns a list of all image files (local filename).
         @NOTE: needs to be called from a threadsafe context.
         """
-        root = self.paths.get_game_path(gm_url, game_url)
-        return [f for f in os.listdir(root) if f.endswith('.png')]
+        with self.locks[gm_url]:  # make IO access safe
+            root = self.paths.get_game_path(gm_url, game_url)
+            return [f for f in os.listdir(root) if f.endswith('.png')]
+
+    @staticmethod
+    def id_from_filename(filename: str) -> int:
+        return int(filename.split('.png')[0])
+
+    @staticmethod
+    def get_max_id(filenames: str) -> int:
+        max_id = 0
+        if len(filenames) > 0:
+            last_png = max(filenames, key=DiskStorage.id_from_filename)
+            max_id = DiskStorage.id_from_filename(last_png)
+        return max_id
 
     def get_next_id(self, gm_url: str, game_url: str) -> int:
         """Returns the next free image number that's not used yet.
         @NOTE: needs to be called from a threadsafe context.
         """
-        max_id = 0
         filenames = self.get_all_images(gm_url, game_url)
+        if len(filenames) == 0:
+            return 0
 
-        def split(s: str) -> int:
-            return int(s.split('.png')[0])
-
-        if len(filenames) > 0:
-            last_png = max(filenames, key=split)
-            max_id = split(last_png) + 1
-        return max_id
+        return self.get_max_id(filenames) + 1
 
     def get_local_image_path(self, gm_url: str, game_url: str, image_id: int) -> str:
         return self.paths.get_game_path(gm_url, game_url) / f'{image_id}.png'
@@ -175,29 +183,6 @@ class DiskStorage:
             
             return image_id
 
-    def get_abandoned_images(self, gm_url: str, game_url: str, is_in_use: callable) -> list[str]:
-        """Return a list of all image files that are not used in any scene in this game"""
-        # check all existing images
-        game_root = self.paths.get_game_path(gm_url, game_url)
-        with self.locks[gm_url]:  # make IO access safe
-            all_images = self.get_all_images(gm_url, game_url)
-
-        abandoned = list()
-        last_id = self.get_next_id(gm_url, game_url) - 1
-        for image_id in all_images:
-            this_id = int(image_id.split('.')[0])
-            if this_id == last_id:
-                # keep this image to avoid next id to cause
-                # unexpected browser cache behavior
-                continue
-
-            # check for any tokens
-            if not is_in_use(this_id):
-                # found abandoned image
-                abandoned.append(os.path.join(game_root, image_id))
-
-        return abandoned
-    
     def remove_music(self, gm_url: str, game_url: str, music_id_range: list[int]) -> None:
         """Remove all given music"""
         root = self.paths.get_game_path(gm_url, game_url)
@@ -206,3 +191,21 @@ class DiskStorage:
                 fname = root / '{0}.mp3'.format(n)
                 if os.path.exists(fname):
                     os.remove(fname)
+
+    def remove_images(self, gm_url: str, game_url: str, images: list[str], id_query: callable) -> int:
+        """Remove given images and return the number of bytes removed"""
+        num_bytes = 0
+
+        with self.locks[gm_url]:  # make IO access safe
+            for image_id in images:
+                filename = self.get_local_image_path(gm_url, game_url, image_id)
+                num_bytes += os.path.getsize(filename)
+                os.remove(filename)
+                # remove image's md5 hash from cache
+                self.md5.delete(gm_url, game_url, id_query(str(filename)))
+
+        # reinitialize md5 hashes
+        all_images = self.get_all_images(gm_url, game_url)
+        self.md5.init(gm_url, game_url, all_images)
+
+        return num_bytes

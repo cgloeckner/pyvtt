@@ -36,6 +36,11 @@ class DiskStorageTest(EngineBaseTest):
     def tearDown(self):
         del self.db
 
+    def test_id_from_filename(self) -> None:
+        fname = '2.png'
+        img_id = self.engine.storage.id_from_filename(fname)
+        self.assertEqual(img_id, 2)
+
     @db_session
     def test_get_all_images(self):
         game = self.db.Game(url='foo', gm_url='url456')
@@ -69,7 +74,33 @@ class DiskStorageTest(EngineBaseTest):
         game = self.db.Game(url='foo', gm_url='url456')
         md5_key = self.engine.storage.md5.to_key(game.gm_url, game.url)
         self.assertEqual(md5_key, 'url456/foo')
+
+    @db_session
+    def test_get_next_id(self):
+        game = self.db.Game(url='foo', gm_url='url456')
+        game.post_setup()
         
+        # starting id
+        i = self.engine.storage.get_next_id(game.gm_url, game.url)
+        self.assertEqual(i, 0)
+        
+        i = self.engine.storage.get_next_id(game.gm_url, game.url)
+        self.assertEqual(i, 0)
+        
+        # gaps ignored for next_id
+        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
+        for i in [0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 12]:
+            p = img_path / '{0}.png'.format(i)
+            p.touch()
+        i = self.engine.storage.get_next_id(game.gm_url, game.url)
+        self.assertEqual(i, 13)
+        
+        # first unused id
+        p = img_path / '5.png'
+        p.touch()     
+        i = self.engine.storage.get_next_id(game.gm_url, game.url)
+        self.assertEqual(i, 13)
+    
     @db_session
     def test_make_md5s(self):
         game = self.db.Game(url='foo', gm_url='url456')

@@ -82,17 +82,32 @@ def register(engine: any, db: Database):
             return int(url.split('/')[-1].split('.')[0])
 
         def get_abandoned_images(self) -> list[str]:
-            def is_in_use(img_id: int) -> True:
-                image_url = self.get_image_url(img_id)
-                token = db.Token.select(lambda t: t.url == image_url).first()
-                return token is not None
+            """Return a list of all image ids that are not used in any scene in this game"""
+            # check all existing images
+            all_images = engine.storage.get_all_images(self.gm_url, self.url)
 
-            return engine.storage.get_abandoned_images(self.gm_url, self.url, is_in_use)
+            abandoned = list()
+            last_id = engine.storage.get_max_id(all_images)
+            print(all_images, last_id)
+            for filename in all_images:
+                image_id = engine.storage.id_from_filename(filename)
+                if image_id == last_id:
+                    # keep this image to avoid next id to cause
+                    # unexpected browser cache behavior
+                    continue
+
+                # check for any tokens
+                image_url = self.get_image_url(image_id)
+                token = db.Token.select(lambda t: t.url == image_url).first()
+                if token is None:
+                    # found abandoned image
+                    abandoned.append(image_id)
+
+            return abandoned
 
         def get_broken_tokens(self) -> list[db.Entity]:
             # query all images
-            with engine.storage.locks[self.gm_url]:  # make IO access safe
-                all_images = engine.storage.get_all_images(self.gm_url, self.url)
+            all_images = engine.storage.get_all_images(self.gm_url, self.url)
 
             # query all tokens without valid image
             broken = list()
@@ -110,16 +125,10 @@ def register(engine: any, db: Database):
 
         def cleanup(self, now) -> CleanupReport:
             """ Cleanup game's unused image and token data. """
-            num_bytes = 0
-
-            # query and remove all images that are not used as tokens
+            # delete all abandoned images
             relevant = self.get_abandoned_images()
-            with engine.storage.locks[self.gm_url]:  # make IO access safe
-                for filename in relevant:
-                    num_bytes += os.path.getsize(filename)
-                    os.remove(filename)
-                    # remove image's md5 hash from cache
-                    engine.storage.md5.delete(self.gm_url, self.url, self.get_id_from_url(filename))
+            num_bytes = engine.storage.remove_images(self.gm_url, self.url, relevant, id_query=self.get_id_from_url)
+            num_md5s = len(relevant)
 
             # delete all outdated rolls
             rolls = db.Roll.select(lambda r: r.game == self and r.timeid < now - engine.latest_rolls)
@@ -131,8 +140,6 @@ def register(engine: any, db: Database):
             num_tokens = len(relevant)
             for t in relevant:
                 t.delete()
-
-            num_md5s = engine.storage.init_game(self.gm_url, self.url)
 
             return num_bytes, num_rolls, num_tokens, num_md5s
 

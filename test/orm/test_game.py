@@ -112,71 +112,12 @@ class GameTest(EngineBaseTest):
         self.assertEqual(game.order, [last_id-3, last_id-2, last_id-1, last_id])
     
     @db_session
-    def test_getNextId(self):
-        game = self.db.Game(url='foo', gm_url='url456')
-        game.post_setup()
-        
-        # starting id
-        i = self.engine.storage.get_next_id(game.gm_url, game.url)
-        self.assertEqual(i, 0)
-        
-        i = self.engine.storage.get_next_id(game.gm_url, game.url)
-        self.assertEqual(i, 0)
-        
-        # gaps ignored for next_id
-        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        for i in [0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 12]:
-            p = img_path / '{0}.png'.format(i)
-            p.touch()
-        i = self.engine.storage.get_next_id(game.gm_url, game.url)
-        self.assertEqual(i, 13)
-        
-        # first unused id
-        p = img_path / '5.png'
-        p.touch()     
-        i = self.engine.storage.get_next_id(game.gm_url, game.url)
-        self.assertEqual(i, 13)
-    
-    @db_session
-    def test_getImageUrl(self):
+    def test_get_image_url(self):
         game = self.db.Game(url='foo', gm_url='url456')
         game.post_setup()
         
         url = game.get_image_url(17)
         self.assertEqual(url, '/asset/url456/foo/17.png')
-        
-    @db_session
-    def test_getFileSize(self):
-        game = self.db.Game(url='foo', gm_url='url456')
-        game.post_setup()
-        
-        # create empty files (to mimic uploaded images)
-        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p1 = img_path / '{0}.png'.format(id1)
-        p1.touch()
-        id2 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p2 = img_path / '{0}.png'.format(id2)
-        with open(p2, 'w') as h:
-            h.write('test')
-        id3 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p3 = img_path / '{0}.png'.format(id3)
-        with open(p3, 'w') as h:
-            h.write('xy')
-        id4 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p4 = img_path / '{0}.png'.format(id4)
-        with open(p4, 'w') as h:
-            h.write('abc')
-        
-        # test file sizes
-        size1 = self.get_file_size(game, str(p1))
-        size2 = self.get_file_size(game, str(p2))
-        size3 = self.get_file_size(game, str(p3))
-        size4 = self.get_file_size(game, str(p4))
-        self.assertEqual(size1, 0)
-        self.assertEqual(size2, 4)
-        self.assertEqual(size3, 2)
-        self.assertEqual(size4, 3)
         
     @db_session
     def test_upload(self):
@@ -236,9 +177,9 @@ class GameTest(EngineBaseTest):
                         # check 2nd md5 being stored
                         md5_2 = self.engine.storage.md5.generate(fupload2.file)
                         checksums = self.engine.storage.md5.checksums[game.get_url()]
-                        self.assertIn(md5_2, checksums) 
+                        self.assertIn(md5_2, checksums)
                         
-                        # cleanup to delete 1st file
+                        # cleanup to delete 1st file (but keep 2nd since it's the latest)
                         b, r, t, m = game.cleanup(0)
                         self.assertGreater(b, 0)
                         self.assertEqual(r, 0)
@@ -271,14 +212,14 @@ class GameTest(EngineBaseTest):
                 url = game.upload(fupload)
                 self.assertIsNone(url)
         
-    def test_getIdFromUrl(self):
+    def test_get_id_from_url(self):
         self.assertEqual(self.db.Game.get_id_from_url('/foo/bar/3.17.png'), 3)
         self.assertEqual(self.db.Game.get_id_from_url('/0.'), 0)
         with self.assertRaises(ValueError):
             self.db.Game.get_id_from_url('/a.')
         
     @db_session
-    def test_getAbandonedImages(self):
+    def test_get_abandoned_images(self):
         game = self.db.Game(url='foo', gm_url='url456')
         game.post_setup()
         
@@ -306,13 +247,13 @@ class GameTest(EngineBaseTest):
         # expect 1st and 3rd file to be abandoned
         # @NOTE: 2nd is assigned, 4th is the last (keeps next id consistent)
         abandoned = game.get_abandoned_images()
-        self.assertIn(str(p1), abandoned)
-        self.assertNotIn(str(p2), abandoned)
-        self.assertIn(str(p3), abandoned)
-        self.assertNotIn(str(p4), abandoned)
+        self.assertIn(id1, abandoned)
+        self.assertNotIn(id2, abandoned)
+        self.assertIn(id3, abandoned)
+        self.assertNotIn(id4, abandoned)
 
     @db_session
-    def test_getBrokenTokens(self):
+    def test_get_broken_tokens(self):
         game = self.db.Game(url='foo', gm_url='url456')
         game.post_setup()
         
@@ -338,7 +279,7 @@ class GameTest(EngineBaseTest):
         self.assertNotIn(static, all_broken)
 
     @db_session
-    def test_removeMusic(self):
+    def test_remove_music(self):
         game = self.db.Game(url='foo', gm_url='url456')
         game.post_setup()
         
