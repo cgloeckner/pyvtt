@@ -36,6 +36,12 @@ class GameTest(EngineBaseTest):
     def tearDown(self):
         del self.db
 
+    def get_file_size(self, game, url: str) -> int:
+        game_root = self.engine.paths.get_game_path(game.gm_url, game.url)
+        img_filename = url.split('/')[-1]
+        local_path = os.path.join(game_root, img_filename)
+        return os.path.getsize(local_path)
+
     @db_session
     def test_mayExpireSoon(self):
         game = self.db.Game(url='foo', gm_url='url456')
@@ -163,10 +169,10 @@ class GameTest(EngineBaseTest):
             h.write('abc')
         
         # test file sizes
-        size1 = game.get_file_size(str(p1))
-        size2 = game.get_file_size(str(p2))
-        size3 = game.get_file_size(str(p3))
-        size4 = game.get_file_size(str(p4))
+        size1 = self.get_file_size(game, str(p1))
+        size2 = self.get_file_size(game, str(p2))
+        size3 = self.get_file_size(game, str(p3))
+        size4 = self.get_file_size(game, str(p4))
         self.assertEqual(size1, 0)
         self.assertEqual(size2, 4)
         self.assertEqual(size3, 2)

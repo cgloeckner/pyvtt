@@ -69,12 +69,6 @@ def register(engine: any, db: Database):
         def get_image_url(self, image_id: int) -> str:
             return f'/asset/{self.gm_url}/{self.url}/{image_id}.png'
 
-        def get_file_size(self, url: str) -> int:
-            game_root = engine.paths.get_game_path(self.gm_url, self.url)
-            img_filename = url.split('/')[-1]
-            local_path = os.path.join(game_root, img_filename)
-            return os.path.getsize(local_path)
-
         def upload(self, handle: bottle.FileUpload) -> str | None:
             """Save the given image via file handle and return the url to the image."""
             # check file format
