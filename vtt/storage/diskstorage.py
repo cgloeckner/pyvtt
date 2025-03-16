@@ -1,6 +1,7 @@
 import os
 import hashlib
 import json
+import shutil
 
 from gevent import lock
 from PIL import Image, UnidentifiedImageError
@@ -207,5 +208,14 @@ class DiskStorage:
         # reinitialize md5 hashes
         all_images = self.get_all_images(gm_url, game_url)
         self.md5.init(gm_url, game_url, all_images)
+
+        return num_bytes
+
+    def remove_game(self, gm_url: str, game_url: str) -> int:
+        """Remove game folder and return number of bytes cleared"""
+        game_path = self.paths.get_game_path(gm_url, game_url)
+        with self.locks[gm_url]:  # make IO access safe
+            num_bytes = os.path.getsize(game_path)
+            shutil.rmtree(game_path)
 
         return num_bytes

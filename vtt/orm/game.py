@@ -88,7 +88,6 @@ def register(engine: any, db: Database):
 
             abandoned = list()
             last_id = engine.storage.get_max_id(all_images)
-            print(all_images, last_id)
             for filename in all_images:
                 image_id = engine.storage.id_from_filename(filename)
                 if image_id == last_id:
@@ -148,12 +147,7 @@ def register(engine: any, db: Database):
             the GM's database. """
             engine.logging.info('|--x Removing {0}'.format(self.url))
 
-            # remove game directory (including all images)
-            game_path = engine.paths.get_game_path(self.gm_url, self.url)
-            num_bytes = os.path.getsize(game_path)
-
-            with engine.storage.locks[self.gm_url]:  # make IO access safe
-                shutil.rmtree(game_path)
+            num_bytes = engine.storage.remove_game(self.gm_url, self.url)
 
             # remove game from GM's cache
             gm_cache = engine.cache.get_from_url(self.gm_url)
