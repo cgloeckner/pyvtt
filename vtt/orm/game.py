@@ -105,13 +105,8 @@ def register(engine: any, db: Database):
             return broken
 
         def remove_music(self):
-            """ Remove music. """
-            root = engine.paths.get_game_path(self.gm_url, self.url)
-            with engine.storage.locks[self.gm_url]:  # make IO access safe
-                for n in range(engine.file_limit['num_music']):
-                    fname = root / '{0}.mp3'.format(n)
-                    if os.path.exists(fname):
-                        os.remove(fname)
+            """Remove all music"""
+            engine.storage.remove_music(self.gm_url, self.url, range(engine.file_limit['num_music']))
 
         def cleanup(self, now) -> CleanupReport:
             """ Cleanup game's unused image and token data. """

@@ -197,3 +197,12 @@ class DiskStorage:
                 abandoned.append(os.path.join(game_root, image_id))
 
         return abandoned
+    
+    def remove_music(self, gm_url: str, game_url: str, music_id_range: list[int]) -> None:
+        """Remove all given music"""
+        root = self.paths.get_game_path(gm_url, game_url)
+        with self.locks[gm_url]:  # make IO access safe
+            for n in music_id_range:
+                fname = root / '{0}.mp3'.format(n)
+                if os.path.exists(fname):
+                    os.remove(fname)
