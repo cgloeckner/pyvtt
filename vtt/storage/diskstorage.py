@@ -157,19 +157,19 @@ class DiskStorage:
             # unsupported file format
             return None
 
+        # create md5 from file
         handle.file.seek(0)
-
-        # make sure image is on disk
         new_md5 = self.md5.generate(handle.file)
         
         with self.locks[gm_url]:  # make IO access safe
+            # look up image in cache
             image_id = self.md5.load(gm_url, game_url, new_md5)
             if image_id is None:
                 image_id = self.get_next_id(gm_url, game_url)
 
+            # make sure the file is on disk
             img_path = self.get_local_image_path(gm_url, game_url, image_id)
             if not os.path.exists(img_path):
-                # save to disk
                 handle.save(str(img_path))
                 self.md5.store(gm_url, game_url, new_md5, image_id)
             
