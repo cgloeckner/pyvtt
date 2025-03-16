@@ -174,3 +174,26 @@ class DiskStorage:
                 self.md5.store(gm_url, game_url, new_md5, image_id)
             
             return image_id
+
+    def get_abandoned_images(self, gm_url: str, game_url: str, is_in_use: callable) -> list[str]:
+        """Return a list of all image files that are not used in any scene in this game"""
+        # check all existing images
+        game_root = self.paths.get_game_path(gm_url, game_url)
+        with self.locks[gm_url]:  # make IO access safe
+            all_images = self.get_all_images(gm_url, game_url)
+
+        abandoned = list()
+        last_id = self.get_next_id(gm_url, game_url) - 1
+        for image_id in all_images:
+            this_id = int(image_id.split('.')[0])
+            if this_id == last_id:
+                # keep this image to avoid next id to cause
+                # unexpected browser cache behavior
+                continue
+
+            # check for any tokens
+            if not is_in_use(this_id):
+                # found abandoned image
+                abandoned.append(os.path.join(game_root, image_id))
+
+        return abandoned

@@ -74,7 +74,7 @@ def register(engine: any, db: Database):
             img_id = engine.storage.upload_image(self.gm_url, self.url, handle)
             if img_id is None:
                 return None
-            
+
             return self.get_image_url(img_id)
 
         @staticmethod
@@ -82,28 +82,12 @@ def register(engine: any, db: Database):
             return int(url.split('/')[-1].split('.')[0])
 
         def get_abandoned_images(self) -> list[str]:
-            # check all existing images
-            game_root = engine.paths.get_game_path(self.gm_url, self.url)
-            with engine.storage.locks[self.gm_url]:  # make IO access safe
-                all_images = engine.storage.get_all_images(self.gm_url, self.url)
+            def is_in_use(img_id: int) -> True:
+                image_url = self.get_image_url(img_id)
+                token = db.Token.select(lambda t: t.url == image_url).first()
+                return token is not None
 
-            abandoned = list()
-            last_id = engine.storage.get_next_id(self.gm_url, self.url) - 1
-            for image_id in all_images:
-                this_id = int(image_id.split('.')[0])
-                if this_id == last_id:
-                    # keep this image to avoid next id to cause
-                    # unexpected browser cache behavior
-                    continue
-                # create url (ignore png-extension due to os.listdir)
-                url = self.get_image_url(this_id)
-                # check for any tokens
-                token = db.Token.select(lambda t: t.url == url).first()
-                if token is None:
-                    # found abandoned image
-                    abandoned.append(os.path.join(game_root, image_id))
-
-            return abandoned
+            return engine.storage.get_abandoned_images(self.gm_url, self.url, is_in_use)
 
         def get_broken_tokens(self) -> list[db.Entity]:
             # query all images
