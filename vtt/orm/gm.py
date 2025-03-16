@@ -24,7 +24,6 @@ CleanupReport = tuple[list[str], int, int, int, int]
 
 
 class BaseGm(typing.Protocol):
-    def make_lock(self) -> None: ...
     def post_setup(self) -> None: ...
     def has_expired(self, now: int) -> bool: ...
     @staticmethod
@@ -50,19 +49,10 @@ def register(engine: any, db: Database):
         metadata = Optional(str)
         timeid = Optional(float)  # used for cleanup
 
-        def make_lock(self) -> None:
-            engine.locks[self.url] = lock.RLock()
-
         def post_setup(self) -> None:
             self.timeid = int(time.time())
 
-            self.make_lock()
-
-            root_path = engine.paths.get_gms_path(self.url)
-
-            with engine.locks[self.url]:  # make IO access safe
-                if not os.path.isdir(root_path):
-                    os.mkdir(root_path)
+            engine.storage.setup_gm(self.url)
 
             # add to engine's GM cache
             engine.cache.insert(self)
@@ -118,7 +108,7 @@ def register(engine: any, db: Database):
             root_path = engine.paths.get_gms_path(self.url)
             num_bytes = os.path.getsize(root_path)
 
-            with engine.locks[self.url]:  # make IO access safe
+            with engine.storage.locks[self.url]:  # make IO access safe
                 shutil.rmtree(root_path)
 
             # remove GM from engine's cache

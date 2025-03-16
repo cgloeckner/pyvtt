@@ -28,6 +28,7 @@ from buildnumber import BuildNumber
 from vtt.cache import EngineCache
 from vtt.orm.register import db_session, create_main_database
 from vtt.server import VttServer
+from vtt.storage import DiskStorage
 
 
 class Engine(object):
@@ -48,13 +49,10 @@ class Engine(object):
 
         self.paths = utils.PathApi(appname=appname, pref_root=pref_dir, app_root=app_root)
         self.paths.ensure(self.paths.get_export_path())
+        self.storage = DiskStorage(self.paths)
 
         self.app = bottle.default_app()
 
-        # setup per-game stuff
-        self.checksums = dict()
-        self.locks = dict()
-        
         # webserver stuff
         self.listen = '0.0.0.0'
         self.hosting = {

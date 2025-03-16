@@ -49,49 +49,11 @@ def register(engine: any, db: Database):
         def get_url(self) -> str:
             return f'{self.gm_url}/{self.url}'
 
-        def make_md5s(self) -> int:
-            md5_path = engine.paths.get_md5_path(self.gm_url, self.url)
-            root = engine.paths.get_game_path(self.gm_url, self.url)
-            all_images = self.get_all_images()
-
-            # load md5 hashes from json-file
-            data = dict()
-            if os.path.exists(md5_path):
-                with open(md5_path, 'r') as handle:
-                    data = json.load(handle)
-
-            # check if image exists for all md5 hashes
-            for md5 in data.copy():
-                filename = '{0}.png'.format(data[md5])
-                if not os.path.exists(root / filename):
-                    del data[md5]
-
-            # check for images without md5
-            missing = list()
-            for filename in all_images:
-                filename_id = int(filename.split('.')[0])
-                if filename_id not in data.values():
-                    missing.append(filename)
-
-            # create missing md5 hashes
-            for filename in missing:
-                # create md5 of file (assumed to be images)
-                with open(root / filename, "rb") as handle:
-                    md5 = engine.get_md5(handle)
-                    data[md5] = int(filename.split('.')[0])
-            engine.checksums[self.get_url()] = data
-
-            # save md5 hashes to json-file
-            with open(md5_path, 'w') as handle:
-                json.dump(data, handle)
-
-            return len(missing)
-
         def get_id_by_md5(self, md5: str) -> int | None:
-            return engine.checksums[self.get_url()].get(md5, None)
+            return engine.storage.checksums[self.get_url()].get(md5, None)
 
         def remove_md5(self, img_id: int):
-            cache = engine.checksums[self.get_url()]
+            cache = engine.storage.checksums[self.get_url()]
             # linear search for image hash
             for k, v in cache.items():
                 if v == img_id:
@@ -100,11 +62,7 @@ def register(engine: any, db: Database):
 
         def post_setup(self):
             """ Adds the game's directory and prepare the md5 cache."""
-            img_path = engine.paths.get_game_path(self.gm_url, self.url)
-
-            with engine.locks[self.gm_url]:  # make IO access safe
-                if not os.path.isdir(img_path):
-                    os.mkdir(img_path)
+            engine.storage.setup_game(self.gm_url, self.url)
 
             # add to the engine's cache
             gm_cache = engine.cache.get_from_url(self.gm_url)
@@ -114,31 +72,13 @@ def register(engine: any, db: Database):
             # since order is optional, but should be provided
             self.order = list()
 
-            self.make_md5s()
+            engine.storage.make_md5s(self.gm_url, self.url)
 
         def reorder_scenes(self):
             """ Reorder scenes based on their IDs. """
             self.order = [s.id for s in self.scenes]
             self.order.sort()
-
-        def get_all_images(self) -> list[str]:
-            """Note: needs to be called from a threadsafe context."""
-            root = engine.paths.get_game_path(self.gm_url, self.url)
-            return [f for f in os.listdir(root) if f.endswith('.png')]
-
-        def get_next_id(self) -> int:
-            """Note: needs to be called from a threadsafe context."""
-            max_id = 0
-            filenames = self.get_all_images()
-
-            def split(s: str) -> int:
-                return int(s.split('.png')[0])
-
-            if len(filenames) > 0:
-                last_png = max(filenames, key=split)
-                max_id = split(last_png) + 1
-            return max_id
-
+ 
         def get_image_url(self, image_id: int) -> str:
             return f'/asset/{self.gm_url}/{self.url}/{image_id}.png'
 
@@ -160,14 +100,14 @@ def register(engine: any, db: Database):
 
             # figure out where to save it
             game_root = engine.paths.get_game_path(self.gm_url, self.url)
-            image_id = self.get_next_id()
+            image_id = engine.storage.get_next_id(self.gm_url, self.url)
             local_path = game_root / f'{image_id}.png'
 
             # make sure image is on disk
             new_md5 = engine.get_md5(handle.file)
             
-            with engine.locks[self.gm_url]:  # make IO access safe
-                chcksm = engine.checksums[self.get_url()]
+            with engine.storage.locks[self.gm_url]:  # make IO access safe
+                chcksm = engine.storage.checksums[self.get_url()]
                 found_id = chcksm.get(new_md5)
                 if found_id is None or not os.path.exists(game_root / f'{found_id}.png'):
                     # save to disk (cache miss or caching error)
@@ -185,11 +125,11 @@ def register(engine: any, db: Database):
         def get_abandoned_images(self) -> list[str]:
             # check all existing images
             game_root = engine.paths.get_game_path(self.gm_url, self.url)
-            with engine.locks[self.gm_url]:  # make IO access safe
-                all_images = self.get_all_images()
+            with engine.storage.locks[self.gm_url]:  # make IO access safe
+                all_images = engine.storage.get_all_images(self.gm_url, self.url)
 
             abandoned = list()
-            last_id = self.get_next_id() - 1
+            last_id = engine.storage.get_next_id(self.gm_url, self.url) - 1
             for image_id in all_images:
                 this_id = int(image_id.split('.')[0])
                 if this_id == last_id:
@@ -208,8 +148,8 @@ def register(engine: any, db: Database):
 
         def get_broken_tokens(self) -> list[db.Entity]:
             # query all images
-            with engine.locks[self.gm_url]:  # make IO access safe
-                all_images = self.get_all_images()
+            with engine.storage.locks[self.gm_url]:  # make IO access safe
+                all_images = engine.storage.get_all_images(self.gm_url, self.url)
 
             # query all tokens without valid image
             broken = list()
@@ -224,7 +164,7 @@ def register(engine: any, db: Database):
         def remove_music(self):
             """ Remove music. """
             root = engine.paths.get_game_path(self.gm_url, self.url)
-            with engine.locks[self.gm_url]:  # make IO access safe
+            with engine.storage.locks[self.gm_url]:  # make IO access safe
                 for n in range(engine.file_limit['num_music']):
                     fname = root / '{0}.mp3'.format(n)
                     if os.path.exists(fname):
@@ -236,7 +176,7 @@ def register(engine: any, db: Database):
 
             # query and remove all images that are not used as tokens
             relevant = self.get_abandoned_images()
-            with engine.locks[self.gm_url]:  # make IO access safe
+            with engine.storage.locks[self.gm_url]:  # make IO access safe
                 for filename in relevant:
                     num_bytes += os.path.getsize(filename)
                     os.remove(filename)
@@ -254,7 +194,7 @@ def register(engine: any, db: Database):
             for t in relevant:
                 t.delete()
 
-            num_md5s = self.make_md5s()
+            num_md5s = engine.storage.make_md5s(self.gm_url, self.url)
 
             return num_bytes, num_rolls, num_tokens, num_md5s
 
@@ -267,7 +207,7 @@ def register(engine: any, db: Database):
             game_path = engine.paths.get_game_path(self.gm_url, self.url)
             num_bytes = os.path.getsize(game_path)
 
-            with engine.locks[self.gm_url]:  # make IO access safe
+            with engine.storage.locks[self.gm_url]:  # make IO access safe
                 shutil.rmtree(game_path)
 
             # remove game from GM's cache
@@ -347,7 +287,7 @@ def register(engine: any, db: Database):
 
                 # add images to the zip, too
                 p = engine.paths.get_game_path(self.gm_url, self.url)
-                for img in self.get_all_images():
+                for img in engine.storage.get_all_images(self.gm_url, self.url):
                     h.write(p / img, img)
 
             return zip_file, zip_path

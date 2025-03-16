@@ -21,7 +21,7 @@ class GmCache:
 
     def __init__(self, engine: any, gm: any) -> None:
         # ensure engine can lock for this GM if required
-        gm.make_lock()
+        engine.storage.setup_gm(gm.url)
         self.db_path = engine.paths.get_database_path(gm.url)
 
         self.engine = engine

@@ -337,7 +337,7 @@ class GmGamesRoutesTest(EngineBaseTest):
         for i in range(3):
             gm_player.socket.push_receive({'OPID': 'GM-CREATE'})
 
-        md5 = list(self.engine.checksums['arthur/test-game-1'].keys())[0]
+        md5 = list(self.engine.storage.checksums['arthur/test-game-1'].keys())[0]
         ret = self.app.post('/vtt/hashtest/arthur/test-game-1', {'hashs[]': [md5]}, xhr=True)
         self.assertEqual(ret.status_int, 200)
         expect = {

@@ -25,7 +25,7 @@ class GmTest(EngineBaseTest):
         gm.post_setup()
         
         # test call of makeLock()
-        self.assertIn(gm.url, self.engine.locks)
+        self.assertIn(gm.url, self.engine.storage.locks)
         
         # test GM's Path
         p = self.engine.paths.get_gms_path(gm.url)

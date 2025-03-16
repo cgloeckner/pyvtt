@@ -26,7 +26,7 @@ class GameCache:
 
     def __init__(self, engine: any, parent: any, game: any) -> None:
         # prepare MD5 hashes for all images
-        num_generated = game.make_md5s()
+        num_generated = engine.storage.make_md5s(game.gm_url, game.url)
 
         self.engine = engine
         self.parent = parent
@@ -75,7 +75,7 @@ class GameCache:
     def upload_music(self, handle):
         root = self.engine.paths.get_game_path(self.parent.url, self.url)
 
-        with self.engine.locks[self.parent.url]:  # make IO access safe
+        with self.engine.storage.locks[self.parent.url]:  # make IO access safe
             # search for next free slot
             slots = self.get_all_slots()
             next_slot = None
@@ -93,7 +93,7 @@ class GameCache:
     def is_music_slot_used(self, slot_id):
         root = self.engine.paths.get_game_path(self.parent.url, self.url)
 
-        with self.engine.locks[self.parent.url]:  # make IO access safe
+        with self.engine.storage.locks[self.parent.url]:  # make IO access safe
             fname = root / '{0}.mp3'.format(int(slot_id))
             return os.path.exists(fname)
 
@@ -101,7 +101,7 @@ class GameCache:
         root = self.engine.paths.get_game_path(self.parent.url, self.url)
 
         # delete these tracks
-        with self.engine.locks[self.parent.url]:  # make IO access safe
+        with self.engine.storage.locks[self.parent.url]:  # make IO access safe
             for slot_id in slots:
                 fname = root / '{0}.mp3'.format(int(slot_id))
                 if os.path.exists(fname):
