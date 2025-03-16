@@ -16,6 +16,7 @@ import time
 import zipfile
 import pathlib
 import typing
+import io
 
 import bottle
 from PIL import Image, UnidentifiedImageError
@@ -212,23 +213,29 @@ def register(engine: any, db: Database):
 
             data = self.to_dict()
 
-            # build zip file
+            # create zip file in memory
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                # add game.json
+                game_json = json.dumps(data, indent=4)
+                zip_file.writestr('game.json', game_json)
+                for filename in engine.storage.get_all_images(self.gm_url, self.url):
+                    # load image from storage
+                    image_id = engine.storage.id_from_filename(filename)
+                    local_path = engine.storage.get_local_image_path(self.gm_url, self.url, image_id)
+                    with open(local_path, 'rb') as handle:
+                        # add image
+                        img_binary = handle.read()
+                        zip_file.writestr(filename, img_binary)
+
+            # save zip to file
             zip_path = engine.paths.get_export_path()
             zip_file = '{0}_{1}.zip'.format(self.gm_url, self.url)
 
-            with zipfile.ZipFile(zip_path / zip_file, "w") as h:
-                # create temporary file and add it to the zip
-                with tempfile.NamedTemporaryFile() as tmp:
-                    s = json.dumps(data, indent=4)
-                    tmp.write(s.encode('utf-8'))
-                    tmp.seek(0)  # rewind!
-                    h.write(tmp.name, 'game.json')
+            with open(zip_path / zip_file, 'wb') as handle:
+                handle.write(zip_buffer.getvalue())
 
-                # add images to the zip, too
-                p = engine.paths.get_game_path(self.gm_url, self.url)
-                for img in engine.storage.get_all_images(self.gm_url, self.url):
-                    h.write(p / img, img)
-
+            # build zip file
             return zip_file, zip_path
 
         @classmethod
