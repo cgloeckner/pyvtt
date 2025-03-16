@@ -68,12 +68,17 @@ class Md5Manager:
         self.checksums[key] = data
         return len(missing)
 
-    def get_id(self, gm_url: str, game_url: str, md5: str) -> int | None:
+    def load(self, gm_url: str, game_url: str, md5: str) -> int | None:
         """Query image id by hash"""
         md5_key = self.to_key(gm_url, game_url)
         return self.checksums[md5_key].get(md5, None)
 
-    def remove(self, gm_url: str, game_url: str, img_id: int) -> None:
+    def store(self, gm_url: str, game_url: str, md5: str, id: int) -> None:
+        """Set image id to hash associated"""
+        md5_key = self.to_key(gm_url, game_url)
+        self.checksums[md5_key][md5] = id
+
+    def delete(self, gm_url: str, game_url: str, img_id: int) -> None:
         """Remove cache entry"""
         md5_key = self.to_key(gm_url, game_url)
         cache = self.checksums[md5_key]
@@ -139,3 +144,33 @@ class DiskStorage:
             last_png = max(filenames, key=split)
             max_id = split(last_png) + 1
         return max_id
+
+    def get_local_image_path(self, gm_url: str, game_url: str, image_id: int) -> str:
+        return self.paths.get_game_path(gm_url, game_url) / f'{image_id}.png'
+
+    def upload_image(self, gm_url: str, game_url: str, handle: bottle.FileUpload) -> str | None:
+        """Save the given image via file handle and return the url to the image."""
+        # check file format
+        try:
+            Image.open(handle.file)
+        except UnidentifiedImageError:
+            # unsupported file format
+            return None
+
+        handle.file.seek(0)
+
+        # make sure image is on disk
+        new_md5 = self.md5.generate(handle.file)
+        
+        with self.locks[gm_url]:  # make IO access safe
+            image_id = self.md5.load(gm_url, game_url, new_md5)
+            if image_id is None:
+                image_id = self.get_next_id(gm_url, game_url)
+
+            img_path = self.get_local_image_path(gm_url, game_url, image_id)
+            if not os.path.exists(img_path):
+                # save to disk
+                handle.save(str(img_path))
+                self.md5.store(gm_url, game_url, new_md5, image_id)
+            
+            return image_id

@@ -70,34 +70,12 @@ def register(engine: any, db: Database):
             return f'/asset/{self.gm_url}/{self.url}/{image_id}.png'
 
         def upload(self, handle: bottle.FileUpload) -> str | None:
-            """Save the given image via file handle and return the url to the image."""
-            # check file format
-            try:
-                Image.open(handle.file)
-            except UnidentifiedImageError:
-                # unsupported file format
+            """Upload image into storage return the url to the image."""
+            img_id = engine.storage.upload_image(self.gm_url, self.url, handle)
+            if img_id is None:
                 return None
-            handle.file.seek(0)
-
-            # figure out where to save it
-            game_root = engine.paths.get_game_path(self.gm_url, self.url)
-            image_id = engine.storage.get_next_id(self.gm_url, self.url)
-            local_path = game_root / f'{image_id}.png'
-
-            # make sure image is on disk
-            new_md5 = engine.storage.md5.generate(handle.file)
             
-            with engine.storage.locks[self.gm_url]:  # make IO access safe
-                chcksm = engine.storage.md5.checksums[self.get_url()]
-                found_id = chcksm.get(new_md5)
-                if found_id is None or not os.path.exists(game_root / f'{found_id}.png'):
-                    # save to disk (cache miss or caching error)
-                    handle.save(str(local_path))
-                    chcksm[new_md5] = image_id
-                    found_id = image_id
-
-            # fetch remote path
-            return self.get_image_url(found_id)
+            return self.get_image_url(img_id)
 
         @staticmethod
         def get_id_from_url(url: str) -> id:
@@ -162,7 +140,7 @@ def register(engine: any, db: Database):
                     num_bytes += os.path.getsize(filename)
                     os.remove(filename)
                     # remove image's md5 hash from cache
-                    engine.storage.md5.remove(self.gm_url, self.url, self.get_id_from_url(filename))
+                    engine.storage.md5.delete(self.gm_url, self.url, self.get_id_from_url(filename))
 
             # delete all outdated rolls
             rolls = db.Roll.select(lambda r: r.game == self and r.timeid < now - engine.latest_rolls)

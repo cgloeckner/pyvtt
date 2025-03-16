@@ -177,11 +177,11 @@ class DiskStorageTest(EngineBaseTest):
         # query 3rd image via checksum
         with open(p3, 'rb') as h:
             md5 = self.engine.storage.md5.generate(h)
-        queried_id = self.engine.storage.md5.get_id(game.gm_url, game.url, md5)
+        queried_id = self.engine.storage.md5.load(game.gm_url, game.url, md5)
         self.assertEqual(queried_id, id3)
 
         # query non-existing image  
-        queried_id = self.engine.storage.md5.get_id(game.gm_url, game.url, 'foobar')
+        queried_id = self.engine.storage.md5.load(game.gm_url, game.url, 'foobar')
         self.assertIsNone(queried_id)
 
     @db_session
@@ -218,12 +218,12 @@ class DiskStorageTest(EngineBaseTest):
         self.engine.storage.init_game(game.gm_url, game.url)
         with open(p3, "rb") as handle:
             md5_3 = self.engine.storage.md5.generate(handle)
-        queried_id = self.engine.storage.md5.get_id(game.gm_url, game.url, md5_3)
+        queried_id = self.engine.storage.md5.load(game.gm_url, game.url, md5_3)
         self.assertEqual(queried_id, id3)
 
         # remove md5
-        self.engine.storage.md5.remove(game.gm_url, game.url, id3)
-        queried_id = self.engine.storage.md5.get_id(game.gm_url, game.url, md5_3)
+        self.engine.storage.md5.delete(game.gm_url, game.url, id3)
+        queried_id = self.engine.storage.md5.load(game.gm_url, game.url, md5_3)
         self.assertIsNone(queried_id)
 
 

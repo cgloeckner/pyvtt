@@ -34,7 +34,7 @@ def register(engine: any):
         known_urls = list()
         for md5 in request.forms.getall('hashs[]'):
             if md5 is not None:
-                img_id = engine.storage.md5.get_id(game.gm_url, game.url, md5)
+                img_id = engine.storage.md5.load(game.gm_url, game.url, md5)
 
                 if img_id is not None:
                     game_url = game.get_image_url(img_id)

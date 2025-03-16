@@ -385,9 +385,9 @@ class GameTest(EngineBaseTest):
             md5_2 = self.engine.storage.md5.generate(h)
         with open(p3, 'rb') as h:
             md5_3 = self.engine.storage.md5.generate(h)
-        self.assertEqual(self.engine.storage.md5.get_id(game.gm_url, game.url, md5_1), id1)
-        self.assertEqual(self.engine.storage.md5.get_id(game.gm_url, game.url, md5_2), id2)
-        self.assertEqual(self.engine.storage.md5.get_id(game.gm_url, game.url, md5_3), id3)
+        self.assertEqual(self.engine.storage.md5.load(game.gm_url, game.url, md5_1), id1)
+        self.assertEqual(self.engine.storage.md5.load(game.gm_url, game.url, md5_2), id2)
+        self.assertEqual(self.engine.storage.md5.load(game.gm_url, game.url, md5_3), id3)
         
         # assign second file to token
         demo_scene = self.db.Scene(game=game)
@@ -407,8 +407,8 @@ class GameTest(EngineBaseTest):
         self.assertFalse(os.path.exists(p1))
         self.assertTrue(os.path.exists(p2))
 
-        self.assertEqual(self.engine.storage.md5.get_id(game.gm_url, game.url, md5_1), None)
-        self.assertEqual(self.engine.storage.md5.get_id(game.gm_url, game.url, md5_2), id2)
+        self.assertEqual(self.engine.storage.md5.load(game.gm_url, game.url, md5_1), None)
+        self.assertEqual(self.engine.storage.md5.load(game.gm_url, game.url, md5_2), id2)
 
         # expect music to still be present
         p3 = img_path / '4.mp3'    
