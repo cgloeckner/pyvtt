@@ -375,16 +375,6 @@ class Engine(object):
         if self.notify_api is not None:
             self.notify_api.on_error(error_id, message)
 
-    @staticmethod
-    def get_md5(handle):
-        hash_md5 = hashlib.md5()
-        offset = handle.tell()
-        for chunk in iter(lambda: handle.read(4096), b""):
-            hash_md5.update(chunk)
-        # rewind after reading
-        handle.seek(offset)
-        return hash_md5.hexdigest()
-        
     def get_size(self, file_upload):
         """ Determine size of a file upload.
         """

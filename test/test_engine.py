@@ -183,15 +183,15 @@ class EngineTest(EngineBaseTest):
     def test_getMd5(self):
         # NOTE: THIS file here is hashed
         with open(__file__, 'rb') as h:
-            ret = self.engine.get_md5(h)
+            ret = self.engine.storage.md5.generate(h)
             self.assertIsInstance(ret, str)
     
     def test_getMd5_works_with_bottle_fileupload(self):
         # NOTE: using THIS file as example
         with open(__file__, 'rb') as h:
             fupload = bottle.FileUpload(fileobj=h, name='foo', filename='test_engine.py')
-            file_hash = self.engine.get_md5(h)
-            obj_hash = self.engine.get_md5(fupload.file)
+            file_hash = self.engine.storage.md5.generate(h)
+            obj_hash = self.engine.storage.md5.generate(fupload.file)
             self.assertEqual(file_hash, obj_hash)
 
     def test_getSize(self):

@@ -69,160 +69,6 @@ class GameTest(EngineBaseTest):
         self.assertTrue(game.has_expired(now))
         
     @db_session
-    def test_getUrl(self):
-        game = self.db.Game(url='foo', gm_url='url456')
-        url = game.get_url()
-        self.assertEqual(url, 'url456/foo')
-        
-    @db_session
-    def test_makeMd5s(self):
-        game = self.db.Game(url='foo', gm_url='url456')
-        game.post_setup()
-
-        # create empty files (to mimic uploaded images)
-        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p1 = img_path / '{0}.png'.format(id1)
-        p1.touch()
-
-        # assume md5 file to be empty 
-        md5_path = self.engine.paths.get_md5_path(game.gm_url, game.url)
-        with open(md5_path, 'r') as handle:
-            data = json.load(handle)
-            self.assertEqual(len(data), 0)
-        
-        # assume empty cache
-        cache_instance = self.engine.storage.checksums[game.get_url()]
-        self.assertEqual(len(cache_instance), 0)
-        
-        # create md5s
-        self.engine.storage.make_md5s(game.gm_url, game.url)
-
-        # expect md5 file with single hash
-        self.assertTrue(os.path.exists(md5_path))
-        with open(md5_path, 'r') as handle:
-            data = json.load(handle)
-            self.assertEqual(len(data), 1)
-
-        # create more files
-        id2 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p2 = img_path / '{0}.png'.format(id2)
-        with open(p2, 'w') as h:  # write different content because of hashing
-            h.write('2')
-        id3 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p3 = img_path / '{0}.png'.format(id3)
-        with open(p3, 'w') as h:  # write different content because of hashing
-            h.write('3')
-        id4 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p4 = img_path / '{0}.png'.format(id4)
-        with open(p4, 'w') as h:  # write different content because of hashing
-            h.write('4')
-
-        # update md5s
-        self.engine.storage.make_md5s(game.gm_url, game.url)
-
-        # expect md5 file with multiple hashs
-        self.assertTrue(os.path.exists(md5_path))
-        with open(md5_path, 'r') as handle:
-            data = json.load(handle)
-            self.assertEqual(len(data), 4)
-        
-        # test image IDs in cache
-        cache_instance = self.engine.storage.checksums[game.get_url()]
-        self.assertEqual(len(cache_instance), 4)
-        ids = set()
-        for md5 in cache_instance:
-            img_id = cache_instance[md5]
-            ids.add(img_id)
-        self.assertEqual(ids, {0, 1, 2, 3})  # compare sets
-
-        # delete file
-        os.remove(p3)
-        self.engine.storage.make_md5s(game.gm_url, game.url)
-        cache_instance = self.engine.storage.checksums[game.get_url()]
-        self.assertEqual(len(cache_instance), 3)
-
-    @db_session
-    def test_getIdByMd5(self):
-        game = self.db.Game(url='foo', gm_url='url456')
-        game.post_setup()
-        
-        # create empty files (to mimic uploaded images)
-        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p1 = img_path / '{0}.png'.format(id1)
-        with open(p1, 'w') as h:  # write different content because of hashing
-            h.write('FOO')
-        id2 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p2 = img_path / '{0}.png'.format(id2)
-        with open(p2, 'w') as h:  # write different content because of hashing
-            h.write('A')
-        id3 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p3 = img_path / '{0}.png'.format(id3)
-        with open(p3, 'w') as h:  # write different content because of hashing
-            h.write('AAAA')
-        id4 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p4 = img_path / '{0}.png'.format(id4)
-        with open(p4, 'w') as h:  # write different content because of hashing
-            h.write('ABAAB')
-        
-        # assume empty cache
-        cache_instance = self.engine.storage.checksums[game.get_url()]
-        self.assertEqual(len(cache_instance), 0)
-        
-        self.engine.storage.make_md5s(game.gm_url, game.url)
-
-        # query 3rd image via checksum
-        with open(p3, 'rb') as h:
-            md5 = self.engine.get_md5(h)
-        queried_id = game.get_id_by_md5(md5)
-        self.assertEqual(queried_id, id3)
-
-        # query non-existing image  
-        queried_id = game.get_id_by_md5('foobar')
-        self.assertIsNone(queried_id)
-
-    @db_session
-    def test_removeMd5(self):  
-        game = self.db.Game(url='foo', gm_url='url456')
-        game.post_setup()
-        
-        # create empty files (to mimic uploaded images)
-        img_path = self.engine.paths.get_game_path(game.gm_url, game.url)
-        id1 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p1 = img_path / '{0}.png'.format(id1)
-        with open(p1, 'w') as h:  # write different content because of hashing
-            h.write('FOO')
-        id2 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p2 = img_path / '{0}.png'.format(id2)
-        with open(p2, 'w') as h:  # write different content because of hashing
-            h.write('A')
-        id3 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p3 = img_path / '{0}.png'.format(id3)
-        with open(p3, 'w') as h:  # write different content because of hashing
-            h.write('AAAA')
-        id4 = self.engine.storage.get_next_id(game.gm_url, game.url)
-        p4 = img_path / '{0}.png'.format(id4)
-        with open(p4, 'w') as h:  # write different content because of hashing
-            h.write('ABAAB')
-        
-        # assume empty cache
-        cache_instance = self.engine.storage.checksums[game.get_url()]
-        self.assertEqual(len(cache_instance), 0)
-
-        # create checksums
-        self.engine.storage.make_md5s(game.gm_url, game.url)
-        with open(p3, "rb") as handle:
-            md5_3 = self.engine.get_md5(handle)
-        queried_id = game.get_id_by_md5(md5_3)
-        self.assertEqual(queried_id, id3)
-
-        # remove md5
-        game.remove_md5(id3)
-        queried_id = game.get_id_by_md5(md5_3)
-        self.assertIsNone(queried_id)
-    
-    @db_session
     def test_postSetup(self):
         game = self.db.Game(url='foo', gm_url='url456')
         
@@ -355,8 +201,8 @@ class GameTest(EngineBaseTest):
                 self.assertTrue(os.path.exists(p))
                 
                 # check md5 being stored
-                md5 = self.engine.get_md5(fupload.file)
-                checksums = self.engine.storage.checksums[game.get_url()]
+                md5 = self.engine.storage.md5.generate(fupload.file)
+                checksums = self.engine.storage.md5.checksums[game.get_url()]
                 self.assertIn(md5, checksums)
                 
                 # try to reupload file: same file used
@@ -382,8 +228,8 @@ class GameTest(EngineBaseTest):
                         self.assertTrue(os.path.exists(p2))
                         
                         # check 2nd md5 being stored
-                        md5_2 = self.engine.get_md5(fupload2.file)
-                        checksums = self.engine.storage.checksums[game.get_url()]
+                        md5_2 = self.engine.storage.md5.generate(fupload2.file)
+                        checksums = self.engine.storage.md5.checksums[game.get_url()]
                         self.assertIn(md5_2, checksums) 
                         
                         # cleanup to delete 1st file
@@ -392,7 +238,7 @@ class GameTest(EngineBaseTest):
                         self.assertEqual(r, 0)
                         self.assertEqual(t, 0)
                         self.assertEqual(m, 1)
-                        checksums = self.engine.storage.checksums[game.get_url()]
+                        checksums = self.engine.storage.md5.checksums[game.get_url()]
                         self.assertNotIn(md5, checksums)
                         self.assertFalse(os.path.exists(p))
                         self.assertIn(md5_2, checksums)
@@ -401,7 +247,7 @@ class GameTest(EngineBaseTest):
                         # reupload 1st file            
                         p1_new = img_path2 / '{0}.png'.format(self.engine.storage.get_next_id(game.gm_url, game.url))
                         game.upload(fupload)
-                        checksums = self.engine.storage.checksums[game.get_url()]
+                        checksums = self.engine.storage.md5.checksums[game.get_url()]
                         self.assertIn(md5, checksums)
                         self.assertTrue(os.path.exists(p1_new))
                         self.assertIn(md5_2, checksums)
@@ -519,7 +365,7 @@ class GameTest(EngineBaseTest):
             h.write('AB234')
         p3.touch()
         
-        self.engine.storage.make_md5s(game.gm_url, game.url)
+        self.engine.storage.init_game(game.gm_url, game.url)
 
         for i in range(120):
             self.db.Roll(game=game, name='foo', color='red', sides=4, result=3)
@@ -528,14 +374,14 @@ class GameTest(EngineBaseTest):
 
         # expect images to be hashed
         with open(p1, 'rb') as h:
-            md5_1 = self.engine.get_md5(h)
+            md5_1 = self.engine.storage.md5.generate(h)
         with open(p2, 'rb') as h:
-            md5_2 = self.engine.get_md5(h)
+            md5_2 = self.engine.storage.md5.generate(h)
         with open(p3, 'rb') as h:
-            md5_3 = self.engine.get_md5(h)
-        self.assertEqual(game.get_id_by_md5(md5_1), id1)
-        self.assertEqual(game.get_id_by_md5(md5_2), id2)
-        self.assertEqual(game.get_id_by_md5(md5_3), id3)
+            md5_3 = self.engine.storage.md5.generate(h)
+        self.assertEqual(self.engine.storage.md5.get_id(game.gm_url, game.url, md5_1), id1)
+        self.assertEqual(self.engine.storage.md5.get_id(game.gm_url, game.url, md5_2), id2)
+        self.assertEqual(self.engine.storage.md5.get_id(game.gm_url, game.url, md5_3), id3)
         
         # assign second file to token
         demo_scene = self.db.Scene(game=game)
@@ -555,8 +401,8 @@ class GameTest(EngineBaseTest):
         self.assertFalse(os.path.exists(p1))
         self.assertTrue(os.path.exists(p2))
 
-        self.assertEqual(game.get_id_by_md5(md5_1), None)
-        self.assertEqual(game.get_id_by_md5(md5_2), id2)
+        self.assertEqual(self.engine.storage.md5.get_id(game.gm_url, game.url, md5_1), None)
+        self.assertEqual(self.engine.storage.md5.get_id(game.gm_url, game.url, md5_2), id2)
 
         # expect music to still be present
         p3 = img_path / '4.mp3'    

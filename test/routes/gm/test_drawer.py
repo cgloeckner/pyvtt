@@ -49,7 +49,7 @@ class GmGamesRoutesTest(EngineBaseTest):
         self.assertEqual(len(fancy_url.split('-')), 3)
         for word in fancy_url.split('-'):
             self.assertNotEqual(word, '')
-
+    
     def test_cannot_cleanup_as_a_player(self):
         self.join_player('arthur', 'test-game-1', 'arthur', 'gold')
         self.join_player('arthur', 'test-game-1', 'bob', 'red')
@@ -337,7 +337,7 @@ class GmGamesRoutesTest(EngineBaseTest):
         for i in range(3):
             gm_player.socket.push_receive({'OPID': 'GM-CREATE'})
 
-        md5 = list(self.engine.storage.checksums['arthur/test-game-1'].keys())[0]
+        md5 = list(self.engine.storage.md5.checksums['arthur/test-game-1'].keys())[0]
         ret = self.app.post('/vtt/hashtest/arthur/test-game-1', {'hashs[]': [md5]}, xhr=True)
         self.assertEqual(ret.status_int, 200)
         expect = {
@@ -348,7 +348,7 @@ class GmGamesRoutesTest(EngineBaseTest):
     def test_cannot_hashtest_for_unknown_gm(self):
         ret = self.app.post('/vtt/hashtest/bob/test-game-1', {'hashs[]': []}, xhr=True, expect_errors=True)
         self.assertEqual(ret.status_int, 404)
-
+    
     def test_cannot_hashtest_for_unknown_game(self):
         ret = self.app.post('/vtt/hashtest/arthur/test-game-2', {'hashs[]': []}, xhr=True, expect_errors=True)
         self.assertEqual(ret.status_int, 404)

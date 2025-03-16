@@ -26,7 +26,7 @@ class GameCache:
 
     def __init__(self, engine: any, parent: any, game: any) -> None:
         # prepare MD5 hashes for all images
-        num_generated = engine.storage.make_md5s(game.gm_url, game.url)
+        num_generated = engine.storage.init_game(game.gm_url, game.url)
 
         self.engine = engine
         self.parent = parent

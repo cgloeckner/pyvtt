@@ -49,21 +49,10 @@ def register(engine: any, db: Database):
         def get_url(self) -> str:
             return f'{self.gm_url}/{self.url}'
 
-        def get_id_by_md5(self, md5: str) -> int | None:
-            return engine.storage.checksums[self.get_url()].get(md5, None)
-
-        def remove_md5(self, img_id: int):
-            cache = engine.storage.checksums[self.get_url()]
-            # linear search for image hash
-            for k, v in cache.items():
-                if v == img_id:
-                    del cache[k]
-                    return
-
         def post_setup(self):
             """ Adds the game's directory and prepare the md5 cache."""
-            engine.storage.setup_game(self.gm_url, self.url)
-
+            engine.storage.init_game(self.gm_url, self.url)
+ 
             # add to the engine's cache
             gm_cache = engine.cache.get_from_url(self.gm_url)
             gm_cache.insert(self)
@@ -71,8 +60,6 @@ def register(engine: any, db: Database):
             # NOTE that order == None if database was freshly migrated
             # since order is optional, but should be provided
             self.order = list()
-
-            engine.storage.make_md5s(self.gm_url, self.url)
 
         def reorder_scenes(self):
             """ Reorder scenes based on their IDs. """
@@ -104,10 +91,10 @@ def register(engine: any, db: Database):
             local_path = game_root / f'{image_id}.png'
 
             # make sure image is on disk
-            new_md5 = engine.get_md5(handle.file)
+            new_md5 = engine.storage.md5.generate(handle.file)
             
             with engine.storage.locks[self.gm_url]:  # make IO access safe
-                chcksm = engine.storage.checksums[self.get_url()]
+                chcksm = engine.storage.md5.checksums[self.get_url()]
                 found_id = chcksm.get(new_md5)
                 if found_id is None or not os.path.exists(game_root / f'{found_id}.png'):
                     # save to disk (cache miss or caching error)
@@ -181,7 +168,7 @@ def register(engine: any, db: Database):
                     num_bytes += os.path.getsize(filename)
                     os.remove(filename)
                     # remove image's md5 hash from cache
-                    self.remove_md5(self.get_id_from_url(filename))
+                    engine.storage.md5.remove(self.gm_url, self.url, self.get_id_from_url(filename))
 
             # delete all outdated rolls
             rolls = db.Roll.select(lambda r: r.game == self and r.timeid < now - engine.latest_rolls)
@@ -194,7 +181,7 @@ def register(engine: any, db: Database):
             for t in relevant:
                 t.delete()
 
-            num_md5s = engine.storage.make_md5s(self.gm_url, self.url)
+            num_md5s = engine.storage.init_game(self.gm_url, self.url)
 
             return num_bytes, num_rolls, num_tokens, num_md5s
 
