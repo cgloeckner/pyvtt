@@ -1,0 +1,36 @@
+# fly.toml app configuration file generated for icvtt-dev on 2025-04-07T12:54:20-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'icvtt-dev'
+primary_region = 'ord'
+
+[build]
+
+[env]
+  MAX_PLAYER_COUNT = '15'
+  VTT_DOMAIN = 'dev.icvtt.net'
+  VTT_LINKS_DISCORD = 'https://discord.gg/H76tfBZZEX'
+  VTT_LINKS_GITHUB = 'https://github.com/cgloeckner/pyvtt/'
+  VTT_PORT = '9000'
+  VTT_PREFDIR = '/data'
+  VTT_SSL = 'true'
+  VTT_TITLE = 'ICVTT DEV'
+
+[[mounts]]
+  source = 'dev'
+  destination = '/data'
+
+[http_service]
+  internal_port = 9000
+  force_https = true
+  auto_stop_machines = 'suspend'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1
