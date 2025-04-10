@@ -1,0 +1,36 @@
+# fly.toml app configuration file generated for pyvtt on 2025-03-14T13:31:21-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'icvtt'
+primary_region = 'ord'
+
+[build]
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[env]
+  VTT_TITLE = "ICVTT" 
+  VTT_PREFDIR = "/data/" 
+  VTT_DOMAIN = "app.icvtt.net" 
+  VTT_SSL = "true" 
+  VTT_PORT = 8000
+  VTT_LINKS_DISCORD = "https://discord.gg/H76tfBZZEX" 
+  VTT_LINKS_GITHUB = "https://github.com/cgloeckner/pyvtt/" 
+  MAX_PLAYER_COUNT = "15"
+
+[mounts]
+  source = "prod"
+  destination = "/data"
