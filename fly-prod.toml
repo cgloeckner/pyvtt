@@ -29,7 +29,7 @@ primary_region = 'ord'
   VTT_PORT = 8000
   VTT_LINKS_DISCORD = "https://discord.gg/H76tfBZZEX" 
   VTT_LINKS_GITHUB = "https://github.com/cgloeckner/pyvtt/" 
-  VTT_NUM_NUSIC = "6"
+  VTT_NUM_MUSIC = "6"
   MAX_PLAYER_COUNT = "15"
 
 [mounts]
