@@ -76,7 +76,7 @@ class Engine(object):
             "background" : int(os.getenv('VTT_LIMIT_BG', 10)),
             "game"       : int(os.getenv('VTT_LIMIT_GAME', 20)),
             "music"      : int(os.getenv('VTT_LIMIT_MUSIC', 10)),
-            "num_music"  : int(os.getenv('VTT_NUM_NUSIC', 5))
+            "num_music"  : int(os.getenv('VTT_NUM_MUSIC', 5))
         }
         self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', "#C52828", "#13AA4F", "#ECBC15", "#7F99C7", "#9251B7", "#797A90", "#80533F", "#21A0B7"]
         
