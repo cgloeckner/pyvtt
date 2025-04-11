@@ -328,7 +328,8 @@ class Engine(object):
         
     def get_client_ip(self, request):
         if self.has_reverse_proxy():
-            return request.environ.get('HTTP_X_FORWARDED_FOR')
+            # NOTE: fly.io provides `X-Forwarded-For` with additional information after the comma
+            return request.environ.get('HTTP_X_FORWARDED_FOR').split(', ')[0]
         else:
             return request.environ.get('REMOTE_ADDR')
 
