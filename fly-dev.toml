@@ -15,6 +15,7 @@ primary_region = 'ord'
   VTT_LINKS_GITHUB = 'https://github.com/cgloeckner/pyvtt/'
   VTT_PORT = '9000'
   VTT_PREFDIR = '/data'
+  VTT_REVERSE_PROXY = "True"
   VTT_SSL = 'true'
   VTT_TITLE = 'ICVTT DEV'
 

@@ -30,6 +30,7 @@ primary_region = 'ord'
   VTT_LINKS_DISCORD = "https://discord.gg/H76tfBZZEX" 
   VTT_LINKS_GITHUB = "https://github.com/cgloeckner/pyvtt/" 
   VTT_NUM_MUSIC = "6"
+  VTT_REVERSE_PROXY = "True"
   MAX_PLAYER_COUNT = "15"
 
 [mounts]
