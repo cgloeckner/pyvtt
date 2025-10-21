@@ -22,6 +22,7 @@ primary_region = 'ord'
 [[mounts]]
   source = 'dev'
   destination = '/data'
+  scheduled_snapshots = false
 
 [http_service]
   internal_port = 9000

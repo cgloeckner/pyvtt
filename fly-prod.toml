@@ -36,3 +36,4 @@ primary_region = 'ord'
 [mounts]
   source = "prod"
   destination = "/data"
+  snapshot_retention = 2
