@@ -29,7 +29,12 @@ class SceneTest(unittest.TestCase):
         
         # create some tokens
         for i in range(5):
-            t = self.db.Token(scene=demo_scene, url='dummy', posx=200, posy=150, size=20)
+            t = demo_scene.create_token(
+                url='dummy', 
+                posx=200, 
+                posy=150, 
+                size=20
+            )
                         
         # use last token as background
         self.db.commit()

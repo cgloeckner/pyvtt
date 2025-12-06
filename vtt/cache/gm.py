@@ -30,14 +30,14 @@ class GmCache:
         self.url = gm.url
         self.games = dict()
         self.db = None  # needs connect_db to be run (but outside a db_session)
-        if self.engine.single_db_mode:
-            self.engine.logging.info(f'Linking database for "{gm.name}" to global database')
-            self.db = self.engine.main_db
 
-    def connect_db(self):
-        # connect to GM's database
-        db_path = self.engine.paths.get_database_path(self.url)
-        self.db = create_gm_database(self.engine, str(db_path))
+    def connect_db(self):        
+        if self.engine.single_db_mode:
+            self.db = self.engine.main_db
+        else:
+            # connect to GM's database
+            db_path = self.engine.paths.get_database_path(self.url)
+            self.db = create_gm_database(self.engine, str(db_path))
         
         # add all existing games to the cache
         with db_session:

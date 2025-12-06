@@ -8,6 +8,8 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
+import time
+
 from pony.orm import *
 
 
@@ -18,6 +20,12 @@ def register(_: any, db: Database):
         game = Required("Game")
         tokens = Set("Token", cascade_delete=True, reverse="scene")  # forward deletion to tokens
         backing = Optional("Token", reverse="back")  # background token
+
+        def create_token(self, **kwargs) -> 'Token':
+            if 'timeid' not in kwargs:
+                kwargs['timeid'] = time.time()
+
+            return db.Token(scene=self, **kwargs)
 
         def pre_delete(self):
             # delete all tokens

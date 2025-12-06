@@ -390,7 +390,13 @@ def register(engine: any, db: Database):
                 game.delete()
                 return None
 
-            t = db.Token(scene=scene, timeid=0, url=token_url, posx=0, posy=0, size=-1)
+            t = scene.create_token(
+                url=token_url,
+                posx=0,
+                posy=0,
+                size=-1,
+                timeid=0
+            )
             db.commit()
 
             scene.backing = t
@@ -417,19 +423,19 @@ def register(engine: any, db: Database):
                         # timer token
                         new_url = '/static/assets/{0}.png'.format(url)
                     # create token
-                    t = db.Token(
-                        scene=scene,
+                    t = scene.create_token(
                         url=new_url,
                         posx=token_data['posx'],
                         posy=token_data['posy'],
-                        zorder=token_data.get('zorder', 0),
-                        size=token_data['size'],
-                        rotate=token_data.get('rotate', 0.0),
-                        flipx=token_data.get('flipx', False),
-                        locked=token_data.get('locked', False),
-                        text=token_data.get('text', ''),
-                        color=token_data.get('color', '')
+                        size=token_data['size']
                     )
+                    t.zorder = token_data.get('zorder', 0)
+                    t.rotate = token_data.get('rotate', 0.0)
+                    t.flipx = token_data.get('flipx', False)
+                    t.locked = token_data.get('locked', False)
+                    t.text = token_data.get('text', '')
+                    t.color = token_data.get('color', '')
+
                     if s["backing"] == token_id:
                         db.commit()
                         scene.backing = t

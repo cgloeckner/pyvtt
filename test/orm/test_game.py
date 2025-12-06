@@ -474,7 +474,12 @@ class GameTest(EngineBaseTest):
         # assign second file to token
         demo_scene = self.db.Scene(game=game)
         url = game.get_image_url(id2)
-        self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
+        demo_scene.create_token(
+            url=url, 
+            posx=200, 
+            posy=150, 
+            size=20
+        )
         self.db.commit()
         
         # expect 1st and 3rd file to be abandoned
@@ -499,9 +504,9 @@ class GameTest(EngineBaseTest):
         # create tokens with and without valid image
         demo_scene = self.db.Scene(game=game)
         url = game.get_image_url(id1)
-        fine = self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
-        broken = self.db.Token(scene=demo_scene, url='bullshit.png', posx=200, posy=150, size=20)
-        static = self.db.Token(scene=demo_scene, url='/static/paths/are/fine.png', posx=200, posy=150, size=20)
+        fine = demo_scene.create_token(url=url, posx=200, posy=150, size=20)
+        broken = demo_scene.create_token(url='bullshit.png', posx=200, posy=150, size=20)
+        static = demo_scene.create_token(url='/static/paths/are/fine.png', posx=200, posy=150, size=20)
         self.db.commit()
         
         # expect broken token to be identified
@@ -566,7 +571,7 @@ class GameTest(EngineBaseTest):
         # assign second file to token
         demo_scene = self.db.Scene(game=game)
         url = game.get_image_url(id2)
-        self.db.Token(scene=demo_scene, url=url, posx=200, posy=150, size=20)
+        demo_scene.create_token(url=url, posx=200, posy=150, size=20)
         self.db.commit()
         
         # expect outdated rolls to be deleted
@@ -605,10 +610,10 @@ class GameTest(EngineBaseTest):
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
         for i in range(7):
-            self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
+            scene1.create_token(url=url, posx=200, posy=150, size=20)
         scene2 = self.db.Scene(game=game)
         for i in range(4):
-            self.db.Token(scene=scene2, url=url, posx=200, posy=150, size=20)
+            scene2.create_token(url=url, posx=200, posy=150, size=20)
         self.db.commit()
         
         # prepare game for deletion
@@ -630,16 +635,16 @@ class GameTest(EngineBaseTest):
         # create two demo scenes with tokens
         url = game.get_image_url('123')
         scene1 = self.db.Scene(game=game)
-        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1)  # background
+        scene1.create_token(url=url, posx=0, posy=0, size=-1)  # background
         for i in range(7):
-            self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
+            scene1.create_token(url=url, posx=200, posy=150, size=20)
         scene2 = self.db.Scene(game=game)
         for i in range(4):
-            self.db.Token(scene=scene2, url=url, posx=200, posy=150, size=20)
+            scene2.create_token(url=url, posx=200, posy=150, size=20)
         self.db.commit()
 
         # create a timer token
-        self.db.Token(scene=scene1, url='/url456/foo/token_d20.png', posx=100, posy=5, size=40)
+        scene1.create_token(url='/url456/foo/token_d20.png', posx=100, posy=5, size=40)
 
         # build dict from game, scenes and tokens
         data = game.to_dict()
@@ -693,16 +698,16 @@ class GameTest(EngineBaseTest):
 
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
-        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1)  # background
+        scene1.create_token(url=url, posx=0, posy=0, size=-1)  # background
         for i in range(7):
-            self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
+            scene1.create_token(url=url, posx=200, posy=150, size=20)
         scene2 = self.db.Scene(game=game)
         for i in range(4):
-            self.db.Token(scene=scene2, url=url, posx=200, posy=150, size=20)
+            scene2.create_token(url=url, posx=200, posy=150, size=20)
         self.db.commit()
 
         # create a timer token
-        self.db.Token(scene=scene1, url='/url456/foo/token_d20.png', posx=100, posy=5, size=40)
+        scene1.create_token(url='/url456/foo/token_d20.png', posx=100, posy=5, size=40)
         
         # create zip file
         fname, path = game.to_zip()
@@ -809,12 +814,12 @@ class GameTest(EngineBaseTest):
         
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
-        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1)  # background
+        scene1.create_token(url=url, posx=0, posy=0, size=-1)  # background
         for i in range(7):
-            self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
+            scene1.create_token(url=url, posx=200, posy=150, size=20)
         scene2 = self.db.Scene(game=game)
         for i in range(4):
-            self.db.Token(scene=scene2, url=url, posx=123, posy=456, size=78, text='foo', color='#00FF00')
+            scene2.create_token(url=url, posx=123, posy=456, size=78, text='foo', color='#00FF00')
         self.db.commit()
         
         # create dict
@@ -890,12 +895,12 @@ class GameTest(EngineBaseTest):
         
         # create two demo scenes with tokens
         scene1 = self.db.Scene(game=game)
-        self.db.Token(scene=scene1, url=url, posx=0, posy=0, size=-1)  # background
+        scene1.create_token(url=url, posx=0, posy=0, size=-1)  # background
         for i in range(7):
-            self.db.Token(scene=scene1, url=url, posx=200, posy=150, size=20)
+            scene1.create_token(url=url, posx=200, posy=150, size=20)
         scene2 = self.db.Scene(game=game)
         for i in range(4):
-            self.db.Token(scene=scene2, url=url, posx=200, posy=150, size=20)
+            scene2.create_token(url=url, posx=200, posy=150, size=20)
         self.db.commit()
         
         # create zip file

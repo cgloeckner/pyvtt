@@ -294,7 +294,7 @@ class GameCache:
                 return;
             g.timeid = now
 
-            for t in self.parent.db.Token.select(lambda t: t.scene.id == g.active and t.timeid >= since):
+            for t in self.parent.db.Token.select(lambda t: t.scene.id == g.active and t.timeid > since):
                 tmp = t.to_dict()
                 tmp['uuid'] = player.uuid
                 all_data.append(tmp)
@@ -574,8 +574,14 @@ class GameCache:
             for k, url in enumerate(urls):
                 # create tokens in circle
                 x, y = self.parent.db.Token.get_pos_by_degree((posx, posy), k, n)
-                t = self.parent.db.Token(scene=s.id, timeid=now, url=url,
-                                         size=size, posx=x, posy=y, text=labels[k], color=color)
+                t = s.create_token(
+                    url=url,
+                    size=size, 
+                    posx=x, 
+                    posy=y, 
+                    text=labels[k], 
+                    color=color
+                )
 
                 self.parent.db.commit()
 
@@ -651,9 +657,17 @@ class GameCache:
                 x = int(t.posx + move_dx)
                 y = int(t.posy + move_dy)
                 # clone token
-                t = self.parent.db.Token(scene=s, url=t.url, posx=x, posy=y,
-                                         zorder=t.zorder, size=t.size, rotate=t.rotate, flipx=t.flipx,
-                                         timeid=now, text=t.text, color=t.color)
+                t = s.create_token(
+                    url=t.url, 
+                    posx=x, 
+                    posy=y, 
+                    zorder=t.zorder, 
+                    size=t.size, 
+                    rotate=t.rotate, 
+                    flipx=t.flipx,
+                    text=t.text, 
+                    color=t.color
+                )
                 # enforce position to be within bounds
                 t.update(pos=[x, y], timeid=now)
 
@@ -839,10 +853,16 @@ class GameCache:
             clone = self.parent.db.Scene(game=g)
             for t in s.tokens:
                 if t.size != -1:
-                    self.parent.db.Token(
-                        scene=clone, url=t.url, posx=t.posx, posy=t.posy,
-                        zorder=t.zorder, size=t.size, rotate=t.rotate,
-                        flipx=t.flipx, locked=t.locked, text=t.text,
+                    clone.create_token(
+                        url=t.url, 
+                        posx=t.posx, 
+                        posy=t.posy,
+                        zorder=t.zorder, 
+                        size=t.size, 
+                        rotate=t.rotate,
+                        flipx=t.flipx, 
+                        locked=t.locked, 
+                        text=t.text,
                         color=t.color
                     )
             self.parent.db.commit()

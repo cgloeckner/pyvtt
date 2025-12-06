@@ -26,8 +26,17 @@ class TokenTest(unittest.TestCase):
     def test_update(self):
         demo_game = self.db.Game(url='test', gm_url='foo')
         demo_scene = self.db.Scene(game=demo_game)
-        t = self.db.Token(scene=demo_scene, url='dummy', posx=200, posy=150, size=20, zorder=5, rotate=33.4,
-                          flipx=True, text='test', color='red')
+        t = demo_scene.create_token(
+            url='dummy', 
+            posx=200, 
+            posy=150, 
+            size=20, 
+            zorder=5, 
+            rotate=33.4,
+            flipx=True, 
+            text='test', 
+            color='red'
+        )
         
         # moving token
         self.assertTrue(t.update(timeid=100, pos=(90, 123)))

@@ -63,16 +63,16 @@ class PlayerCacheTest(EngineBaseTest):
             game.active = scene1.id
             
             # create backgrounds
-            b1 = gm_cache.db.Token(scene=scene1, url='/foo', posx=20, posy=30, size=-1)
-            gm_cache.db.Token(scene=scene2, url='/foo', posx=20, posy=30, size=-1)
+            b1 = scene1.create_token(url='/foo', posx=20, posy=30, size=-1)
+            scene2.create_token(url='/foo', posx=20, posy=30, size=-1)
             
             gm_cache.db.commit()
             scene1.backing = b1
-            
+
             # create some tokens
             for i in range(5):
-                gm_cache.db.Token(scene=scene1, url='/foo', posx=20+i, posy=30, size=40)
-                gm_cache.db.Token(scene=scene2, url='/foo', posx=20+i, posy=30, size=40)
+                t = scene1.create_token(url='/foo', posx=20+i, posy=30, size=40)
+                scene2.create_token(url='/foo', posx=20+i, posy=30, size=40)
 
     def get_game(self, gm='foo', game='bar'):
         """ Helper to query a game. """
@@ -275,10 +275,13 @@ class PlayerCacheTest(EngineBaseTest):
         
         # update some tokens in active scene
         since = time.time() - 30  # for last 30 seconds
+        count = 0
         with db_session:
             active = gm_cache.db.Game.select(lambda g: g.url == 'bar').first().active
             for t in gm_cache.db.Token.select(lambda _t: _t.scene.id == active and _t.posx >= 22):
                 t.timeid = since
+                count += 1
+        self.engine.logging.error(count)
         # trigger token update after player1 changed something
         game_cache.broadcast_token_update(player_cache1, since)
         
@@ -292,7 +295,8 @@ class PlayerCacheTest(EngineBaseTest):
         # check data for tokens
         self.assertEqual(data1['OPID'], 'UPDATE')
         tokens = data1['tokens']
-        self.assertEqual(len(tokens), 3)
+
+        self.assertEqual(len(tokens), count)
         
         # expect tokens to be branded with the uuid of player1 (since
         # he modified them) - so the client can handle it correctly
@@ -484,7 +488,7 @@ class PlayerCacheTest(EngineBaseTest):
         
     def test_onRange(self):
         def add_token(x, y):
-            return gm_cache.db.Token(scene=scene, url='/test', posx=x, posy=y, size=20)
+            return scene.create_token(url='/test', posx=x, posy=y, size=20)
 
         socket1 = SocketDummy()
         socket2 = SocketDummy()
@@ -780,7 +784,7 @@ class PlayerCacheTest(EngineBaseTest):
             game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
             previous_timestamp = game.timeid - 0.1
             scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
-            token = gm_cache.db.Token(scene=scene, url='/test', posx=30, posy=15, size=20)
+            token = scene.create_token(url='/test', posx=30, posy=15, size=20)
 
         def query_token(tid=token.id):
             with db_session:
@@ -1194,10 +1198,10 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             scene = self.active_scene()
             self.purge_scene(scene)
-            t1 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
-            t2 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
-            t3 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
-            t4 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+            t1 = scene.create_token(url='test', posx=5, posy=5, size=15)
+            t2 = scene.create_token(url='test', posx=5, posy=5, size=15)
+            t3 = scene.create_token(url='test', posx=5, posy=5, size=15)
+            t4 = scene.create_token(url='test', posx=5, posy=5, size=15)
         ids = [t1.id, t3.id]
         game_cache.on_delete_token(player_cache1, {'tokens': ids})
         # expect DELETE broadcast
@@ -1240,11 +1244,11 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             scene = self.active_scene()
             self.purge_scene(scene)
-            t1 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
-            t2 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
-            t3 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+            t1 = scene.create_token(url='test', posx=5, posy=5, size=15)
+            t2 = scene.create_token(url='test', posx=5, posy=5, size=15)
+            t3 = scene.create_token(url='test', posx=5, posy=5, size=15)
             t3.locked = True
-            t4 = gm_cache.db.Token(scene=scene, url='test', posx=5, posy=5, size=15)
+            t4 = scene.create_token(url='test', posx=5, posy=5, size=15)
         ids = [t1.id, t3.id, t4.id]
         game_cache.on_delete_token(player_cache1, {'tokens': ids})
         # expect DELETE broadcast for 2 of 3 tokens
@@ -1413,10 +1417,10 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             scene = self.active_scene()
             self.purge_scene(scene)
-            gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
-            gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
-            t3 = gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
-            gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
+            scene.create_token(url='test1', posx=5, posy=6, size=15)
+            scene.create_token(url='test2', posx=6, posy=7, size=16)
+            t3 = scene.create_token(url='test3', posx=7, posy=8, size=17)
+            scene.create_token(url='test4', posx=8, posy=9, size=18)
         data = {
             'ids': [t3.id],
             'posx': 100,
@@ -1448,10 +1452,10 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             scene = self.active_scene()
             self.purge_scene(scene)
-            t1 = gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
-            gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
-            t3 = gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
-            t4 = gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
+            t1 = scene.create_token(url='test1', posx=5, posy=6, size=15)
+            scene.create_token(url='test2', posx=6, posy=7, size=16)
+            t3 = scene.create_token(url='test3', posx=7, posy=8, size=17)
+            t4 = scene.create_token(url='test4', posx=8, posy=9, size=18)
         data = {
             'ids': [t1.id, t3.id, t4.id],
             'posx': 100,
@@ -1482,10 +1486,10 @@ class PlayerCacheTest(EngineBaseTest):
         with db_session:
             scene = self.active_scene()
             self.purge_scene(scene)
-            t1 = gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
-            gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
-            gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
-            t4 = gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
+            t1 = scene.create_token(url='test1', posx=5, posy=6, size=15)
+            scene.create_token(url='test2', posx=6, posy=7, size=16)
+            scene.create_token(url='test3', posx=7, posy=8, size=17)
+            t4 = scene.create_token(url='test4', posx=8, posy=9, size=18)
         data = {
             'ids': [t1.id, 4563574575678, t4.id],
             'posx': 100,
@@ -1505,10 +1509,10 @@ class PlayerCacheTest(EngineBaseTest):
             with db_session:
                 scene = self.active_scene()
                 self.purge_scene(scene)
-                t1 = gm_cache.db.Token(scene=scene, url='test1', posx=5, posy=6, size=15)
-                t2 = gm_cache.db.Token(scene=scene, url='test2', posx=6, posy=7, size=16)
-                t3 = gm_cache.db.Token(scene=scene, url='test3', posx=7, posy=8, size=17)
-                gm_cache.db.Token(scene=scene, url='test4', posx=8, posy=9, size=18)
+                t1 = scene.create_token(url='test1', posx=5, posy=6, size=15)
+                t2 = scene.create_token(url='test2', posx=6, posy=7, size=16)
+                t3 = scene.create_token(url='test3', posx=7, posy=8, size=17)
+                scene.create_token(url='test4', posx=8, posy=9, size=18)
             data = {
                 'ids': [t1.id, t2.id, t3.id],
                 'posx': pos[0],
@@ -1801,10 +1805,24 @@ class PlayerCacheTest(EngineBaseTest):
                 self.assertEqual(len(_all_scene_ids), 2)
                 self.assertEqual(_all_scene_ids[1], _active.id)
                 # create some tokens and background
-                gm_cache.db.Token(scene=_active, url='wallpaper', posx=1, posy=2, size=-1)
+                _active.create_token(
+                    url='wallpaper', 
+                    posx=1, 
+                    posy=2, 
+                    size=-1
+                )
                 for _ in range(3):
-                    gm_cache.db.Token(scene=_active, url='test', posx=20, posy=21, size=3, rotate=22.5, flipx=True,
-                                      locked=True, text='foo', color='#FF0000')
+                    _active.create_token(
+                        url='test', 
+                        posx=20, 
+                        posy=21, 
+                        size=3, 
+                        rotate=22.5,
+                        flipx=True,
+                        locked=True, 
+                        text='foo', 
+                        color='#FF0000'
+                    )
                 return _all_scene_ids, _active
         
         # clear game
