@@ -107,6 +107,13 @@ class EngineBaseTest(unittest.TestCase):
         del self.engine
         del self.tmpdir
 
+    def reloadEngine(self, argv=list()):
+        # reload engine (without cleanup thread)
+        argv.append('--quiet')
+        self.engine = Engine(argv=argv, pref_dir=self.root)
+
+        self.monkeyPatch()
+
     def join_player(self, gm_url: str, game_url: str, player_name: str, player_color: str) -> tuple[any, PlayerCache]:
         # post login
         ret = self.app.post('/game/{0}/{1}/login'.format(gm_url, game_url),

@@ -64,6 +64,7 @@ class Engine(object):
             "reverse" : bool(os.getenv('VTT_REVERSE_PROXY', False))
         }
         self.main_db = None
+        self.single_db_mode = '--single-db-mode' in argv
         self.maintenance = atomicx.AtomicInt()
         
         # blacklist for GM names and game URLs
@@ -129,6 +130,7 @@ class Engine(object):
         )
         
         self.logging.info(f'Started Modes: {sys.argv}')
+        self.logging.info(f'Using {self.paths.pref_root} as preference directory')
         
         # load fancy url generator api ... lol
         self.url_generator = utils.FancyUrlApi(self.paths)
@@ -149,6 +151,9 @@ class Engine(object):
             print('                 Default ~/.local/share')
             print('    --loglevel=<level>')
             print('                 Use <level> as logging level')
+            print('    --single-db-mode')
+            print('                 Force to use a single SQLite database file instead')
+            print('                 of multiple files')
             print('')
             sys.exit(0)
 
@@ -170,6 +175,7 @@ class Engine(object):
 
         self.logging.info('Loading main database...')
         # create main database
+        self.orm: dict[str, any] = {}
         self.main_db = create_main_database(self)
         
         # setup db_session to all routes

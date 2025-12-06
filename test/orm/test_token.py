@@ -8,6 +8,7 @@ License: MIT (see LICENSE for details)
 import unittest
 from pony.orm import db_session
 
+from vtt import engine
 from vtt import orm
 
 
@@ -15,7 +16,8 @@ class TokenTest(unittest.TestCase):
     
     def setUp(self):
         # create temporary database
-        self.db = orm.create_gm_database(engine=None, filename=':memory:')
+        dummy_engine = engine.Engine()
+        self.db = orm.create_gm_database(dummy_engine, filename=':memory:')
         
     def tearDown(self):
         del self.db

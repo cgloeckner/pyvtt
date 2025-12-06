@@ -25,13 +25,6 @@ class EngineTest(EngineBaseTest):
     def tearDown(self):
         super().tearDown()
 
-    def reloadEngine(self, argv=list()):
-        # reload engine (without cleanup thread)
-        argv.append('--quiet')
-        self.engine = engine.Engine(argv=argv, pref_dir=self.root)
-
-        self.monkeyPatch()
-
     def test_run_engine_with_custom_prefdir(self):
         engine.Engine(argv=['--prefdir=/tmp'])
         
@@ -200,7 +193,11 @@ class EngineTest(EngineBaseTest):
     def test_getSupportedDice(self):
         dice = self.engine.get_supported_dice()
         self.assertEqual(dice, [2, 4, 6, 8, 10, 12, 20, 100])
-        
+    
+    def test_single_db_mode(self):
+        e = engine.Engine(argv=['--single-db-mode'])
+        self.assertTrue(e.single_db_mode)
+
     def test_cleanup(self):
         now = time.time()
         
