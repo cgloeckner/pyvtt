@@ -2,6 +2,10 @@
 
 The VTT offers some JSON-based API endpoints.
 
+## `/vtt/api/hosting`
+
+used domain, port, public ip etc.
+
 ## `/vtt/api/users`
 
 - number of `total` and `abandoned` (soon expire) `gms`

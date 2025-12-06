@@ -9,6 +9,7 @@ __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 import httpagentparser
+import copy
 
 from bottle import *
 
@@ -16,6 +17,14 @@ from vtt.utils.common import add_dict_set, count_dict_set_len
 
 
 def register(engine: any):
+
+    @get('/vtt/api/hosting')
+    def api_query_hosting():
+        data = copy.deepcopy(engine.hosting)
+        data['ip'] = engine.get_public_ip()
+        data['websocket'] = engine.get_websocket_url()
+        data['auth'] = engine.get_auth_callback_url()
+        return data
 
     @get('/vtt/api/users')
     def api_query_users():
