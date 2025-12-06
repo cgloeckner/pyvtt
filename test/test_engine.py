@@ -18,6 +18,7 @@ from pony.orm import db_session
 
 from test.common import EngineBaseTest
 from vtt import engine
+from vtt import orm
 
 
 class EngineTest(EngineBaseTest):
@@ -225,15 +226,11 @@ class EngineTest(EngineBaseTest):
             # create some rolls
             old = now - self.engine.latest_rolls - 10
             for i in range(15):
-                gm1_cache.db.Roll(game=g1, name='test', color='red',
-                    sides=20, result=random.randrange(1, 20), timeid=now)
-                gm1_cache.db.Roll(game=g2, name='test', color='red',
-                    sides=20, result=random.randrange(1, 20), timeid=now)
+                orm.create_roll(gm1_cache.db, g1, 'test', 'red', 20)
+                orm.create_roll(gm1_cache.db, g2, 'test', 'red', 20)
             for i in range(45):
-                gm1_cache.db.Roll(game=g1, name='test', color='red',
-                    sides=12, result=random.randrange(1, 12), timeid=old)
-                gm1_cache.db.Roll(game=g2, name='test', color='red',
-                    sides=12, result=random.randrange(1, 12), timeid=old)
+                orm.create_roll(gm1_cache.db, g1, 'test', 'red', 12).timeid = old
+                orm.create_roll(gm1_cache.db, g2, 'test', 'red', 12).timeid = old
             all_rolls = gm1_cache.db.Roll.select()
             self.assertEqual(len(all_rolls), 120)
             
