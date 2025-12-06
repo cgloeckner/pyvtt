@@ -20,8 +20,7 @@ class PlayerCacheTest(EngineBaseTest):
         super().setUp()
         
         with db_session:
-            gm = self.engine.main_db.GM(name='user123', url='foo', identity='user123', sid='123456')
-            gm.post_setup()
+            gm = self.engine.cache.create_gm(name='user123', url='foo', identity='user123', sid='123456', metadata='')
         
         # create GM database
         gm_cache = self.engine.cache.get(gm)

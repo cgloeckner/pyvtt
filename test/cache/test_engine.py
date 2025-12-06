@@ -17,10 +17,8 @@ class EngineCacheTest(EngineBaseTest):
         
         # @NOTE: first insertion is triggered by postSetup()
         with db_session:
-            gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
-            gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
-            gm1.post_setup()
-            gm2.post_setup()
+            gm1 = self.engine.cache.create_gm(name='foo', url='foo', identity='foo', sid='123', metadata='')
+            gm2 = self.engine.cache.create_gm(name='bar', url='bar', identity='bar', sid='456', metadata='')
         
         # 2nd insertion is fine (GmCache is replaced)
         # @NOTE: the user may delete cookies and relogin
@@ -30,10 +28,8 @@ class EngineCacheTest(EngineBaseTest):
         cache = self.engine.cache
         
         with db_session:
-            gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
-            gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
-            gm1.post_setup()
-            gm2.post_setup()
+            gm1 = self.engine.cache.create_gm(name='foo', url='foo', identity='foo', sid='123', metadata='')
+            gm2 = self.engine.cache.create_gm(name='bar', url='bar', identity='bar', sid='456', metadata='')
         
         # different GMs have different cache instances
         gm1_cache = cache.get(gm1)
@@ -44,10 +40,8 @@ class EngineCacheTest(EngineBaseTest):
         cache = self.engine.cache
         
         with db_session:
-            gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
-            gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
-            gm1.post_setup()
-            gm2.post_setup()
+            gm1 = self.engine.cache.create_gm(name='foo', url='foo', identity='foo', sid='123', metadata='')
+            gm2 = self.engine.cache.create_gm(name='bar', url='bar', identity='bar', sid='456', metadata='')
         
         # different GMs have different cache instances
         gm1_cache = cache.get_from_url(gm1.url)
@@ -62,10 +56,8 @@ class EngineCacheTest(EngineBaseTest):
         cache = self.engine.cache
         
         with db_session:
-            gm1 = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
-            gm2 = self.engine.main_db.GM(name='bar', url='bar', identity='bar', sid='456')
-            gm1.post_setup()
-            gm2.post_setup()
+            gm1 = self.engine.cache.create_gm(name='foo', url='foo', identity='foo', sid='123', metadata='')
+            gm2 = self.engine.cache.create_gm(name='bar', url='bar', identity='bar', sid='456', metadata='')
         
         cache.remove(gm1)
         
@@ -94,8 +86,8 @@ class EngineCacheTest(EngineBaseTest):
 
         # create GM
         with db_session:
-            gm = self.engine.main_db.GM(name='foo', url='foo', identity='foo', sid='123')
-            gm.post_setup()
+            gm = self.engine.cache.create_gm(name='foo', url='foo', identity='foo', sid='123', metadata='')
+        
         gm_cache = cache.get(gm)
         gm_cache.connect_db()
 

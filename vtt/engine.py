@@ -485,11 +485,13 @@ class Engine(object):
         # create GM data (name, session id etc.)
         with db_session:
             for gm_data in gms:
-                gm = self.main_db.GM(name=gm_data['name'], url=gm_data['url'],
-                                     identity=gm_data['identity'], sid=gm_data['sid'],
-                                     metadata=gm_data['metadata'])
-                gm.post_setup() # NOTE: timeid is overwritten here
-                self.cache.insert(gm)
+                self.cache.create_gm(
+                    name=gm_data['name'], 
+                    identity=gm_data['identity'],
+                    metadata=gm_data['metadata'],
+                    url=gm_data['url'],
+                    sid=gm_data['sid']
+                )
 
         # create Games
         for gm_data in gms:

@@ -18,24 +18,18 @@ def _login_callback(engine: any, provider: str):
 
     def register_new_gm_account(session: any) -> 'GM':
         # create GM (username as display name, user-id as url)
-        gm = engine.main_db.GM(
+        gm = engine.cache.create_gm(
             name=session['name'],
             identity=session['identity'],
-            metadata=session['metadata'],
-            url=engine.main_db.GM.generate_uuid(),
-            sid=engine.main_db.GM.generate_session(),
+            metadata=session['metadata']
         )
-        gm.post_setup()
         engine.main_db.commit()
-
-        # add to cache and initialize database
-        engine.cache.insert(gm)
-        gm_cache = engine.cache.get(gm)
 
         # @NOTE: database creation NEEDS to be run from another
         # thread, because every bottle route has a db_session
         # active, but creating a database from within a db_session
         # isn't possible
+        gm_cache = engine.cache.get(gm)
         tmp = gevent.Greenlet(run=gm_cache.connect_db)
         tmp.start()
         try:
@@ -118,19 +112,14 @@ def register(engine: any):
                 return status
 
             # create new GM (use GM name as display name and URL)
-            sid = engine.main_db.GM.generate_session()
-            gm = engine.main_db.GM(name=name, identity=name, url=name, sid=sid)
-            gm.post_setup()
+            gm = engine.cache.create_gm(name=name, identity=name, metadata='', url=name)
             engine.main_db.commit()
-
-            # add to cache and initialize database
-            engine.cache.insert(gm)
-            gm_cache = engine.cache.get(gm)
 
             # @NOTE: database creation NEEDS to be run from another
             # thread, because every bottle route has an db_session
             # active, but creating a database from within a db_session
             # isn't possible
+            gm_cache = engine.cache.get(gm)
             tmp = gevent.Greenlet(run=gm_cache.connect_db)
             tmp.start()
             try:
@@ -140,7 +129,7 @@ def register(engine: any):
                 raise
 
             expires = time.time() + engine.cleanup['expire']
-            response.set_cookie('session', sid, path='/', expires=expires, secure=engine.has_ssl())
+            response.set_cookie('session', gm.sid, path='/', expires=expires, secure=engine.has_ssl())
 
             engine.logging.access(f'GM created with name="{gm.name}" url={gm.url} by {client_ip}.')
 

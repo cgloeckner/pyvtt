@@ -17,9 +17,9 @@ class GmCacheTest(EngineBaseTest):
         super().setUp()
         
         with db_session:
-            gm = self.engine.main_db.GM(name='user123', url='foo', identity='user123', sid='123456')
-            gm.post_setup()
-            self.cache = self.engine.cache.get(gm)
+            gm = self.engine.cache.create_gm(name='user123', url='foo', identity='user123', sid='123456', metadata='')
+        
+        self.cache = self.engine.cache.get(gm)
         
         # create GM database
         self.db = orm.create_gm_database(engine=self.engine, filename=':memory:')

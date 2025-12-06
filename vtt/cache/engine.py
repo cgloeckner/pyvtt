@@ -38,6 +38,23 @@ class EngineCache:
 
         self.engine.logging.info('EngineCache created')
 
+    def create_gm(self, name: str, identity: str, metadata: str, url: str|None=None, sid: str|None=None) -> 'GM':
+        if url is None:
+            url = self.engine.main_db.GM.generate_uuid()
+
+        if sid is None:
+            sid = self.engine.main_db.GM.generate_session()
+
+        gm = self.engine.main_db.GM(
+            name=name,
+            identity=identity,
+            metadata=metadata,
+            url=url,
+            sid=sid
+        )
+        gm.post_setup()
+        return gm
+
     # --- cache implementation ----------------------------------------
 
     def insert(self, gm):

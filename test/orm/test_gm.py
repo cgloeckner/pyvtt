@@ -21,8 +21,7 @@ class GmTest(EngineBaseTest):
     @db_session
     def test_postSetup(self):
         # create demo GM
-        gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-        gm.post_setup()
+        gm = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
         
         # test call of makeLock()
         self.assertIn(gm.url, self.engine.locks)
@@ -37,11 +36,10 @@ class GmTest(EngineBaseTest):
 
     def test_hasExpired(self):
         with db_session:
-            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm.post_setup()
-            now = int(time.time())
-
-        gm_cache = self.engine.cache.insert(gm)
+            gm = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
+        
+        now = int(time.time())
+        gm_cache = self.engine.cache.get(gm)
         gm_cache.connect_db()
 
         with db_session:
@@ -59,10 +57,9 @@ class GmTest(EngineBaseTest):
         now = int(time.time())
 
         with db_session:
-            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm.post_setup()
+            gm = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
 
-        gm_cache = self.engine.cache.insert(gm)
+        gm_cache = self.engine.cache.get(gm)
         gm_cache.connect_db()
 
         with db_session:
@@ -84,8 +81,7 @@ class GmTest(EngineBaseTest):
     def test_cleanup(self):
         with db_session:
             # create demo GM
-            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm.post_setup()
+            gm = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
         
         gm_cache = self.engine.cache.get(gm)
         gm_cache.connect_db()
@@ -139,8 +135,7 @@ class GmTest(EngineBaseTest):
     def test_preDelete(self):
         with db_session:
             # create demo GM
-            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm.post_setup()
+            gm = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
         
         gm_cache = self.engine.cache.get(gm)
         gm_cache.connect_db()
@@ -177,8 +172,7 @@ class GmTest(EngineBaseTest):
     @db_session
     def test_refreshSession(self):
         # create demo GM
-        gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-        gm.post_setup()
+        gm = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
         
         # setup session
         day_ago = time.time() - 3600 * 24
@@ -201,9 +195,7 @@ class GmTest(EngineBaseTest):
     def test_loadFromSession(self):
         with db_session:
             # create demo GM
-            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm.post_setup()
-            gm.sid = self.engine.main_db.GM.generate_session()
+            gm = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
         
         # create fake-request
         class FakeRequest(object):

@@ -27,8 +27,7 @@ class GameTest(EngineBaseTest):
         
         # finish GM data
         with db_session:
-            gm = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm.post_setup()
+            gm = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
         
         # create GM database
         self.db = orm.create_gm_database(engine=self.engine, filename=':memory:')

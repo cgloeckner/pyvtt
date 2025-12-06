@@ -204,10 +204,8 @@ class EngineTest(EngineBaseTest):
         
         with db_session:
             # create GMs
-            gm1 = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm1.post_setup()
-            gm2 = self.engine.main_db.GM(name='nobody', url='second', identity='nobody', sid='5673')
-            gm2.post_setup()
+            gm1 = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
+            gm2 = self.engine.cache.create_gm(name='nobody', url='second', identity='nobody', sid='5673', metadata='')
             gm2.timeid = now - self.engine.cleanup['expire'] - 10
         
         gm1_cache = self.engine.cache.get(gm1)
@@ -276,10 +274,8 @@ class EngineTest(EngineBaseTest):
     def test_saveToDict(self):
         with db_session:
             # create GMs
-            gm1 = self.engine.main_db.GM(name='user123', url='url456', identity='user123', sid='123456')
-            gm1.post_setup()
-            gm2 = self.engine.main_db.GM(name='nobody', url='second', identity='nobody', sid='5673')
-            gm2.post_setup()
+            gm1 = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
+            gm2 = self.engine.cache.create_gm(name='nobody', url='second', identity='nobody', sid='5673', metadata='')
         
         gm1_cache = self.engine.cache.get(gm1)
         gm1_cache.connect_db()
