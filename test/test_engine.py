@@ -217,11 +217,9 @@ class EngineTest(EngineBaseTest):
         
         with db_session:
             # create some games
-            g1 = gm1_cache.db.Game(url='foo', gm_url='url456')
-            g1.post_setup()
-            g2 = gm1_cache.db.Game(url='bar', gm_url='url456')
+            g1 = gm1_cache.create_game(url='foo')
+            g2 = gm1_cache.create_game(url='bar')
             g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
-            g2.post_setup()
             
             # create some rolls
             old = now - self.engine.latest_rolls - 10
@@ -290,14 +288,11 @@ class EngineTest(EngineBaseTest):
         
         with db_session:
             # create some games
-            g1 = gm1_cache.db.Game(url='foo', gm_url='second')
-            g1.post_setup()
-            g2 = gm1_cache.db.Game(url='bar', gm_url='second')
+            g1 = gm1_cache.create_game(url='foo')
+            g2 = gm1_cache.create_game(url='bar')
             g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
-            g2.post_setup()
-            g3 = gm2_cache.db.Game(url='bar', gm_url='url456')
+            g3 = gm2_cache.create_game(url='bar')
             g3.timeid = time.time() - self.engine.cleanup['expire'] - 10
-            g3.post_setup()
 
         export = self.engine.save_to_dict()
 

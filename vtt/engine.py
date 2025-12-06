@@ -497,9 +497,7 @@ class Engine(object):
             gm_cache.connect_db()
             with db_session:
                 for url in gm_data['games']:
-                    game = gm_cache.db.Game(url=url, gm_url=gm_data['url'])
-                    game.post_setup()
+                    game = gm_cache.create_game(url=url)
                     gm_cache.db.commit()
                     game.from_dict(gm_data['games'][url])
                     gm_cache.db.commit()
-                    

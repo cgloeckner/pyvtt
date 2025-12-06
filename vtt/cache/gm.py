@@ -8,6 +8,8 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
+import time
+
 from gevent import lock
 
 from vtt.orm.register import db_session, create_gm_database
@@ -22,7 +24,6 @@ class GmCache:
     def __init__(self, engine: any, gm: any) -> None:
         # ensure engine can lock for this GM if required
         gm.make_lock()
-        self.db_path = engine.paths.get_database_path(gm.url)
 
         self.engine = engine
         self.lock = lock.RLock()
@@ -33,11 +34,10 @@ class GmCache:
             self.engine.logging.info(f'Linking database for "{gm.name}" to global database')
             self.db = self.engine.main_db
 
-        # self.engine.logging.info('GmCache {0} with {0} created'.format(self.url, self.db_path))
-
     def connect_db(self):
         # connect to GM's database
-        self.db = create_gm_database(self.engine, str(self.db_path))
+        db_path = self.engine.paths.get_database_path(self.url)
+        self.db = create_gm_database(self.engine, str(db_path))
         
         # add all existing games to the cache
         with db_session:
@@ -47,7 +47,14 @@ class GmCache:
                 if game.order == list():
                     game.reorder_scenes()
 
-        # self.engine.logging.info('GmCache {0} with {0} loaded'.format(self.url, self.db_path))
+    def create_game(self, url: str) -> 'Game':
+        game = self.db.Game(
+            url=url,
+            timeid=time.time(),
+            gm_url=self.url
+        )
+        game.post_setup()
+        return game
 
     # --- cache implementation ----------------------------------------
 

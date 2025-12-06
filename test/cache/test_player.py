@@ -28,8 +28,7 @@ class PlayerCacheTest(EngineBaseTest):
         gm_cache.connect_db()
         
         with db_session:
-            game = gm_cache.db.Game(url='bar', gm_url='foo')
-            game.post_setup()
+            game = gm_cache.create_game(url='bar')
             
             # create pretty old rolls
             kwargs = {
@@ -780,7 +779,7 @@ class PlayerCacheTest(EngineBaseTest):
         # create demo token
         with db_session:
             game = gm_cache.db.Game.select(lambda g: g.url == 'bar').first()
-            last_update = game.timeid
+            previous_timestamp = game.timeid - 0.1
             scene = gm_cache.db.Scene.select(lambda s: s.id == game.active).first()
             token = gm_cache.db.Token(scene=scene, url='/test', posx=30, posy=15, size=20)
 
@@ -803,7 +802,7 @@ class PlayerCacheTest(EngineBaseTest):
         self.assertEqual(answer1['OPID'], 'UPDATE')
         self.assertEqual(len(answer1['tokens']), 0)
         # expect game expiring timer being updated
-        self.assertGreater(game.id, last_update)
+        self.assertGreater(game.timeid, previous_timestamp)
         
         socket1.clear_all()
         socket2.clear_all()

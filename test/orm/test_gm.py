@@ -71,8 +71,7 @@ class GmTest(EngineBaseTest):
             self.assertTrue(gm.has_expired(now, gm_cache.db))
 
         with db_session:
-            game = gm_cache.db.Game(url='test-game', gm_url=gm.url)
-            game.post_setup()
+            game = gm_cache.create_game(url='test-game')
 
             game.timeid = 1
             self.assertTrue(game.has_expired(now, 1.0))
@@ -93,11 +92,9 @@ class GmTest(EngineBaseTest):
         
         with db_session:
             # create some games
-            g1 = gm_cache.db.Game(url='foo', gm_url='url456')
-            g1.post_setup()
-            g2 = gm_cache.db.Game(url='bar', gm_url='url456')
+            g1 = gm_cache.create_game(url='foo')
+            g2 = gm_cache.create_game(url='bar')
             g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
-            g2.post_setup()
             
             # create some rolls
             now = time.time()
@@ -150,10 +147,8 @@ class GmTest(EngineBaseTest):
         
         with db_session:
             # create some games
-            g1 = gm_cache.db.Game(url='foo', gm_url='url456')
-            g1.post_setup()
-            g2 = gm_cache.db.Game(url='bar', gm_url='url456')
-            g2.post_setup()
+            g1 = gm_cache.create_game(url='foo')
+            g2 = gm_cache.create_game(url='bar')
             
             # create some rolls
             now = time.time()

@@ -21,12 +21,14 @@ class GameCacheTest(EngineBaseTest):
             gm.post_setup()
         
         # create GM database
+        gm_cache = self.engine.cache.get(gm)
         self.db = orm.create_gm_database(engine=self.engine, filename=':memory:')
-        
+        gm_cache.db = self.db
+
         with db_session:
-            game = self.db.Game(url='bar', gm_url='foo')
-            game.post_setup()
-            self.cache = self.engine.cache.get(gm).get(game)
+            game = gm_cache.create_game(url='bar')
+        
+        self.cache = gm_cache.get(game)
         
     def tearDown(self):
         del self.db

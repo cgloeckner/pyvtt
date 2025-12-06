@@ -101,8 +101,8 @@ class EngineCacheTest(EngineBaseTest):
 
         # create Game
         with db_session:
-            game = gm_cache.db.Game(url='bar', gm_url='foo')
-            game.post_setup()
+            game = gm_cache.create_game(url='bar')
+        
         game_cache = gm_cache.get(game)
         self.assertEqual(len(game_cache.players), 0)
 
