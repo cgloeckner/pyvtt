@@ -22,6 +22,7 @@ import uuid
 
 import bottle
 import atomicx
+from dotenv import load_dotenv
 
 import vtt.utils as utils
 from buildnumber import BuildNumber
@@ -33,6 +34,8 @@ from vtt.server import VttServer
 class Engine(object):
 
     def __init__(self, app_root=pathlib.Path('.'), argv=list(), pref_dir=None):
+        load_dotenv()
+        
         appname = os.getenv('VTT_APPNAME', 'pyvtt')
         pref_dir = os.getenv('VTT_PREFDIR', pref_dir)
         self.log_level = os.getenv('VTT_LOG_LEVEL', 'INFO')

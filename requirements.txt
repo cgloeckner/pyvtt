@@ -36,3 +36,4 @@ httpx~=0.25.2
 google-auth==2.25.2
 google-auth-oauthlib==1.2.0
 atomicx==0.0.14
+dotenv==0.9.9
