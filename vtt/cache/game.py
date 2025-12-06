@@ -356,8 +356,6 @@ class GameCache:
         # roll dice
         now = time.time()
         sides = data['sides']
-        result = random.randrange(1, sides + 1)
-        roll_id = None
 
         if sides not in self.engine.get_supported_dice():
             # ignore unsupported dice
@@ -369,24 +367,22 @@ class GameCache:
             g = self.parent.db.Game.select(lambda g: g.url == self.url).first()
             if g is None:
                 self.engine.logging.warning(
-                    'Player {0} tried to roll 1d{1} at {2}/{3} by {4}, but the game was not found'.format(player.name,
-                                                                                                          sides,
-                                                                                                          self.parent.url,
-                                                                                                          self.url,
-                                                                                                          player.ip))
+                    f'Player {player.name} tried to roll 1d{sides} at '
+                    +f'{self.parent.url}/{self.url} by {player.ip}, but the game was not found'
+                )
                 return;
 
             g.timeid = now
 
             # roll dice
-            self.parent.db.Roll(game=g, name=player.name, color=player.color, sides=sides, result=result, timeid=now)
+            r = g.create_roll(player.name, player.color, sides)
 
         # broadcast dice result
         self.broadcast({
             'OPID': 'ROLL',
             'color': player.color,
             'sides': sides,
-            'result': result,
+            'result': r.result,
             'recent': True,
             'name': player.name
         })

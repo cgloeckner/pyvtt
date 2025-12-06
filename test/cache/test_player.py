@@ -31,28 +31,24 @@ class PlayerCacheTest(EngineBaseTest):
             
             # create pretty old rolls
             kwargs = {
-                'game': game,
                 'name': 'nobody',
                 'color': '#DEAD00',
-                'sides': 4,
-                'result': 3,
-                'timeid': time.time() - self.engine.latest_rolls - 10
+                'sides': 4
             }
-            gm_cache.db.Roll(**kwargs)
+            old = time.time() - self.engine.latest_rolls - 10
+            game.create_roll(**kwargs).timeid = old
             
             # create some old rolls 
             kwargs['sides'] = 12
-            kwargs['timeid'] = time.time() - self.engine.recent_rolls - 10
+            old = time.time() - self.engine.recent_rolls - 10
             for i in range(1, 13):
-                kwargs['result'] = i
-                gm_cache.db.Roll(**kwargs)
+                game.create_roll(**kwargs).timeid = old
             
             # create some recent rolls
             kwargs['sides'] = 20
-            kwargs['timeid'] = time.time()
+            old = time.time()
             for i in range(1, 21):
-                kwargs['result'] = i
-                gm_cache.db.Roll(**kwargs)
+                game.create_roll(**kwargs).timeid = old
             
             # create scenes and tokens
             scene1 = gm_cache.db.Scene(game=game)

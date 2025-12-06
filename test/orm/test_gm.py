@@ -96,15 +96,12 @@ class GmTest(EngineBaseTest):
             now = time.time()
             old = now - self.engine.latest_rolls - 10
             for i in range(15):
-                gm_cache.db.Roll(game=g1, name='test', color='red', sides=20, result=random.randrange(1, 20),
-                                 timeid=now)
-                gm_cache.db.Roll(game=g2, name='test', color='red', sides=20, result=random.randrange(1, 20),
-                                 timeid=now)
+                g1.create_roll(name='test', color='red', sides=20)
+                g2.create_roll(name='test', color='red', sides=20)
             for i in range(45):
-                gm_cache.db.Roll(game=g1, name='test', color='red', sides=12, result=random.randrange(1, 12),
-                                 timeid=old)
-                gm_cache.db.Roll(game=g2, name='test', color='red', sides=12, result=random.randrange(1, 12),
-                                 timeid=old)
+                g1.create_roll(name='test', color='red', sides=12).timeid = old
+                g2.create_roll(name='test', color='red', sides=12).timeid = old
+            gm_cache.db.commit()
             all_rolls = gm_cache.db.Roll.select()
             self.assertEqual(len(all_rolls), 120)
             
@@ -148,10 +145,8 @@ class GmTest(EngineBaseTest):
             # create some rolls
             now = time.time()
             for i in range(15):
-                gm_cache.db.Roll(game=g1, name='test', color='red', sides=20,
-                                 result=random.randrange(1, 20), timeid=now)
-                gm_cache.db.Roll(game=g2, name='test', color='red', sides=20,
-                                 result=random.randrange(1, 20), timeid=now)
+                g1.create_roll(name='test', color='red', sides=20)
+                g2.create_roll(name='test', color='red', sides=20)
             all_rolls = gm_cache.db.Roll.select()
             self.assertEqual(len(all_rolls), 30)
         

@@ -5,9 +5,7 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
-import json
 import os
-import random
 import requests
 import tempfile
 import time
@@ -18,7 +16,6 @@ from pony.orm import db_session
 
 from test.common import EngineBaseTest
 from vtt import engine
-from vtt import orm
 
 
 class EngineTest(EngineBaseTest):
@@ -222,11 +219,11 @@ class EngineTest(EngineBaseTest):
             # create some rolls
             old = now - self.engine.latest_rolls - 10
             for i in range(15):
-                orm.create_roll(gm1_cache.db, g1, 'test', 'red', 20)
-                orm.create_roll(gm1_cache.db, g2, 'test', 'red', 20)
+                g1.create_roll('test', 'red', 20)
+                g2.create_roll('test', 'red', 20)
             for i in range(45):
-                orm.create_roll(gm1_cache.db, g1, 'test', 'red', 12).timeid = old
-                orm.create_roll(gm1_cache.db, g2, 'test', 'red', 12).timeid = old
+                g1.create_roll('test', 'red', 12).timeid = old
+                g2.create_roll('test', 'red', 12).timeid = old
             all_rolls = gm1_cache.db.Roll.select()
             self.assertEqual(len(all_rolls), 120)
             

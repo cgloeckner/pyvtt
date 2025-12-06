@@ -553,9 +553,9 @@ class GameTest(EngineBaseTest):
         game.make_md5s()
 
         for i in range(120):
-            self.db.Roll(game=game, name='foo', color='red', sides=4, result=3)
-            self.db.Roll(game=game, name='foo', color='red', sides=4, result=3, timeid=15)
-            self.db.Roll(game=game, name='foo', color='red', sides=4, result=3, timeid=15)
+            game.create_roll(name='foo', color='red', sides=4).timeid = 0
+            game.create_roll(name='foo', color='red', sides=4)
+            game.create_roll(name='foo', color='red', sides=4)
 
         # expect images to be hashed
         with open(p1, 'rb') as h:

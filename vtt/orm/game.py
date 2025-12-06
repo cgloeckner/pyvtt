@@ -16,6 +16,8 @@ import time
 import zipfile
 import pathlib
 import typing
+import random
+import time
 
 import bottle
 from PIL import Image, UnidentifiedImageError
@@ -39,6 +41,16 @@ def register(engine: any, db: Database):
         gm_url = Required(str)  # used for internal things
         order = Optional(IntArray)  # scene ordering by their ids
 
+        def create_roll(self, name: str, color: str, sides: int) -> 'Roll':
+            return db.Roll(
+                game=self,
+                name=name,
+                color=color,
+                sides=sides,
+                result=random.randrange(1, sides + 1),
+                timeid=time.time()
+            )
+        
         def has_expired(self, now: int, scale: float = 1.0) -> bool:
             delta = now - self.timeid
             return self.timeid > 0 and delta > engine.cleanup['expire'] * scale
