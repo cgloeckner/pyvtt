@@ -13,6 +13,7 @@ primary_region = 'ord'
   VTT_DOMAIN = 'dev.icvtt.net'
   VTT_LINKS_DISCORD = 'https://discord.gg/H76tfBZZEX'
   VTT_LINKS_GITHUB = 'https://github.com/cgloeckner/pyvtt/'
+  VTT_NUM_MUSIC = "6"
   VTT_PORT = '9000'
   VTT_PREFDIR = '/data'
   VTT_REVERSE_PROXY = "True"
