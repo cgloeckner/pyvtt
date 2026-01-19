@@ -1,4 +1,4 @@
-Authlib==1.6.5
+Authlib==1.6.6
 beautifulsoup4==4.11.1
 bottle==0.12.23
 cachetools==5.2.0
