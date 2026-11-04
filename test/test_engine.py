@@ -226,7 +226,7 @@ class EngineTest(EngineBaseTest):
                 g2.create_roll('test', 'red', 12).timeid = old
             all_rolls = gm1_cache.db.Roll.select()
             self.assertEqual(len(all_rolls), 120)
-            
+
             # export both games
             g1.to_zip()
             g2.to_zip()
@@ -234,12 +234,19 @@ class EngineTest(EngineBaseTest):
             num_files = len(os.listdir(export_path))
             self.assertEqual(num_files, 2)
             
+            # estimate num_bytes of boths games (because gm expired) and zips
+            p = self.engine.paths.get_game_path(g1.gm_url, g1.url)
+            expected_num_bytes = os.path.getsize(p)
+            p = self.engine.paths.get_game_path(g2.gm_url, g2.url)
+            expected_num_bytes += os.path.getsize(p)
+            expected_num_bytes += os.path.getsize(export_path)
+            
             # cleanup!
             gms, games, zips, b, r, t, m = self.engine.cleanup_all()
             self.assertEqual(gms, ['second']) 
             self.assertEqual(games, ['url456/bar'])
             self.assertEqual(zips, 2)
-            self.assertEqual(b, 12288)
+            self.assertEqual(b, expected_num_bytes)
             self.assertEqual(r, 0)
             self.assertEqual(t, 0)
             self.assertEqual(m, 0)
