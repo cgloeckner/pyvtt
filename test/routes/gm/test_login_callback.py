@@ -72,7 +72,7 @@ class GmLoginCallbackRoutesTest(EngineBaseTest):
         self.assertEqual(ret.location, 'http://localhost:80/')
 
         sid = self.app.cookies['session']
-        self.assertNotEquals(sid, '')
+        self.assertNotEqual(sid, '')
 
         with orm.db_session:
             gm = self.engine.main_db.GM.select(lambda g: g.sid == sid).first()
