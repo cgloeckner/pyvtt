@@ -26,6 +26,7 @@ from pony.orm import *
 from .gm import BaseGm
 
 
+# num_bytes freed, num_rolls freed, num_tokens freed, num_md5s freed
 CleanupReport = tuple[int, int, int, int]
 
 

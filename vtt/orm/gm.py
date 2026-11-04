@@ -20,6 +20,8 @@ from gevent import lock
 from pony.orm import *
 
 
+# list of games URLs, num_bytes freed, num_rolls freed,
+# num_tokens freed, num_md5s freed
 CleanupReport = tuple[list[str], int, int, int, int]
 
 

@@ -104,11 +104,15 @@ class GmTest(EngineBaseTest):
             gm_cache.db.commit()
             all_rolls = gm_cache.db.Roll.select()
             self.assertEqual(len(all_rolls), 120)
+
+            # estimate num_bytes of 2nd game
+            p = self.engine.paths.get_game_path(g2.gm_url, g2.url)
+            expected_num_bytes = os.path.getsize(p)
             
             # trigger cleanup
             g, i, r, t, m = gm.cleanup(gm_cache.db, now)
             self.assertEqual(g, ['url456/bar'])
-            self.assertEqual(i, 4096)
+            self.assertEqual(i, expected_num_bytes)
             self.assertEqual(r, 45)
             self.assertEqual(t, 0)
             self.assertEqual(m, 0)
