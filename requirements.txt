@@ -18,7 +18,7 @@ Pillow==13.0.0
 pony==0.7.18
 protobuf==5.29.6
 psutil==5.9.4
-pyasn1==0.4.8
+pyasn1==0.6.5
 pyasn1-modules==0.2.8
 pycparser==2.21
 pyOpenSSL==22.1.0
