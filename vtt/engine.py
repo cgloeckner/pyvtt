@@ -34,7 +34,7 @@ from vtt.server import VttServer
 
 class Engine(object):
 
-    def __init__(self, app_root=pathlib.Path('.'), argv=list(), pref_dir=None):
+    def __init__(self, app_root=pathlib.Path('.'), argv=list(), pref_dir: str | None = None):
         load_dotenv()
         
         appname = os.getenv('VTT_APPNAME', 'pyvtt')
@@ -45,12 +45,16 @@ class Engine(object):
                 appname = arg.split('--appname=')[1]
 
             elif arg.startswith('--prefdir='):
-                pref_dir = pathlib.Path(arg.split('--prefdir=')[1])
+                pref_dir = arg.split('--prefdir=')[1]
 
             elif arg.startswith('--loglevel='):
                 self.log_level = arg.split('--loglevel=')[1]
 
-        self.paths = utils.PathApi(appname=appname, pref_root=pref_dir, app_root=app_root)
+        self.paths = utils.PathApi(
+            appname=appname,
+            pref_root=pathlib.Path(pref_dir) if pref_dir else None,
+            app_root=app_root
+        )
         self.paths.ensure(self.paths.get_export_path())
 
         self.app = bottle.default_app()
