@@ -38,25 +38,25 @@ def flag_settings() -> dict[str, str | int | bool]:
     )
     parser.add_argument(
         "--singledbmode", "--single-db-mode", "--single_db_mode",
-        dest="single_db_mode", type=bool,
+        dest="single_db_mode", action="store_true",
         help="Force to use a single SQLite database file instead " \
         "of multiple files"
     )
     parser.add_argument(
-        "--localhost", type=bool,
+        "--localhost", action="store_true",
         help="Restrict server to 127.0.0.1"
     )
     parser.add_argument(
-        "--debug", type=bool,
+        "--debug", action="store_true",
         help="Suppress notification API and enable catching all " \
         "exceptions in browser"
     )
     parser.add_argument(
-        "--quiet", type=bool, help="Suppress logging to stdout"
+        "--quiet", action="store_true", help="Suppress logging to stdout"
     )
     parser.add_argument(
         "--nologs", "--no-logs", "--no_logs",
-        dest="no_logs", type=bool,
+        dest="no_logs", action="store_true",
         help="Suppress logging to files"
     )
 

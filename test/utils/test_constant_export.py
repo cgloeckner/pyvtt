@@ -23,7 +23,7 @@ class ConstantExportTest(unittest.TestCase):
 
     def test_load_from_engine(self):
         class MockEngine:
-            settings = settings.Settings({})
+            settings = settings.Settings()
             playercolors: list[str] = ['#ff0000', '#00ff00', '#0000ff']
 
         mock_engine = MockEngine()
