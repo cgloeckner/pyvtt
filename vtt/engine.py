@@ -192,9 +192,7 @@ class Engine(object):
             if data is not None:
                 providers[api_name] = data
         
-        self.logging.info(f'Found oauth setup for: {
-            [api_name for api_name in providers]
-        }')
+        self.logging.info(f'Found oauth setup for: {[api_name for api_name in providers]}')
         
         if len(providers) >= 1:
             self.login_api = utils.OAuthClient(
