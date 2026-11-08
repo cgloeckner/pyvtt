@@ -55,7 +55,7 @@ def register(engine: typing.Any, db: Database):
 
         def has_expired(self, now: int, gm_db: Database) -> bool:
             delta = now - self.timeid
-            if self.timeid == 0 or delta <= engine.cleanup['expire']:
+            if self.timeid == 0 or delta <= engine.settings.cleanup_expire:
                 return False
 
             Game = gm_db.entities["Game"]
@@ -71,7 +71,7 @@ def register(engine: typing.Any, db: Database):
         @staticmethod
         def cleanup(gm_db: Database, now: int) -> CleanupReport:
             """ Cleanup GM's games' outdated rolls, unused images or
-            event remove expired games (see engine.cleanup['expire']).
+            event remove expired games (see engine.settings.cleanup_expire).
             """
             games = list()
             num_bytes = 0
@@ -120,7 +120,7 @@ def register(engine: typing.Any, db: Database):
             """ Refresh session id. """
             now = time.time()
             self.timeid = now
-            response.set_cookie('session', self.sid, path='/', expires=now + engine.cleanup['expire'])
+            response.set_cookie('session', self.sid, path='/', expires=now + engine.settings.cleanup_expire)
 
         @staticmethod
         def load_from_session(request: bottle.Request) -> 'GM':

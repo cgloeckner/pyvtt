@@ -35,8 +35,8 @@ def rename_backup(fname):
 if __name__ == '__main__':
     if '--export' in sys.argv:
         # boot engine
-        engine = Engine(argv=['--quiet'])
-        print('{0} migration export started.'.format(engine.title))
+        engine = Engine(quiet=True)
+        print('{0} migration export started.'.format(engine.settings.app_name))
 
         # export data to dict
         data = engine.save_to_dict()
@@ -51,15 +51,15 @@ if __name__ == '__main__':
     elif '--import' in sys.argv:
         # rename all databases to like gm.db.1 etc.
         print('Rename database files')
-        paths = PathApi(appname='pyvtt')
+        paths = PathApi(app_name='pyvtt')
         rename_backup(paths.get_main_database_path())
         for gmname in os.listdir(paths.get_gms_path()):
             fname = paths.get_database_path(gmname)
             rename_backup(fname)
 
         # boot engine (create tables etc.)  
-        engine = Engine(argv=['--quiet'])
-        print('{0} migration export started.'.format(engine.title))
+        engine = Engine(quiet=True)
+        print('{0} migration export started.'.format(engine.settings.app_name))
 
         # load json from file 
         p = engine.paths.root / 'export.json'
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     elif '--music' in sys.argv:
         # rename each games' "music.mp3" to "0.mp3"
         print('Rename music files')
-        paths = PathApi(appname='pyvtt')
+        paths = PathApi(app_name='pyvtt')
         n = 0
         for gmname in os.listdir(paths.get_gms_path()):
             gm_root = paths.get_gms_path(gmname)

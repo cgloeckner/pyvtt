@@ -16,7 +16,8 @@ import sys
 # API for providing local hard drive paths
 class PathApi:
 
-    def __init__(self, appname: str, pref_root: pathlib.Path | None = None, app_root=pathlib.Path('..')) -> None:
+    def __init__(self, app_name: str, pref_root: pathlib.Path | None = None, 
+                 app_root=pathlib.Path('..')) -> None:
         """ Uses given root or pick standard preference directory. """
         self.app_root = app_root
 

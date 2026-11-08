@@ -132,7 +132,7 @@ def register(engine: typing.Any):
                 # reraise greenlet Timeout exception to trigger proper error reporting
                 raise
 
-            expires = time.time() + engine.cleanup['expire']
+            expires = time.time() + engine.settings.cleanup_expire
             response.set_cookie('session', gm.sid, path='/', expires=expires, secure=engine.has_ssl())
 
             engine.logging.access(f'GM created with name="{gm.name}" url={gm.url} by {client_ip}.')

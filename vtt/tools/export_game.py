@@ -20,7 +20,7 @@ from vtt import engine
 
 
 if __name__ == '__main__':
-    e = engine.Engine(sys.argv)
+    e = engine.Engine()
 
     gm_url   = sys.argv[1]
     game_url = sys.argv[2]

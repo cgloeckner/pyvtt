@@ -1323,7 +1323,7 @@ class PlayerCacheTest(EngineBaseTest):
         player_cache3.socket = socket3
 
         beacon_data = {'OPID': 'MUSIC', 'action': 'add', 'slot_id': [0, 2, 3, 4]}          
-        expected: list[bool | None] = [None] * self.engine.file_limit['num_music']
+        expected: list[bool | None] = [None] * self.engine.settings.num_music
         self.assertEqual(game_cache.playback, expected)
         game_cache.on_music(player_cache3, beacon_data)
         # expect MUSIC add-slots broadcast

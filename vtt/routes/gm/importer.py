@@ -77,7 +77,7 @@ def register(engine: typing.Any):
         is_zip = filename.endswith('zip')
         if is_zip:
             # test zip file size
-            limit = engine.file_limit['game']
+            limit = engine.settings.limit_game
             if size <= limit * 1024 * 1024:
                 game = gm_cache.db.Game.from_zip(gm, game_url, files[0])
                 if game is None:
@@ -92,7 +92,7 @@ def register(engine: typing.Any):
                 return status
         else:
             # test background file size
-            limit = engine.file_limit['background']
+            limit = engine.settings.limit_bg
             if size <= limit * 1024 * 1024:
                 game = gm_cache.db.Game.from_image(gm, game_url, files[0])
             else:

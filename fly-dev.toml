@@ -15,10 +15,10 @@ primary_region = 'ord'
   VTT_LINKS_GITHUB = 'https://github.com/cgloeckner/pyvtt/'
   VTT_NUM_MUSIC = "6"
   VTT_PORT = '9000'
-  VTT_PREFDIR = '/data'
+  VTT_PREF_DIR = '/data'
   VTT_REVERSE_PROXY = "True"
   VTT_SSL = 'true'
-  VTT_TITLE = 'ICVTT DEV'
+  VTT_APP_NAME = 'ICVTT_DEV'
 
 [[mounts]]
   source = 'dev'

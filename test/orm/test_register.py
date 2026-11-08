@@ -35,7 +35,7 @@ class RegisterTest(EngineBaseTest):
         self.assertIn('Roll', self.engine.orm)
 
     def test_create_main_database_in_single_mode(self):
-        self.reloadEngine(argv=['--single-db-mode'])
+        self.reload_engine(single_db_mode=True)
         
         # check registered classes
         self.assertIn('GM', self.engine.orm)
@@ -45,7 +45,7 @@ class RegisterTest(EngineBaseTest):
         self.assertIn('Roll', self.engine.orm)
 
     def test_create_gm_database_in_single_mode(self):
-        self.reloadEngine(argv=['--single-db-mode'])
+        self.reload_engine(single_db_mode=True)
         
         db = register.create_gm_database(self.engine, 'does-not-matter')
         

@@ -79,7 +79,7 @@ def register(engine: typing.Any):
             return result
 
         # save playername in client cookie
-        expire = int(time.time() + engine.cleanup['expire'])
+        expire = int(time.time() + engine.settings.cleanup_expire)
         response.set_cookie('playername', player_name, path=game.get_url(), expires=expire, secure=engine.has_ssl())
         response.set_cookie('playercolor', player_color, path=game.get_url(), expires=expire, secure=engine.has_ssl())
 

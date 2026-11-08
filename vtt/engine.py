@@ -23,10 +23,10 @@ import typing
 
 import bottle
 import atomicx
-from dotenv import load_dotenv
 
 import vtt.utils as utils
 from buildnumber import BuildNumber
+from vtt.settings import env_settings, Settings
 from vtt.cache import EngineCache
 from vtt.orm.register import db_session, create_main_database
 from vtt.server import VttServer
@@ -34,25 +34,22 @@ from vtt.server import VttServer
 
 class Engine(object):
 
-    def __init__(self, app_root=pathlib.Path('.'), argv=list(), pref_dir: str | None = None):
-        load_dotenv()
+    def __init__(self, **kwargs):
+        app_root = kwargs.pop("app_root", pathlib.Path("."))
+
+        kwargs = env_settings(**kwargs)
+        self.settings = Settings(**kwargs)
         
-        appname = os.getenv('VTT_APPNAME', 'pyvtt')
-        pref_dir = os.getenv('VTT_PREFDIR', pref_dir)
-        self.log_level = os.getenv('VTT_LOG_LEVEL', 'INFO')
-        for arg in argv:
-            if arg.startswith('--appname='):
-                appname = arg.split('--appname=')[1]
-
-            elif arg.startswith('--prefdir='):
-                pref_dir = arg.split('--prefdir=')[1]
-
-            elif arg.startswith('--loglevel='):
-                self.log_level = arg.split('--loglevel=')[1]
+        # initialize path api
+        pref_root: pathlib.Path | None = None
+        if self.settings.pref_dir != "":
+            pref_root = pathlib.Path(self.settings.pref_dir)
+            # FIXME: path_api should work with str instead and do the
+            # pathlib stuff on its own
 
         self.paths = utils.PathApi(
-            appname=appname,
-            pref_root=pathlib.Path(pref_dir) if pref_dir else None,
+            app_name=self.settings.app_name,
+            pref_root=pref_root,
             app_root=app_root
         )
         self.paths.ensure(self.paths.get_export_path())
@@ -65,32 +62,18 @@ class Engine(object):
         
         # webserver stuff
         self.listen = '0.0.0.0'
-        self.hosting = {
-            "domain"  : os.getenv('VTT_DOMAIN', 'localhost'),
-            "port"    : int(os.getenv('VTT_PORT', 8080)),
-            "ssl"     : bool(os.getenv('VTT_SSL', False)),
-            "reverse" : bool(os.getenv('VTT_REVERSE_PROXY', False))
-        }
-        self.main_db = None
-        self.single_db_mode = '--single-db-mode' in argv
         self.maintenance = atomicx.AtomicInt()
         
         # blacklist for GM names and game URLs
         self.gm_blacklist = ['', 'static', 'asset', 'vtt', 'game']
         self.url_regex    = r'^[A-Za-z0-9_\-.]+$'
         
-        # maximum file sizes for uploads (in MB)
-        self.file_limit = {
-            "token"      : int(os.getenv('VTT_LIMIT_TOKEN', 2)),
-            "background" : int(os.getenv('VTT_LIMIT_BG', 10)),
-            "game"       : int(os.getenv('VTT_LIMIT_GAME', 20)),
-            "music"      : int(os.getenv('VTT_LIMIT_MUSIC', 10)),
-            "num_music"  : int(os.getenv('VTT_NUM_MUSIC', 5))
-        }
-        self.playercolors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', "#C52828", "#13AA4F", "#ECBC15", "#7F99C7", "#9251B7", "#797A90", "#80533F", "#21A0B7"]
+        self.playercolors = [
+            '#FF0000', '#00FF00', '#0000FF', '#FFFF00',
+            '#FF00FF', "#C52828", "#13AA4F", "#ECBC15",
+            "#7F99C7", "#9251B7", "#797A90", "#80533F",
+            "#21A0B7"]
         
-        self.title = os.getenv('VTT_TITLE', appname)
-
         self.links = [
             {
                 "label" : "HOME",
@@ -110,31 +93,20 @@ class Engine(object):
                     'url': value
                 })
         
-        self.cleanup = {
-            'expire':  int(os.getenv('VTT_CLEANUP_EXPIRE', 2592000)),
-            'daytime': os.getenv('VTT_CLEANUP_TIME', '03:00')
-        }
-
         self.notify_api = None # notify api instance
         self.login_api = None   # login api instance
         self.cache = None   # later engine cache
 
-        # handle commandline arguments
-        self.localhost = '--localhost' in argv
-        self.debug     = '--debug' in argv
-        self.quiet     = '--quiet' in argv
-        self.no_logs   = '--no-logs' in argv
-        
         self.logging = utils.LoggingApi(
-            quiet        = self.quiet,
+            quiet        = self.settings.quiet,
             info_file    = self.paths.get_log_path('info'),
             error_file   = self.paths.get_log_path('error'),
             access_file  = self.paths.get_log_path('access'),
             warning_file = self.paths.get_log_path('warning'),
             logins_file  = self.paths.get_log_path('logins'),
             auth_file    = self.paths.get_log_path('auth'),
-            stdout_only  = self.no_logs,
-            loglevel     = self.log_level
+            stdout_only  = self.settings.no_logs,
+            loglevel     = self.settings.log_level
         )
         
         self.logging.info(f'Started Modes: {sys.argv}')
@@ -143,54 +115,33 @@ class Engine(object):
         # load fancy url generator api ... lol
         self.url_generator = utils.FancyUrlApi(self.paths)
 
-        # show argv help
-        if '--help' in argv:
-            print('Commandline options:')
-            print('    --localhost  Restrict server to 127.0.0.1')
-            print('    --debug      Suppress notification API, enable catching all')
-            print('                 exceptions')
-            print('    --quiet      Suppress logging to stdout.')
-            print('    --no-logs    Suppress logging to files.')
-            print('    --appname=<title>')
-            print('                 Use <title> in html title and as foldername for')
-            print('                 preference directory, e.g. ~/.local/share/<title>')
-            print('    --prefdir=<path>')
-            print('                 Use <path> as root path for preference directory.')
-            print('                 Default ~/.local/share')
-            print('    --loglevel=<level>')
-            print('                 Use <level> as logging level')
-            print('    --single-db-mode')
-            print('                 Force to use a single SQLite database file instead')
-            print('                 of multiple files')
-            print('')
-            sys.exit(0)
-
-        if self.localhost:
+        if self.settings.localhost:
             # use localhost as domain
-            self.listen = '127.0.0.1'
-            self.hosting['domain'] = 'localhost'
-            self.logging.info('Restricting to localhost')
+            self.listen = "127.0.0.1"
+            self.domain = "localhost"
+            self.logging.info("Restricting to localhost")
 
         else:
-            if self.hosting['domain'] == '':
+            # host publicly
+            if self.settings.domain == "":
                 # run via public ip
                 ip = self.get_public_ip()
-                self.hosting['domain'] = ip
-                self.logging.info(f'Using Public IP {ip} as Domain')
+                self.domain = ip
+                self.logging.info(f"Using Public IP {ip} as Domain")
 
             self.init_webhooks()
             self.init_oauth()
 
         self.logging.info('Loading main database...')
         # create main database
-        self.orm: dict[str, typing.Any] = {}
+        self.orm: dict[str, typing.Any] = {}  # FIXME: delete because of db.entities["Foo"]
         self.main_db = create_main_database(self)
         
         # setup db_session to all routes
         self.app.install(db_session)
         
         # setup error catching
-        if self.debug:
+        if self.settings.debug:
             # let bottle catch exceptions
             self.app.catchall = True
         
@@ -226,9 +177,12 @@ class Engine(object):
         
         if len(webhooks) >= 1:
             # FIXME: using the next best webhook API does not allow multiple webhooks
-            app_title = f'{self.title} on {self.get_domain()}'
+            app_title = f'{self.settings.app_name} on {self.get_domain()}'
             first_hook = webhooks[list(webhooks.keys())[0]]
-            self.notify_api = utils.DiscordWebhook(app_title=app_title, alias=app_title, url=first_hook['url'], roles=[], users=first_hook['users'])
+            self.notify_api = utils.DiscordWebhook(
+                app_title=app_title, alias=app_title, url=first_hook['url'], 
+                roles=[], users=first_hook['users']
+            )
 
     def init_oauth(self) -> None:
         # collect provider data from environ vars
@@ -238,16 +192,23 @@ class Engine(object):
             if data is not None:
                 providers[api_name] = data
         
-        self.logging.info(f'Found oauth setup for: {[api_name for api_name in providers]}')
+        self.logging.info(f'Found oauth setup for: {
+            [api_name for api_name in providers]
+        }')
         
         if len(providers) >= 1:
-            self.login_api = utils.OAuthClient(on_auth=self.logging.auth, callback_url=self.get_auth_callback_url(),
-                                                providers=providers)
+            self.login_api = utils.OAuthClient(
+                on_auth=self.logging.auth,
+                callback_url=self.get_auth_callback_url(),
+                providers=providers
+            )
 
     def load_version_number(self) -> None:
         # load version number
         bn = BuildNumber()
-        bn.load_from_file(self.paths.get_static_path(default=True) / 'client' / 'version.js')
+        bn.load_from_file(
+            self.paths.get_static_path(default=True) / 'client' / 'version.js'
+        )
         self.version = str(bn)
         
         # query latest git hash
@@ -257,7 +218,8 @@ class Engine(object):
         except:
             self.logging.warning('Cannot load git SHA from sha.txt.')
             # fallback
-            p = subprocess.run('git rev-parse --short HEAD', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.run('git rev-parse --short HEAD', shell=True, 
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if p.returncode != 0:
                 error = p.stderr.decode('utf-8')
                 self.logging.error(f'Cannot query git SHa from commandline: {error}')
@@ -265,7 +227,7 @@ class Engine(object):
                 self.git_hash = p.stdout.decode('utf-8').split('\n')[0]
 
         # generate debug hash
-        if self.debug:
+        if self.settings.debug:
             self.debug_hash = uuid.uuid4().hex
 
     def run(self):
@@ -274,22 +236,22 @@ class Engine(object):
 
         bottle.run(
             host       = self.listen,
-            port       = self.hosting['port'],
-            debug      = self.debug,
-            quiet      = self.quiet,
+            port       = self.settings.port,
+            debug      = self.settings.debug,
+            quiet      = self.settings.quiet,
             server     = VttServer, # type: ignore
         )
         
     def get_domain(self):
-        if self.localhost:
+        if self.settings.localhost:
             # because of forced localhost mode
             return 'localhost'
         else:
             # use domain (might be replaced by public ip)
-            return self.hosting['domain']
+            return self.settings.domain
         
     def get_port(self):
-        return self.hosting['port']
+        return self.settings.port
    
     def get_url(self):
         port   = ''
@@ -332,10 +294,10 @@ class Engine(object):
         return v
 
     def has_reverse_proxy(self):
-        return self.hosting['reverse']
+        return self.settings.reverse_proxy
 
     def has_ssl(self):
-        return self.hosting['ssl']
+        return self.settings.ssl
 
     def verify_url_section(self, s):
         return bool(re.match(self.url_regex, s))
@@ -417,7 +379,7 @@ class Engine(object):
         """ Deletes all export games' zip files, unused images and
         outdated dice roll results from all games.
         Inactive games or even GMs are deleted
-        (see engine.cleanup['expire']).
+        (see engine.settings.cleanup_expire).
         """
         now = time.time()
         gms   = list()
@@ -427,7 +389,6 @@ class Engine(object):
         num_tokens = 0
         num_md5s   = 0
 
-        assert self.main_db
         Gm = self.main_db.entities["GM"]
 
         assert self.cache
@@ -472,7 +433,6 @@ class Engine(object):
         """
         gms = list()
 
-        assert self.main_db
         Gm = self.main_db.entities["GM"]
 
         assert self.cache

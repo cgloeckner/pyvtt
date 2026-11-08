@@ -36,7 +36,7 @@ class GameCache:
         self.next_id = 0  # used for player indexing in UI
 
         self.playback = list()
-        for slot_id in range(engine.file_limit['num_music']):
+        for slot_id in range(engine.settings.num_music):
             if self.is_music_slot_used(slot_id):
                 self.playback.append(False)  # exists but not playing
             else:
@@ -67,7 +67,7 @@ class GameCache:
     def get_all_slots(self):
         root = self.engine.paths.get_game_path(self.parent.url, self.url)
         slots = list()
-        for slot_id in range(self.engine.file_limit['num_music']):
+        for slot_id in range(self.engine.settings.num_music):
             if os.path.exists(root / '{0}.mp3'.format(slot_id)):
                 slots.append(slot_id)
         return slots
@@ -79,7 +79,7 @@ class GameCache:
             # search for next free slot
             slots = self.get_all_slots()
             next_slot = None
-            for slot_id in range(self.engine.file_limit['num_music']):
+            for slot_id in range(self.engine.settings.num_music):
                 if slot_id not in slots:
                     next_slot = slot_id
                     break

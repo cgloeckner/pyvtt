@@ -59,7 +59,7 @@ def register(engine: typing.Any, db: Database):
         
         def has_expired(self, now: int, scale: float = 1.0) -> bool:
             delta = now - self.timeid
-            return self.timeid > 0 and delta > engine.cleanup['expire'] * scale
+            return self.timeid > 0 and delta > engine.settings.cleanup_expire * scale
 
         def may_expire_soon(self, now: int) -> bool:
             return self.has_expired(now, scale=0.5)
@@ -260,7 +260,7 @@ def register(engine: typing.Any, db: Database):
             """ Remove music. """
             root = engine.paths.get_game_path(self.gm_url, self.url)
             with engine.locks[self.gm_url]:  # make IO access safe
-                for n in range(engine.file_limit['num_music']):
+                for n in range(engine.settings.num_music):
                     fname = root / '{0}.mp3'.format(n)
                     if os.path.exists(fname):
                         os.remove(fname)

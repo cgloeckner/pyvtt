@@ -9,7 +9,7 @@ import tempfile
 import unittest
 import pathlib
 
-from vtt import utils, orm
+from vtt import utils, orm, settings
 
 
 class ConstantExportTest(unittest.TestCase):
@@ -23,13 +23,7 @@ class ConstantExportTest(unittest.TestCase):
 
     def test_load_from_engine(self):
         class MockEngine:
-            file_limit: dict[str, int] = {
-                'token': 5,
-                'background': 25,
-                'game': 40,
-                'music': 6,
-                'num_music': 7
-            }
+            settings = settings.Settings({})
             playercolors: list[str] = ['#ff0000', '#00ff00', '#0000ff']
 
         mock_engine = MockEngine()
@@ -43,11 +37,11 @@ class ConstantExportTest(unittest.TestCase):
         self.assertEqual(e['MAX_TOKEN_SIZE'], orm.MAX_TOKEN_SIZE)
         self.assertEqual(e['MAX_TOKEN_LABEL_SIZE'], orm.MAX_TOKEN_LABEL_SIZE)
 
-        self.assertEqual(e['MAX_TOKEN_FILESIZE'], 5)
-        self.assertEqual(e['MAX_BACKGROUND_FILESIZE'], 25)
-        self.assertEqual(e['MAX_GAME_FILESIZE'], 40)
-        self.assertEqual(e['MAX_MUSIC_FILESIZE'], 6)
-        self.assertEqual(e['MAX_MUSIC_SLOTS'], 7)
+        self.assertEqual(e['MAX_TOKEN_FILESIZE'], mock_engine.settings.limit_token)
+        self.assertEqual(e['MAX_BACKGROUND_FILESIZE'], mock_engine.settings.limit_bg)
+        self.assertEqual(e['MAX_GAME_FILESIZE'], mock_engine.settings.limit_game)
+        self.assertEqual(e['MAX_MUSIC_FILESIZE'], mock_engine.settings.limit_music)
+        self.assertEqual(e['MAX_MUSIC_SLOTS'], mock_engine.settings.num_music)
 
         self.assertEqual(e['SUGGESTED_PLAYER_COLORS'], mock_engine.playercolors)
 

@@ -19,7 +19,7 @@ class FancyUrlApiTest(unittest.TestCase):
         self.tmpdir = tempfile.TemporaryDirectory()
         pref_root = pathlib.Path(self.tmpdir.name)
 
-        self.paths = utils.PathApi(appname='unittest', app_root=pathlib.Path('..'), pref_root=pref_root)
+        self.paths = utils.PathApi(app_name='unittest', app_root=pathlib.Path('..'), pref_root=pref_root)
         verbs_file = self.paths.get_fancy_url_path('verbs')
 
         with open(verbs_file, 'w') as h:

@@ -40,7 +40,7 @@ class GmCache:
         self.db: Database | None = None
     
     def connect_db(self): 
-        if self.engine.single_db_mode:
+        if self.engine.settings.single_db_mode:
             self.db = self.engine.main_db
         else:
             # connect to GM's database

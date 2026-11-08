@@ -27,7 +27,7 @@
         <img class="browse" src="/static/upload.png" onClick="initUpload();" draggable="false" title="FILE UPLOAD" />
         <img class="close" src="/static/close.png" onClick="hideAssetsBrowser();" draggable="false" title="DISCARD" />
         <select id="games" onChange="loadAssets()">
-            <option value="null">{{engine.title}} Assets</option>
+            <option value="null">{{engine.settings.app_name}} Assets</option>
         </select>
         <div id="assets"></div>
     </div>

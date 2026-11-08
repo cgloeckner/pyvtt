@@ -17,7 +17,7 @@ License: MIT (see LICENSE for details)
 %end
     <link rel="stylesheet" type="text/css" href="/static/client/normalize.css?v={{engine.version}}">
     <link rel="stylesheet" type="text/css" href="/static/client/layout.css?v={{engine.version}}">
-    <title>{{engine.title}}: {{title}}</title>
+    <title>{{engine.settings.app_name}}: {{title}}</title>
 </head>
 
 <body>

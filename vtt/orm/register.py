@@ -24,7 +24,7 @@ def register_gm_database(engine: typing.Any, db: Database) -> None:
 
 def create_gm_database(engine: typing.Any, filename: str) -> Database:
     """ Creates a new database for with GM entities such as Tokens, Scenes etc."""
-    if engine.single_db_mode:
+    if engine.settings.single_db_mode:
         # use global db
         return engine.main_db
     
@@ -44,7 +44,7 @@ def create_main_database(engine: typing.Any) -> Database:
 
     # register entities
     engine.orm['GM'] = gm.register(engine, db)
-    if engine.single_db_mode:
+    if engine.settings.single_db_mode:
         register_gm_database(engine, db)
 
     # bind

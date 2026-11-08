@@ -47,7 +47,7 @@ class CleanupThread(object):
             self.engine.notify_api.on_cleanup(results)
 
     def getNextUpdate(self):      
-        h, m   = self.engine.cleanup['daytime'].split(':')
+        h, m   = self.engine.settings.cleanup_time.split(':')
         now    = datetime.datetime.today()
         future = datetime.datetime(now.year, now.month, now.day, int(h), int(m))
         if now > future:

@@ -24,7 +24,7 @@ class EngineTest(EngineBaseTest):
         super().tearDown()
 
     def test_run_engine_with_custom_prefdir(self):
-        engine.Engine(argv=['--prefdir=/tmp'])
+        engine.Engine(pref_dir="/tmp")
         
 
     def test_run(self): 
@@ -45,13 +45,13 @@ class EngineTest(EngineBaseTest):
         
     def test_getDomain(self):
         os.environ['VTT_DOMAIN'] = 'example.com'
-        self.reloadEngine()
+        self.reload_engine()
         
         domain = self.engine.get_domain()
         self.assertEqual(domain, 'example.com')
         
         # reload with --localhost
-        self.reloadEngine(argv=['--localhost'])
+        self.reload_engine(localhost=True)
         domain = self.engine.get_domain()
         self.assertEqual(domain, 'localhost')
         
@@ -61,36 +61,36 @@ class EngineTest(EngineBaseTest):
         
         # reload with custom port
         os.environ['VTT_PORT'] = '8080'
-        self.reloadEngine()
+        self.reload_engine()
         p = self.engine.get_port()
         self.assertEqual(p, 8080)
         
     def test_hasSsl(self):
-        self.reloadEngine()
+        self.reload_engine()
         self.assertFalse(self.engine.has_ssl())
         
         # reload with ssl
         os.environ['VTT_SSL'] = 'True'
-        self.reloadEngine()   
+        self.reload_engine()   
         self.assertTrue(self.engine.has_ssl())
 
     def test_getUrl(self):
-        self.reloadEngine()
+        self.reload_engine()
         self.assertEqual(self.engine.get_url(), 'http://vtt.example.com:8080')
 
         # enabling SSL causes the port to be ignored (assued HTTPS' default 443 from outside)
         os.environ['VTT_SSL'] = 'True'
-        self.reloadEngine()
+        self.reload_engine()
         self.assertEqual(self.engine.get_url(), 'https://vtt.example.com')
 
         
     def test_getWebsocketUrl(self):
-        self.reloadEngine()
+        self.reload_engine()
         self.assertEqual(self.engine.get_websocket_url(), 'ws://vtt.example.com:8080/vtt/websocket')
 
         # enabling SSL causes the port to be ignored (assued HTTPS' default 443 from outside)
         os.environ['VTT_SSL'] = 'True'
-        self.reloadEngine()
+        self.reload_engine()
         self.assertEqual(self.engine.get_websocket_url(), 'wss://vtt.example.com/vtt/websocket')
         
     def test_getBuildSha(self):
@@ -112,12 +112,12 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(v, self.engine.debug_hash)
 
     def test_getAuthCallbackUrl(self):
-        self.reloadEngine()
+        self.reload_engine()
         self.assertEqual(self.engine.get_auth_callback_url(), 'http://vtt.example.com:8080/vtt/callback')
 
         # enabling SSL causes the port to be ignored (assued HTTPS' default 443 from outside)
         os.environ['VTT_SSL'] = 'True'
-        self.reloadEngine()
+        self.reload_engine()
         self.assertEqual(self.engine.get_auth_callback_url(), 'https://vtt.example.com/vtt/callback')
         
     def test_verifyUrlSection(self):
@@ -143,7 +143,7 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(self.engine.get_client_ip(dummy_request), '1.2.3.4')
         # test reverse proxy
         os.environ['VTT_REVERSE_PROXY'] = 'True'
-        self.reloadEngine()
+        self.reload_engine()
         self.assertEqual(self.engine.get_client_ip(dummy_request), '5.6.7.8')
         
     def test_getClientAgent(self):
@@ -193,8 +193,8 @@ class EngineTest(EngineBaseTest):
         self.assertEqual(dice, [2, 4, 6, 8, 10, 12, 20, 100])
     
     def test_single_db_mode(self):
-        e = engine.Engine(argv=['--single-db-mode'])
-        self.assertTrue(e.single_db_mode)
+        e = engine.Engine(single_db_mode=True)
+        self.assertTrue(e.settings.single_db_mode)
 
     def test_cleanup(self):
         now = time.time()
@@ -204,7 +204,7 @@ class EngineTest(EngineBaseTest):
             # create GMs
             gm1 = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
             gm2 = self.engine.cache.create_gm(name='nobody', url='second', identity='nobody', sid='5673', metadata='')
-            gm2.timeid = now - self.engine.cleanup['expire'] - 10
+            gm2.timeid = now - self.engine.settings.cleanup_expire - 10
         
         gm1_cache = self.engine.cache.get(gm1)
         assert gm1_cache
@@ -220,7 +220,7 @@ class EngineTest(EngineBaseTest):
             assert g1
             g2 = gm1_cache.create_game(url='bar')
             assert g2
-            g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
+            g2.timeid = time.time() - self.engine.settings.cleanup_expire - 10
             
             # create some rolls
             old = now - self.engine.latest_rolls - 10
@@ -300,9 +300,9 @@ class EngineTest(EngineBaseTest):
             # create some games
             g1 = gm1_cache.create_game(url='foo')
             g2 = gm1_cache.create_game(url='bar')
-            g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
+            g2.timeid = time.time() - self.engine.settings.cleanup_expire - 10
             g3 = gm2_cache.create_game(url='bar')
-            g3.timeid = time.time() - self.engine.cleanup['expire'] - 10
+            g3.timeid = time.time() - self.engine.settings.cleanup_expire - 10
 
         export = self.engine.save_to_dict()
 

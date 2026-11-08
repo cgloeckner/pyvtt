@@ -21,7 +21,7 @@ class PathApiTest(unittest.TestCase):
         self.tmpdir = tempfile.TemporaryDirectory()
         root = pathlib.Path(self.tmpdir.name)
         
-        self.paths = utils.PathApi(appname='unittest', pref_root=root)
+        self.paths = utils.PathApi(app_name='unittest', pref_root=root)
 
     def tearDown(self):
         del self.paths
@@ -36,7 +36,7 @@ class PathApiTest(unittest.TestCase):
         self.assertEqual(self.paths.pref_root, expected)
         
     def test_path_api_without_specific_prefroot(self):
-        paths = utils.PathApi(appname='unittest')
+        paths = utils.PathApi(app_name='unittest')
         expected = pathlib.Path.cwd() / 'data'
         self.assertEqual(paths.pref_root, expected)
 

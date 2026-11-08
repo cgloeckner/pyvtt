@@ -103,9 +103,9 @@ def register(engine):
 
             # check image size
             if content == 'image':
-                max_file_size = engine.file_limit['token']
+                max_file_size = engine.settings.limit_token
                 if i == 0 and not background_set:
-                    max_file_size = engine.file_limit['background']
+                    max_file_size = engine.settings.limit_bg
                 # determine file size
                 size = engine.get_size(handle)
                 # check file size
@@ -116,7 +116,7 @@ def register(engine):
 
             # check audio size
             elif content == 'audio':
-                max_file_size = engine.file_limit['music']
+                max_file_size = engine.settings.limit_music
                 # determine file size
                 size = engine.get_size(handle)
                 # check file size

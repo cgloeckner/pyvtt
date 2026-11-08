@@ -33,7 +33,7 @@ def register(engine: typing.Any):
 
         # query gms
         total_gms = engine.main_db.GM.select().count()
-        abandoned_gms = engine.main_db.GM.select(lambda g: g.timeid < now - engine.cleanup['expire']).count()
+        abandoned_gms = engine.main_db.GM.select(lambda g: g.timeid < now - engine.settings.cleanup_expire).count()
 
         # query games
         threshold = 10
@@ -142,7 +142,7 @@ def register(engine: typing.Any):
     @get('/vtt/api/build')
     def api_build():
         return {
-            'title': engine.title,
+            'title': engine.settings.app_name,
             'version': engine.version,
             'git_hash': engine.git_hash,
             'debug_hash': engine.debug_hash

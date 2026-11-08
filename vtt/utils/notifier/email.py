@@ -26,7 +26,7 @@ class EmailApi(Notifier):
 
     def __init__(self, engine, **data):
         self.engine = engine
-        self.appname = data['appname']
+        self.app_name = data['app_name']
         self.host = data['host']
         self.port = data['port']
         self.sender = data['sender']
@@ -45,7 +45,7 @@ class EmailApi(Notifier):
         # create mail content
         frm = f'From: pyvtt Server <{self.sender}>'
         to = f'To: Developers <{self.sender}>'
-        sub = f'Subject: [{self.appname}/{self.engine.title}] {subject}'
+        sub = f'Subject: [{self.app_name}/{self.engine.settings.app_name}] {subject}'
         plain = f'{frm}\n{to}\n{sub}\n{message}'
 
         # send email
@@ -63,7 +63,7 @@ class EmailApi(Notifier):
             self.smtp.sendmail(self.sender, self.sender, plain)
 
     def on_start(self):
-        msg = f'The VTT server {self.appname}/{self.engine.title} on {self.engine.get_domain()} is now online!'
+        msg = f'The VTT server {self.app_name}/{self.engine.settings.app_name} on {self.engine.get_domain()} is now online!'
         self.send('Server Online', msg)
 
     def on_cleanup(self, report):

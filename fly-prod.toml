@@ -22,8 +22,8 @@ primary_region = 'ord'
   cpus = 1
 
 [env]
-  VTT_TITLE = "ICVTT" 
-  VTT_PREFDIR = "/data/" 
+  VTT_APP_NAME = "ICVTT" 
+  VTT_PREF_DIR = "/data/" 
   VTT_DOMAIN = "app.icvtt.net" 
   VTT_SSL = "true" 
   VTT_PORT = 8000

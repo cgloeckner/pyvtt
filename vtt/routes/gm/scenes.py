@@ -95,7 +95,7 @@ def register(engine: typing.Any):
             abort(403)  # Forbidden
 
         # check file size
-        max_file_size = engine.file_limit['background']
+        max_file_size = engine.settings.limit_bg
         size = engine.get_size(handle)
         if size > max_file_size * 1024 * 1024:
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried set the background at the '

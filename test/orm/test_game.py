@@ -42,15 +42,15 @@ class GameTest(EngineBaseTest):
         now = int(time.time())
 
         # will expire soon
-        game.timeid = int(now - self.engine.cleanup['expire'] * 0.75)
+        game.timeid = int(now - self.engine.settings.cleanup_expire * 0.75)
         self.assertTrue(game.may_expire_soon(now))
 
         # will not expire soon
-        game.timeid = int(now - self.engine.cleanup['expire'] * 0.3)
+        game.timeid = int(now - self.engine.settings.cleanup_expire * 0.3)
         self.assertFalse(game.may_expire_soon(now))
         
         # even HAS expired
-        game.timeid = int(now - self.engine.cleanup['expire'] * 1.2)
+        game.timeid = int(now - self.engine.settings.cleanup_expire * 1.2)
         self.assertTrue(game.may_expire_soon(now))
         
     @db_session
@@ -60,11 +60,11 @@ class GameTest(EngineBaseTest):
         now = int(time.time())
 
         # has not expired yet
-        game.timeid = int(now - self.engine.cleanup['expire'] * 0.75)
+        game.timeid = int(now - self.engine.settings.cleanup_expire * 0.75)
         self.assertFalse(game.has_expired(now))
 
         # has expired
-        game.timeid = int(now - self.engine.cleanup['expire'] * 1.2)
+        game.timeid = int(now - self.engine.settings.cleanup_expire * 1.2)
         self.assertTrue(game.has_expired(now))
         
     @db_session

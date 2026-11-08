@@ -39,9 +39,9 @@ class UploadRoutesTest(EngineBaseTest):
         self.img_huge = make_image(2000, 2000)  # too large
         mib = 2 ** 20
         self.assertLess(len(self.img_small), mib)
-        self.assertLess(len(self.img_large), (self.engine.file_limit['background'] + 1) * mib)
-        self.assertGreater(len(self.img_large), (self.engine.file_limit['background'] // 2) * mib)
-        self.assertGreater(len(self.img_huge), self.engine.file_limit['background'] * mib)
+        self.assertLess(len(self.img_large), (self.engine.settings.limit_bg + 1) * mib)
+        self.assertGreater(len(self.img_large), (self.engine.settings.limit_bg // 2) * mib)
+        self.assertGreater(len(self.img_huge), self.engine.settings.limit_bg * mib)
 
         # register arthur
         ret = self.app.post('/vtt/join', {'gmname': 'arthur'}, xhr=True)
@@ -220,7 +220,7 @@ class UploadRoutesTest(EngineBaseTest):
     def test_cannot_upload_more_music_than_slots_are_available(self):
         root = self.engine.paths.get_game_path('arthur', 'test-game-1')
 
-        self.assertEqual(self.engine.file_limit['num_music'], 5)
+        self.assertEqual(self.engine.settings.num_music, 5)
         ret = self.app.post('/game/arthur/test-game-1/upload',
                             upload_files=[
                                 ('file[]', 'sample.mp3', b''),

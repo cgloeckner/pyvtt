@@ -44,7 +44,7 @@
     <div id="players" onDragStart="onStartDragPlayers(event);" onMouseDown="onResetPlayers(event);" onDragEnd="onEndDragPlayers(event);" onWheel="onWheelPlayers();" ontouchmove="onDragPlayers(event);"></div>
     
     <div class="audioplayer" draggable="false" id="musiccontrols">
-%for n in range(engine.file_limit['num_music']):
+%for n in range(engine.settings.num_music):
         <audio id="audioplayer{{n}}" loop></audio>
 %end
         <img src="/static/louder.png" draggable="false" onClick="onStepMusic(1);" title="MAKE LOUDER" />

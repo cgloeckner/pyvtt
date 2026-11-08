@@ -22,6 +22,7 @@ from geventwebsocket.exceptions import WebSocketError
 from vtt.engine import Engine
 from vtt.cache import PlayerCache
 from vtt.utils import PathApi
+from vtt.settings import Settings
 
 
 @functools.cache
@@ -61,7 +62,7 @@ class EngineBaseTest(unittest.TestCase):
 
     @staticmethod
     def defaultEnviron():
-        os.environ['VTT_TITLE'] = 'unittest'
+        os.environ['VTT_APP_NAME'] = 'unittest'
         os.environ['VTT_LIMIT_TOKEN'] =' 2'
         os.environ['VTT_LIMIT_BG'] = '10'
         os.environ['VTT_LIMIT_GAME'] = '20'
@@ -73,21 +74,21 @@ class EngineBaseTest(unittest.TestCase):
         os.environ['VTT_PORT'] = '8080'
         os.environ.pop('VTT_SSL', None)
         os.environ.pop('VTT_REVERSE_PROXY', None)
-
+    
     def setUp(self) -> None:
         # create temporary directory
         self.tmpdir = tempfile.TemporaryDirectory()
         self.root = pathlib.Path(self.tmpdir.name)
         
         # pre-generate paths api for dummy files
-        paths = PathApi(appname='unittest', pref_root=self.root)
+        paths = PathApi(app_name='unittest', pref_root=self.root)
         for w in ['verbs', 'adjectives', 'nouns']:
             with open(paths.get_fancy_url_path() / '{0}.txt'.format(w), 'w') as h:
                 h.write('demo')
         
         # load engine app into webtest
         EngineBaseTest.defaultEnviron()
-        self.engine = Engine(argv=['--quiet', '--localhost'], pref_dir=self.root)
+        self.engine = Engine(quiet=True, localhost=True, pref_dir=self.root)
         self.engine.app.catchall = False
         self.app = webtest.TestApp(self.engine.app)
         
@@ -107,10 +108,9 @@ class EngineBaseTest(unittest.TestCase):
         del self.engine
         del self.tmpdir
 
-    def reloadEngine(self, argv=list()):
+    def reload_engine(self, **kwargs):
         # reload engine (without cleanup thread)
-        argv.append('--quiet')
-        self.engine = Engine(argv=argv, pref_dir=self.root)
+        self.engine = Engine(quiet=True, pref_dir=self.root, **kwargs)
 
         self.monkeyPatch()
 
@@ -178,12 +178,6 @@ class SocketDummy:
 
 
 # ---------------------------------------------------------------------
-
-def pre_setup_unittest(argv: list[str]) -> list[str]:
-    argv.append('--quiet')
-    argv.append('--debug')
-    argv.append('--localhost')
-    return argv
 
 
 def setup_unittest_routes(engine):

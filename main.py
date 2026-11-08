@@ -1,17 +1,17 @@
 from gevent import monkey; monkey.patch_all()
 
-import sys
-
 from vtt.engine import Engine
 from vtt.cleanup import CleanupThread
 from vtt import routes
+from vtt.settings import flag_settings
 
 
-if __name__ == '__main__':
+def main() -> None:
+    flags = flag_settings()
+    
+    # run engin 
     try:
-        argv = sys.argv
-
-        engine = Engine(argv=argv)
+        engine = Engine(**flags)
         routes.register_gm(engine)
         routes.register_player(engine)
         routes.register_resources(engine)
@@ -22,4 +22,7 @@ if __name__ == '__main__':
         engine.run()
     except KeyboardInterrupt:
         pass
+
+if __name__ == '__main__':
+    main()
 

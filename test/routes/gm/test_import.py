@@ -26,9 +26,9 @@ class GmImportRoutesTest(EngineBaseTest):
         self.img_huge = make_image(2000, 2000)
         mib = 2 ** 20
         self.assertLess(len(self.img_small), mib)
-        self.assertLess(len(self.img_large), (self.engine.file_limit['background'] + 1) * mib)
-        self.assertGreater(len(self.img_large), (self.engine.file_limit['background'] // 2) * mib)
-        self.assertGreater(len(self.img_huge), self.engine.file_limit['background'] * mib)
+        self.assertLess(len(self.img_large), (self.engine.settings.limit_bg + 1) * mib)
+        self.assertGreater(len(self.img_large), (self.engine.settings.limit_bg // 2) * mib)
+        self.assertGreater(len(self.img_huge), self.engine.settings.limit_bg * mib)
 
         # create some zips
         empty_game = json.dumps({
@@ -37,9 +37,9 @@ class GmImportRoutesTest(EngineBaseTest):
         })
 
         self.zip_normal = make_zip('zip2', empty_game, 5)
-        self.zip_huge = make_zip('zip2', empty_game, self.engine.file_limit['game'])
-        self.assertLess(len(self.zip_normal), self.engine.file_limit['game'] * mib)
-        self.assertGreater(len(self.zip_huge), self.engine.file_limit['game'] * mib)
+        self.zip_huge = make_zip('zip2', empty_game, self.engine.settings.limit_game)
+        self.assertLess(len(self.zip_normal), self.engine.settings.limit_game * mib)
+        self.assertGreater(len(self.zip_huge), self.engine.settings.limit_game * mib)
         self.fake_file = b'0' * mib
         self.text_file = b'hello world'
 
@@ -177,7 +177,7 @@ class GmImportRoutesTest(EngineBaseTest):
         self.assertTrue(ret.json['url_ok'])
         self.assertFalse(ret.json['file_ok'])
         self.assertEqual(ret.json['error'],
-                         'TOO LARGE BACKGROUND (MAX {0} MiB)'.format(self.engine.file_limit['background']))
+                         'TOO LARGE BACKGROUND (MAX {0} MiB)'.format(self.engine.settings.limit_bg))
         self.assertEqual(ret.json['url'], '')
         ret = self.app.get('/game/arthur/test-url-5', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
@@ -218,7 +218,7 @@ class GmImportRoutesTest(EngineBaseTest):
         self.assertEqual(ret.content_type, 'application/json')
         self.assertTrue(ret.json['url_ok'])
         self.assertFalse(ret.json['file_ok'])
-        self.assertEqual(ret.json['error'], 'TOO LARGE GAME (MAX {0} MiB)'.format(self.engine.file_limit['game']))
+        self.assertEqual(ret.json['error'], 'TOO LARGE GAME (MAX {0} MiB)'.format(self.engine.settings.limit_game))
         ret = self.app.get('/game/arthur/test-url-8', expect_errors=True)
         self.assertEqual(ret.status_int, 404)
 
