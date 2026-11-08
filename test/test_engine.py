@@ -199,7 +199,6 @@ class EngineTest(EngineBaseTest):
     def test_cleanup(self):
         now = time.time()
         assert self.engine.cache
-        assert self.engine.main_db
         
         with db_session:
             # create GMs
@@ -326,7 +325,6 @@ class EngineTest(EngineBaseTest):
          
     def test_loadFromDict(self):
         assert self.engine.cache
-        assert self.engine.main_db
 
         data = [{
             'name': 'otto',

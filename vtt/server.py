@@ -43,5 +43,6 @@ class VttServer(bottle.ServerAdapter):
         super().__init__(host, port, **options)
     
     def run(self, handler):
-        server = WSGIServer(self.listener, handler, handler_class=WebSocketHandler, **self.options)
+        server = WSGIServer(self.listener, handler, 
+                            handler_class=WebSocketHandler, **self.options)
         server.serve_forever()
