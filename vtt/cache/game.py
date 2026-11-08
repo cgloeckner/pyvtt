@@ -10,7 +10,7 @@ __licence__ = 'MIT'
 
 import json
 import os
-import random
+import typing
 import time
 
 from bottle import request
@@ -24,7 +24,7 @@ from .player import PlayerCache
 class GameCache:
     """ Thread-safe player dict using name as key. """
 
-    def __init__(self, engine: any, parent: any, game: any) -> None:
+    def __init__(self, engine: typing.Any, parent: typing.Any, game: typing.Any) -> None:
         # prepare MD5 hashes for all images
         num_generated = game.make_md5s()
 
@@ -564,7 +564,7 @@ class GameCache:
             if g is None:
                 self.engine.logging.warning(
                     'Player {0} tried creating a tokens at {1}/{2}, but the scene #{4} was not found'.format(
-                        player.name, self.parent.url, self.url, g.active))
+                        player.name, self.parent.url, self.url))
                 return
 
             for k, url in enumerate(urls):

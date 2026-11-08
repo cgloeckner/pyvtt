@@ -9,11 +9,12 @@ __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 import time
+import typing
 
 from pony.orm import *
 
 
-def register(_: any, db: Database):
+def register(_: typing.Any, db: Database):
 
     class Scene(db.Entity):
         id = PrimaryKey(int, auto=True)

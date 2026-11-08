@@ -10,13 +10,14 @@ __licence__ = 'MIT'
 
 import httpagentparser
 import copy
+import typing
 
 from bottle import *
 
 from vtt.utils.common import add_dict_set, count_dict_set_len
 
 
-def register(engine: any):
+def register(engine: typing.Any):
 
     @get('/vtt/api/hosting')
     def api_query_hosting():

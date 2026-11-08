@@ -9,9 +9,14 @@ __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 import time
+import typing
+import functools
 
 from gevent import lock
+from pony.orm import Database
+from pony.orm.core import EntityMeta
 
+from vtt.orm.protocols import GmLike, GameLike
 from vtt.orm.register import db_session, create_gm_database
 from .game import GameCache
 
@@ -21,17 +26,20 @@ class GmCache:
     Holds GM-databases.
     """
 
-    def __init__(self, engine: any, gm: any) -> None:
+    def __init__(self, engine: typing.Any, gm: GmLike) -> None:
         # ensure engine can lock for this GM if required
         gm.make_lock()
 
         self.engine = engine
         self.lock = lock.RLock()
-        self.url = gm.url
-        self.games = dict()
-        self.db = None  # needs connect_db to be run (but outside a db_session)
 
-    def connect_db(self):        
+        self.url: str = gm.url
+        self.games: dict[str, GameCache] = {}
+
+        # requires connect_db to be run (but outside a db_session)
+        self.db: Database | None = None
+    
+    def connect_db(self): 
         if self.engine.single_db_mode:
             self.db = self.engine.main_db
         else:
@@ -41,14 +49,20 @@ class GmCache:
         
         # add all existing games to the cache
         with db_session:
-            for game in self.db.Game.select():
+            for game in self.GameCls.select():
                 self.insert(game)
                 # reorder scenes by ID if necessary
                 if game.order == list():
                     game.reorder_scenes()
 
-    def create_game(self, url: str) -> 'Game':
-        game = self.db.Game(
+    @functools.cached_property
+    def GameCls(self) -> EntityMeta:
+        """Helper to fetch Game entity class"""
+        assert self.db
+        return self.db.entities["Game"]
+
+    def create_game(self, url: str) -> GameLike:        
+        game = self.GameCls(
             url=url,
             timeid=time.time(),
             gm_url=self.url
@@ -58,7 +72,7 @@ class GmCache:
 
     # --- cache implementation ----------------------------------------
 
-    def insert(self, game):
+    def insert(self, game: GameLike) -> GameCache:
         """ Try to insert a game into GM's Cache. """
         url = game.url
         with self.lock:
@@ -67,16 +81,19 @@ class GmCache:
             self.games[url] = GameCache(self.engine, self, game)
             return self.games[url]
 
-    def get(self, game: any) -> str:
+    def get(self, game: GameLike) -> GameCache | None:
+        """Query GameCache of given game or None (see get_from_url)."""
         return self.get_from_url(game.url)
-
-    def get_from_url(self, url: str) -> str | None:
+    
+    def get_from_url(self, url: str) -> GameCache | None:
+        """Query GameCache by game url or None (if user tries to access
+        e.g. a game that does not exist anymore)."""
         with self.lock:
             try:
                 return self.games[url]
             except KeyError:
                 return None
 
-    def remove(self, game: any) -> None:
+    def remove(self, game: GameLike) -> None:
         with self.lock:
             del self.games[game.url]

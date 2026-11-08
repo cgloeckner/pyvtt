@@ -5,12 +5,14 @@ Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
+import typing
+
 from .common import LoginClient, BaseLoginApi, AuthHandle
 from .discord import DiscordLogin
 from .google import GoogleLogin
 
 
-SUPPORTED_LOGIN_APIS: dict[str, any] = {
+SUPPORTED_LOGIN_APIS: dict[str, typing.Any] = {
     'google': GoogleLogin,
     'discord': DiscordLogin
 }

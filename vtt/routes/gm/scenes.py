@@ -8,10 +8,12 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
+import typing
+
 from bottle import *
 
 
-def register(engine: any):
+def register(engine: typing.Any):
 
     @post('/vtt/hashtest/<gm_url>/<game_url>')
     def post_image_hashtest(gm_url: str, game_url: str):

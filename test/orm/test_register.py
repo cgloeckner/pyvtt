@@ -22,10 +22,7 @@ class RegisterTest(EngineBaseTest):
         self.assertNotIn('Roll', self.engine.orm)
 
     def test_gm_database(self):
-        path = self.engine.paths.get_database_path('test-gm')
-        path.parent.mkdir()
-        
-        db = register.create_gm_database(self.engine, 'test-gm')
+        db = register.create_gm_database(self.engine, ':memory:')
 
         # assume to be different database
         self.assertNotEqual(db, self.engine.main_db)

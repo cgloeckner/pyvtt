@@ -4,6 +4,7 @@ htmlcov/
 run.sh
 
 # VSCode
+.vscode
 pyvtt.code-workspace
 
 # PyCharm

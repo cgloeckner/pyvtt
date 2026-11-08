@@ -41,7 +41,7 @@ class BaseGm(typing.Protocol):
     def generate_uuid() -> str: ...
 
 
-def register(engine: any, db: Database):
+def register(engine: typing.Any, db: Database):
 
     class GM(db.Entity):
         id = PrimaryKey(int, auto=True)

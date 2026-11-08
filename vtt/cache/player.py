@@ -11,6 +11,7 @@ __licence__ = 'MIT'
 import json
 import time
 import uuid
+import typing
 
 import flag
 import gevent
@@ -23,7 +24,7 @@ class PlayerCache:
     """
     instance_count = 0  # instance counter for server status
 
-    def __init__(self, engine: any, parent: any, name: str, color: str, is_gm: bool) -> None:
+    def __init__(self, engine: typing.Any, parent: typing.Any, name: str, color: str, is_gm: bool) -> None:
         PlayerCache.instance_count += 1
 
         self.engine = engine
@@ -88,16 +89,24 @@ class PlayerCache:
         """ Returns if socket is ok. """
         return self.socket is not None and not self.socket.closed
 
-    def read(self) -> any:
-        """ Return JSON object read from socket. """
+    def read(self) -> dict:
+        """ Return JSON object read from socket (or empty dict if no socket
+        initialized) """
+        if not self.socket:
+            return {}
+        
         # fetch data
         # with self.lock:# note: atm deadlocking
         raw = self.socket.receive()
         if raw is not None:
             # parse data
-            return json.loads(raw)
+            obj = json.loads(raw)
+            assert isinstance(obj, dict)
+            return obj
 
-    def write(self, data: any):
+        return {}
+        
+    def write(self, data: dict):
         """ Write JSON object to socket. """
         # dump data
         raw = json.dumps(data)
@@ -106,7 +115,7 @@ class PlayerCache:
         if self.socket is not None:
             self.socket.send(raw)
 
-    def fetch(self, data: dict, key: any) -> any:
+    def fetch(self, data: dict, key: typing.Any) -> typing.Any:
         """ Try to fetch key from data or raise ProtocolError. """
         try:
             return data[key]

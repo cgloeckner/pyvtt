@@ -8,10 +8,12 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
+import typing
+
 from bottle import *
 
 
-def register(engine: any):
+def register(engine: typing.Any):
 
     @get('/vtt/schedule/<timestamp>')
     @view('countdown')

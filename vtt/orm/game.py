@@ -30,7 +30,7 @@ from .gm import BaseGm
 CleanupReport = tuple[int, int, int, int]
 
 
-def register(engine: any, db: Database):
+def register(engine: typing.Any, db: Database):
 
     class Game(db.Entity):
         id = PrimaryKey(int, auto=True)

@@ -9,13 +9,14 @@ __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 import math
+import typing
 
 from pony.orm import *
 
 from .constants import *
 
 
-def register(_: any, db: Database):
+def register(_: typing.Any, db: Database):
 
     class Token(db.Entity):
         id = PrimaryKey(int, auto=True)

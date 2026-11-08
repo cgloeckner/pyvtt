@@ -5,18 +5,20 @@ Copyright (c) 2020-2024 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
+import typing
+
 from urllib.parse import urlparse, parse_qs
 
 from test.common import EngineBaseTest
 from vtt import routes, orm, utils
 
 
-def skip_on_auth(_: any) -> None:
+def skip_on_auth(_: typing.Any) -> None:
     pass
 
 
 class DummyProviderLogin(utils.BaseLoginApi):
-    def __init__(self, client: any, on_auth: any, callback_url: str, client_id: str, client_secret: str,
+    def __init__(self, client: typing.Any, on_auth: typing.Any, callback_url: str, client_id: str, client_secret: str,
                  icon_url: str):
         super().__init__('dummy', callback_url, client_id, client_secret, icon_url)
         self.client = client

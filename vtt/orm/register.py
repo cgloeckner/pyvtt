@@ -8,19 +8,21 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
+import typing
+
 from pony.orm import *
 
 from . import token, scene, roll, game, gm
 
 
-def register_gm_database(engine: any, db: Database) -> None:
+def register_gm_database(engine: typing.Any, db: Database) -> None:
     engine.orm['Token'] = token.register(engine, db)
     engine.orm['Scene'] = scene.register(engine, db)
     engine.orm['Roll'] = roll.register(engine, db)
     engine.orm['Game'] = game.register(engine, db)
 
 
-def create_gm_database(engine: any, filename: str) -> Database:
+def create_gm_database(engine: typing.Any, filename: str) -> Database:
     """ Creates a new database for with GM entities such as Tokens, Scenes etc."""
     if engine.single_db_mode:
         # use global db
@@ -36,7 +38,7 @@ def create_gm_database(engine: any, filename: str) -> Database:
     return db
 
 
-def create_main_database(engine: any) -> Database:
+def create_main_database(engine: typing.Any) -> Database:
     """ Creates main database for GM data."""
     db = Database()
 

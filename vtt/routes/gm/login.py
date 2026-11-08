@@ -9,14 +9,15 @@ __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 import gevent
+import typing
 
 from bottle import *
 
 
-def _login_callback(engine: any, provider: str):
+def _login_callback(engine: typing.Any, provider: str):
     """Registers a callback url for oauth-login with the given provider."""
 
-    def register_new_gm_account(session: any) -> 'GM':
+    def register_new_gm_account(session: typing.Any) -> 'GM':
         # create GM (username as display name, user-id as url)
         gm = engine.cache.create_gm(
             name=session['name'],
@@ -67,7 +68,7 @@ def _login_callback(engine: any, provider: str):
         redirect('/')
 
 
-def register(engine: any):
+def register(engine: typing.Any):
 
     # shared login page
     @get('/vtt/join')

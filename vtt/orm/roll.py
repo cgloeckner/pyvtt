@@ -8,10 +8,12 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
+import typing
+
 from pony.orm import *
 
 
-def register(_: any, db: Database):
+def register(_: typing.Any, db: Database):
 
     class Roll(db.Entity):
         id = PrimaryKey(int, auto=True)

@@ -5,12 +5,14 @@ Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
+import typing
+
 from vtt.utils.auth.common import LoginClient, AuthSession
 
 
 class LoginMock(LoginClient):
     def __init__(self):
-        self.sessions: dict[str, any] = {}
+        self.sessions: dict[str, typing.Any] = {}
 
     def load_session(self, state: str) -> AuthSession:
         return self.sessions.pop(state)

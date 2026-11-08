@@ -9,9 +9,11 @@ __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
 import json
+import typing
 
 from gevent import lock
 
+from vtt.orm.protocols import GmLike
 from vtt.orm.register import db_session
 from .gm import GmCache
 
@@ -19,7 +21,7 @@ from .gm import GmCache
 class EngineCache:
     """ Thread-safe gms dict using gm-url as key. """
 
-    def __init__(self, engine: any) -> None:
+    def __init__(self, engine: typing.Any) -> None:
         self.engine = engine
         self.lock = lock.RLock()
         self.gms = dict()
@@ -38,7 +40,7 @@ class EngineCache:
 
         self.engine.logging.info('EngineCache created')
 
-    def create_gm(self, name: str, identity: str, metadata: str, url: str|None=None, sid: str|None=None) -> 'GM':
+    def create_gm(self, name: str, identity: str, metadata: str, url: str|None=None, sid: str|None=None) -> GmLike:
         if url is None:
             url = self.engine.main_db.GM.generate_uuid()
 

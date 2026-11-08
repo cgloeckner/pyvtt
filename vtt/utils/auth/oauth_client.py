@@ -5,6 +5,8 @@ Copyright (c) 2020-2023 Christian Glöckner
 License: MIT (see LICENSE for details)
 """
 
+import typing
+
 from gevent import lock
 
 from .factory import create_login_api
@@ -21,7 +23,7 @@ class OAuthClient(LoginClient):
                      for api_name in providers}
 
         # thread-safe structure to hold login sessions
-        self.sessions: dict[str, any] = {}
+        self.sessions: dict[str, typing.Any] = {}
         self.lock = lock.RLock()
 
     def load_session(self, state: str) -> any:
@@ -29,7 +31,7 @@ class OAuthClient(LoginClient):
         with self.lock:
             return self.sessions.pop(state)
 
-    def save_session(self, state: str, session: any) -> None:
+    def save_session(self, state: str, session: typing.Any) -> None:
         """Save session via state."""
         with self.lock:
             self.sessions[state] = session

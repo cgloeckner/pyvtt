@@ -8,11 +8,13 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
+import typing
+
 from . import login, play
 from ..gm import thumbnail
 
 
-def register(engine: any):
+def register(engine: typing.Any):
     login.register(engine)
     thumbnail.register(engine)
     play.register(engine)

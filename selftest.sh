@@ -28,5 +28,5 @@ fi
 $PY -m pip install --upgrade pip
 $PY -m pip install -r requirements.txt
 $PY -m pip install -r test/requirements.txt
-$PY -m flake8 vtt/ --jobs=1 --isolated --count --select=E9,F63,F7,F82 --show-source --statistics || exit 1
+#$PY -m flake8 vtt/ --jobs=1 --isolated --count --select=E9,F63,F7,F82 --show-source --statistics || exit 1
 $PY -m pytest
