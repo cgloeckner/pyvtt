@@ -26,6 +26,7 @@ def register(engine: typing.Any):
             # FIXME: setting cookie is ignored on redirect
             response.set_cookie('session', '', path='/', max_age=1, secure=engine.has_ssl())
             redirect('/vtt/join')
+            return  # for pylace
 
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -35,6 +36,7 @@ def register(engine: typing.Any):
                                    f'but he was not in the cache')
             response.set_cookie('session', '', path='/', max_age=1, secure=engine.has_ssl())
             abort(404)
+            return  # for pylace
 
         # refresh session
         gm.refresh_session(response)
@@ -60,6 +62,7 @@ def register(engine: typing.Any):
         gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             abort(404)
+            return  # for pylace
 
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -67,6 +70,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried to kick all players at {game_url} '
                                    f'by {client_ip} but he was not inside the cache')
             abort(404)
+            return  # for pylace
 
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
@@ -74,6 +78,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried to kick all players at {game_url} '
                                    f'by {client_ip} but game was not found')
             abort(404)
+            return  # for pylace
 
         # load game from cache and clean it up
         now = time.time()
@@ -90,6 +95,7 @@ def register(engine: typing.Any):
         gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             abort(404)
+            return  # for pylace
 
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -97,6 +103,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried to kick player #{uuid} at {game_url} '
                                    f'by {client_ip} but he was not inside the cache')
             abort(404)
+            return  # for pylace
 
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
@@ -111,6 +118,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried to kick player #{uuid} at {game_url} '
                                    f'by {client_ip} but the game was not inside the cache')
             abort(404)
+            return  # for pylace
 
         name = game_cache.disconnect(uuid)
 
@@ -124,6 +132,7 @@ def register(engine: typing.Any):
         gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             abort(404)
+            return  # for pylace
 
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -131,6 +140,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried delete the game {game_url} '
                                    f'by {client_ip} but he was not inside the cache')
             abort(404)
+            return  # for pylace
 
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
@@ -138,6 +148,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried delete the game {game_url} '
                                    f'by {client_ip} but game was not found')
             abort(404)
+            return  # for pylace
 
         # delete everything for that game
         game.pre_delete()

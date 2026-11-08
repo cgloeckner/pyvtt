@@ -32,8 +32,9 @@ def register(engine: typing.Any):
             'error': ''
         }
 
-        player_name = template('{{value}}', value=format(request.forms.playername))
-        player_color = request.forms.get('playercolor')
+        forms = typing.cast(FormsDict, request.forms)
+        player_name = template('{{value}}', value=format(forms.playername))
+        player_color = forms.get('playercolor')
 
         # load GM from cache
         gm_cache = engine.cache.get_from_url(gm_url)

@@ -22,8 +22,10 @@ import time
 import bottle
 from PIL import Image, UnidentifiedImageError
 from pony.orm import *
+from pony.orm.core import EntityMeta
 
-from .gm import BaseGm
+from .protocols import RollLike, TokenLike, GmLike, GameLike
+#from .gm import BaseGm
 
 
 # num_bytes freed, num_rolls freed, num_tokens freed, num_md5s freed
@@ -31,6 +33,10 @@ CleanupReport = tuple[int, int, int, int]
 
 
 def register(engine: typing.Any, db: Database):
+
+    Roll: EntityMeta = db.entities["Roll"]
+    Token: EntityMeta = db.entities["Token"]
+    Scene: EntityMeta = db.entities["Scene"]
 
     class Game(db.Entity):
         id = PrimaryKey(int, auto=True)
@@ -42,8 +48,8 @@ def register(engine: typing.Any, db: Database):
         gm_url = Required(str)  # used for internal things
         order = Optional(IntArray)  # scene ordering by their ids
 
-        def create_roll(self, name: str, color: str, sides: int) -> 'Roll':
-            return db.Roll(
+        def create_roll(self, name: str, color: str, sides: int) -> RollLike:
+            return Roll(
                 game=self,
                 name=name,
                 color=color,
@@ -163,7 +169,8 @@ def register(engine: typing.Any, db: Database):
 
         def upload(self, handle: bottle.FileUpload) -> str | None:
             """Save the given image via file handle and return the url to the image."""
-            suffix = '.{0}'.format(handle.filename.split(".")[-1])
+            filename = typing.cast(str, handle.filename)
+            suffix = '.{0}'.format(filename.split(".")[-1])
             with tempfile.NamedTemporaryFile(suffix=suffix) as tmp_file:
                 # save image to temporary file
                 handle.save(tmp_file.name, overwrite=True)
@@ -208,7 +215,7 @@ def register(engine: typing.Any, db: Database):
                 return remote_path
 
         @staticmethod
-        def get_id_from_url(url: str) -> id:
+        def get_id_from_url(url: str) -> int:
             return int(url.split('/')[-1].split('.')[0])
 
         def get_abandoned_images(self) -> list[str]:
@@ -228,14 +235,14 @@ def register(engine: typing.Any, db: Database):
                 # create url (ignore png-extension due to os.listdir)
                 url = self.get_image_url(this_id)
                 # check for any tokens
-                token = db.Token.select(lambda t: t.url == url).first()
+                token = Token.select(lambda t: t.url == url).first()
                 if token is None:
                     # found abandoned image
                     abandoned.append(os.path.join(game_root, image_id))
 
             return abandoned
 
-        def get_broken_tokens(self) -> list[db.Entity]:
+        def get_broken_tokens(self) -> list[TokenLike]:
             # query all images
             with engine.locks[self.gm_url]:  # make IO access safe
                 all_images = self.get_all_images()
@@ -273,7 +280,7 @@ def register(engine: typing.Any, db: Database):
                     self.remove_md5(self.get_id_from_url(filename))
 
             # delete all outdated rolls
-            rolls = db.Roll.select(lambda r: r.game == self and r.timeid < now - engine.latest_rolls)
+            rolls = Roll.select(lambda r: r.game == self and r.timeid < now - engine.latest_rolls)
             num_rolls = len(rolls)
             rolls.delete()
 
@@ -310,11 +317,11 @@ def register(engine: typing.Any, db: Database):
 
             return num_bytes
 
-        def to_dict(self) -> dict[str, list[db.Entity]]:
+        def to_dict(self) -> dict[str, list[TokenLike]]:
             # collect all tokens in this game
             tokens = list()
             id_translation = dict()  # required because the current token ids will not persist
-            game_tokens = db.Token.select(
+            game_tokens = Token.select(
                 lambda t: t.scene is not None and t.scene.game is not None and t.scene.game == self
             )
             for token in game_tokens:
@@ -382,9 +389,9 @@ def register(engine: typing.Any, db: Database):
             return zip_file, zip_path
 
         @classmethod
-        def from_image(cls, gm: BaseGm, url: str, handle: bottle.FileUpload) -> typing.Self | None:
+        def from_image(cls, gm: GmLike, url: str, handle: bottle.FileUpload) -> typing.Optional["Game"]:
             # create game with that image as background
-            game = db.Game(url=url, gm_url=gm.url)
+            game = Game(url=url, gm_url=gm.url)
             try:
                 game.post_setup()
             except KeyError:
@@ -392,7 +399,7 @@ def register(engine: typing.Any, db: Database):
                 return None
 
             # create initial scene
-            scene = db.Scene(game=game)
+            scene = Scene(game=game)
             db.commit()
             game.active = scene.id
 
@@ -420,10 +427,10 @@ def register(engine: typing.Any, db: Database):
 
             return game
 
-        def from_dict(self, data: dict[str, db.Entity]) -> None:
+        def from_dict(self, data: dict[str, typing.Any]) -> None:
             # create scenes
             for sid, s in enumerate(data["scenes"]):
-                scene = db.Scene(game=self)
+                scene = Scene(game=self)
 
                 # create tokens for that scene
                 for token_id in s["tokens"]:
@@ -462,10 +469,11 @@ def register(engine: typing.Any, db: Database):
             self.reorder_scenes()
 
         @classmethod
-        def from_zip(cls, gm: BaseGm, url: str, handle: bottle.FileUpload) -> typing.Self | None:
+        def from_zip(cls, gm: GmLike, url: str, handle: bottle.FileUpload) -> typing.Optional["Game"]:
             # unzip uploaded file to temp dir
             with tempfile.TemporaryDirectory() as tmp_dir:
-                zip_path = os.path.join(tmp_dir, handle.filename)
+                filename = typing.cast(str, handle.filename)
+                zip_path = os.path.join(tmp_dir, filename)
                 handle.save(str(zip_path))
                 try:
                     with zipfile.ZipFile(zip_path, 'r') as fp:
@@ -486,7 +494,7 @@ def register(engine: typing.Any, db: Database):
                     return None
 
                 # create game
-                game = db.Game(url=url, gm_url=gm.url)
+                game = Game(url=url, gm_url=gm.url)
                 try:
                     game.post_setup()
                 except KeyError:

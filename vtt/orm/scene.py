@@ -13,8 +13,12 @@ import typing
 
 from pony.orm import *
 
+from .protocols import TokenLike
+
 
 def register(_: typing.Any, db: Database):
+
+    Token = db.entities["Token"]
 
     class Scene(db.Entity):
         id = PrimaryKey(int, auto=True)
@@ -22,11 +26,11 @@ def register(_: typing.Any, db: Database):
         tokens = Set("Token", cascade_delete=True, reverse="scene")  # forward deletion to tokens
         backing = Optional("Token", reverse="back")  # background token
 
-        def create_token(self, **kwargs) -> 'Token':
+        def create_token(self, **kwargs) -> TokenLike:
             if 'timeid' not in kwargs:
                 kwargs['timeid'] = time.time()
 
-            return db.Token(scene=self, **kwargs)
+            return Token(scene=self, **kwargs)
 
         def pre_delete(self):
             # delete all tokens

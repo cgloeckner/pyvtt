@@ -25,22 +25,6 @@ from pony.orm import *
 CleanupReport = tuple[list[str], int, int, int, int]
 
 
-class BaseGm(typing.Protocol):
-    def make_lock(self) -> None: ...
-    def post_setup(self) -> None: ...
-    def has_expired(self, now: int) -> bool: ...
-    @staticmethod
-    def cleanup(gm_db: Database, now: int) -> CleanupReport: ...
-    def pre_delete(self) -> int: ...
-    def refresh_session(self, response: bottle.Response) -> None: ...
-    @staticmethod
-    def load_from_session(request: bottle.Request) -> 'BaseGm': ...
-    @staticmethod
-    def generate_session() -> str: ...
-    @staticmethod
-    def generate_uuid() -> str: ...
-
-
 def register(engine: typing.Any, db: Database):
 
     class GM(db.Entity):
@@ -74,8 +58,10 @@ def register(engine: typing.Any, db: Database):
             if self.timeid == 0 or delta <= engine.cleanup['expire']:
                 return False
 
+            Game = gm_db.entities["Game"]
+
             # check whether all games have expired too
-            for game in gm_db.Game.select(gm_url=self.url):
+            for game in Game.select(gm_url=self.url):
                 if not game.has_expired(now, 1.0):
                     # at least this game did not expire yet
                     return False
@@ -93,7 +79,9 @@ def register(engine: typing.Any, db: Database):
             num_tokens = 0
             num_md5s = 0
 
-            for g in gm_db.Game.select():
+            Game = gm_db.entities["Game"]
+
+            for g in Game.select():
                 if g.has_expired(now):
                     # remove this game
                     num_bytes += g.pre_delete()

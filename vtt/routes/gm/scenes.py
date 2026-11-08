@@ -21,6 +21,7 @@ def register(engine: typing.Any):
         gm_cache = engine.cache.get_from_url(gm_url)
         if gm_cache is None:
             abort(404)
+            return  # for pylace
 
         # load game from cache
         game_cache = gm_cache.get_from_url(game_url)
@@ -31,10 +32,12 @@ def register(engine: typing.Any):
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
         if game is None:
             abort(404)
+            return  # for pylace
 
         # query urls for given md5 hashes
         known_urls = list()
-        for md5 in request.forms.getall('hashs[]'):
+        forms = typing.cast(FormsDict, request.forms)
+        for md5 in forms.getall('hashs[]'):
             if md5 is not None:
                 img_id = game.get_id_by_md5(md5)
 
@@ -53,6 +56,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM url="{gm_url}" tried set the background at the game {game_url} '
                                    f'by {client_ip} but is not the GM')
             abort(404)
+            return  # for pylace
 
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -60,6 +64,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried set the background at the game '
                                    f'{game_url} by {client_ip} but he was not inside the cache')
             abort(404)
+            return  # for pylace
 
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
@@ -67,6 +72,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried set the background at the game '
                                    f'{game_url} by {client_ip} but game was not found')
             abort(404)
+            return  # for pylace
 
         # load scene
         scene = gm_cache.db.Scene.select(lambda scn: scn.id == game.active).first()
@@ -74,7 +80,7 @@ def register(engine: typing.Any):
             abort(404)
 
         # expect single background to be uploaded
-        files = request.files.getall('file[]')
+        files = typing.cast(FormsDict, request.files).getall('file[]')
         if len(files) != 1:
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried set the background at the game '
                                    f'{game_url} by {client_ip} but did not provide a single image')
@@ -108,6 +114,7 @@ def register(engine: typing.Any):
         gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             abort(404)
+            return  # for pylace
 
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -115,6 +122,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried create a scene at game {game_url} '
                                    f'by {client_ip} but he was not inside the cache')
             abort(404)
+            return  # for pylace
 
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()

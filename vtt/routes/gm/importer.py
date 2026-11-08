@@ -31,6 +31,7 @@ def register(engine: typing.Any):
         gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             abort(404)
+            return  # for pylace
 
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -62,7 +63,7 @@ def register(engine: typing.Any):
         status['url_ok'] = True
 
         # upload file
-        files = files = request.files.getall('file')
+        files = typing.cast(FormsDict, request.files).getall('file')
         if len(files) != 1:
             engine.logging.warning(f'GM name="{gm.name}" url={gm.url} tried to import game by {client_ip} '
                                    f'but uploaded {len(files)} files')
@@ -123,6 +124,7 @@ def register(engine: typing.Any):
         gm = engine.main_db.GM.load_from_session(request)
         if gm is None:
             abort(404)
+            return  # for pylace
 
         # load GM from cache
         gm_cache = engine.cache.get(gm)
@@ -130,6 +132,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried to export game {game_url} '
                                    f'by {client_ip} but he was not inside the cache')
             abort(404)
+            return  # for pylace
 
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
@@ -137,6 +140,7 @@ def register(engine: typing.Any):
             engine.logging.warning(f'GM name="{gm.name}" url="{gm.url}" tried to export game {game_url} '
                                    f'by {client_ip} but game was not found')
             abort(404)
+            return  # for pylace
 
         # export game to zip-file
         zip_file, zip_path = game.to_zip()

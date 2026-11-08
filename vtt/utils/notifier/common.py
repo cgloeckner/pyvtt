@@ -11,9 +11,9 @@ __licence__ = 'MIT'
 import typing
 
 
-SUPPORTED_APIS: list[str] = {
+SUPPORTED_APIS: list[str] = [
     'discord'
-}
+]
 
 
 class Notifier(typing.Protocol):

@@ -10,6 +10,7 @@ __licence__ = 'MIT'
 
 import json
 import random
+import typing
 
 from bottle import *
 
@@ -40,6 +41,7 @@ def register(engine):
         gm_cache = engine.cache.get_from_url(gm_url)
         if gm_cache is None:
             abort(404)
+            return  # for pylace
 
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
@@ -65,28 +67,33 @@ def register(engine):
         gm_cache = engine.cache.get_from_url(gm_url)
         if gm_cache is None:
             abort(404)
+            return  # for pylace
 
         # load game from cache
         game_cache = gm_cache.get_from_url(game_url)
         if game_cache is None:
             abort(404)
+            return  # for pylace
 
         # load game from GM's database to upload files
         answer = {'urls': list(), 'music': list()}
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
         if game is None:
             abort(404)
+            return  # for pylace
 
         # load active scene
         scene = gm_cache.db.Scene.select(lambda scn: scn.id == game.active).first()
         if scene is None:
             abort(404)
+            return  # for pylace
 
         background_set = scene.backing is not None
         file_list = list()
         # query file sizes
+        files = typing.cast(FormsDict, request.files)
         try:
-            file_list = request.files.getall('file[]')
+            file_list = files.getall('file[]')
         except OSError:
             # cannot read uploaded files
             abort(404)
@@ -159,6 +166,6 @@ def register(engine):
             try:
                 greenlet.get()
             except Exception as err:
-                error.metadata = player_cache.get_meta_data()
+                setattr(error, "metadata", player_cache.get_meta_data())
                 # reraise greenlet's exception to trigger proper error reporting
                 raise err

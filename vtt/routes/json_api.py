@@ -69,6 +69,7 @@ def register(engine: typing.Any):
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
+            return  # for pylace
 
         # query whether user is the hosting GM
         session_gm = engine.main_db.GM.load_from_session(request)
@@ -76,12 +77,13 @@ def register(engine: typing.Any):
             abort(404)
 
         data = {
-            'games': []
+            'games': [],
+            'query_time': 0.0
         }
         for game in gm_cache.db.Game.select():
             data['games'].append(game.url)
         done = time.time()
-
+        
         data['query_time'] = done - start
         return data
 
@@ -94,6 +96,7 @@ def register(engine: typing.Any):
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
+            return  # for pylace
 
         # query whether user is the hosting GM
         session_gm = engine.main_db.GM.load_from_session(request)
@@ -108,7 +111,8 @@ def register(engine: typing.Any):
 
         files = {
             'images': [],
-            'audio': []
+            'audio': [],
+            'query_time': 0.0
         }
         for sub_root in root:
             for filename in os.listdir(sub_root):
@@ -163,12 +167,12 @@ def register(engine: typing.Any):
 
             # save data
             add_dict_set(locations, record.country, record.ip)
-            if 'platform' in data:
-                add_dict_set(platforms, data['platform']['name'], record.ip)
+            if (platform := data.get('platform')) and (name := platform.get('name')):
+                add_dict_set(platforms, name, record.ip)
             else:
                 add_dict_set(platforms, 'unknown', record.ip)
-            if 'browser' in data:
-                add_dict_set(browsers, data['browser']['name'], record.ip)
+            if (browser := data.get('browser')) and (name := browser.get('name')):
+                add_dict_set(browsers, name, record.ip)
             else:
                 add_dict_set(browsers, 'unknown', record.ip)
 

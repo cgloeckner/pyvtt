@@ -13,11 +13,13 @@ import typing
 
 from bottle import *
 
+from vtt.orm.protocols import GmLike
+
 
 def _login_callback(engine: typing.Any, provider: str):
     """Registers a callback url for oauth-login with the given provider."""
 
-    def register_new_gm_account(session: typing.Any) -> 'GM':
+    def register_new_gm_account(session: typing.Any) -> GmLike:
         # create GM (username as display name, user-id as url)
         gm = engine.cache.create_gm(
             name=session['name'],
@@ -50,7 +52,7 @@ def _login_callback(engine: typing.Any, provider: str):
         gm = engine.main_db.GM.select(lambda g: g.identity == session['identity']).first()
         if gm is None:
             gm = register_new_gm_account(session)
-
+            
             engine.logging.access(f'GM created using external auth with name="{gm.name}" url={gm.url} by {client_ip}.')
 
         else:
@@ -92,7 +94,8 @@ def register(engine: typing.Any):
             }
 
             # test gm name (also as url)
-            gm_name = request.forms.gmname
+            forms = typing.cast(FormsDict, request.forms)
+            gm_name = forms.gmname
             if not engine.verify_url_section(gm_name):
                 # contains invalid characters
                 status['error'] = 'NO SPECIAL CHARS OR SPACES'

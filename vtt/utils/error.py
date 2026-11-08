@@ -31,14 +31,15 @@ def get_stacktrace() -> str:
 
 def get_cookie() -> dict:
     """Get HTTP cookies to a string."""
-    return {key: value for key, value in bottle.request.cookies.items()}
+    cookies = typing.cast(bottle.FormsDict, bottle.request.cookies)
+    return {key: value for key, value in cookies.items()}
 
 
 def get_metadata(error: Exception) -> dict:
     """Get Exception Metadata as a string."""
     if hasattr(error, 'metadata'):
         # dump metadata that was fetched from the player cache instances earlier
-        return error.metadata
+        return getattr(error, "metadata")
 
     return {}
 

@@ -22,12 +22,14 @@ def register(engine: typing.Any):
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
+            return  # for pylace
 
         # load scene from GM's database
         scene = gm_cache.db.Scene.select(lambda scn: scn.id == scene_id and scn.game.url == game_url).first()
         if scene is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
+            return  # for pylace
 
         engine.paths.get_game_path(gm_url, game_url)
         if scene.backing is not None:
@@ -44,11 +46,13 @@ def register(engine: typing.Any):
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
+            return  # for pylace
 
         # load game from GM's database
         game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
         if game is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
+            return  # for pylace
 
         redirect(f'/vtt/thumbnail/{gm_url}/{game_url}/{game.active}')

@@ -50,9 +50,11 @@ def register(engine: typing.Any):
         if gm_cache is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)
+            return  # for pylace
 
         # load game from GM's database
-        game = gm_cache.db.Game.select(lambda g: g.url == game_url).first()
+        Game = gm_cache.db.entities["Game"]
+        game = Game.select(lambda g: g.url == game_url).first()
         if game is None:
             # @NOTE: not logged because somebody may play around with this
             abort(404)

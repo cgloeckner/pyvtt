@@ -26,7 +26,7 @@ class OAuthClient(LoginClient):
         self.sessions: dict[str, typing.Any] = {}
         self.lock = lock.RLock()
 
-    def load_session(self, state: str) -> any:
+    def load_session(self, state: str) -> typing.Any:
         """Query session via state but remove it from the cache"""
         with self.lock:
             return self.sessions.pop(state)

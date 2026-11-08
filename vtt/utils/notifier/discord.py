@@ -37,9 +37,9 @@ class DiscordWebhook:
         self.send(msg)
 
     def on_cleanup(self, report: dict) -> None:
-        report = json.dumps(report, indent=4)
+        report_str = json.dumps(report, indent=4)
         msg = (f'The VTT Server finished cleanup.\n'
-               f'```{report}```')
+               f'```{report_str}```')
         self.send(msg)
 
     def on_error(self, error_id: str, message: str):

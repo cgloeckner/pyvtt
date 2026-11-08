@@ -8,11 +8,16 @@ License: MIT (see LICENSE for details)
 __author__ = 'Christian Glöckner'
 __licence__ = 'MIT'
 
-
 import typing
 
+import bottle
 
-class GmLike(typing.Protocol):
+
+class EntityLike(typing.Protocol):
+    def delete(self) -> None: ...
+
+
+class GmLike(EntityLike, typing.Protocol):
     id: int
     name: str
     url: str
@@ -22,8 +27,9 @@ class GmLike(typing.Protocol):
     timeid: float
 
     def make_lock(self) -> None: ...
+    def refresh_session(self, response: bottle.Response) -> None: ...
 
-class GameLike(typing.Protocol):
+class GameLike(EntityLike, typing.Protocol):
     id: int
     url: str
     scenes: set["SceneLike"]
@@ -33,13 +39,13 @@ class GameLike(typing.Protocol):
     gm_url: str
     order: list[int] | None
 
-class SceneLike(typing.Protocol):
+class SceneLike(EntityLike, typing.Protocol):
     id: int
     game: GameLike
     tokens: set["TokenLike"]
     backing: typing.Optional["TokenLike"]
 
-class RollLike(typing.Protocol):
+class RollLike(EntityLike, typing.Protocol):
     id: int
     game: GameLike
     name: str
@@ -48,7 +54,7 @@ class RollLike(typing.Protocol):
     result: int
     timeid: float
 
-class TokenLike(typing.Protocol):
+class TokenLike(EntityLike, typing.Protocol):
     id: int
     scene: SceneLike
     url: str
