@@ -12,7 +12,7 @@ gevent-websocket==0.10.1
 httpagentparser==1.9.5
 httplib2==0.32.0
 idna==3.7
-oauthlib==4.0.0
+oauthlib==4.0.1
 packaging>=24.0
 Pillow==13.0.0
 pony==0.7.18
