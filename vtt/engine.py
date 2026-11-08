@@ -214,7 +214,7 @@ class Engine(object):
     def init_webhooks(self) -> None:
         webhooks = {}
         for api_name in utils.notifier.SUPPORTED_APIS:
-            data = utils.parse_webhook_data(api_name, os.environ)
+            data = utils.parse_webhook_data(api_name, dict(os.environ))
             if data is not None:
                 webhooks[api_name] = data
 
@@ -230,7 +230,7 @@ class Engine(object):
         # collect provider data from environ vars
         providers = {}
         for api_name in utils.auth.SUPPORTED_LOGIN_APIS:
-            data = utils.parse_provider_data(api_name, os.environ)
+            data = utils.parse_provider_data(api_name, dict(os.environ))
             if data is not None:
                 providers[api_name] = data
         
@@ -273,7 +273,7 @@ class Engine(object):
             port       = self.hosting['port'],
             debug      = self.debug,
             quiet      = self.quiet,
-            server     = VttServer,
+            server     = VttServer, # type: ignore
         )
         
     def get_domain(self):
@@ -422,10 +422,17 @@ class Engine(object):
         num_rolls  = 0
         num_tokens = 0
         num_md5s   = 0
+
+        assert self.main_db
+        Gm = self.main_db.entities["GM"]
+
+        assert self.cache
         
         with db_session:
-            for gm in self.main_db.GM.select():
+            for gm in Gm.select():
                 gm_cache = self.cache.get(gm)
+                if not gm_cache:
+                    continue
 
                 # check if GM expired
                 if gm.has_expired(now, gm_cache.db):
@@ -461,17 +468,27 @@ class Engine(object):
         """
         gms = list()
 
+        assert self.main_db
+        Gm = self.main_db.entities["GM"]
+
+        assert self.cache
+        
         # dump GM data (name, session id etc.)
         with db_session:
-            for gm in self.main_db.GM.select():
+            for gm in Gm.select():
                 gms.append(gm.to_dict())
         
         # dump each GM's games
         for gm in gms:         
             gm_cache = self.cache.get_from_url(gm['url'])
             gm['games'] = dict()
+            if not gm_cache:
+                continue
+
+            assert gm_cache.db
+            Game = gm_cache.db.entities["Game"]
             with db_session:
-                for game in gm_cache.db.Game.select():
+                for game in Game.select():
                     # fetch all(!) data
                     gm['games'][game.url] = game.to_dict()
 
@@ -483,6 +500,8 @@ class Engine(object):
         This method's purpose is to allow database schema migration.
         ONLY CALL THIS WITH EMPTY DATABASES.
         """
+        assert self.cache
+        
         # create GM data (name, session id etc.)
         with db_session:
             for gm_data in gms:
@@ -497,7 +516,11 @@ class Engine(object):
         # create Games
         for gm_data in gms:
             gm_cache = self.cache.get_from_url(gm_data['url'])
+            if not gm_cache:
+                continue
+        
             gm_cache.connect_db()
+            assert gm_cache.db
             with db_session:
                 for url in gm_data['games']:
                     game = gm_cache.create_game(url=url)

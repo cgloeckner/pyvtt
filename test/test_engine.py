@@ -198,6 +198,8 @@ class EngineTest(EngineBaseTest):
 
     def test_cleanup(self):
         now = time.time()
+        assert self.engine.cache
+        assert self.engine.main_db
         
         with db_session:
             # create GMs
@@ -206,14 +208,19 @@ class EngineTest(EngineBaseTest):
             gm2.timeid = now - self.engine.cleanup['expire'] - 10
         
         gm1_cache = self.engine.cache.get(gm1)
+        assert gm1_cache
         gm1_cache.connect_db()
+        assert gm1_cache.db
         gm2_cache = self.engine.cache.get(gm2)
+        assert gm2_cache
         gm2_cache.connect_db()
         
         with db_session:
             # create some games
             g1 = gm1_cache.create_game(url='foo')
+            assert g1
             g2 = gm1_cache.create_game(url='bar')
+            assert g2
             g2.timeid = time.time() - self.engine.cleanup['expire'] - 10
             
             # create some rolls
@@ -224,7 +231,7 @@ class EngineTest(EngineBaseTest):
             for i in range(45):
                 g1.create_roll('test', 'red', 12).timeid = old
                 g2.create_roll('test', 'red', 12).timeid = old
-            all_rolls = gm1_cache.db.Roll.select()
+            all_rolls = gm1_cache.db.entities["Roll"].select()
             self.assertEqual(len(all_rolls), 120)
 
             # export both games
@@ -252,23 +259,23 @@ class EngineTest(EngineBaseTest):
             self.assertEqual(m, 0)
             
             # expect first game to still exist
-            q1 = gm1_cache.db.Game.select(lambda g: g.url == 'foo').first()
+            q1 = gm1_cache.db.entities["Game"].select(lambda g: g.url == 'foo').first()
             self.assertEqual(g1, q1)
             # with only 15 rolls left
-            g1_rolls = gm1_cache.db.Roll.select(lambda r: r.game == q1)
+            g1_rolls = gm1_cache.db.entities["Roll"].select(lambda r: r.game == q1)
             self.assertEqual(len(g1_rolls), 15)
             for r in g1_rolls: # expect no d12 rolls (they were deleted)
                 self.assertEqual(r.sides, 20)
             
             # expect second game to be deleted
-            q2 = gm1_cache.db.Game.select(lambda g: g.url == 'bar').first()
+            q2 = gm1_cache.db.entities["Game"].select(lambda g: g.url == 'bar').first()
             self.assertIsNone(q2)
             # so only 15 rolls remain in total 
-            all_rolls = gm1_cache.db.Roll.select()
+            all_rolls = gm1_cache.db.entities["Roll"].select()
             self.assertEqual(len(all_rolls), 15)
             
             # expect second GM to be deleted
-            gm2_ = self.engine.main_db.GM.select(lambda g: g.url == 'second').first()
+            gm2_ = self.engine.main_db.entities["GM"].select(lambda g: g.url == 'second').first()
             self.assertIsNone(gm2_)
             
             # expect all ZIPs being removed
@@ -276,14 +283,18 @@ class EngineTest(EngineBaseTest):
             self.assertEqual(num_files, 0)
 
     def test_saveToDict(self):
+        assert self.engine.cache
+
         with db_session:
             # create GMs
             gm1 = self.engine.cache.create_gm(name='user123', url='url456', identity='user123', sid='123456', metadata='')
             gm2 = self.engine.cache.create_gm(name='nobody', url='second', identity='nobody', sid='5673', metadata='')
         
         gm1_cache = self.engine.cache.get(gm1)
+        assert gm1_cache
         gm1_cache.connect_db()
         gm2_cache = self.engine.cache.get(gm2)
+        assert gm2_cache
         gm2_cache.connect_db()
         
         with db_session:
@@ -314,6 +325,9 @@ class EngineTest(EngineBaseTest):
         self.assertIn('bar', export[1]['games'])
          
     def test_loadFromDict(self):
+        assert self.engine.cache
+        assert self.engine.main_db
+
         data = [{
             'name': 'otto',
             'url' : '12345',
@@ -332,7 +346,7 @@ class EngineTest(EngineBaseTest):
 
         # check GM data
         with db_session:
-            all_gms = list(self.engine.main_db.GM.select())
+            all_gms = list(self.engine.main_db.entities["GM"].select())
         self.assertEqual(len(all_gms), 1)
         self.assertEqual(all_gms[0].name, 'otto')
         self.assertEqual(all_gms[0].url, '12345')
@@ -342,8 +356,10 @@ class EngineTest(EngineBaseTest):
 
         # check Games Data
         gm_cache = self.engine.cache.get_from_url('12345')
+        assert gm_cache
+        assert gm_cache.db
         with db_session:
-            all_games = list(gm_cache.db.Game.select())
+            all_games = list(gm_cache.db.entities["Game"].select())
         self.assertEqual(len(all_games), 1)
 
     def test_atomic_maintenance_timestamp(self) -> None:

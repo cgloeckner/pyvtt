@@ -59,7 +59,7 @@ class EngineCache:
 
     # --- cache implementation ----------------------------------------
 
-    def insert(self, gm):
+    def insert(self, gm: GmLike):
         url = gm.url
         with self.lock:
             # @NOTE: existing GmCache is replaced
@@ -67,11 +67,13 @@ class EngineCache:
             self.gms[url] = GmCache(self.engine, gm)
             return self.gms[url]
 
-    def get(self, gm):
-        if gm:
-            return self.get_from_url(gm.url)
+    def get(self, gm: GmLike) -> GmCache | None:
+        """Query GmCache of given gm or None (see get_from_url)."""
+        return self.get_from_url(gm.url)
 
-    def get_from_url(self, url):
+    def get_from_url(self, url: str) -> GmCache | None:
+        """Query GmCache by gm url or None (if user tries to access
+        e.g. a gm that does not exist anymore)."""
         with self.lock:
             try:
                 return self.gms[url]
