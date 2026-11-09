@@ -94,6 +94,12 @@ class ErrorDispatcher:
             except (KeyboardInterrupt, SystemExit):
                 raise
             except Exception as error:
-                self.handle_error(error)
+                try:
+                    self.handle_error(error)
+                except bottle.HTTPResponse:
+                    raise
+                except Exception:
+                    # Error handler itself failed
+                    bottle.abort(500, "Internal Server Error")
 
         return wrapper
