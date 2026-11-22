@@ -73,7 +73,7 @@ function getDiscordPrompt(d) {
 
 function updateCountdown() {
     let url = '/vtt/schedule/'
-    let server = $('#server')[0].value
+    let server = $('#server')[0].value || window.location.origin
     let gm_url = $('#gm_url')[0].value
     let game_url = $('#games option:selected').val()
 
@@ -85,7 +85,9 @@ function updateCountdown() {
     url += d.getTime().toString(16)
 
     let anchor = document.createElement('a');
-    anchor.href = `${server}${url}`;
+    console.log(url)
+    console.log(server)
+    anchor.href = new URL(url, server).href;
     anchor.target = "_blank";
     anchor.textContent = `${server}${url}`;
     $('#schedule_url')[0].innerHTML = '';
