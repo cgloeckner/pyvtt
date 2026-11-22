@@ -5,6 +5,10 @@ Copyright (c) 2020-2022 Christian Glöckner
 License: MIT (see LICENSE for details)
 */
 
+function isSafePathToken(value) {
+    return typeof value === 'string' && /^[A-Za-z0-9_-]+$/.test(value);
+}
+
 function registerGm(event) {
     event.preventDefault();
     
@@ -121,7 +125,12 @@ function updateDays() {
 function kickPlayer(url, uuid) {
     var kick = confirm("KICK THIS PLAYER?");
     if (kick) {
-        $.post(url='/vtt/kick-player/' + url + '/' + uuid)
+        if (!isSafePathToken(url) || !isSafePathToken(uuid)) {
+            console.error('Invalid kick-player parameters')
+            return
+        }
+        var safeUrl = '/vtt/kick-player/' + encodeURIComponent(url) + '/' + encodeURIComponent(uuid)
+	    $.post(url=safeUrl)
     }
 }
 
