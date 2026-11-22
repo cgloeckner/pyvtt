@@ -85,8 +85,6 @@ function updateCountdown() {
     url += d.getTime().toString(16)
 
     let anchor = document.createElement('a');
-    console.log(url)
-    console.log(server)
     anchor.href = new URL(url, server).href;
     anchor.target = "_blank";
     anchor.textContent = `${server}${url}`;
@@ -123,7 +121,7 @@ function updateDays() {
 function kickPlayer(url, uuid) {
     var kick = confirm("KICK THIS PLAYER?");
     if (kick) {
-        $.post(url='/vtt/kick-player/' + url + '/' + uuid);
+        $.post(url='/vtt/kick-player/' + url + '/' + uuid)
     }
 }
 
