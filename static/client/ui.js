@@ -318,18 +318,34 @@ function logRoll(sides, result) {
     var hsl = getHsl(my_color);
     var filter = "hue-rotate(" + hsl[0] + "turn) saturate(" + hsl[1] + ") brightness(" + (2*hsl[2]) + ")";
 
-    var die = '<div style="left: ' + x + 'px; top: ' + y + 'px;" draggable="true"'
-        + 'onDragStart="startDragRoll(event, this);" '
-        + 'ontouchstart="startDragRoll(event, this);" '
-        + 'ontouchmove="onDragRoll(event);" '
-        + 'ontouchend="stopDragRoll(event, this);" '
-        + 'onDragEnd="stopDragRoll(event, this);">'
-        + '<img src="/static/assets/token_d' + sides + '.png" style="filter: ' + filter + ';"><span>' + result + '</span></div>';
-
-    tray.prepend(die);
+    var die = $('<div>')
+        .css({
+            left: x + 'px',
+            top: y + 'py'
+        })
+        .attr({
+            draggable: 'true',
+            onDragStart: 'startDragRoll(event, this)',
+            onDragEnd: 'stopDropRoll(event, this)'
+        })
+        .on({
+            touchstart: function(event) { startDragRoll(event, this) },
+            touchmove: function(event) { onDragRoll(event) },
+            touchend: function(event) { stopDragRoll(event, this) }
+        })
+        .append(
+            $('<img>')
+                .attr('src', '/static/assets/token_d' + sides + '.png')
+                .css('filter', filter)
+        )
+        .append(
+            $('<span>').text(result)
+        )
+    
+    tray.prepend(die)
     var dom_span = tray.children(':first-child');
     dom_span[0].onmousedown = function(event) { onClickRoll(event, $(this)) };
-
+        
     dom_span.delay(dice_shake).fadeIn(250, function() {
         if (fade_dice) {
             dom_span.delay(6 * roll_timeout).fadeOut(100, function() {
@@ -379,7 +395,6 @@ function addRoll(sides, result, name, color, recent) {
         var box_span = $('<span>')
             .addClass('roll' + lbl_css)
             .css('border', '3px inset ' + color)
-        console.log(box_span)
         var result_span = $('<span>')
             .addClass('result')
             .text(result_label)
