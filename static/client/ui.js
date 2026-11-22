@@ -265,6 +265,13 @@ function logRoll(sides, result) {
     var x = 20 + 50 * row + Math.random() * 15;
     var y = 20 + 50 * col + Math.random() * 15;
 
+    // sanitize untrusted socket value before interpolating into HTML
+    sides = parseInt(sides, 10);
+    var allowed_sides = [2, 4, 6, 8, 10, 12, 20, 100];
+    if (!allowed_sides.includes(sides)) {
+        sides = 6;
+    }
+
     var css = '';
     if (sides == 2) {
         // use D6 as binary dice
