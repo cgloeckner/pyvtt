@@ -202,10 +202,10 @@ function onOrder(data) {
 
 function onBeacon(data) {
     // grab beacon
-    var beacon = beacons[data['uuid']];
+    var beacon = beacons.get(data['uuid']);
     if (beacon == null) {
         addBeacon(data['color'], data['uuid']);
-        beacon = beacons[data['uuid']];
+        beacon = beacons.get(data['uuid']);
     }
     
     // update beacon
