@@ -345,7 +345,7 @@ function logRoll(sides, result) {
     tray.prepend(die)
     var dom_span = tray.children(':first-child');
     dom_span[0].onmousedown = function(event) { onClickRoll(event, $(this)) };
-        
+
     dom_span.delay(dice_shake).fadeIn(250, function() {
         if (fade_dice) {
             dom_span.delay(6 * roll_timeout).fadeOut(100, function() {
@@ -398,7 +398,9 @@ function addRoll(sides, result, name, color, recent) {
         var result_span = $('<span>')
             .addClass('result')
             .text(result_label)
-        var player_span = $('<span>').addClass('player')
+        var player_span = $('<span>')
+            .addClass('player')
+            .text(name)
         box_span.append(result_span)
         box_span.append(player_span)
 
