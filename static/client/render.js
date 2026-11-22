@@ -784,7 +784,7 @@ function drawScene() {
     });
 
     // draw beacons
-    $.each(beacons, function(index, beacon) {
+    beacons.forEach(function(beacon, index) {
         drawBeacon(beacon);
     });
     
