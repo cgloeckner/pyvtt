@@ -376,33 +376,37 @@ function addRoll(sides, result, name, color, recent) {
     
     if (recent) {
         // create dice result
-        var parent_span = '<span style="display: none;">';
-        var box_span    = '<span class="roll' + lbl_css + '" style="border: 3px inset ' + color + ';">';
-        var result_span = '<span class="result">';
-        var player_span = '<span class="player">';
-        var dice_result_span =
-            parent_span + '\n'
-                + '\t' + box_span + '\n'
-                    + '\t\t' + result_span + result_label + '</span>\n'
-                    + '\t\t' + player_span + name + '</span>\n'
-                + '\t</span>\n'
-                + '\t<span class="' + ani_css + '"></span>\n'
-            + '</span>';
+        var box_span = $('<span>')
+            .addClass('roll' + lbl_css)
+            .css('border', '3px inset ' + color)
+        console.log(box_span)
+        var result_span = $('<span>')
+            .addClass('result')
+            .text(result_label)
+        var player_span = $('<span>').addClass('player')
+        box_span.append(result_span)
+        box_span.append(player_span)
 
+        var dice_result_span = $('<span>').css('display', 'none')
+        dice_result_span.append(box_span)
+        
+        var ani_span = $('<span>').addClass(ani_css)
+        dice_result_span.append(ani_span)
+        
         var container = $('#d' + sides + 'rolls');
         container.prepend(dice_result_span);
         
-        // prepare automatic cleanup
-        var dom_span = container.children(':first-child');
-        dom_span.delay(dice_shake).fadeIn(100, function() {
+        // prepare fadeout animation
+        dice_result_span = container.children(':first-child');
+        dice_result_span.delay(dice_shake).fadeIn(100, function() {
             if (fade_dice) {
-                dom_span.delay(roll_timeout).fadeOut(500, function() { this.remove(); });
+                dice_result_span.delay(roll_timeout).fadeOut(500, function() { this.remove(); });
             }
         });
         
         if (ani_css == 'maxani') {
             // let animation fade out earlier
-            var ani = $(dom_span.children()[1]);
+            var ani = $(dice_result_span.children()[1]);
             ani.delay(3000).fadeOut(500);
         }
     };
