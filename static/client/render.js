@@ -200,7 +200,7 @@ function getPixelData(token, x, y) {
 
 // --- beacon implementation ------------------------------------------
 
-var beacons = {}; // contains beacons keyed by players' uuid
+var beacons = new Map(); // contains beacons keyed by players' uuid
 
 /// Beacon constructor
 function Beacon(color) {
@@ -211,7 +211,7 @@ function Beacon(color) {
 
 /// Add beacon
 function addBeacon(color, uuid) {
-    beacons[uuid] = new Beacon(color);
+    beacons.set(uuid, new Beacon(color));
 }
 
 function startBeacon(beacon, x, y) {
