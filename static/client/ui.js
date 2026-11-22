@@ -154,32 +154,63 @@ function showPlayer(p, force=false) {
     }
 
     // create player container (uuid as id, custom colored, optional kick click, draggable)
-    var coloring = ' style="filter: drop-shadow(1px 1px 9px ' + p.color + ') drop-shadow(-1px -1px 0 ' + p.color + ');"';
-    var ordering = ' onMouseEnter="onMouseOverPlayer(\'' + p.uuid + '\');"';
-       ordering += ' onMouseLeave="onMouseLeavePlayer(\'' + p.uuid + '\');"';
+    var player = $('<span>')
+        .attr('id', 'player_' + p.uuid)
+        .attr('draggable', 'true')
+        .addClass('player')
+        .css('filter', 'drop-shadow(1px 1px 9px ' + p.color + ') drop-shadow(-1px -1px 0 ' + p.color + ')')
+        .on('mouseenter', function() { onMouseOverPlayer(p.uuid); })
+        .on('mouseleave', function() { onMouseLeavePlayer(p.uuid); })
     
-    // create player menu for this player
-    var menu = '<div class="playermenu" id="playermenu_' + p.uuid + '">'
-    if (p.index > 0) {
-        menu += '<img src="/static/left.png" draggable="false" class="left" title="MOVE TO LEFT" onClick="onPlayerOrder(-1);" />'
-    }
-    if (is_gm && p.uuid != my_uuid) {
-        menu += '<img src="/static/delete.png" draggable="false" class="center" title="KICK PLAYER" onClick="kickPlayer(\'' + game_url + '\', \'' + p.uuid + '\');" />';
-    }
-    if (!p.is_last) {
-        menu += '<img src="/static/right.png" draggable="false" class="right" title="MOVE TO RIGHT" onMouseLeave="hideHint();" onClick="onPlayerOrder(1);" />';
-    }
-    menu += '</div>';
-    
-    // build player's container
-    var agent_str = '';
     if (is_gm) {
-        agent_str =' title="' + p.agent + '"';
+        player.attr('title', p.agent)
+
+        // create player menu for this player
+        var menu = $('<div>')
+            .addClass('playermenu')
+            .attr('id', 'playermenu_' + p.uuid)
+
+        if (p.index > 0) {
+            menu.append(
+                $('<img>')
+                    .attr('src', '/static/left.png')
+                    .attr('draggable', 'false')
+                    .attr('title', 'MOVE TO LEFT')
+                    .addClass('left')
+                    .on('click', function() { onPlayerOrder(-1); })
+            )
+        }
+
+        if (p.uuid != my_uuid) {
+            menu.append(
+                $('<img>')
+                    .attr('src', '/static/delete.png')
+                    .attr('draggable', 'false')
+                    .attr('title', 'KICK PLAYER')
+                    .addClass('center')
+                    .on('click', function() { kickPlayer(game_url, p.uuid); })
+            )
+        }
+
+        if (!p.is_last) {
+            menu.append(
+                $('<img>')
+                    .attr('src', '/static/right.png')
+                    .attr('draggable', 'false')
+                    .attr('title', 'MOVE TO RIGHT')
+                    .addClass('right')
+                    .on('click', function() { onPlayerOrder(1); })
+                    .on('mouseleave', function() { hideHint(); })
+            )
+        }
+
+        player.append(menu)
     }
     
-    var player_container = '<span id="player_' + p.uuid + '"' + ordering + ' draggable="true" class="player"' + coloring + agent_str + '>'  + menu + p.flag + '&nbsp;' + p.name + '</span>';
-
-    $('#players').append(player_container);
+    // add text with flag, whitespace and player name
+    player.append(document.createTextNode((p.flag || '') + '\u00A0' + (p.name || '')))
+    
+    $('#players').append(player);
     players[p.uuid] = p;
 }
 
