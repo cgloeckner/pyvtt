@@ -121,9 +121,21 @@ class Settings:
     limit_music: int = 10
     num_music: int = 6
 
+    # footer links
+    links_discord: str | None = None
+    links_github: str | None = None
+
     # cleanup settings
     cleanup_expire: int = 2592000  # expire after 30d
     cleanup_time: str = "03:00"  # cleanup at 3am
 
+    # webhook settings
     webhook_discord_url: str | None = None
     webhook_user: str = ""
+
+    # oauth settigns
+    oauth_discord_id: str | None = None
+    oauth_discord_secret: str = ""
+
+    oauth_google_id: str | None = None
+    oauth_google_secret: str = ""

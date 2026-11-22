@@ -17,7 +17,7 @@ def main() -> None:
         routes.register_resources(engine)
         routes.register_error(engine)
         routes.register_api(engine)
-
+        
         engine.cleanup_worker = CleanupThread(engine)
         engine.run()
     except KeyboardInterrupt:

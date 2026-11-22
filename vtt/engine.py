@@ -38,6 +38,7 @@ class Engine(object):
         app_root = kwargs.pop("app_root", pathlib.Path("."))
 
         kwargs = env_settings(**kwargs)
+        print(kwargs)
         self.settings = Settings(**kwargs)
         
         # initialize path api
@@ -84,14 +85,16 @@ class Engine(object):
             }
         ]
 
-        for category in ['discord', 'github']:
-            key = f'VTT_LINKS_{category.upper()}'
-            value = os.getenv(key)
-            if value is not None:
-                self.links.append({
-                    'label': category.upper(),
-                    'url': value
-                })
+        if self.settings.links_discord:
+            self.links.append({
+                "label": "DISCORD",
+                "url": self.settings.links_discord
+            })
+        if self.settings.links_github:
+            self.links.append({
+                "label": "GITHUB",
+                "url": self.settings.links_github
+            })
         
         self.notify_api = None # notify api instance
         self.login_api = None   # login api instance
@@ -167,40 +170,39 @@ class Engine(object):
         self.cache = EngineCache(self)
 
     def init_webhooks(self) -> None:
-        webhooks = {}
-        for api_name in utils.notifier.SUPPORTED_APIS:
-            data = utils.parse_webhook_data(api_name, dict(os.environ))
-            if data is not None:
-                webhooks[api_name] = data
-
-        self.logging.info(f'Found webhook setup for: {[api_name for api_name in webhooks]}')
+        if not self.settings.webhook_discord_url:
+            return
         
-        if len(webhooks) >= 1:
-            # FIXME: using the next best webhook API does not allow multiple webhooks
-            app_title = f'{self.settings.app_name} on {self.get_domain()}'
-            first_hook = webhooks[list(webhooks.keys())[0]]
-            self.notify_api = utils.DiscordWebhook(
-                app_title=app_title, alias=app_title, url=first_hook['url'], 
-                roles=[], users=first_hook['users']
-            )
-
+        app_title = f"{self.settings.app_name} on {self.get_domain()}"
+        self.notify_api = utils.DiscordWebhook(
+            app_title=app_title, alias=app_title,
+            url=self.settings.webhook_discord_url, roles=[],
+            users=[self.settings.webhook_user]
+        )
+    
     def init_oauth(self) -> None:
-        # collect provider data from environ vars
         providers = {}
-        for api_name in utils.auth.SUPPORTED_LOGIN_APIS:
-            data = utils.parse_provider_data(api_name, dict(os.environ))
-            if data is not None:
-                providers[api_name] = data
+        if self.settings.oauth_discord_id:
+            providers["discord"] = {
+                "client_id": self.settings.oauth_discord_id,
+                "client_secret": self.settings.oauth_discord_secret
+            }
         
-        self.logging.info(f'Found oauth setup for: {[api_name for api_name in providers]}')
-        
-        if len(providers) >= 1:
-            self.login_api = utils.OAuthClient(
-                on_auth=self.logging.auth,
-                callback_url=self.get_auth_callback_url(),
-                providers=providers
-            )
+        if self.settings.oauth_discord_id:
+            providers["google"] = {
+                "client_id": self.settings.oauth_google_id,
+                "client_secret": self.settings.oauth_google_secret
+            }
 
+        if not providers:
+            return
+        
+        self.login_api = utils.OAuthClient(
+            on_auth=self.logging.auth,
+            callback_url=self.get_auth_callback_url(),
+            providers=providers
+        )
+    
     def load_version_number(self) -> None:
         # load version number
         bn = BuildNumber()
