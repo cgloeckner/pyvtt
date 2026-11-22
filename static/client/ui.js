@@ -392,23 +392,26 @@ function addRoll(sides, result, name, color, recent) {
     
     if (recent) {
         // create dice result
-        var box_span = $('<span>')
-            .addClass('roll' + lbl_css)
-            .css('border', '3px inset ' + color)
-        var result_span = $('<span>')
-            .addClass('result')
-            .text(result_label)
-        var player_span = $('<span>')
-            .addClass('player')
-            .text(name)
-        box_span.append(result_span)
-        box_span.append(player_span)
-
-        var dice_result_span = $('<span>').css('display', 'none')
-        dice_result_span.append(box_span)
-        
-        var ani_span = $('<span>').addClass(ani_css)
-        dice_result_span.append(ani_span)
+        var dice_result_span = $('<span>')
+            .css('display', 'none')
+            .append(
+                $('<span>')
+                    .addClass('roll' + lbl_css)
+                    .css('border', '3px inset ' + color)
+                    .append(
+                        $('<span>')
+                            .addClass('result')
+                            .text(result_label)
+                    )
+                    .append(
+                        $('<span>')
+                            .addClass('player')
+                            .text(name)
+                    )
+            )
+            .append(
+                $('<span>').addClass(ani_css)
+            )
         
         var container = $('#d' + sides + 'rolls');
         container.prepend(dice_result_span);
